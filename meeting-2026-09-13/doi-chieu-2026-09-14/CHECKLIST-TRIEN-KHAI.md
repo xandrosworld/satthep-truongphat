@@ -1,6 +1,6 @@
 # Checklist triển khai sau cuộc họp 13/09
 
-Phiên bản tài liệu: 14/09/2026 — v2.1, giữ các sửa đổi F01–F14 và bổ sung thương hiệu vật tư thiết bị theo tin nhắn mới.
+Phiên bản tài liệu: 14/09/2026 — v2.2, giữ yêu cầu v2.1/F01–F14 và cập nhật kết quả triển khai đủ sáu mục đợt 1.
 
 Phạm vi: luồng báo giá Trường Phát — dùng để bàn giao cho người hoặc bot tiếp tục sửa phần mềm.  
 Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu của khách.
@@ -11,13 +11,13 @@ Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệ
 
 ## Theo dõi triển khai đợt 1 — 14/09/2026
 
-**Lượt hoàn thiện tiếp theo:** xem [báo cáo sáu mục](../../docs/BATCH-01-COMPLETE-2026-09-14.md) và chạy `npm run verify:batch-one:complete`. Quản lý quy ước, khổ chung máy/xưởng và dòng vật tư nháp đã được bổ sung trong mã; đang kiểm cuối/đối chiếu deploy trước khi đánh dấu hoàn thành. Các đoạn `3cf0b3c` phía dưới là lịch sử đợt đầu, không phải trạng thái phát hành lượt bổ sung.
+**Trạng thái hiện hành:** BG-01, DM-01/02/03/04 và UX-01 đã hoàn thành triển khai/kiểm chứng nội bộ, đánh dấu `[x]` theo phần 11. Ứng dụng `6a74c13` đã push và lên Netlify; 14 nhóm kiểm local (152 ca logic, 26 ca máy chủ), 15 nhóm tình huống web thật, 20 ảnh; kiểm web kết thúc 11:41:58 ngày 14/09/2026. [Báo cáo sáu mục và bằng chứng từng mã](../../docs/BATCH-01-COMPLETE-2026-09-14.md). Máy chủ được kiểm đúng môi trường máy chủ thử cục bộ; Netlify vẫn lưu trình duyệt. Không phải hoàn thành toàn bộ GĐ1 hay khách đã nghiệm thu. Các đoạn `3cf0b3c` phía dưới là lịch sử đợt đầu.
 
 [Báo cáo đợt 1](../../docs/BATCH-01-2026-09-14.md) ghi phần đã sửa, phần còn lại, mã kiểm thử và vị trí ảnh thực tế. “Hiện trạng đã thấy” bên dưới vẫn là mốc trước sửa; không dùng nó để kết luận mã mới chưa có chức năng.
 
-Mã ứng dụng `3cf0b3c` đã push `main`; kiểm bản Netlify lúc **11:00 ngày 14/09/2026** đạt **7/7 nhóm tình huống**, có **12 ảnh thực tế**. Bộ kiểm cục bộ đạt **11/11 nhóm** (141 ca logic, 23 ca máy chủ và các nhóm giao diện). Mã web khớp build đã kiểm, ngoài thẻ thanh công cụ do Netlify nối cuối. Đây là kết quả phạm vi đợt 1, không phải nghiệm thu khách hoặc hoàn thành nguyên cả sáu mã; xem giới hạn từng mã trong báo cáo.
+**Ghi nhận lịch sử đợt đầu:** Mã ứng dụng `3cf0b3c` đã push `main`; kiểm bản Netlify lúc **11:00 ngày 14/09/2026** đạt **7/7 nhóm tình huống**, có **12 ảnh thực tế**. Bộ kiểm cục bộ đạt **11/11 nhóm** (141 ca logic, 23 ca máy chủ và các nhóm giao diện). Mã web khớp build đã kiểm, ngoài thẻ thanh công cụ do Netlify nối cuối. Đây là kết quả phạm vi đợt 1, không phải nghiệm thu khách hoặc hoàn thành nguyên cả sáu mã; xem giới hạn từng mã trong báo cáo.
 
-Đợt này xử lý hồ sơ tạo báo giá, vật tư/thương hiệu, dữ liệu tra kg/m–m²/m, khổ/phần dư theo mã, cây chung năm bước và bốn nhóm dòng. Chưa hoàn thành cả DM-02/03/04: còn bộ cấu hình hình dạng tổng quát, khổ mua dùng chung theo máy/xưởng và dòng vật tư nháp chưa mã. Chưa làm DM-05/AI/các công thức giá bổ sung; giữ nguyên yêu cầu và CĐ. Không đổi sang `[x]` chỉ vì các ca đầu vào đã chạy đạt.
+Tại mốc `3cf0b3c`, đợt đầu xử lý hồ sơ tạo báo giá, vật tư/thương hiệu, dữ liệu tra kg/m–m²/m, khổ/phần dư theo mã, cây chung năm bước và bốn nhóm dòng. Khi đó chưa hoàn thành cả DM-02/03/04: còn bộ cấu hình hình dạng tổng quát, khổ mua dùng chung theo máy/xưởng và dòng vật tư nháp chưa mã. Chưa làm DM-05/AI/các công thức giá bổ sung; giữ nguyên yêu cầu và CĐ. Lượt hoàn thiện `6a74c13` đã bổ sung các phần này và chạy lại bộ kiểm trước khi đổi sáu mục sang `[x]`; không dùng riêng test đợt đầu để kết luận.
 
 ## 1. Kết quả cần đạt
 
@@ -77,7 +77,7 @@ Nguồn KH mới nhất: [phản hồi bổ sung sau họp](../../docs/nguon/202
 
 ## 4. P0 — sửa ngay trước lần gửi khách tiếp theo
 
-### [~] BG-01 — Gộp đầu vào vào bước “Tạo báo giá mới”
+### [x] BG-01 — Gộp đầu vào vào bước “Tạo báo giá mới”
 
 **Hiện trạng đã thấy:** bản hiện tại có trang khách hàng và phần yêu cầu/tệp ở bước riêng; form tạo báo giá máy chủ chỉ có mã, khách hàng và công trình.  
 **Phải sửa:** trong một luồng tạo báo giá phải có:
@@ -190,7 +190,7 @@ AI không tự duyệt giá, không tự chọn phương án và không ghi đè
 
 ## 5. P1 — danh mục và đầu vào dùng lại
 
-### [~] DM-01 — Danh mục vật tư theo nhóm, trường nhập phụ thuộc loại
+### [x] DM-01 — Danh mục vật tư theo nhóm, trường nhập phụ thuộc loại
 
 - Nhóm mở rộng được: phôi gia công; linh kiện/thiết bị; vật tư tiêu hao; xăng dầu; vật tư phụ.
 - Có chức năng tự sinh mã khi thêm vật tư (PA1 dòng 23–26); không chỉ cho nhập tay rồi coi đã đạt. Mã phải không trùng. Tên được gợi ý từ vật liệu + hình dạng + mác + đặc tính + quy cách nhưng người dùng được sửa.
@@ -211,7 +211,7 @@ AI không tự duyệt giá, không tự chọn phương án và không ghi đè
 
 ![Danh mục mác vật liệu trong hệ thống tham khảo](checklist-images/03-mac-vat-lieu.png)
 
-### [~] DM-02 — Quy ước hình dạng và công thức do người dùng quản lý
+### [x] DM-02 — Quy ước hình dạng và công thức do người dùng quản lý
 
 Mỗi hình dạng khai được:
 
@@ -236,7 +236,7 @@ Tách lượng của một đơn vị với toàn đơn, kg phôi với kg mua s
 
 ![Bảng quy ước hình dạng trong bản demo](checklist-images/15-quy-uoc-hinh-dang.png)
 
-### [~] DM-03 — Khổ mua chuẩn và phần dư
+### [x] DM-03 — Khổ mua chuẩn và phần dư
 
 - Khổ tấm/thanh là dữ liệu kho/mua hàng, tách khỏi mã vật tư.
 - Cho chọn nhiều khổ chuẩn theo năng lực máy/xưởng và nhập khổ đặc thù cho đơn.
@@ -254,7 +254,7 @@ Tách lượng của một đơn vị với toàn đơn, kg phôi với kg mua s
 
 ![Bảng hao hụt và phần dư trong bản demo](checklist-images/09-hao-hut-phan-du.png)
 
-### [~] DM-04 — Thư viện mẫu và tạo nhanh tại báo giá
+### [x] DM-04 — Thư viện mẫu và tạo nhanh tại báo giá
 
 - Thư viện gom sản phẩm/cấu kiện mẫu, không kéo mọi danh mục thành mục menu riêng.
 - Trong báo giá thêm được dòng sản phẩm, cấu kiện hoặc vật tư trống.
@@ -283,7 +283,7 @@ Tách lượng của một đơn vị với toàn đơn, kg phôi với kg mua s
 
 ![Vùng kích thước cha và vật tư con cần chuyển sang liên kết bằng công thức](../../artifacts/customer-review/09-new-variant-pass.png)
 
-### [~] UX-01 — Phân biệt rõ bốn loại dòng trong cây cấu thành
+### [x] UX-01 — Phân biệt rõ bốn loại dòng trong cây cấu thành
 
 Phải nhìn nhanh và phân biệt được:
 

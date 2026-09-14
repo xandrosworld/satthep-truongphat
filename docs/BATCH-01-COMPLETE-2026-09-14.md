@@ -64,6 +64,21 @@ Gốc bằng chứng: `artifacts/customer-review/batch-01-complete-2026-09-14/`:
 
 Kiểm cục bộ kết thúc **11:40:08 ngày 14/09/2026 (giờ Việt Nam)**: đạt **14/14 nhóm**, gồm **152/152 ca logic**, **26/26 ca máy chủ**, các nhóm giao diện mới và hồi quy. SHA-256 build sau chuẩn hóa LF: `b0f93c8ec0131878c0a0eb27817378b0480a73c0f72d54018216ba619cc2f00a`. Đã kiểm không có nguồn/build thay đổi sau lần chạy này.
 
-Đang phát hành và kiểm web; chưa đánh dấu sáu mã `[x]` trước khi bản deploy đúng mã và kiểm trực tiếp web đều đạt. Kết quả phát hành cuối sẽ được bổ sung tại đây sau khi chạy xong.
+Mã ứng dụng [`6a74c13`](https://github.com/xandrosworld/satthep-truongphat/commit/6a74c1368c8a220eec1c80574522d07f8bffacd9) đã commit/push `main`. Netlify phục vụ đúng build từ **11:41:25**; kiểm trực tiếp kết thúc **11:41:58 ngày 14/09/2026 (giờ Việt Nam)**. Cả ba kịch bản web đạt: **7 + 5 + 3 = 15 nhóm tình huống**, **20 ảnh** đã lưu, không ghi nhận lỗi JavaScript trong các phiên thử. HTML web khớp toàn bộ ứng dụng đã kiểm, chỉ có đúng thanh công cụ Netlify nối cuối; hash HTML đầy đủ chuẩn hóa LF: `239232545e3790ab8f7b88b963ec4f10aceee69610ad3954a070556b60e5b568`.
+
+**Đã đánh dấu `[x]` đủ sáu mã theo phần 11 checklist.** Không còn chờ người dùng tự kiểm lại để đóng nhóm này. Nghiệm thu của khách vẫn là trạng thái riêng.
+
+| Mã | Kiểm trên bản mới | Ảnh web thật (tính từ gốc bằng chứng) | CĐ ảnh hưởng đến mã / nghiệm thu khách |
+| --- | --- | --- | --- |
+| BG-01 | Hồ sơ/tệp qua form, tải lại, bytes tệp gốc; máy chủ thử kiểm riêng | `regression/live/01-tao-bao-gia-du-ho-so.png`, `02-mo-lai-ho-so-va-tep.png` cùng thư mục | Không có CĐ chặn phạm vi này / chưa khách nghiệm thu |
+| DM-01 | Mã tự sinh, liên kết vật liệu, gợi ý tên, thương hiệu/giá và tìm mã | `regression/live/03-thiet-bi-thuong-hieu.png` | Không có CĐ chặn phạm vi này / chưa khách nghiệm thu |
+| DM-02 | Công thức cùng kết quả ở màn thử/đơn; phiên bản; kg/m–m²/m; gom phôi | `live/01-quy-uoc-thu-cong-thuc.png`, `live/04-thong-so-va-ket-qua-trong-don.png`, `regression/live/07-du-lieu-tra-ngay-trong-don.png` | DM-05 là việc khác, không coi đã làm / chưa khách nghiệm thu |
+| DM-03 | Khổ chung/riêng, nguồn khổ đúng sau đổi, lượng mua, ngưỡng phần dư | `live/02-kho-chuan-theo-may-xuong.png`, `live/05-kho-chung-khong-doi-quy-cach.png`, `regression/live/08-kho-mua-nguong-phan-du.png` | Không có CĐ chặn phạm vi này / chưa khách nghiệm thu |
+| DM-04 | Dòng nháp lưu/mở lại, chặn giá, chọn mã giữ định danh; cùng cây năm bảng | `live/03-dong-nhap-canh-bao.png`, `regression/live/06-cay-operations.png`, `06-cay-waste.png`, `06-cay-mass.png`, `06-cay-prices.png` cùng thư mục | Không có CĐ chặn phạm vi này / chưa khách nghiệm thu |
+| UX-01 | Nhãn/thụt cấp, thang xám, chọn/hover/cảnh báo; khóa máy chủ kiểm riêng | `live/07-bon-loai-dong-chon-va-hover.png`, `live/08-canh-bao-kich-thuoc-khong-hop-le.png`, `regression/live/05-bon-cap-thang-xam.png` | Không có CĐ chặn phạm vi này / chưa khách nghiệm thu |
+
+Chữ/số/nhãn phụ được đo trên năm bảng: tỷ lệ tương phản thấp nhất của các phần tử kiểm là **4,84:1**; đây là phạm vi kiểm bảng cấu thành, không phải chứng nhận toàn ứng dụng đạt mọi tiêu chí tiếp cận. Hai ảnh khóa máy chủ nằm ở `team/`, không gọi chúng là ảnh máy chủ Netlify.
+
+[Trang xem bằng chứng trên máy](../artifacts/customer-review/batch-01-complete-2026-09-14/KET-QUA.md) có ảnh nhúng và liên kết kết quả; không có trong clone công khai. Lượt ghi kết quả sau kiểm chỉ sửa tài liệu, không đổi mã ứng dụng/build trên.
 
 Giới hạn giữ nguyên: Netlify lưu dữ liệu/tệp theo trình duyệt; chức năng máy chủ được kiểm trên máy chủ thử cục bộ, chưa triển khai máy chủ Internet trong đợt này. Không tuyên bố đã kiểm đơn thật của khách, AI bóc tách, DM-05, công thức TMC/thuế hoặc lắp đặt thiết bị thuộc các mục khác.

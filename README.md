@@ -1,14 +1,16 @@
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
-## Hoàn thiện sáu mục đợt 1 — lượt tiếp theo
+## Đã hoàn thiện sáu mục đợt 1 — 14/09/2026
 
-Đang chốt BG-01, DM-01/02/03/04, UX-01 theo [báo cáo hoàn thiện](docs/BATCH-01-COMPLETE-2026-09-14.md). Đã bổ sung quản lý quy ước hình dạng, khổ dùng chung theo xưởng/máy, dòng vật tư nháp và kiểm trạng thái/tương phản. Chạy `npm run verify:batch-one:complete` để kiểm lại toàn gói. Trạng thái deploy/kiểm web cuối ghi trong báo cáo; các mốc `3cf0b3c` bên dưới là lịch sử đợt đầu.
+**BG-01, DM-01, DM-02, DM-03, DM-04, UX-01 đã được đánh dấu `[x]`** sau khi hoàn thiện, kiểm local, commit/push và kiểm bản Netlify mới. Ứng dụng `6a74c13`: **14 nhóm kiểm local (152 ca logic, 26 ca máy chủ)**; web thật đạt **15 nhóm tình huống, 20 ảnh**, kết thúc 11:41:58 ngày 14/09/2026. Xem [báo cáo hoàn thiện và bằng chứng từng mã](docs/BATCH-01-COMPLETE-2026-09-14.md), chạy lại bằng `npm run verify:batch-one:complete`.
 
-## Đợt 1 đã lên web và kiểm trực tiếp — 14/09/2026
+Phần mới: quy ước hình dạng có trường cố định/biến, công thức và phiên bản; khổ mua chung theo xưởng/máy; dòng vật tư nháp chưa mã; trạng thái/tương phản bốn nhóm dòng. Netlify vẫn là bản lưu trình duyệt; máy chủ dùng chung được kiểm trên máy chủ thử cục bộ. **Không có nghĩa hoàn thành toàn bộ GĐ1 hoặc khách đã nghiệm thu.** DM-05, AI và các mục giá khác vẫn theo checklist.
+
+## Lịch sử đợt 1 ban đầu — bản 3cf0b3c
 
 Đã sửa gói đầu vào/cấu thành cho BG-01, DM-01/02/03/04 và UX-01. Xem [báo cáo đợt 1](docs/BATCH-01-2026-09-14.md) để biết chính xác phần đã làm, phần còn lại, cách chạy kiểm và trạng thái phát hành. Các câu “chỉ sửa tài liệu” bên dưới mô tả lượt rà checklist trước khi bắt đầu đợt này, không phải trạng thái mã hiện tại.
 
-Không suy ra cả sáu đầu mục đã xong: DM-02 còn quản lý cấu hình hình dạng tổng quát; DM-03 còn khổ chuẩn dùng chung theo máy/xưởng; DM-04 còn dòng vật tư nháp chưa chọn mã. Công thức liên kết DM-05, AI và các phần giá chưa nằm trong gói này. Giữ checklist làm đặc tả, không giảm tiêu chí để khớp giao diện đã có.
+Tại mốc `3cf0b3c`, chưa xong cả sáu đầu mục: DM-02 còn cấu hình hình dạng tổng quát; DM-03 còn khổ chung theo máy/xưởng; DM-04 còn dòng vật tư nháp. Các phần thiếu đó đã được xử lý trong `6a74c13` nêu ở đầu README. Công thức liên kết DM-05, AI và các phần giá khác không nằm trong nhóm sáu mục này. Giữ checklist làm đặc tả, không giảm tiêu chí để khớp giao diện đã có.
 
 Mã ứng dụng `3cf0b3c` đã push và kiểm trên `https://baogia-truongphat.netlify.app/` lúc 11:00 ngày 14/09: đạt 11 nhóm kiểm cục bộ và 7 nhóm tình huống trên web, lưu 12 ảnh. Xem báo cáo để biết phạm vi và giới hạn, không dùng số test làm xác nhận hoàn tất GĐ1. Máy chủ dùng chung mới được kiểm cục bộ; Netlify vẫn là chế độ trình duyệt.
 
