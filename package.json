@@ -3,6 +3,8 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
+    "verify:declaration-review": "node tools/verify-declaration-review.cjs",
+    "test:declaration-review:ui": "node tests/declaration-review-browser.cjs",
     "verify:rules-catalog": "node tools/verify-rules-catalog.cjs",
     "test:shape-row:ui": "node tests/shape-row-browser.cjs",
     "test:rules-catalog:ui": "node tests/rules-catalog-browser.cjs",

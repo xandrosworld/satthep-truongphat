@@ -7,3 +7,21 @@ test('definitions server: approved quote snapshot unchanged after shared definit
 test('definitions server: malformed schema and stock cannot enter shared catalogue',async t=>{const {call}=await run(t),master=(await call('catalog')).data;for(const extra of [{shapeDefinitions:[{id:'broken'}]},{stockSizes:[{id:'BAD',name:'Bad',base:'bar',length:0}]},{shapeDefinitions:defined().shapeDefinitions.map(d=>({...d,length:'process.exit(0)'}))}])A.equal((await call('catalog','PUT',{expectedVersion:master.version,catalog:{...master.catalog,...extra}})).status,400);});
 
 test('definitions server: independent per-piece mass and area persist and are recalculated on the server',async t=>{const {call}=await run(t),db=defined(),d=D.saveShape(db,{...db.shapeDefinitions[0],blankShape:'profile',blankMass:'PHOI_D / 1000 * KL_DV / 2',blankSurface:'PHOI_D / 1000 * DT_DV / 2'}),m=D.applyShape({id:'PART-MAT',name:'Phôi công thức riêng',density:7850,unit:'kg',price:10000,stockL:6000,stockW:0},d,{KM:10,AM:.5});db.materials.push(m);db.quote.products=[{id:'PART-SP',kind:'product',name:'Ba phôi thử',qty:1,children:[D.assign(D.draft('Phôi',3),m,db.rules)],ops:[]}];db.quote.kerf=0;const created=await call('quotes','POST',{document:db});A.equal(created.status,201);const read=(await call('quotes/'+created.data.id)).data;A.equal(read.document.quote.products[0].children[0].spec.shapeDefinition.blankMass,d.blankMass);A.equal(C.calculate(read.document).rows[0].geometry.weight,30);A.equal(C.calculate(read.document).rows[0].geometry.blankArea,1.5);A.equal(C.calculate(read.document).rows[0].purchasedWeight,60);const master=(await call('catalog')).data;A.equal((await call('catalog','PUT',{expectedVersion:master.version,catalog:{...master.catalog,shapeDefinitions:[{...d,blankMass:'L'}]}})).status,400);});
+
+test('review server: named parameters, alternate prices and per-job complexity persist and calculate together',async t=>{
+ const {call}=await run(t),db=P.demoSeed(),W=require('../work-core.js'),CV=require('../conventions-core.js'),master=(await call('catalog')).data;
+ CV.save(db,'parameters',{name:'GAP',label:'Khoảng hở lắp ghép',unit:'mm'});
+ const options=[{id:'opt-area',name:'Theo m² thử',method:'catalog',inside:4000,outside:6000,insideUnit:'m²',outsideUnit:'m²',fixedScope:'total'}];
+ db.rates.find(r=>r.id==='cut').priceOptions=C.copy(options);db.quote.ratesSnapshot.find(r=>r.id==='cut').priceOptions=C.copy(options);W.setPriceOption(db.quote,'cut','opt-area');const n=db.quote.products[0].children[0];n.ops[0].complexity={label:'Khó',multiplier:1.2};
+ A.equal((await call('catalog','PUT',{expectedVersion:master.version,catalog:{...master.catalog,rates:db.rates,conventions:db.conventions}})).status,200);
+ const created=await call('quotes','POST',{document:db});A.equal(created.status,201);const saved=(await call('quotes/'+created.data.id)).data.document;A.equal(saved.conventions.parameters[0].label,'Khoảng hở lắp ghép');A.equal(saved.quote.operationPriceOptions.cut,'opt-area');A.equal(C.calculate(saved).nodes[n.id].ownOps[0].cost,76800);
+ const catalogue=(await call('catalog')).data;catalogue.catalog.rates.find(r=>r.id==='cut').priceOptions[0].inside=9999;A.equal((await call('catalog','PUT',{expectedVersion:catalogue.version,catalog:catalogue.catalog})).status,200);
+ A.deepEqual((await call('quotes/'+created.data.id)).data.document.quote,saved.quote);
+});
+
+test('review server: malformed options, names and direct complexity cannot be persisted',async t=>{
+ const {call}=await run(t),master=(await call('catalog')).data;
+ for(const patch of [{priceOptions:[{id:'opt-test',name:'Thử',method:'catalog',inside:-1,outside:2,insideUnit:'kg',outsideUnit:'kg'}]},{priceOptions:[{id:'opt-test',name:'Thử',method:'unknown',inside:1,outside:2,insideUnit:'kg',outsideUnit:'kg'}]}]){const catalog=C.copy(master.catalog);Object.assign(catalog.rates[0],patch);A.equal((await call('catalog','PUT',{expectedVersion:master.version,catalog})).status,400);}
+ for(const multiplier of [0,-1,null,'oops']){const db=P.demoSeed();db.quote.products[0].ops[0].complexity={label:'Thử',multiplier};A.equal((await call('quotes','POST',{document:db})).status,400);}
+ const db=P.demoSeed();db.conventions={parameters:[{name:'L',label:123,unit:'mm'}]};A.equal((await call('quotes','POST',{document:db})).status,400);
+});

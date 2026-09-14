@@ -32,18 +32,21 @@ function factor(f,input,tier){
   return {value:convert(found.percent),label:String(found.key),kind:'category'};
 }
 function price(rate,op,ctx,tier){
+  const selected=resolvePriceOption(rate,op);rate=selected.rate;op=selected.op;
   if(!['inside','outside'].includes(op.mode))throw Error('Nơi thực hiện không hợp lệ');
   const method=op.pricingMethod||'factors';
   if(!['factors','catalog','direct','fixed'].includes(method))throw Error('Phương pháp tính công đoạn chưa hợp lệ');
   const raw=['direct','fixed'].includes(method)?op.unitPrice:rate[op.mode];
   let value=number(raw,'Đơn giá '+rate.name);const base=value,factors=[];
-  if(method==='factors'&&(op.mode==='inside'||rate.outsideFactors))for(const f of rate.factors||[]){if(f.enabled===false)continue;
+  if(method==='factors'&&(op.mode==='inside'||rate.outsideFactors))for(const f of rate.factors||[]){if(f.enabled===false||op.complexity&&f.param==='complexity')continue;
     const input=op.inputs?.[f.param]??ctx[f.param],b=factor(f,input,tier);value*=1+b.value/100;factors.push({name:f.name,param:f.param,input,...b});
   }
+  if(op.complexity){validateComplexity(op.complexity);const multiplier=Number(op.complexity.multiplier);value*=multiplier;factors.push({name:'Mức độ phức tạp',param:'complexity',input:op.complexity.label,value:(multiplier-1)*100,multiplier,source:'declared',kind:'category'});}
   if(!Number.isFinite(value))throw Error('Đơn giá tính được vượt giới hạn');
-  return {value,base,factors,method};
+  return {value,base,factors,method,priceOptionId:op.priceOptionId||'',priceOptionName:selected.option?.name||''};
 }
 function operation(rate,op,ctx,r,tier){
+  const selected=resolvePriceOption(rate,op);rate=selected.rate;op=selected.op;
   r={...r,weight:r.workWeight??r.weight,area:r.workArea??r.area};
   const method=op.pricingMethod||'factors';
   const unit=method==='fixed'?'gói':method==='direct'?op.priceUnit:(rate[op.mode+'Unit']||rate.unit);
@@ -57,9 +60,22 @@ function operation(rate,op,ctx,r,tier){
   const cost=basis*applied.value;if(!Number.isFinite(cost))throw Error('Chi phí công đoạn vượt giới hạn');
   return {...applied,unit,basis,cost,rate:applied.value};
 }
-function methodFor(op,quote){return quote.operationMethods?.[op.id]||op.pricingMethod||'factors';}
-function setMethod(quote,id,method){if(!['factors','catalog','direct','fixed'].includes(method))throw Error('Cách tính chưa hợp lệ');quote.operationMethods??={};quote.operationMethods[id]=method;for(const n of C.flatten(quote.products))for(const op of n.ops||[])if(op.id===id)op.pricingMethod=method;}
-function methodErrors(quote){const seen=new Map(),errors=[];for(const n of C.flatten(quote.products))for(const op of n.ops||[]){const method=methodFor(op,quote);if(seen.has(op.id)&&seen.get(op.id)!==method)errors.push('Nguyên công '+op.id+': đang có nhiều cách tính. Chọn một cách tính chung cho nguyên công này trong báo giá.');seen.set(op.id,method);}return [...new Set(errors)];}
+function optionFor(op,quote){return quote.operationPriceOptions?.[op.id]??op.priceOptionId??'';}
+function methodFor(op,quote){const id=optionFor(op,quote),rate=quote.ratesSnapshot?.find(r=>r.id===op.id),option=rate?.priceOptions?.find(x=>x.id===id);return option?.method||quote.operationMethods?.[op.id]||op.pricingMethod||'factors';}
+function setMethod(quote,id,method){if(!['factors','catalog','direct','fixed'].includes(method))throw Error('Cách tính chưa hợp lệ');quote.operationMethods??={};quote.operationMethods[id]=method;if(quote.operationPriceOptions)delete quote.operationPriceOptions[id];for(const n of C.flatten(quote.products))for(const op of n.ops||[])if(op.id===id){op.pricingMethod=method;delete op.priceOptionId;}}
+function validateComplexity(x){if(!x||typeof x.label!=='string'||!x.label.trim()||x.label.length>120)throw Error('Mức độ phức tạp cần tên đánh giá');number(x.multiplier,'Hệ số phức tạp',{positive:true});}
+function validatePriceOptions(rate){
+  if(rate.priceOptions===undefined)return;
+  if(!Array.isArray(rate.priceOptions)||rate.priceOptions.length>40)throw Error('Khai tối đa 40 cách tính đơn giá');const seen=new Set();
+  for(const x of rate.priceOptions){if(!x||typeof x.id!=='string'||!/^opt-[A-Za-z0-9_-]{1,80}$/.test(x.id)||seen.has(x.id))throw Error('Mã cách tính bị trống, trùng hoặc không hợp lệ');seen.add(x.id);if(typeof x.name!=='string'||!x.name.trim()||x.name.length>160||!['catalog','factors','fixed'].includes(x.method))throw Error('Cách tính cần tên và phương pháp hợp lệ');for(const mode of ['inside','outside']){number(x[mode],'Đơn giá '+x.name+' / '+mode);if(typeof x[mode+'Unit']!=='string'||!x[mode+'Unit'].trim()||x[mode+'Unit'].length>40)throw Error('Cách tính '+x.name+' cần đơn vị');}if(x.method==='fixed'&&!['total','unit'].includes(x.fixedScope))throw Error('Chọn phạm vi giá gói');if(x.enabled!==undefined&&typeof x.enabled!=='boolean'||x.outsideFactors!==undefined&&typeof x.outsideFactors!=='boolean')throw Error('Trạng thái cách tính không hợp lệ');}
+}
+function resolvePriceOption(rate,op){
+  if(!op.priceOptionId)return {rate,op,option:null};validatePriceOptions(rate);const option=rate.priceOptions?.find(x=>x.id===op.priceOptionId);
+  if(!option||option.enabled===false)throw Error('Cách tính đơn giá đã chọn không còn khả dụng; chọn lại trong báo giá');
+  return {rate:{...rate,inside:option.inside,outside:option.outside,insideUnit:option.insideUnit,outsideUnit:option.outsideUnit,outsideFactors:option.outsideFactors??rate.outsideFactors},op:{...op,pricingMethod:option.method,...(option.method==='fixed'?{unitPrice:option[op.mode],fixedScope:option.fixedScope}:{})},option};
+}
+function setPriceOption(quote,id,optionId){const rate=quote.ratesSnapshot?.find(r=>r.id===id),option=rate?.priceOptions?.find(x=>x.id===optionId);if(!option||option.enabled===false)throw Error('Chọn cách tính đã khai báo cho nguyên công');validatePriceOptions(rate);setMethod(quote,id,option.method);quote.operationPriceOptions??={};quote.operationPriceOptions[id]=optionId;for(const n of C.flatten(quote.products))for(const op of n.ops||[])if(op.id===id)op.priceOptionId=optionId;}
+function methodErrors(quote){const seen=new Map(),errors=[];for(const n of C.flatten(quote.products))for(const op of n.ops||[]){const method=methodFor(op,quote)+'|'+optionFor(op,quote);if(seen.has(op.id)&&seen.get(op.id)!==method)errors.push('Nguyên công '+op.id+': đang có nhiều cách tính. Chọn một cách tính chung cho nguyên công này trong báo giá.');seen.set(op.id,method);}return [...new Set(errors)];}
 function recipes(rate){return rate.consumptions!==undefined?rate.consumptions:rate.consumption?[rate.consumption]:[];}
 function consume(recipe,n,r,index,opIndex,rateName,workUnit){
   r={...r,weight:r.workWeight??r.weight,area:r.workArea??r.area};
@@ -111,6 +127,6 @@ function expenses(entries,base,generated){
   }
   return {totals,allocations,items,errors,rows:all};
 }
-const api={EXPENSES,METHODS,methodFor,setMethod,methodErrors,number,context,factor,price,operation,recipes,consume,expenses};
+const api={EXPENSES,METHODS,optionFor,methodFor,setMethod,setPriceOption,resolvePriceOption,validatePriceOptions,validateComplexity,methodErrors,number,context,factor,price,operation,recipes,consume,expenses};
 if(typeof module!=='undefined')module.exports=api;else root.TPWork=api;
 })(typeof window!=='undefined'?window:globalThis);

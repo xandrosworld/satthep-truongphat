@@ -2,6 +2,8 @@
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const KINDS={parameters:'Thông số cấu kiện',substances:'Vật liệu / khối lượng riêng',grades:'Mác vật liệu',characteristics:'Đặc tính vật liệu',units:'Đơn vị tính',customers:'Nhóm khách hàng',complexity:'Độ phức tạp'};
 const BASE_UNITS=['kg','tấn','m²','m³','m','lần','bộ','cái','gói','lít','tấm','thanh'];
+const PARAMETER_NAMES={L:'Chiều dài',W:'Chiều rộng',H:'Chiều cao',D:'Đường kính',T:'Chiều dày',F:'Chiều rộng gờ',W1:'Chiều rộng phụ',H1:'Chiều cao phụ',TF:'Chiều dày cánh',KM:'Khối lượng trên mét',AM:'Diện tích trên mét'};
+function parameterName(db,key){return entries(db,'parameters').find(x=>x.name===key)?.label||PARAMETER_NAMES[key]||'';}
 function entries(db,kind){const stored=db.conventions?.[kind]||[],values=new Map();const put=x=>{if(x.name&&!values.has(x.name))values.set(x.name,x);};
  if(kind==='substances')db.materials.forEach(m=>put({name:m.substance,density:m.density,price:db.materialPrices?.find(r=>r.substance===m.substance&&!r.grade&&r.unit==='kg')?.price??(m.unit==='kg'?m.price:0)}));
  if(kind==='grades')db.materials.forEach(m=>put({name:m.grade,parent:m.substance,price:m.unit==='kg'?m.price:0}));
@@ -9,7 +11,8 @@ function entries(db,kind){const stored=db.conventions?.[kind]||[],values=new Map
  if(kind==='units'){BASE_UNITS.forEach(name=>put({name,builtin:true}));db.materials.forEach(m=>put({name:m.unit}));}
  if(kind==='parameters'){['L','W','H','D','T','F','W1','H1','P','TF'].forEach(name=>put({name,unit:'mm'}));C.flatten([...db.quote.products,...db.library]).forEach(n=>Object.keys({...n.params,...n.dims}).forEach(name=>put({name,unit:'mm'})));}
  if(kind==='complexity')for(const name of ['1','2','3','4'])put({name,percent:0});
- for(const item of stored)values.set(item.name,item);return [...values.values()].filter(x=>!x.hidden);
+ if(kind==='parameters')for(const d of db.shapeDefinitions||[])for(const f of d.fields||[])put({name:f.key,label:f.name||PARAMETER_NAMES[f.key]||'',unit:f.unit});
+ for(const item of stored)values.set(item.name,{...values.get(item.name),...item});return [...values.values()].filter(x=>!x.hidden).map(x=>kind==='parameters'?{...x,label:x.label||PARAMETER_NAMES[x.name]||''}:x);
 }
 function references(db,kind,item){const hits=new Set(),name=item.name;const matches=n=>kind==='substances'?n.spec?.substance===name:kind==='grades'?n.spec?.grade===name&&(!item.parent||n.spec.substance===item.parent):kind==='units'?n.unit===name||n.spec?.unit===name:kind==='complexity'?String(n.complexity||'')===name:kind==='parameters'?Object.hasOwn(n.params||{},name)||Object.hasOwn(n.dims||{},name)||new RegExp('\\b'+name+'\\b').test((n.ruleSpec?.length||'')+' '+(n.ruleSpec?.width||'')+' '+JSON.stringify(n.measurementRules||{})):false;
  for(const q of [db.quote,...(db.savedQuotes||[]).map(x=>x.quote),...(db.history||[]).map(x=>x.quote)]){for(const n of C.flatten(q?.products||[]))if(matches(n))hits.add((q.id||'Báo giá')+' / '+n.name);if(kind==='customers'&&q.customerGroup===name)hits.add(q.id+' / phân loại khách');}
@@ -23,6 +26,7 @@ function references(db,kind,item){const hits=new Set(),name=item.name;const matc
 function save(db,kind,item,oldName){if(!Object.hasOwn(KINDS,kind)||!String(item.name||'').trim())throw Error('Nhập tên danh mục');item.name=String(item.name).trim();if(item.name.length>80)throw Error('Tên tối đa 80 ký tự');if(kind==='parameters'&&(!/^[A-Za-z][A-Za-z0-9_]{0,23}$/.test(item.name)||['constructor','prototype','__proto__','BW','SA','CW','CA','RHO'].includes(item.name)))throw Error('Tên biến không hợp lệ');
  if(oldName!==item.name&&entries(db,kind).some(x=>x.name===item.name))throw Error('Tên đã có trong danh mục');if(kind==='substances'&&!(Number(item.density)>0))throw Error('Khối lượng riêng phải lớn hơn 0');if(['substances','grades'].includes(kind)&&(!Number.isFinite(item.price)||item.price<0))throw Error('Giá tham chiếu phải không âm');if(kind==='grades'&&!entries(db,'substances').some(x=>x.name===item.parent))throw Error('Chọn vật liệu gốc');if(['customers','complexity'].includes(kind)&&(!Number.isFinite(item.percent)||item.percent<=-100||!Number.isFinite(item.reserve??0)||(item.reserve??0)<=-100))throw Error('Hệ số phải lớn hơn -100%');
  if(kind==='characteristics'&&!entries(db,'substances').some(x=>x.name===item.parent))throw Error('Chọn vật liệu gốc');
+ if(kind==='parameters'&&item.label!==undefined&&(typeof item.label!=='string'||!item.label.trim()||item.label.length>120))throw Error('Tên thông số cần từ 1 đến 120 ký tự');
  const old=entries(db,kind).find(x=>x.name===oldName),uses=old?references(db,kind,old):[];if(old&&oldName!==item.name&&['parameters','units'].includes(kind)&&uses.length)throw Error('Mã / biến đang dùng; tạo mã mới thay vì đổi ý nghĩa');
  if(old&&['grades','characteristics'].includes(kind)&&old.parent!==item.parent&&uses.length)throw Error('Giá trị đang được dùng; không đổi vật liệu gốc');
  db.conventions??={};db.conventions[kind]??=[];db.conventions[kind]=db.conventions[kind].filter(x=>![oldName,item.name].includes(x.name));if(oldName&&oldName!==item.name)db.conventions[kind].push({name:oldName,hidden:true});db.conventions[kind].push(C.copy(item));
@@ -35,5 +39,5 @@ function save(db,kind,item,oldName){if(!Object.hasOwn(KINDS,kind)||!String(item.
  if(['substances','grades'].includes(kind)){db.materialPrices??=[];for(const r of db.materialPrices){if(kind==='substances'&&r.substance===oldName)r.substance=item.name;if(kind==='grades'&&r.grade===oldName&&r.substance===old?.parent)r.grade=item.name;}const substance=kind==='substances'?item.name:item.parent,grade=kind==='grades'?item.name:'';let row=db.materialPrices.find(r=>r.substance===substance&&(r.grade||'')===grade&&r.unit==='kg');if(!row){row={substance,grade,unit:'kg'};db.materialPrices.push(row);}row.price=item.price;}
 }
 function remove(db,kind,name){const item=entries(db,kind).find(x=>x.name===name);if(!item)throw Error('Không tìm thấy giá trị');const uses=references(db,kind,item);if(uses.length)throw Error('Đang dùng tại '+uses.length+' vị trí: '+uses.slice(0,3).join('; '));db.conventions??={};db.conventions[kind]=[...(db.conventions[kind]||[]).filter(x=>x.name!==name),{name,hidden:true}];}
-const api={KINDS,BASE_UNITS,entries,references,save,remove};if(typeof module!=='undefined')module.exports=api;else root.TPConventions=api;
+const api={KINDS,BASE_UNITS,PARAMETER_NAMES,parameterName,entries,references,save,remove};if(typeof module!=='undefined')module.exports=api;else root.TPConventions=api;
 })(typeof window!=='undefined'?window:globalThis);

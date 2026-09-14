@@ -1,5 +1,7 @@
 # Danh mục quy ước và công thức phôi — 14/09/2026
 
+> Bản này ghi đợt 21:59. Phản hồi 22:59 sau đó đã thay cách nhập trực tiếp trên bảng bằng màn Sửa công thức. Xem [bản hiện hành](DECLARATION-REVIEW-2026-09-14.md).
+
 Phản hồi bổ sung làm rõ rằng công thức phải nằm ngay trong bảng **Thông tin hình dạng phôi**, cùng thông số khai tại mã vật tư và báo giá. Chỉ có kết quả tại bước Khối lượng & diện tích hoặc một bộ quy ước riêng chưa đáp ứng cách tổ chức này.
 
 ## Thay đổi

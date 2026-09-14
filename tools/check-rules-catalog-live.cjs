@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),{createHash}=require('node:crypto'),{execFileSync}=require('node:child_process');
-const root=path.resolve(__dirname,'..'),dir=path.join(root,'artifacts/customer-review/catalog-review-2026-09-14/live');
+const root=path.resolve(__dirname,'..'),dir=path.resolve(root,process.env.RULES_CATALOG_REVIEW_ROOT||'artifacts/customer-review/catalog-review-2026-09-14','live');
 fs.mkdirSync(dir,{recursive:true});
 const url='https://baogia-truongphat.netlify.app/',lf=s=>s.replace(/\r\n/g,'\n'),sha=s=>createHash('sha256').update(s).digest('hex');
 const local=lf(fs.readFileSync(path.join(root,'dist/index.html'),'utf8')),verification=JSON.parse(fs.readFileSync(path.join(dir,'../verification.json'),'utf8'));

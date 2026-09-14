@@ -85,7 +85,7 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
       try{
         const rate=q.ratesSnapshot.find(x=>x.id===op.id);if(!rate)throw Error('Không tìm thấy mã nguyên công');
         const ctx={...context(n,r),...W.context(n,r,q.products)};
-        const applied=W.operation(rate,{...op,pricingMethod:W.methodFor(op,q)},ctx,r,tier),cost=applied.cost;
+        const applied=W.operation(rate,{...op,pricingMethod:W.methodFor(op,q),priceOptionId:W.optionFor(op,q)},ctx,r,tier),cost=applied.cost;
         item={...item,...applied,name:rate.name};
         parts[op.mode==='outside'?'outside':'factory']+=cost;
         if(op.mode==='inside'&&rate.tmcReplace){r.replaceableFactory+=cost;if(!op.afterPackage)r.ownReplaceableFactory+=cost;}

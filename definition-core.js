@@ -21,6 +21,7 @@ function validateShape(d){
   if(!d||!/^[A-Za-z0-9_-]{1,80}$/.test(d.id)||!String(d.name||'').trim()||d.name.length>200||!['sheet','bar'].includes(d.base))throw Error('Quy ước cần mã, tên và dạng tấm/thanh');
   if(!Array.isArray(d.fields)||!d.fields.length||d.fields.length>24)throw Error('Khai từ 1 đến 24 thông số');
   const seen=new Set(),dims={RHO:[1,-3],PI:[0,0]};
+  for(const f of d.fields)if(f.name!==undefined&&(typeof f.name!=='string'||f.name.length>120))throw Error('Tên thông số tối đa 120 ký tự');
   for(const f of d.fields){if(!validKey(f.key)||seen.has(f.key)||!['fixed','input'].includes(f.mode)||!Object.hasOwn(units,f.unit))throw Error('Thông số bị trùng, sai ký hiệu, nơi nhập hoặc đơn vị: '+f.key);seen.add(f.key);dims[f.key]=units[f.unit];positive(f.sample,'Số thử '+f.key,true);}
   const expected={length:[0,1],width:d.base==='sheet'?[0,1]:[0,0],mass:[1,d.base==='sheet'?-2:-1],surface:[0,d.base==='sheet'?0:1]};
   for(const [key,unit]of Object.entries(expected)){const result=dimension(d[key],dims);if(!result.literal&&result.d.some((v,i)=>v!==unit[i]))throw Error('Công thức '+key+' sai đơn vị đầu ra');if(result.literal&&key!=='width'&&key!=='surface')throw Error('Công thức '+key+' cần biến có đơn vị, không dùng số trần');}

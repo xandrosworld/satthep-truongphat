@@ -1,6 +1,12 @@
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
-## Hiện hành — danh mục và công thức phôi, 14/09/2026
+## Hiện hành — phản hồi 22:59–23:06 ngày 14/09/2026
+
+Bảng hình dạng chỉ để xem; **Sửa công thức** mở đầy đủ dữ liệu và kiểm tra trước khi lưu. Thông số có tên/diễn giải riêng. Bảng giá nguyên công khai được nhiều cách tính để chọn trong báo giá; từng công việc có độ phức tạp và hệ số nhập trực tiếp. Các dòng khai báo có **Kiểm tra tổng thể**. [Cách dùng, phạm vi và kiểm chứng](docs/DECLARATION-REVIEW-2026-09-14.md).
+
+Kiểm bản hiện tại: `npm run verify:declaration-review`. Bằng chứng ở `artifacts/customer-review/review-2026-09-14-late`; thông tin commit/deploy ở `DELIVERY.json` trong gói nội bộ. [Checklist hiện hành](meeting-2026-09-13/doi-chieu-2026-09-14/CHECKLIST-TRIEN-KHAI.md) vẫn giữ 25 mã; các bản bên dưới là lịch sử.
+
+## Lịch sử — danh mục và công thức phôi, 14/09/2026
 
 Bảng **Thông tin hình dạng phôi** có đủ dạng cấu kiện, hình dạng phôi, thông số tại mã/báo giá, ô công thức dài–rộng, khối lượng và diện tích phôi trên từng dòng, cùng nút xem công thức tổng hợp. Mác/đặc tính được gom theo vật liệu. [Thay đổi, cách dùng và kiểm chứng](docs/CATALOG-REVIEW-2026-09-14.md).
 
