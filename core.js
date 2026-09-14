@@ -101,7 +101,7 @@ function nest(items,spec,kerf,strategy='best'){
   return {stocks,stockL,stockW,used,purchased,util:purchased?used/purchased:0};
 }
 function calculate(db){
-  const linked=flatten(db.quote.products).some(n=>Object.keys(n.dimensionLinks||{}).length);const q=linked?copy(db.quote):db.quote;const dependency=linked?(api.dimensionLinks||(typeof module!=='undefined'?require('./dimension-links-core.js'):null)).resolve(q.products):{errors:[],byNode:{}};
+  const linked=flatten(db.quote.products).some(n=>Object.keys(n.dimensionLinks||{}).length||n.thicknessRequirement);const q=linked?copy(db.quote):db.quote;const dependency=linked?(api.dimensionLinks||(typeof module!=='undefined'?require('./dimension-links-core.js'):null)).resolve(q.products):{errors:[],byNode:{}};
   const rows=[],nodes={},errors=[...dependency.errors],colors=['#3568aa','#518782','#ad8654','#8574a9','#6083a1','#9a6979'];
   for(const n of flatten(q.products))if(n.kind==='product'&&n.params?.T!=null&&(!Number.isFinite(n.params.T)||n.params.T<=0||n.params.T>100000))errors.push(n.name+': Dày chung T phải là số dương, không quá 100.000 mm');
   function visit(n,mult,product,path,covered=null){const count=mult*n.qty;if(!(n.qty>0))errors.push(n.name+': số lượng phải lớn hơn 0');if(q.pricing&&!covered&&n.outsource?.enabled)covered=n;const record={node:n,count,weight:0,area:0,volume:0,material:0,ops:0,transport:0,install:0,productId:product.id,...(covered?{coveredBy:covered.id,packageOwner:covered.id===n.id}: {})};nodes[n.id]=record;
