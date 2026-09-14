@@ -68,7 +68,7 @@ const path=require('node:path'),fs=require('node:fs');
     expect(await page.evaluate(()=>db.history.length)).toBe(1);await page.reload();
     expect(await page.evaluate(()=>db.quote.status)).toBe('approved');await tab('preview');
     const downloadPromise=page.waitForEvent('download');await page.locator('[data-action=export-quote]').click();const download=await downloadPromise;await download.saveAs(path.join(folder,'bao-gia-thu.csv'));
-    const csv=fs.readFileSync(path.join(folder,'bao-gia-thu.csv'),'utf8');expect(csv).toContain('7126053');expect(csv).not.toContain('Hệ số');
+    const csv=fs.readFileSync(path.join(folder,'bao-gia-thu.csv'),'utf8');expect(csv).toContain('7126053');expect(csv).toContain('BẢN LÀM VIỆC');expect(csv).not.toContain('Hệ số');
     await page.evaluate(()=>{document.querySelector('#print-area').innerHTML=paper();});
     await page.pdf({path:path.join(folder,'03-bao-gia-thu.pdf'),format:'A4',printBackground:true});check('Quote PDF/CSV share selected totals; no internal costing; history survives reload');
     await page.setViewportSize({width:390,height:844});

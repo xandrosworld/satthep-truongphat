@@ -6,6 +6,7 @@ const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const W=typeof module!=='undefined'?require('./work-core.js'):root.TPWork;
 const M=typeof module!=='undefined'?require('./manufacturing-core.js'):root.TPMfg;
 const D=typeof module!=='undefined'?require('./device-core.js'):root.TPDevice;
+const Tax=typeof module!=='undefined'?require('./tax-core.js'):root.TPTax;
 const legacyCalculate=C.calculate, legacySeed=C.seed;
 const METHODS=[['detail','Theo tính toán'],['tmc','Theo thang máng cáp'],['kg','Theo kg phôi'],['competitor','Theo đối thủ']];
 const PARTS=['stock','ancillary','allowance','finishing','factory','outside','tmcCommon','incoming','outgoing','install','delivery'];
@@ -144,9 +145,10 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
       let suggested=r.suggestedUnit;
       if(id==='kg'){
         if(!(r.weight>0))methodErrors.push(r.node.name+': không có kg phôi để áp giá/kg');
-        suggested=Math.round(amount(r.node.pricePerKg,r.node.name+' / đơn giá/kg',methodErrors)*r.weight/r.node.qty);
+        const entered=amount(r.node.pricePerKg,r.node.name+' / đơn giá/kg',methodErrors),tax=Tax.declaration(db.quote,r.node,'kg');
+        suggested=Math.round((tax.known?tax.net:entered)*r.weight/r.node.qty);
       }
-      if(id==='competitor')suggested=Math.round(amount(r.node.competitorPrice,r.node.name+' / giá đối thủ',methodErrors));
+      if(id==='competitor'){const entered=amount(r.node.competitorPrice,r.node.name+' / giá đối thủ',methodErrors),tax=Tax.declaration(db.quote,r.node,'competitor');suggested=Math.round(tax.known?tax.net:entered);}
       return {...r,suggestedUnit:suggested,unitSell:suggested,sell:Math.round(suggested*r.node.qty)};
     });
     alternatives[id]={id,name,products,total:totalOf(products),errors:methodErrors,ready:!methodErrors.length&&!errors.length};
@@ -172,8 +174,11 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   }));
   const total=totalOf(products);
   if(!Number.isFinite(total.grand))errors.push('Kết quả tính vượt giới hạn; kiểm tra số liệu');
-  return {...base,products,total,alternatives,pricing:{...p,selected:selected.id},warnings,generated,includedGenerated,logistics,devices,packages:Object.values(base.nodes).filter(r=>r.packageCharge).map(r=>r.packageCharge),
+  const output={...base,products,total,alternatives,pricing:{...p,selected:selected.id},warnings,generated,includedGenerated,logistics,devices,packages:Object.values(base.nodes).filter(r=>r.packageCharge).map(r=>r.packageCharge),
     reuse:{...base.reuse,chargeAll:reuseCost(false),excludeSelected:reuseCost(true)},errors:[...new Set(errors)]};
+  output.tax=Tax.assess(db.quote,output);
+  if(q.documentMode==='official')output.errors=[...new Set([...output.errors,...output.tax.releaseErrors])];
+  return output;
 }
 function demoSeed(){
   const db=legacySeed();enable(db);
