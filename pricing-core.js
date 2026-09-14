@@ -5,6 +5,7 @@
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const W=typeof module!=='undefined'?require('./work-core.js'):root.TPWork;
 const M=typeof module!=='undefined'?require('./manufacturing-core.js'):root.TPMfg;
+const D=typeof module!=='undefined'?require('./device-core.js'):root.TPDevice;
 const legacyCalculate=C.calculate, legacySeed=C.seed;
 const METHODS=[['detail','Theo tính toán'],['tmc','Theo thang máng cáp'],['kg','Theo kg phôi'],['competitor','Theo đối thủ']];
 const PARTS=['stock','ancillary','allowance','finishing','factory','outside','tmcCommon','incoming','outgoing','install','delivery'];
@@ -103,6 +104,9 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   const generated=Object.values(base.nodes).flatMap(r=>r.ownGenerated||[]),logistics=W.expenses(q.expenses||[],{...base,products:roots},generated);
   errors.push(...logistics.errors);
   for(const r of roots)for(const key of ['incoming','outgoing','delivery','install'])r.parts[key]+=logistics.allocations[r.node.id]?.[key]||0;
+  const devices=D.calculate(q,base,logistics);errors.push(...devices.errors);
+  for(const r of Object.values(base.nodes))r.deviceParts={factory:0,install:0};
+  for(const e of devices.items)if(!e.error&&e.cost)for(const n of C.nodePath(q.products,e.nodeId)||[]){const r=base.nodes[n.id],key=e.stage==='production'?'factory':'install';r.deviceParts[key]+=e.cost;r.parts[key]+=e.cost;if(key==='factory')r.ops+=e.cost;else r.install+=e.cost;}
   const makeCost=(r,parts,includeProductionExtras=true)=>{
     // Customer clarification: production excludes delivery and installation.
     // Incoming/outsource freight belong to production; delivery/install join base cost afterwards.
@@ -121,7 +125,8 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   const detail=roots.map(r=>makeCost(r,r.parts));
   const tmcErrors=[];
   const tmc=roots.map(r=>{
-    let computed={parts:{...r.parts},items:[]};try{computed=M.tmc(r,base,p,tier,stockNet);}catch(e){tmcErrors.push(r.node.name+': '+e.message);}
+    const tmcRoot={...r,parts:{...r.parts,factory:r.parts.factory-r.deviceParts.factory,install:r.parts.install-r.deviceParts.install}};
+    let computed={parts:{...tmcRoot.parts},items:[]};try{computed=M.tmc(tmcRoot,base,p,tier,stockNet);}catch(e){tmcErrors.push(r.node.name+': '+e.message);}
     return {...makeCost(r,computed.parts,false),tmc:computed};
   });
   const alternatives={};
@@ -167,7 +172,7 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   }));
   const total=totalOf(products);
   if(!Number.isFinite(total.grand))errors.push('Kết quả tính vượt giới hạn; kiểm tra số liệu');
-  return {...base,products,total,alternatives,pricing:{...p,selected:selected.id},warnings,generated,includedGenerated,logistics,packages:Object.values(base.nodes).filter(r=>r.packageCharge).map(r=>r.packageCharge),
+  return {...base,products,total,alternatives,pricing:{...p,selected:selected.id},warnings,generated,includedGenerated,logistics,devices,packages:Object.values(base.nodes).filter(r=>r.packageCharge).map(r=>r.packageCharge),
     reuse:{...base.reuse,chargeAll:reuseCost(false),excludeSelected:reuseCost(true)},errors:[...new Set(errors)]};
 }
 function demoSeed(){

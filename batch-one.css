@@ -62,3 +62,5 @@
 #definition-preview,#definition-dim-preview{display:block;line-height:1.7;margin:16px 0}
 .remnant-piece:disabled{cursor:not-allowed;opacity:.55;background:repeating-linear-gradient(45deg,#e8d4c4,#e8d4c4 5px,#f7ebdf 5px,#f7ebdf 10px)}
 @media(max-width:650px){.b1-record{grid-template-columns:1fr;gap:6px}.b1-record dd{margin-bottom:10px}.b1-legend{padding:0}.b1-remnant-rule{display:block}}
+.device-confirm{display:flex!important;align-items:flex-start;gap:9px;margin:12px 0;line-height:1.6}
+.device-confirm input[type=checkbox]{width:16px!important;height:16px;flex:0 0 16px;margin:4px 0 0}

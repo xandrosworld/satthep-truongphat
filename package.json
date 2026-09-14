@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
+    "verify:batch-four": "node tools/verify-batch-four.cjs",
     "verify:batch-three": "node tools/verify-batch-three.cjs",
     "verify:batch-two": "node tools/verify-batch-two.cjs",
     "start": "node tools/serve.cjs",

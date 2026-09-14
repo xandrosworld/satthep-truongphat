@@ -16,7 +16,7 @@ function b1QuoteDialog(copyCurrent=false,source=null,master=null){
     const request={...(copyCurrent?C.copy(r):{}),...B1.requestDetails(Object.fromEntries(f)),code:String(f.get('requestCode')).trim(),notes:String(f.get('requestNotes')).trim(),items:C.copy(r.items||[]),files:C.copy(r.files||[])};
     const files=[...$('#dialog [name=sourceFiles]').files];B1.validateFiles(files,request.files.length);
     const q=copyCurrent?C.copy(base):{...C.copy(base),products:[],ratesSnapshot:C.copy(master?.catalog.rates||db.rates),pricing:master?C.copy(master.catalog.pricingDefaults):TPPrice.defaults(),expenses:[],remnantSelections:{},remnantMode:'all',notes:''};
-    if(!copyCurrent)for(const key of ['legacySource','approvedOffer','approvedBaseline','remnantRules','freightOut','validUntil'])delete q[key];
+    if(!copyCurrent)for(const key of ['deviceInstallations','deviceHistory','deviceWorkHistory','legacySource','approvedOffer','approvedBaseline','remnantRules','freightOut','validUntil'])delete q[key];
     Object.assign(q,{id,date:f.get('date'),customer:info.name,customerInfo:C.copy(info),project:String(f.get('project')).trim(),request,status:'draft',commercial:{status:'draft',version:0,events:[]},workspaceKey:C.uid()});if(q.pricing)q.pricing.overrides={};TPIntake.validateRequest(q);
     // Validate before uploading. Closing a pending dialog must not switch the active quote.
     const form=$('#dialog-form'),active=db.quote,guard=()=>{if(!form.isConnected||!$('#dialog').open||db.quote!==active||Quotes.conflict)throw Error('Đã rời phiếu tạo; chưa tạo báo giá.');};
