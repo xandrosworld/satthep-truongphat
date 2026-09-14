@@ -1,6 +1,6 @@
 # Checklist triển khai sau cuộc họp 13/09
 
-Phiên bản tài liệu: 14/09/2026 — v2.4, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; cập nhật đợt 3 có hai mã hoàn thành nội bộ, ba mã bổ sung một phần.
+Phiên bản tài liệu: 14/09/2026 — v2.5, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; bổ sung đợt 4 cho thiết bị, không tự đóng các điểm CĐ.
 
 Phạm vi: luồng báo giá Trường Phát — dùng để bàn giao cho người hoặc bot tiếp tục sửa phần mềm.  
 Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu của khách.
@@ -9,7 +9,13 @@ Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu c�
 
 Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệu được rà tại commit `e8c0cae6f56485f1a65dca88dbae8f0b2d8774ab`; phải kiểm lại khi mã thay đổi. Bản giải thích hiện hành là tài liệu này; các báo cáo phân tích cũ lưu để truy vết, không dùng diễn giải đã bị sửa để ghi đè v2. Ảnh/clip/phiên âm chủ yếu chỉ có trong gói nguồn nội bộ, không đi kèm clone GitHub; xem phần 12.
 
-## Hiện hành — đợt 3, ngày 14/09/2026
+## Hiện hành — đợt 4, ngày 14/09/2026
+
+**TC-07 chuyển [ ] → [~]; TC-05, BG-04, GD-01, BG-02 giữ [~]. Tổng vẫn 13/25 mã [x].** Ứng dụng `10bc393` đã push và khớp Netlify; **18/18 nhóm local (192 ca logic, 36 ca máy chủ)**, **9/9 nhóm mới + 5/5 hồi quy web**, kết thúc 13:56:34 ngày 14/09. Có **21 ảnh web**, 21 ảnh local và 6 ảnh máy chủ thử trong manifest. [Báo cáo đợt 4 và giới hạn từng mã](../../docs/BATCH-04-2026-09-14.md).
+
+Đã có công thiết bị theo % hoặc đơn giá, giá theo đúng hãng, chọn rõ lớp giá, dẫn nguồn đã gồm, cảnh báo nguồn/phạm vi thay đổi và mất cấu hình khi nhân bản. Không cộng khoản mới vào giá bán kg/TMC/đối thủ. Các nguồn chỉ liên kết theo phạm vi được người khai xác nhận, không tự nhận biết hai tên khác nhau là cùng công việc. **CĐ-01/02/03 và AI còn mở**, không phải nghiệm thu khách hay hoàn thành toàn GĐ1. Netlify vẫn lưu trình duyệt; server được kiểm tại localhost. Các trạng thái đợt trước bên dưới là lịch sử.
+
+## Lịch sử — đợt 3, ngày 14/09/2026
 
 **GD-02, GD-04 đổi sang [x]; TC-05, BG-04, GD-01 giữ [~].** Ứng dụng `59fc6e0` đã push và khớp Netlify. **17/17 nhóm local (177 ca logic, 33 ca máy chủ), 5/5 nhóm mới + 9/9 nhóm hồi quy trên web**, kết thúc 13:32:31 ngày 14/09/2026. Có 19 ảnh web thật, 9 ảnh local và 6 ảnh máy chủ thử. [Báo cáo đợt 3, bằng chứng và giới hạn từng mã](../../docs/BATCH-03-2026-09-14.md).
 
@@ -113,6 +119,8 @@ Cho phép “Lưu nháp” khi thiếu dữ liệu chưa bắt buộc; nhưng tr
 
 ### [~] BG-02 — Sửa/khóa đúng bản chất ba phương án giá trọn gói
 
+**Đợt 4:** kiểm riêng khoản công thiết bị mới của phương án tính toán không làm đổi giá bán kg/TMC/đối thủ. Không thay đầu vào thực sự của TMC, chưa hoàn tất chuỗi/nhánh TMC hoặc thuế.
+
 **Phải sửa phép tính:**
 
 - Chi tiết: tính từ các khoản chi phí và hệ số theo BG-04.
@@ -152,6 +160,8 @@ Người dùng chọn một cột làm căn cứ cho toàn báo giá. Mọi đi�
 **Kiểm tra đạt:** tổng giá và phần chênh còn lại không đổi khi chỉ ẩn/hiện cơ cấu; không trừ hai lần khoản cha/con; chọn phương án không sửa ngược đầu vào cột khác. Giá có/không gồm thuế được đưa về cùng mặt bằng sau khi khai đủ điều kiện.
 
 ### [~] BG-04 — Giữ đúng ba lớp giá của phương án tính toán
+
+**Đợt 4:** công thiết bị vào đúng lớp do người khai xác nhận; thiếu lớp thì báo lỗi, không tự áp hệ số SX. Đã kiểm cả lớp sản xuất và lớp giá gốc. Không tự đóng CĐ-02.
 
 **Đợt 3:** đã kiểm công thức ba lớp và yếu tố SX bổ sung có căn cứ; yếu tố mới không tự nhân sang TMC/kg/đối thủ. Phần công việc thiết bị mới chưa rõ lớp vẫn giữ CĐ-02, chưa đánh dấu trọn mã.
 
@@ -371,6 +381,8 @@ Mỗi yếu tố ghi rõ lấy số sản phẩm, số cấu kiện hay số v�
 
 ### [~] TC-05 — Tách vận chuyển và lắp đặt theo bản chất
 
+**Đợt 4:** có liên kết công thiết bị với khoản lắp đặt đã tính theo đối tượng; phần công thiết bị bằng 0 khi đã gồm, khoản gốc và các công khác vẫn giữ. Nguồn bị xóa/đổi phạm vi phải chọn lại. CĐ-02 giữ mở.
+
 **Đợt 3:** đã kiểm tuyến/lượt, chọn cấu kiện/chi tiết, lượng/đơn vị, yếu tố riêng, giá gói và phân bổ làm tròn. Còn chống trùng công việc thiết bị theo TC-07/CĐ-02 nên chưa đánh dấu trọn mã. Xem báo cáo đợt 3; yêu cầu dưới đây giữ nguyên.
 
 Tách ít nhất:
@@ -416,7 +428,9 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 **Kiểm tra đạt:** đúng đơn vị mét/cái và số lượng; không trùng công/hao hụt; dòng TMC thiếu bậc/giá bị báo thiếu; cả ba ca trên khớp nhánh có căn cứ. Giữ nguyên đầu vào TMC, đổi riêng khoản tham khảo thì tổng không đổi; đổi đầu vào TMC thật thì tổng tính lại. Chỉ đóng TC-06/BG-05 sau khi đã xử lý các nhánh liên quan của CĐ-01.
 
-### [ ] TC-07 — Chi phí lắp đặt riêng của thiết bị/linh kiện
+### [~] TC-07 — Chi phí lắp đặt riêng của thiết bị/linh kiện
+
+**Đợt 4:** đã kiểm công %/đơn giá, cơ sở tổng không nhân lượng lần hai, đúng hãng, lớp giá có xác nhận, dẫn công/gói/chi phí đã gồm, không xóa việc khác. Có cảnh báo nguồn đổi/xóa, đổi lượng/hãng với cơ sở tổng, nhân bản thiếu cấu hình; xử lý được công còn sót sau xóa thiết bị. CĐ-02 vẫn cần đối chiếu công việc thực tế nên chưa đánh dấu trọn mã; xem báo cáo đợt 4. Yêu cầu dưới đây giữ nguyên.
 
 - Với mã thuộc nhóm thiết bị/linh kiện, ngoài giá mua phải cho khai chi phí lắp đặt của chính chi tiết đó.
 - Mỗi mã/dòng chọn một trong các cách: không có chi phí; đã gồm trong giá nhà cung cấp; phần trăm trên giá trị thiết bị; hoặc đơn giá lắp đặt cụ thể.
@@ -438,6 +452,8 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 ## 7. P1 — giá đầu vào, duyệt và đầu ra
 
 ### [~] GD-01 — Giá tham chiếu và giá áp dụng của từng báo giá
+
+**Đợt 4:** đổi thiết bị/hãng qua bảng công lắp phải xác nhận giá mới, giữ tỷ lệ và đơn giá công; % liên kết tính lại theo giá đúng hãng. Đổi ĐVT khi còn công không được quy đổi ngầm; đổi hãng làm hết xác nhận tổng tiền nhập riêng. Còn thuế/CĐ-03 và phủ đủ lịch sử các đường cập nhật danh mục.
 
 **Đợt 3:** đã kiểm xác nhận trước–sau khi chọn giá và lưu dấu vết riêng của đơn. Còn điều kiện thuế, quy trình đổi hãng/liên kết lắp đặt theo %, phủ lịch sử các đường sửa giá danh mục; chưa đánh dấu trọn mã.
 
