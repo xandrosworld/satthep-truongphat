@@ -10,7 +10,7 @@ const METHODS=[['detail','Theo tính toán'],['tmc','Theo thang máng cáp'],['k
 const PARTS=['stock','ancillary','allowance','finishing','factory','outside','tmcCommon','incoming','outgoing','install','delivery'];
 const copy=C.copy, finite=v=>v!==null&&v!==''&&v!==undefined&&Number.isFinite(Number(v));
 function amount(v,label,errors,allowNegative=false){if(!finite(v)||(!allowNegative&&Number(v)<0)){errors.push(label+': cần nhập số '+(allowNegative?'hợp lệ':'không âm'));return 0;}return Number(v);}
-function defaults(){return {version:2,selected:'detail',overhead:2,management:3,special:0,profit:10,processing:3,order:5,reserve:0,customer:0,salesFactors:[],incoming:0,outgoing:0,delivery:0,install:0,overrides:{},tmcLoss:1.5,tmcTables:[
+function defaults(){return {version:2,selected:'detail',overhead:2,management:3,special:0,profit:10,processing:3,order:5,reserve:0,customer:0,salesFactors:[],productionFactors:[],incoming:0,outgoing:0,delivery:0,install:0,overrides:{},tmcLoss:1.5,tmcTables:[
   {id:'tray',name:'Máng cáp',unit:'m',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]},
   {id:'ladder',name:'Thang cáp',unit:'m',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]},
   {id:'cover',name:'Nắp thang / máng',unit:'m',tiers:[{max:100,price:1000},{max:500,price:1000},{max:1000,price:2000},{max:null,price:2000}]},
@@ -62,6 +62,7 @@ function calculate(db){
     if(!finite(p[key])||Number(p[key])<=-100)errors.push('Hệ số '+key+' phải lớn hơn -100%');
     p[key]=finite(p[key])?Number(p[key]):0;
   }
+  const productionFactors=(p.productionFactors||[]).filter(f=>f.enabled!==false);for(const f of productionFactors)if(!String(f.name||'').trim()||!finite(f.percent)||Number(f.percent)<=-100)errors.push('Yếu tố sản xuất cần tên và hệ số lớn hơn -100%');
   const salesFactors=[...(p.reserve?[{id:'reserve',name:'Dự phòng bổ sung',percent:p.reserve}]:[]),...(p.salesFactors||[])].filter(f=>f.enabled!==false);
   for(const f of salesFactors)if(!finite(f.percent)||Number(f.percent)<=-100)errors.push('Yếu tố bán '+f.name+': hệ số phải lớn hơn -100%');
   if(!finite(q.vat)||q.vat<0||q.vat>100)errors.push('Thuế suất chưa hợp lệ');
@@ -102,18 +103,18 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   const generated=Object.values(base.nodes).flatMap(r=>r.ownGenerated||[]),logistics=W.expenses(q.expenses||[],{...base,products:roots},generated);
   errors.push(...logistics.errors);
   for(const r of roots)for(const key of ['incoming','outgoing','delivery','install'])r.parts[key]+=logistics.allocations[r.node.id]?.[key]||0;
-  const makeCost=(r,parts)=>{
+  const makeCost=(r,parts,includeProductionExtras=true)=>{
     // Customer clarification: production excludes delivery and installation.
     // Incoming/outsource freight belong to production; delivery/install join base cost afterwards.
     const direct=PARTS.filter(k=>!['delivery','install'].includes(k)).reduce((s,k)=>s+parts[k],0),overhead=direct*p.overhead/100;
     const management=(direct+overhead)*p.management/100,special=(direct+overhead+management)*p.special/100;
-    const production=direct+overhead+management+special,cost=production+parts.delivery+parts.install;
+    let production=direct+overhead+management+special;const productionSteps=[];for(const f of includeProductionExtras?productionFactors:[]){const percent=Number(f.percent)||0,base=production,value=base*percent/100;production+=value;productionSteps.push({...f,percent,base,value,total:production});}const productionExtras=productionSteps.reduce((s,f)=>s+f.value,0),cost=production+parts.delivery+parts.install;
     let running=cost;const saleSteps=[];
     for(const f of [{id:'profitMarkup',name:'Lợi nhuận',percent:p.profit},{id:'processing',name:'Xử lý',percent:p.processing},{id:'order',name:'Đơn hàng',percent:p.order},{id:'customer',name:'Khách hàng',percent:p.customer},...salesFactors]){
       const percent=Number(f.percent)||0,base=running,value=base*percent/100;running+=value;saleSteps.push({...f,percent,base,value,total:running});
     }
     const stepValue=id=>saleSteps.find(f=>f.id===id)?.value||0;
-    return {...r,parts:{...parts},direct,overhead,management,special,production,cost,saleSteps,profitMarkup:stepValue('profitMarkup'),processing:stepValue('processing'),order:stepValue('order'),customer:stepValue('customer'),reserve:stepValue('reserve'),saleExtras:saleSteps.slice(4).reduce((s,f)=>s+f.value,0),
+    return {...r,parts:{...parts},direct,overhead,management,special,production,cost,productionSteps,productionExtras,saleSteps,profitMarkup:stepValue('profitMarkup'),processing:stepValue('processing'),order:stepValue('order'),customer:stepValue('customer'),reserve:stepValue('reserve'),saleExtras:saleSteps.slice(4).reduce((s,f)=>s+f.value,0),
       material:parts.stock+parts.ancillary+parts.allowance+parts.finishing,ops:parts.factory+parts.outside,
       suggestedUnit:r.node.qty>0?Math.round(running/r.node.qty):0};
   };
@@ -121,11 +122,11 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   const tmcErrors=[];
   const tmc=roots.map(r=>{
     let computed={parts:{...r.parts},items:[]};try{computed=M.tmc(r,base,p,tier,stockNet);}catch(e){tmcErrors.push(r.node.name+': '+e.message);}
-    return {...makeCost(r,computed.parts),tmc:computed};
+    return {...makeCost(r,computed.parts,false),tmc:computed};
   });
   const alternatives={};
-  function totalOf(products){const totals={parts:zeros(),material:0,ops:0,transport:0,install:0,cost:0,sell:0,weight:0,area:0,direct:0,production:0,overhead:0,management:0,special:0,profitMarkup:0,processing:0,order:0,customer:0,reserve:0,saleExtras:0};
-    for(const r of products){for(const key of PARTS)totals.parts[key]+=r.parts[key];for(const key of ['material','ops','cost','sell','weight','area','direct','production','overhead','management','special','profitMarkup','processing','order','customer','reserve','saleExtras'])totals[key]+=r[key]||0;}
+  function totalOf(products){const totals={parts:zeros(),material:0,ops:0,transport:0,install:0,cost:0,sell:0,weight:0,area:0,direct:0,production:0,overhead:0,management:0,special:0,productionExtras:0,profitMarkup:0,processing:0,order:0,customer:0,reserve:0,saleExtras:0};
+    for(const r of products){for(const key of PARTS)totals.parts[key]+=r.parts[key];for(const key of ['material','ops','cost','sell','weight','area','direct','production','overhead','management','special','productionExtras','profitMarkup','processing','order','customer','reserve','saleExtras'])totals[key]+=r[key]||0;}
     // Delivery/install already form base cost and therefore the quoted unit price.
     totals.delivery=totals.parts.delivery;totals.beforeTax=totals.sell;
     totals.transport=totals.parts.incoming+totals.parts.outgoing+totals.parts.delivery;totals.install=totals.parts.install;
@@ -196,6 +197,7 @@ function demoSeed(){
   for(const g of base.groups)if(!g.error)db.quote.remnantSelections[g.signature]=g.remnants.filter(r=>r.l>=250&&r.w>=250).map(r=>r.id);
   return db;
 }
+C.pricingTier=tier;
 const api={METHODS,PARTS,defaults,enable,refreshPrices,tier,context,appliedRate,calculate,demoSeed,legacyCalculate};
 // One shared calculation path for BOM, operations, comparison, print and exports.
 C.calculate=calculate;
