@@ -23,7 +23,16 @@ Mỗi phương án nhóm gồm nhánh công thức cho nhóm đó và nhánh chi
 - Bộ trình duyệt mới: **14/14 nhóm**, thao tác thật từ chọn cột, tạo nhóm, khai tham số, phân loại, xác nhận giá/thuế, chọn giá, lưu/mở lại, duyệt đến tải XLSX/PDF; kiểm màn hình rộng và 390px.
 - Ca nhóm QA độc lập: 30 kg × 120 + 3 sản phẩm × 100 = **3.900**; phần ngoài nhóm tính chi tiết **4.630**; toàn đơn **8.530 trước thuế + 682 thuế thử = 9.212**. TMC hỗn hợp giữ **10.009 trước thuế / 10.810 sau thuế** như ca hồi quy. Số này là QA, không phải bảng giá khách.
 - Chạy lại: `node tools/verify-group-pricing.cjs`. Hồ sơ local ở `artifacts/customer-review/group-pricing-2026-09-14/`. Phiên trình duyệt riêng dùng dữ liệu QA, không sửa dữ liệu khách.
-- Local đã đạt **9/9 tác vụ**, gồm build, logic, máy chủ và sáu bộ trình duyệt (nhóm mới, TMC, thuế, nguồn giá/bản chào, chế tạo, Dày). Đang xác minh Netlify; chưa ghi nhận triển khai web trong bản báo cáo này.
+- Local đã đạt **9/9 tác vụ**, gồm build, logic, máy chủ và sáu bộ trình duyệt (nhóm mới, TMC, thuế, nguồn giá/bản chào, chế tạo, Dày). Ứng dụng commit `c56b8a4fe579ab4ae823f997e7106c44426745b3` đã push main và Netlify khớp toàn HTML chuẩn LF lúc **17:17:36 ngày 14/09/2026**, chỉ có đúng toolbar Netlify nối cuối. SHA-256 ứng dụng `5351200e4de3df911e7175a086fcb68826310422d3fefe087dd41dfe68992a7b`.
+- Web thật đạt **42/42 nhóm, 33 ảnh**: 14 nhóm mới, 9 TMC, 8 thuế, 11 nguồn giá/thiết bị/bản chào. Các bộ đều không có lỗi JavaScript. Đã mở và đối chiếu nội dung tệp XLSX/PDF thực xuất với tổng tiền; có `export-content-check.json`.
+- Kiểm sâu phát hiện kịch bản QA in trực tiếp ban đầu chưa dựng vùng in nên PDF trắng. Đã sửa bộ nhóm/TMC để bấm nút In thật, kiểm vùng in và chạy lại local/live. PDF mới có nội dung, số tiền đúng, không lộ công thức/nguồn giá; mỗi tệp thử có hai trang. Không dùng PDF trắng ban đầu làm bằng chứng đạt.
+- `node tools/collect-group-pricing-proof.cjs` tạo manifest SHA-256 từng tệp và kiểm nguồn khớp phiên bản đã test. Ảnh/tệp QA được giữ local, không push dữ liệu khách lên repo công khai.
+
+Ảnh trên web thật:
+
+![Đơn cơ khí không hiển thị TMC trong so sánh](../artifacts/customer-review/group-pricing-2026-09-14/live/01-don-co-khi-khong-hien-tmc.png)
+
+![Bản chào duyệt theo nhóm, tổng QA 9.212](../artifacts/customer-review/group-pricing-2026-09-14/live/06-ban-chao-duyet-gia-theo-nhom.png)
 
 ## Vì sao chưa được đóng trọn bốn mã
 
