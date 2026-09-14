@@ -1,6 +1,7 @@
 /* Explicit quote tax declarations. No tax rate or tax treatment is inferred. */
 (function(root){
 'use strict';
+const Cost=typeof module!=='undefined'?require('./cost-input-core.js'):root.TPCostInput;
 const valid=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 const rate=v=>valid(v)&&Number(v)>=0&&Number(v)<=100;
 function stable(value){if(Array.isArray(value))return value.map(stable);if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().filter(k=>value[k]!==undefined).map(k=>[k,stable(value[k])]));return value;}
@@ -8,7 +9,7 @@ function identity(q){return JSON.stringify(stable({id:q.id,date:q.date,customer:
 function costSignature(q){
   const pricing={...q.pricing};delete pricing.taxReview;delete pricing.selected;delete pricing.overrides;
   const products=JSON.parse(JSON.stringify(q.products||[]));for(const n of products){delete n.pricePerKg;delete n.competitorPrice;}
-  return JSON.stringify(stable({products,rates:q.ratesSnapshot,expenses:q.expenses,devices:q.deviceInstallations,pricing,kerf:q.kerf,remnantMode:q.remnantMode,remnantSelections:q.remnantSelections,remnantRules:q.remnantRules,operationMethods:q.operationMethods}));
+  return JSON.stringify(stable({products,rates:q.ratesSnapshot,expenses:q.expenses,devices:q.deviceInstallations,pricing,costSources:q.costPriceSources,kerf:q.kerf,remnantMode:q.remnantMode,remnantSelections:q.remnantSelections,remnantRules:q.remnantRules,operationMethods:q.operationMethods}));
 }
 function input(value,declaration){
   const d=declaration||{},matches=valid(value)&&valid(d.value)&&Number(value)===Number(d.value);
@@ -29,11 +30,12 @@ function review(q,data,at=new Date().toISOString()){
     if(d.status==='included'&&!rate(d.rate))throw Error(n.name+': nhập thuế suất đã nằm trong giá');
     inputs[n.id][m]={status:d.status,value,rate:d.status==='included'?Number(d.rate):null};
   }}
+  if(data.costConfirmed)Cost.confirmNet(q,String(data.reason).trim(),at);
   q.pricing.taxReview={inputs,quoteIdentity:identity(q),outputRate:data.outputConfirmed?Number(q.vat):null,costSignature:data.costConfirmed?costSignature(q):null,reason:String(data.reason).trim(),at};
   return q.pricing.taxReview;
 }
 function assess(q,result){
-  const d=q.pricing?.taxReview||{},costKnown=d.costSignature===costSignature(q)&&!!String(d.reason||'').trim(),outputKnown=d.quoteIdentity===identity(q)&&rate(d.outputRate)&&Number(d.outputRate)===Number(q.vat),methods={};
+  const d=q.pricing?.taxReview||{},costKnown=d.costSignature===costSignature(q)&&!!String(d.reason||'').trim()&&Cost.view(q).every(r=>r.tmcOnly||r.known),outputKnown=d.quoteIdentity===identity(q)&&rate(d.outputRate)&&Number(d.outputRate)===Number(q.vat),methods={};
   const detail=result.alternatives.detail;
   // A disjoint reference set: direct work excludes material/freight; management
   // is separate, never subtracted a second time through the production subtotal.

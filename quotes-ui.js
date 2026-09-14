@@ -13,7 +13,7 @@ function quoteNew(copyCurrent=false,source=null){const base=source||db.quote,day
     const id=String(f.get('id')).trim();if(db.savedQuotes?.some(x=>x.quote.id===id))throw Error('Mã báo giá đã tồn tại trên máy này');
     const q=copyCurrent?C.copy(base):{...C.copy(base),products:[],ratesSnapshot:C.copy(db.rates),pricing:TPPrice.defaults(),expenses:[],remnantSelections:{},remnantMode:'all'};
     Object.assign(q,{id,date:f.get('date'),customer:String(f.get('customer')).trim(),project:String(f.get('project')).trim(),status:'draft',commercial:{status:'draft',version:0,events:[]},workspaceKey:C.uid()});
-    if(q.pricing)q.pricing.overrides={};if(!copyCurrent){delete q.deviceInstallations;delete q.deviceHistory;delete q.deviceWorkHistory;delete q.customerInfo;delete q.request;delete q.legacySource;delete q.approvedOffer;delete q.approvedBaseline;}const contact=inCustomers().find(c=>c.name===q.customer);if(contact)q.customerInfo=C.copy(contact);quoteSwitch(q);if(!copyCurrent){tab='intake';render();}
+    if(q.pricing)q.pricing.overrides={};if(!copyCurrent){delete q.deviceInstallations;delete q.deviceHistory;delete q.deviceWorkHistory;delete q.customerInfo;delete q.request;delete q.legacySource;delete q.approvedOffer;delete q.approvedBaseline;delete q.offerTerms;delete q.offerTermsHistory;delete q.costPriceSources;delete q.costPriceHistory;delete q.inputPriceAudit;}const contact=inCustomers().find(c=>c.name===q.customer);if(contact)q.customerInfo=C.copy(contact);quoteSwitch(q);if(!copyCurrent){tab='intake';render();}
   });
 }
 function quoteHistory(){const key=db.quote.workspaceKey,history=db.history.map((h,i)=>({...h,index:i})).filter(h=>h.quote.workspaceKey?h.quote.workspaceKey===key:h.quote.id===db.quote.id);

@@ -7,6 +7,7 @@ const W=typeof module!=='undefined'?require('./work-core.js'):root.TPWork;
 const M=typeof module!=='undefined'?require('./manufacturing-core.js'):root.TPMfg;
 const D=typeof module!=='undefined'?require('./device-core.js'):root.TPDevice;
 const Tax=typeof module!=='undefined'?require('./tax-core.js'):root.TPTax;
+const Offer=typeof module!=='undefined'?require('./offer-terms-core.js'):root.TPOfferTerms;
 const legacyCalculate=C.calculate, legacySeed=C.seed;
 const METHODS=[['detail','Theo tính toán'],['tmc','Theo thang máng cáp'],['kg','Theo kg phôi'],['competitor','Theo đối thủ']];
 const PARTS=['stock','ancillary','allowance','finishing','factory','outside','tmcCommon','incoming','outgoing','install','delivery'];
@@ -177,7 +178,7 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   const output={...base,products,total,alternatives,pricing:{...p,selected:selected.id},warnings,generated,includedGenerated,logistics,devices,packages:Object.values(base.nodes).filter(r=>r.packageCharge).map(r=>r.packageCharge),
     reuse:{...base.reuse,chargeAll:reuseCost(false),excludeSelected:reuseCost(true)},errors:[...new Set(errors)]};
   output.tax=Tax.assess(db.quote,output);
-  if(q.documentMode==='official')output.errors=[...new Set([...output.errors,...output.tax.releaseErrors])];
+  if(q.documentMode==='official')output.errors=[...new Set([...output.errors,...output.tax.releaseErrors,...Offer.errors(db.quote)])];
   return output;
 }
 function demoSeed(){
