@@ -50,13 +50,18 @@ try {
     [ordered]@{cell='CM4'; calculated=$unitPrice; cached=Number-Tmc 'CM4'},
     [ordered]@{cell='CO4'; calculated=$amount; cached=Number-Tmc 'CO4'}
   )
+  foreach ($mapping in @(@('Output','J4',$unitPrice),@('Output','L4',$amount),@('BC Chao gia','L4',$unitPrice))) {
+    $cached = ($cells | Where-Object { $_.sheet -eq $mapping[0] -and $_.address -eq $mapping[1] }).value
+    if ($null -eq $cached -or $cached -eq '') { throw 'Missing linked output cell' }
+    $checks += [ordered]@{cell=($mapping[0]+'!'+$mapping[1]);calculated=$mapping[2];cached=[double]$cached}
+  }
   foreach ($check in $checks) { $check.delta=$check.calculated-$check.cached; $check.passed=[Math]::Abs($check.delta) -lt 0.000001 }
   $report = [ordered]@{
     at=[DateTime]::UtcNow.ToString('o'); sourceName=[IO.Path]::GetFileName($tmcSource); sha256=(Get-FileHash -LiteralPath $tmcSource -Algorithm SHA256).Hash.ToLowerInvariant()
     method='Read original OOXML and cached cells; independently recompute CB/CE/CM/CO. No Excel full-workbook recalculation, no customer data edits.'
     cachedExampleKind='D4:D7 are mechanical in the supplied workbook, not a real pure-TMC or mixed-order acceptance sample.'
     cells=$cells; checks=$checks; passed=(@($checks | Where-Object { -not $_.passed }).Count -eq 0)
-    findings=@('CB uses material + auxiliary + separate part price + blended labor + finishing + internal freight + installation, before common cost; delivery excluded.', 'CA uses length in millimetres times quantity times 2: equivalent 2000 currency units per metre, not 2 per metre.', 'CI2 is a multiplier, not a percentage. Percent-form equivalent is (CI2-1)*100 and must retain source/label.', 'The workbook CP3 delivery calculation is separate. Later customer three-layer/all-in rules take precedence; do not append CP3 on top of an already complete quotation.', 'This cached arithmetic audit alone does not close CĐ-01 or establish a new business formula.')
+    findings=@('CB uses material + auxiliary + separate part price + blended labor + finishing + internal freight + installation, before common cost; delivery excluded.', 'CA uses length in millimetres times quantity times 2: equivalent 2000 currency units per metre, not 2 per metre.', 'CI2 is a multiplier, not a percentage. Percent-form equivalent is (CI2-1)*100 and must retain source/label.', 'The workbook CP3 delivery calculation is separate. Later customer three-layer/all-in rules take precedence; do not append CP3 on top of an already complete quotation.', 'This cached arithmetic audit alone does not close CD-01 or establish a new business formula.')
   }
   New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
   $report | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'workbook-audit.json') -Encoding UTF8
