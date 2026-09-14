@@ -1,6 +1,6 @@
 # Checklist triển khai sau cuộc họp 13/09
 
-Phiên bản tài liệu: 14/09/2026 — v2.6, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; bổ sung đợt 5 cho giá/thuế và chỉ số, không tự đóng các điểm CĐ.
+Phiên bản tài liệu: 14/09/2026 — v2.7, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; hoàn tất cơ chế/kiểm chứng năm mã đợt 6, phân biệt quy tắc còn thiếu với dữ liệu phải xác nhận theo từng đơn.
 
 Phạm vi: luồng báo giá Trường Phát — dùng để bàn giao cho người hoặc bot tiếp tục sửa phần mềm.  
 Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu của khách.
@@ -9,7 +9,17 @@ Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu c�
 
 Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệu được rà tại commit `e8c0cae6f56485f1a65dca88dbae8f0b2d8774ab`; phải kiểm lại khi mã thay đổi. Bản giải thích hiện hành là tài liệu này; các báo cáo phân tích cũ lưu để truy vết, không dùng diễn giải đã bị sửa để ghi đè v2. Ảnh/clip/phiên âm chủ yếu chỉ có trong gói nguồn nội bộ, không đi kèm clone GitHub; xem phần 12.
 
-## Hiện hành — đợt 5, ngày 14/09/2026
+## Hiện hành — đợt 6, ngày 14/09/2026
+
+**BG-04, TC-05, TC-07, GD-01, GD-03 chuyển [~] → [x] về triển khai/kiểm chứng nội bộ. Tổng 18/25 mã [x], còn 3 mã [~] và 4 mã [ ].** Ứng dụng `f432bdc39bd045072feca297da17160d2c693af3` đã push và khớp Netlify lúc 15:12:52; local **20/20 nhóm, 216 ca logic, 39 ca máy chủ**; web thật **33/33 nhóm**, kết thúc **15:13:25**, lưu **37 ảnh web, 37 ảnh local và 6 ảnh máy chủ thử**. [Báo cáo năm mã, cách dùng, đáp án và giới hạn](../../docs/BATCH-06-2026-09-14.md).
+
+Đã khép luồng nguồn giá/thuế từng đầu vào → công thiết bị/logistics → ba lớp giá → duyệt → PDF/Excel/CSV; có lịch sử đầy đủ giá danh mục (kể cả vật tư định mức), không kế thừa nhầm dữ liệu khi tạo đơn mới và không in badge hosting. Các khẳng định đợt 3–5 bên dưới là lịch sử, không thay trạng thái đợt 6.
+
+**Không coi khách đã xác nhận CĐ-02/CĐ-03 hay mẫu ký.** Phần mềm yêu cầu khai rõ công việc/lớp giá/cơ sở tiền/thuế và quyền dùng mẫu theo từng báo giá; thiếu hoặc thay đổi thì chặn chính thức. Đây là cơ chế xử lý đầu vào chưa rõ, không tự đặt mặc định nghiệp vụ. **CĐ-01 vẫn thiếu quy tắc TMC/pha trộn và chưa đóng.** Netlify còn lưu trình duyệt; máy chủ kiểm localhost, chưa triển khai server sản xuất hay nghiệm thu khách.
+
+**7 mã còn lại:** BG-02, BG-03, BG-05, TC-06, BG-06, ERP-01, ERP-02. Đếm theo 25 tiêu đề mã, không theo số ô của bộ kịch bản minh họa ở phần 10.
+
+## Lịch sử — đợt 5, ngày 14/09/2026
 
 **BG-03 chuyển [ ] → [~]; BG-02/BG-05/GD-01/GD-03 giữ [~]. Tổng 13/25 mã [x], 8 mã [~], 4 mã [ ].** Ứng dụng `ce92dfd` đã push và khớp Netlify. Local **19/19 nhóm, 202 ca logic, 37 ca máy chủ**; web thật **8 nhóm giá/thuế + 9 nhóm hồi quy thiết bị**, thêm kiểm vùng chỉ số lúc 14:22:11. Có **20 ảnh web và 19 ảnh local** trong manifest. [Báo cáo đợt 5, cách dùng và giới hạn](../../docs/BATCH-05-2026-09-14.md).
 
@@ -169,7 +179,9 @@ Người dùng chọn một cột làm căn cứ cho toàn báo giá. Mọi đi�
 
 **Kiểm tra đạt:** tổng giá và phần chênh còn lại không đổi khi chỉ ẩn/hiện cơ cấu; không trừ hai lần khoản cha/con; chọn phương án không sửa ngược đầu vào cột khác. Giá có/không gồm thuế được đưa về cùng mặt bằng sau khi khai đủ điều kiện.
 
-### [~] BG-04 — Giữ đúng ba lớp giá của phương án tính toán
+### [x] BG-04 — Giữ đúng ba lớp giá của phương án tính toán
+
+**Đợt 6 — hiện hành:** Đã kiểm trọn ba lớp với giá đầu vào được quy đổi có nguồn: cùng công thiết bị 4 triệu, vào sản xuất hoặc giá gốc theo công việc được khai/xác nhận; không mặc định lớp. Ca thử xưởng cho 38.418.019 đồng, công trình 36.897.379 đồng, khớp đáp án độc lập và bản xuất. CĐ-02 được xử lý bằng khai tường minh và chặn khi thiếu, không coi ca thật đã được khách chốt. Đã kiểm bản Netlify `f432bdc`; [bằng chứng và giới hạn](../../docs/BATCH-06-2026-09-14.md). Các ghi nhận đợt trước bên dưới là lịch sử.
 
 **Đợt 4:** công thiết bị vào đúng lớp do người khai xác nhận; thiếu lớp thì báo lỗi, không tự áp hệ số SX. Đã kiểm cả lớp sản xuất và lớp giá gốc. Không tự đóng CĐ-02.
 
@@ -391,7 +403,9 @@ Mỗi yếu tố ghi rõ lấy số sản phẩm, số cấu kiện hay số v�
 
 **Kiểm tra đạt:** thay diện tích xử lý/số lớp làm lượng sơn thay đúng định mức; giá sơn đổi cập nhật đúng phần tiền của bản nháp được chọn. Tính lại không tạo mã danh mục hoặc dòng nhu cầu trùng. Thuê ngoài đã gồm sơn không cộng tiền sơn lần hai nhưng vẫn truy vết được nhu cầu/công việc.
 
-### [~] TC-05 — Tách vận chuyển và lắp đặt theo bản chất
+### [x] TC-05 — Tách vận chuyển và lắp đặt theo bản chất
+
+**Đợt 6 — hiện hành:** Đã kiểm tuyến/lượt, phạm vi cấu kiện/sản phẩm, lượng/đơn vị/yếu tố, phân bổ và đúng lớp giá; gói không lặp, “đã gồm” chỉ nối đúng công việc nguồn. Giá logistics có khai thuế/nguồn riêng. Hồi quy cả nguồn bị xóa/đổi và công việc khác phạm vi. Công việc thực tế chưa rõ vẫn phải khai/đối chiếu trước phát hành. Đã kiểm bản Netlify `f432bdc`; [bằng chứng và giới hạn](../../docs/BATCH-06-2026-09-14.md). Các ghi nhận đợt trước bên dưới là lịch sử.
 
 **Đợt 4:** có liên kết công thiết bị với khoản lắp đặt đã tính theo đối tượng; phần công thiết bị bằng 0 khi đã gồm, khoản gốc và các công khác vẫn giữ. Nguồn bị xóa/đổi phạm vi phải chọn lại. CĐ-02 giữ mở.
 
@@ -440,7 +454,9 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 **Kiểm tra đạt:** đúng đơn vị mét/cái và số lượng; không trùng công/hao hụt; dòng TMC thiếu bậc/giá bị báo thiếu; cả ba ca trên khớp nhánh có căn cứ. Giữ nguyên đầu vào TMC, đổi riêng khoản tham khảo thì tổng không đổi; đổi đầu vào TMC thật thì tổng tính lại. Chỉ đóng TC-06/BG-05 sau khi đã xử lý các nhánh liên quan của CĐ-01.
 
-### [~] TC-07 — Chi phí lắp đặt riêng của thiết bị/linh kiện
+### [x] TC-07 — Chi phí lắp đặt riêng của thiết bị/linh kiện
+
+**Đợt 6 — hiện hành:** Đã kiểm %/đơn giá, cơ sở tổng không nhân lượng lần hai, đúng hãng, hai lớp giá có xác nhận và các ca đã gồm/khác công việc/thay đổi nguồn. Bổ sung giá nguồn/thuế cho đơn giá công và tiền thiết bị, không chia thuế hệ số %. Không dùng 20–30% làm mặc định. CĐ-02 là đầu vào thực tế phải khai rõ; chưa khai/đổi căn cứ thì chặn, không xác nhận hộ khách. Đã kiểm bản Netlify `f432bdc`; [bằng chứng và giới hạn](../../docs/BATCH-06-2026-09-14.md). Các ghi nhận đợt trước bên dưới là lịch sử.
 
 **Đợt 4:** đã kiểm công %/đơn giá, cơ sở tổng không nhân lượng lần hai, đúng hãng, lớp giá có xác nhận, dẫn công/gói/chi phí đã gồm, không xóa việc khác. Có cảnh báo nguồn đổi/xóa, đổi lượng/hãng với cơ sở tổng, nhân bản thiếu cấu hình; xử lý được công còn sót sau xóa thiết bị. CĐ-02 vẫn cần đối chiếu công việc thực tế nên chưa đánh dấu trọn mã; xem báo cáo đợt 4. Yêu cầu dưới đây giữ nguyên.
 
@@ -463,7 +479,9 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 ## 7. P1 — giá đầu vào, duyệt và đầu ra
 
-### [~] GD-01 — Giá tham chiếu và giá áp dụng của từng báo giá
+### [x] GD-01 — Giá tham chiếu và giá áp dụng của từng báo giá
+
+**Đợt 6 — hiện hành:** Đã có metadata/quy đổi thuế từng đầu vào vật tư, vật tư định mức, đơn giá nguyên công, gói thuê, logistics và công thiết bị; giữ nguồn, căn cứ và lịch sử. Lịch sử danh mục phủ cả giá vật tư định mức, bảng giá và quy ước; máy chủ giữ actor/revision. Giá đổi/hãng/đơn vị đổi mất xác nhận cũ; snapshot, nhân bản và đơn trống được kiểm riêng. CĐ-03 phải khai theo từng hồ sơ, không suy điều kiện thuế. Đã kiểm bản Netlify `f432bdc`; [bằng chứng và giới hạn](../../docs/BATCH-06-2026-09-14.md). Các ghi nhận đợt trước bên dưới là lịch sử.
 
 **Đợt 5:** lưu điều kiện thuế từng giá/kg/đối thủ và căn cứ/giờ khai trong snapshot; giá đổi làm hết hiệu lực điều kiện của giá đó. Chi phí có xác nhận mặt bằng chưa thuế, gắn đầu vào hiện tại; thay đầu vào phải rà lại. Chưa có metadata/quy đổi thuế tự động từng dòng vật tư, nguyên công, gói thuê, logistics; người lập phải quy đổi nguồn có thuế và cập nhật đúng trường trước. Lịch sử các đường danh mục vẫn chưa phủ đủ.
 
@@ -501,7 +519,9 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 ![Khu vực hệ số trong demo cần tổ chức theo đúng lớp giá](checklist-images/13-he-so.png)
 
-### [~] GD-03 — Bản chào giá chuyên nghiệp và nhất quán
+### [x] GD-03 — Bản chào giá chuyên nghiệp và nhất quán
+
+**Đợt 6 — hiện hành:** Đã có form chọn/xác nhận mẫu ký và các điều kiện riêng của báo giá; thiếu hoặc nội dung đổi chặn bản chính thức. Duyệt và tải PDF A4/Excel/CSV thực tế trên web cho cùng tổng; không lộ giá nguồn/căn cứ nội bộ, không in huy hiệu hosting. Máy chủ bán hàng nhận đúng phần được phép. Mẫu thử là QA, không phải mẫu Trường Phát đã chấp thuận; hồ sơ thực phải có căn cứ được dùng trước phát hành. Đã kiểm bản Netlify `f432bdc`; [bằng chứng và giới hạn](../../docs/BATCH-06-2026-09-14.md). Các ghi nhận đợt trước bên dưới là lịch sử.
 
 **Đợt 5:** kiểm bản chính thức 4.000.000 trước thuế + 320.000 thuế = 4.320.000 trên web; bản PDF/Excel giữ tổng chuẩn hóa, không cộng lại thuế trong giá nguồn. CSV/PDF/Excel làm việc có nhãn; bản chính thức thiếu/stale căn cứ bị chặn cả bộ tính/máy chủ. Mẫu ký và điều kiện thực tế/CĐ-03 vẫn chưa được khách chấp thuận; không đánh dấu xong trọn mã.
 
@@ -651,6 +671,8 @@ Quy trình người dùng yêu cầu: gom khoảng 5–6 đầu mục → triể
 - URL kiểm bản deploy: `https://baogia-truongphat.netlify.app/` (người dùng cung cấp; lượt sửa tài liệu này chưa kiểm web).
 - Không tự push trong lượt chỉ được yêu cầu sửa checklist. Quy trình này dùng khi bắt đầu đợt triển khai được yêu cầu.
 
+Phân biệt khi áp dụng từ đợt 6: **thiếu quy tắc tính** (CĐ-01) vẫn chặn đóng mã liên quan. **Thiếu dữ liệu/xác nhận của một hồ sơ thực** (công việc/cơ sở/lớp giá CĐ-02, thuế CĐ-03, mẫu ký) không được tự điền; cơ chế phần mềm chỉ được hoàn tất nếu có trường khai, căn cứ, kiểm ca thiếu/đổi, và chặn phát hành khi chưa xác nhận. Đánh dấu cơ chế đã kiểm không có nghĩa dữ liệu thật đã được khách chốt. Không dùng một ô xác nhận để thay cho công thức chưa biết, không hạ điều kiện nghiệm thu của khách.
+
 Một mã chỉ đổi sang `[x]` khi có đủ:
 
 1. Mã nguồn đã sửa và đối chiếu yêu cầu/nguồn; không còn điểm CĐ chưa giải quyết ảnh hưởng tới kết quả của mã đó.
@@ -755,6 +777,8 @@ Bản chép P1/P2 do AI tạo, chưa nghe xác minh toàn bộ 90 phút. P1 có 
 Ảnh gốc có chú thích mới về form tạo, kích thước, màu phân cấp và thiết bị được khách gửi qua hội thoại. Ảnh hiện trạng local dùng tại các mục tương ứng chỉ xác định vùng giao diện, không thay ảnh chú thích gốc; muốn chuyển toàn bộ bằng chứng sang máy khác phải bổ sung các ảnh gốc được phép chia sẻ vào gói nội bộ. Không dựng lại ảnh rồi gọi là ảnh khách.
 
 ## 13. Các điểm còn cần đối chiếu — không tự quyết thay khách
+
+**Trạng thái sau đợt 6:** CĐ-01 vẫn là thiếu quy tắc tính và giữ các mã phụ thuộc mở. Với CĐ-02/CĐ-03 và mẫu ký, đã triển khai/kiểm cơ chế khai và xác nhận trên từng báo giá; chưa có xác nhận cho dữ liệu kinh doanh thực. Bảng dưới tiếp tục là việc phải đối chiếu khi nhập hồ sơ. Nếu công việc/lớp giá, thuế hay quyền dùng mẫu còn chưa rõ thì hồ sơ đó chưa được phát hành chính thức; dấu [x] của cơ chế không thay người lập xác nhận.
 
 Các điểm dưới đây không làm dừng toàn bộ dự án. Làm phần đã đủ căn cứ; chưa đóng mục tính tiền liên quan khi chưa giải quyết điểm CĐ. Khi có câu trả lời, lưu nguyên văn, ngày/nguồn và cập nhật đúng ID, không ghi đè lời cũ.
 
