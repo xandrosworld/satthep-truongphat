@@ -1,6 +1,17 @@
 /* Manufacturing scopes, safe work measurements and configurable TMC partitioning. */
 (function(root){'use strict';
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
+// Existing explicit assignments are retained. Missing classification is NOT a
+// non-TMC declaration and must never silently produce a detailed fallback.
+function scope(node){return node.tmcScope||((node.tmcKind||node.tmcBreakdown?.length)?'tmc':'unknown');}
+const policyKeys=['overhead','management','special','profit','processing','order','customer'];
+function policyErrors(p){const x=p.tmcPolicy;if(!x||x.version!==1||!String(x.reason||'').trim())return ['TMC: chưa khai chuỗi giá riêng và căn cứ CĐ-01 cho báo giá'];const errors=[];for(const k of policyKeys)if(!finite(x[k])||Number(x[k])<=-100||Number(x[k])>10000)errors.push('TMC: hệ số '+k+' chưa hợp lệ');return errors;}
+function setPolicy(q,data,at=new Date().toISOString()){
+  if(['submitted','approved'].includes(q.status))throw Error('Bản đã khóa; tạo bản sửa trước');
+  const x={version:1,reason:String(data.reason||'').trim(),at};for(const k of policyKeys)x[k]=data[k];
+  const errors=policyErrors({tmcPolicy:x});if(errors.length)throw Error(errors.join('; '));
+  for(const k of policyKeys)x[k]=Number(x[k]);q.pricing.tmcPolicy=x;return x;
+}
 const finite=v=>v!==null&&v!==''&&v!==undefined&&Number.isFinite(Number(v));
 function nonnegative(v,label){if(!finite(v)||Number(v)<0)throw Error(label+' phải là số không âm');return Number(v);}
 function measure(n,r,nodes){
@@ -54,6 +65,6 @@ function presets(){return [
   {id:'z-clamp',name:'Kẹp Z',unit:'cái',tiers:[{max:400,price:1000},{max:700,price:1000},{max:1000,price:1000},{max:1500,price:1000},{max:2000,price:1000},{max:null,price:1000}]},
   {id:'u-v-bar',name:'Thanh U / V',unit:'cái',tiers:[{max:400,price:7000},{max:700,price:10000},{max:1000,price:15000},{max:1500,price:20000},{max:2000,price:25000},{max:null,price:30000}]}
 ].map(t=>({...t,loss:1.5,thresholdMode:'upper'}));}
-const api={measure,packageCost,tmc,presets};C.manufacturing=api;
+const api={measure,packageCost,tmc,presets,scope,policyKeys,policyErrors,setPolicy};C.manufacturing=api;
 if(typeof module!=='undefined')module.exports=api;else root.TPMfg=api;
 })(typeof window!=='undefined'?window:globalThis);

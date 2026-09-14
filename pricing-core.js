@@ -109,14 +109,14 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   const devices=D.calculate(q,base,logistics);errors.push(...devices.errors);
   for(const r of Object.values(base.nodes))r.deviceParts={factory:0,install:0};
   for(const e of devices.items)if(!e.error&&e.cost)for(const n of C.nodePath(q.products,e.nodeId)||[]){const r=base.nodes[n.id],key=e.stage==='production'?'factory':'install';r.deviceParts[key]+=e.cost;r.parts[key]+=e.cost;if(key==='factory')r.ops+=e.cost;else r.install+=e.cost;}
-  const makeCost=(r,parts,includeProductionExtras=true)=>{
+  const makeCost=(r,parts,includeProductionExtras=true,policy=p)=>{
     // Customer clarification: production excludes delivery and installation.
     // Incoming/outsource freight belong to production; delivery/install join base cost afterwards.
-    const direct=PARTS.filter(k=>!['delivery','install'].includes(k)).reduce((s,k)=>s+parts[k],0),overhead=direct*p.overhead/100;
-    const management=(direct+overhead)*p.management/100,special=(direct+overhead+management)*p.special/100;
+    const direct=PARTS.filter(k=>!['delivery','install'].includes(k)).reduce((s,k)=>s+parts[k],0),overhead=direct*policy.overhead/100;
+    const management=(direct+overhead)*policy.management/100,special=(direct+overhead+management)*policy.special/100;
     let production=direct+overhead+management+special;const productionSteps=[];for(const f of includeProductionExtras?productionFactors:[]){const percent=Number(f.percent)||0,base=production,value=base*percent/100;production+=value;productionSteps.push({...f,percent,base,value,total:production});}const productionExtras=productionSteps.reduce((s,f)=>s+f.value,0),cost=production+parts.delivery+parts.install;
     let running=cost;const saleSteps=[];
-    for(const f of [{id:'profitMarkup',name:'Lợi nhuận',percent:p.profit},{id:'processing',name:'Xử lý',percent:p.processing},{id:'order',name:'Đơn hàng',percent:p.order},{id:'customer',name:'Khách hàng',percent:p.customer},...salesFactors]){
+    for(const f of [{id:'profitMarkup',name:'Lợi nhuận',percent:policy.profit},{id:'processing',name:'Xử lý',percent:policy.processing},{id:'order',name:'Đơn hàng',percent:policy.order},{id:'customer',name:'Khách hàng',percent:policy.customer},...(policy===p?salesFactors:[])]){
       const percent=Number(f.percent)||0,base=running,value=base*percent/100;running+=value;saleSteps.push({...f,percent,base,value,total:running});
     }
     const stepValue=id=>saleSteps.find(f=>f.id===id)?.value||0;
@@ -126,10 +126,13 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   };
   const detail=roots.map(r=>makeCost(r,r.parts));
   const tmcErrors=[];
-  const tmc=roots.map(r=>{
+  const tmc=roots.map((r,index)=>{
+    const scope=M.scope(r.node);
+    if(scope==='detail')return {...detail[index],tmc:{items:[],scope:'detail',note:'Ngoài thang máng cáp — tính chi tiết'}};
+    if(scope!=='tmc')tmcErrors.push(r.node.name+': chưa xác định nhóm sản phẩm TMC hay cơ khí khác');
     const tmcRoot={...r,parts:{...r.parts,factory:r.parts.factory-r.deviceParts.factory,install:r.parts.install-r.deviceParts.install}};
     let computed={parts:{...tmcRoot.parts},items:[]};try{computed=M.tmc(tmcRoot,base,p,tier,stockNet);}catch(e){tmcErrors.push(r.node.name+': '+e.message);}
-    return {...makeCost(r,computed.parts,false),tmc:computed};
+    return {...makeCost(r,computed.parts,false,M.policyErrors(p).length?p:p.tmcPolicy),tmc:{...computed,scope:'tmc'}};
   });
   const alternatives={};
   function totalOf(products){const totals={parts:zeros(),material:0,ops:0,transport:0,install:0,cost:0,sell:0,weight:0,area:0,direct:0,production:0,overhead:0,management:0,special:0,productionExtras:0,profitMarkup:0,processing:0,order:0,customer:0,reserve:0,saleExtras:0};
@@ -177,6 +180,7 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   if(!Number.isFinite(total.grand))errors.push('Kết quả tính vượt giới hạn; kiểm tra số liệu');
   const output={...base,products,total,alternatives,pricing:{...p,selected:selected.id},warnings,generated,includedGenerated,logistics,devices,packages:Object.values(base.nodes).filter(r=>r.packageCharge).map(r=>r.packageCharge),
     reuse:{...base.reuse,chargeAll:reuseCost(false),excludeSelected:reuseCost(true)},errors:[...new Set(errors)]};
+  output.tmcPolicyErrors=roots.some(r=>M.scope(r.node)==='tmc')?M.policyErrors(p):[];
   output.tax=Tax.assess(db.quote,output);
   if(q.documentMode==='official')output.errors=[...new Set([...output.errors,...output.tax.releaseErrors,...Offer.errors(db.quote)])];
   return output;

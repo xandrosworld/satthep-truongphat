@@ -1,6 +1,6 @@
 # Checklist triển khai sau cuộc họp 13/09
 
-Phiên bản tài liệu: 14/09/2026 — v2.9, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; theo dõi triển khai ô Dày và xác nhận phạm vi TMC lúc 15:26–15:27. Chưa có trả lời câu hỏi 15:33:49 về cách tính hàng ngoài TMC.
+Phiên bản tài liệu: 14/09/2026 — v2.10, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; cập nhật xác nhận TMC lúc 15:46/15:49 và đợt triển khai phân nhánh/chuỗi riêng/giá thị trường. Còn bảng đối chiếu chuỗi/tổng XL, không còn chờ trả lời câu hỏi 15:33:49.
 
 Phạm vi: luồng báo giá Trường Phát — dùng để bàn giao cho người hoặc bot tiếp tục sửa phần mềm.  
 Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu của khách.
@@ -11,9 +11,11 @@ Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệ
 
 ## Hiện hành — ô Dày và phạm vi TMC, ngày 14/09/2026
 
-**17/25 mã [x], 4 mã [~], 4 mã [ ].** DM-05 chuyển `[x] → [~]` vì có yêu cầu mới về ô **Dày** tại hàng kích thước chung, không phải kết luận phần liên kết công thức đã kiểm ở đợt 2 bị lỗi. Giữ 25 mã, không thêm mã đầu mục trùng. Phần ô nhập/lưu Dày đã triển khai tại `b4b8840`, kiểm **224 ca logic, 41 ca máy chủ**, **27 nhóm web thật/24 ảnh**, Netlify khớp build. **Chưa tự đổi mã vật tư theo T**, còn CĐ-04 nên giữ DM-05 `[~]`. [Báo cáo và giới hạn](../../docs/THICKNESS-2026-09-14.md).
+**Mốc trước đợt TMC: 17/25 mã [x], 4 mã [~], 4 mã [ ].** DM-05 chuyển `[x] → [~]` vì có yêu cầu mới về ô **Dày** tại hàng kích thước chung, không phải kết luận phần liên kết công thức đã kiểm ở đợt 2 bị lỗi. Giữ 25 mã, không thêm mã đầu mục trùng. Phần ô nhập/lưu Dày đã triển khai tại `b4b8840`, kiểm **224 ca logic, 41 ca máy chủ**, **27 nhóm web thật/24 ảnh**, Netlify khớp build. **Chưa tự đổi mã vật tư theo T**, còn CĐ-04 nên giữ DM-05 `[~]`. [Báo cáo và giới hạn](../../docs/THICKNESS-2026-09-14.md).
 
-**Phản hồi TMC mới:** khách đã xác nhận công thức TMC chỉ áp cho sản phẩm thang máng cáp trong đơn nhiều loại sản phẩm. Không hỏi lại phạm vi này. Câu đề nghị dùng phương án chi tiết cho hàng cơ khí khác lúc **15:33:49 chưa được khách trả lời**; không coi câu của bên lập trình là xác nhận. [Nguyên văn — nội dung 6](../../docs/nguon/2026-09-14-phan-hoi-bo-sung-sau-hop.txt). CĐ-01 chưa đóng toàn bộ.
+**Phản hồi TMC mới — 15:46/15:49:** khách đã trả lời “Chính xác rồi em” cho đề nghị 15:33:49: TMC chỉ áp cho thang máng cáp; sản phẩm cơ khí khác trong cùng đơn dùng chi tiết. Ảnh chỉ nhóm thang máng cáp gồm thân, nắp và phụ kiện. Không hỏi lại hai nhánh đã chốt. [Nguyên văn — nội dung 6](../../docs/nguon/2026-09-14-phan-hoi-bo-sung-sau-hop.txt). CĐ-01 chỉ còn đối chiếu chuỗi/tổng, không còn chờ câu trả lời này.
+
+**Đợt TMC — cập nhật triển khai:** đã thêm phân loại tường minh, nhánh cơ khí giữ nguyên chi tiết, hệ số TMC riêng có căn cứ, nguồn/thuế bậc TMC, chỉ số bốn phương án và giá thị trường độc lập. Kiểm cục bộ 234 ca logic + 43 ca máy chủ; [báo cáo, đáp án và giới hạn](../../docs/TMC-2026-09-14.md). TC-06 đổi `[ ] → [~]`. Tổng **17/25 [x], 5 [~], 3 [ ]**, vẫn **8 mã chưa hoàn tất toàn bộ**. Không lấy ca số QA thay bảng đối chiếu số trung gian của workbook khách để tích xong bốn mã.
 
 **8 mã chưa hoàn tất:** DM-05, BG-02, BG-03, BG-05, TC-06, BG-06, ERP-01, ERP-02. Bảy mã cũ giữ nguyên trạng thái. Căn cứ mới: [phản hồi khách — nội dung 5](../../docs/nguon/2026-09-14-phan-hoi-bo-sung-sau-hop.txt). Phần cần làm/kiểm nằm tại DM-05; giới hạn liên kết độ dày theo dõi tại CĐ-04. Ảnh không bổ sung quy tắc TMC, không đóng CĐ-01.
 
@@ -454,11 +456,11 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 ![Các nhóm vận chuyển và lắp đặt trong demo](checklist-images/10-van-chuyen-lap-dat.png)
 
-### [ ] TC-06 — TMC là bảng giá riêng nhưng tổng phương án là trọn gói
+### [~] TC-06 — TMC là bảng giá riêng nhưng tổng phương án là trọn gói
 
-**Căn cứ:** KH về giá đầy đủ, PA2 dòng 305–329 về nhân công/hao hụt đặc thù, XL về các nhánh công thức. KH mới nội dung 6 lúc 15:26:36/15:27:29 đã xác nhận công thức TMC chỉ áp cho sản phẩm thang máng cáp trong đơn nhiều loại. Công thức cuối và cách tính hàng ngoài TMC còn điểm CĐ-01; chưa có trả lời đề nghị dùng phương án chi tiết lúc 15:33:49, không tuyên bố đã khóa toàn bộ.
+**Căn cứ:** KH về giá đầy đủ, PA2 dòng 305–329 về nhân công/hao hụt đặc thù, XL về các nhánh công thức. KH mới nội dung 6 lúc 15:46:38 đã chốt sản phẩm thang máng cáp dùng TMC, sản phẩm cơ khí khác trong cùng đơn dùng chi tiết; ảnh 15:49 chỉ nhóm TMC. Còn đối chiếu đầy đủ chuỗi/tổng tại CĐ-01. [Đợt triển khai mới và giới hạn](../../docs/TMC-2026-09-14.md); các ghi nhận đợt 5 phía trên là lịch sử.
 
-- Chỉ áp công thức TMC cho sản phẩm thang máng cáp theo KH mới; bảng nhân công/hao hụt theo nhóm thang/máng/phụ kiện phù hợp. Không ép khung máy thành TMC, không gán hàng ngoài TMC giá 0 hoặc tự đổi sang cách tính khác khi chưa có căn cứ.
+- Chỉ áp công thức TMC cho sản phẩm thang máng cáp; bảng nhân công/hao hụt theo nhóm thang/máng/phụ kiện phù hợp. Sản phẩm cơ khí khác dùng chi tiết theo KH 15:46:38. Không ép khung máy thành TMC; phân loại chưa rõ hoặc giá TMC thiếu phải báo rõ, không âm thầm trả 0/đổi nhánh.
 - Hao hụt riêng, nhân công theo chủng loại/khổ/kích thước. Đơn vị thân/nắp/phụ kiện phải tách. Số minh họa 1,5%, 2.000 đồng... không phải số bất biến.
 - Nhân công TMC đã gồm công việc nào thì không cộng lại nguyên công chi tiết cùng công việc đó.
 - Phương án cần đủ giá vật tư, công, hoàn thiện và các khoản/hệ số thuộc **công thức riêng** đã đối chiếu. Tổng tạo ra là giá đầy đủ; không cộng thêm khoản tham chiếu từ phương án tính toán.
@@ -812,7 +814,7 @@ Các điểm dưới đây không làm dừng toàn bộ dự án. Làm phần �
 
 | Mã | Còn thiếu điều gì | Cách xử lý và điều kiện đóng | Ảnh hưởng |
 | --- | --- | --- | --- |
-| CĐ-01 | Đã rõ công thức TMC chỉ áp cho sản phẩm thang máng cáp. Còn đối chiếu chuỗi tính/tổng và cách tính hàng ngoài TMC trong cùng đơn; câu hỏi 15:33:49 chưa có trả lời. | Dựng bảng số trung gian từ XL cho các ca TC-06 thực sự áp dụng; không hỏi lại phạm vi TMC. Chưa tự coi hàng ngoài TMC dùng phương án chi tiết. Ca một sản phẩm gộp hai phần chỉ cần xác định thêm nếu thực tế có; không biến câu hỏi của bên lập trình thành nghiệp vụ bắt buộc. | TC-06, BG-02/BG-05 và chỉ số TMC tại BG-03. |
+| CĐ-01 | Phạm vi TMC và nhánh cơ khí dùng chi tiết đã được khách chốt 15:46:38. Còn bảng đối chiếu chuỗi/tổng từ XL theo cấu trúc mới. | Không hỏi lại nhánh ngoài TMC. Đã có cơ chế khai chuỗi TMC riêng và ca QA, nhưng chưa thay bằng chứng đối chiếu số trung gian của XL. Rà CA/CB/CE/CM và đầu ra BC Chao gia, khoản/hệ số thật với khoản đối chiếu. Ca một sản phẩm gộp hai phần chỉ cần nếu thực tế có. | TC-06, BG-02/BG-05 và hoàn tất BG-03. |
 | CĐ-02 | Lắp đặt thiết bị là công việc nào, tiền thiết bị làm cơ sở là gì, thuộc lớp giá nào khi có cả việc tại xưởng/công trình. | Ghi rõ đối tượng, phạm vi, giá trị và lượng trong ví dụ; đối chiếu lớp giá với công thức KH, hỏi đúng công việc chưa rõ. Không xin lại tỷ lệ cố định; khách đã nói tỷ lệ thay đổi. | TC-07, phần lắp đặt tương ứng tại TC-05/BG-04. |
 | CĐ-03 | Giá nhập thực tế đã/chưa gồm thuế và điều kiện thuế của ca báo giá. | Cho khai rõ tại đầu vào, đưa về cùng mặt bằng, kiểm bản xuất. Chưa xác nhận thì để trạng thái chưa xác nhận trước phát hành, không cộng thêm hoặc coi đã gồm ngầm. | BG-02/BG-03, GD-01/GD-03. |
 | CĐ-04 | Khi đổi Dày chung, vật tư nào nhận liên kết; có cần đổi mã cố định theo độ dày; xử lý sản phẩm gồm nhiều độ dày. Ảnh chỉ xác định ô/vị trí, chưa trả lời các quy tắc này. | Rà nguồn và quy tắc cố định/liên kết hiện có trước. Chỉ hỏi khách phần còn thiếu bằng một ca cụ thể nếu nguồn chưa đủ, không hỏi lại việc thêm ô. Tách trường/lưu dữ liệu khỏi tự động đổi vật tư; không ghi đè mã, giá, hãng hay mọi dòng con theo suy đoán. Ghi căn cứ và ca kiểm trước khi đóng. | Bổ sung DM-05; hồi quy mã vật tư, khối lượng và giá của dòng chịu tác động. |
