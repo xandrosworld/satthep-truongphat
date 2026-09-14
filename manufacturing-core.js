@@ -47,7 +47,7 @@ function tmc(r,base,p,tier,stockNet){
     let material=0;if(!entry.laborOnly){for(const row of rows){if(stockCovered.has(row.id))throw Error('Phạm vi TMC chồng nhau; một mã vật tư chỉ nhận hao hụt một lần');stockCovered.add(row.id);material+=stockNet(row)*(1+loss/100);}
       for(const id of ids){const work=base.nodes[id];if(work.coveredBy)continue;const own=work.ownReplaceableFactory||0;if(own&&opsCovered.has(id))throw Error('Công TMC bị tính lặp theo cấp');opsCovered.add(id);replace+=own;}
     }
-    const labor=basis*bound.value,aux=extraCost(table.ancillary,basis,material,labor),overhead=table.common?.kind==='percent'&&table.common.basis==='scope'?0:extraCost(table.common,basis,material,labor);if(table.common?.kind==='percent'&&table.common.basis==='scope'&&(assignments.length!==1||target.id!==node.id||entry.laborOnly))throw Error('Chi phí chung trên toàn sản phẩm chỉ khai một lần ở dòng sản phẩm; không áp trên các phần phân rã chồng phạm vi');stock+=material;laborTotal+=labor;ancillary+=aux;common+=overhead;
+    const labor=basis*bound.value,aux=extraCost(table.ancillary,basis,material,labor),overhead=table.common?.kind==='percent'&&table.common.basis==='scope'?0:extraCost(table.common,basis,material,labor);if(table.common?.kind==='percent'&&table.common.basis==='scope'&&entry.laborOnly)throw Error('Chi phí chung toàn sản phẩm không gắn vào phần chỉ bổ sung nhân công');stock+=material;laborTotal+=labor;ancillary+=aux;common+=overhead;
     items.push({nodeId:target.id,name:target.name,tableId:table.id,table:table.name,basis,unit:table.unit,rate:bound.value,bound,loss,material,labor,ancillary:aux,common:overhead,laborOnly:!!entry.laborOnly});
   }
   for(const row of eligible)if(!stockCovered.has(row.id)&&!base.nodes[row.id].coveredBy)throw Error('Chưa gán bảng TMC cho '+row.node.name);
@@ -56,13 +56,14 @@ function tmc(r,base,p,tier,stockNet){
   for(const n of C.flatten([node])){const rr=base.nodes[n.id];if(!rr.coveredBy&&rr.ownReplaceableFactory>0&&!opsCovered.has(n.id))throw Error('Chưa phân nhóm TMC cho công đoạn tại '+n.name);}
   parts.allowance=eligible.reduce((s,row)=>{const item=items.find(x=>!x.laborOnly&&C.flatten([C.findNode([node],x.nodeId)]).some(n=>n.id===row.id));return s+(item?stockNet(row)*(1+item.loss/100):row.cost)*(row.node.auxiliaryPercent||0)/100;},0);
   parts.stock=stock;parts.factory=parts.factory-replace+laborTotal;parts.ancillary+=ancillary;parts.tmcCommon=common;
-  const wholeTable=items.length===1&&p.tmcTables.find(t=>t.id===items[0].tableId);if(wholeTable?.common?.kind==='percent'&&wholeTable.common.basis==='scope'){
+  let commonSummary;const wholeTables=items.map(i=>p.tmcTables.find(t=>t.id===i.tableId)).filter(t=>t.common?.kind==='percent'&&t.common.basis==='scope');if(wholeTables.length){
+    const rates=wholeTables.map(t=>nonnegative(t.common.value,'Tỷ lệ chi phí chung'));if(rates.some(v=>v!==rates[0])||common!==0)throw Error('Chi phí chung toàn sản phẩm cần cùng một tỷ lệ, không cộng thêm khoản chung của bảng khác');
     // XD Gia!CB4: BP+BQ+BR+BU+BV+BW+BY, BEFORE common cost.
     // Delivery is outside this base. Do not include another common charge or factors.
-    const commonBase=['stock','ancillary','allowance','factory','outside','finishing','incoming','outgoing','install'].reduce((sum,k)=>sum+(parts[k]||0),0),percent=nonnegative(wholeTable.common.value,'Tỷ lệ chi phí chung');
-    common=commonBase*percent/100;parts.tmcCommon=common;Object.assign(items[0],{common,commonBase,commonPercent:percent,commonBasis:'scope'});
+    const commonBase=['stock','ancillary','allowance','factory','outside','finishing','incoming','outgoing','install'].reduce((sum,k)=>sum+(parts[k]||0),0),percent=rates[0];
+    common=commonBase*percent/100;parts.tmcCommon=common;commonSummary={productId:node.id,basis:commonBase,percent,amount:common,source:'XL CB: toàn sản phẩm trước CP chung, không giao hàng'};if(items.length===1)Object.assign(items[0],{common,commonBase,commonPercent:percent,commonBasis:'scope'});
   }
-  return {parts,items,basis:items[0]?.basis,rate:items[0]?.rate,bound:items[0]?.bound};
+  return {parts,items,commonSummary,basis:items[0]?.basis,rate:items[0]?.rate,bound:items[0]?.bound};
 }
 function presets(){return [
   {id:'ladder-accessory',name:'Phụ kiện thang cáp',unit:'cái',tiers:[{max:100,price:28000},{max:500,price:28000},{max:1000,price:28000},{max:null,price:70000}]},
