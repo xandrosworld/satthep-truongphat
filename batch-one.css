@@ -64,3 +64,4 @@
 @media(max-width:650px){.b1-record{grid-template-columns:1fr;gap:6px}.b1-record dd{margin-bottom:10px}.b1-legend{padding:0}.b1-remnant-rule{display:block}}
 .device-confirm{display:flex!important;align-items:flex-start;gap:9px;margin:12px 0;line-height:1.6}
 .device-confirm input[type=checkbox]{width:16px!important;height:16px;flex:0 0 16px;margin:4px 0 0}
+.product-params .thickness-note{flex-basis:100%;font-size:11px;line-height:1.5;color:#53657a}

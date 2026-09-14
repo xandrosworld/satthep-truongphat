@@ -4,7 +4,7 @@ const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const D=()=>typeof module!=='undefined'?require('./definition-core.js'):root.TPDefinitions;
 const vectors={mm:[0,1],number:[0,0],'kg/m':[1,-1],'m²/m':[0,1]};
 function fields(n){
-  if(n.kind!=='material')return [...new Set(['L','W','H',...Object.keys(n.params||{})])].map(key=>({key,unit:'mm',fixed:false}));
+  if(n.kind!=='material')return [...new Set(['L','W','H',...(n.kind==='product'?['T']:[]),...Object.keys(n.params||{})])].map(key=>({key,unit:'mm',fixed:false}));
   if(n.spec?.shapeDefinition)return n.spec.shapeDefinition.fields.map(f=>({key:f.key,unit:f.unit,fixed:f.mode==='fixed'}));
   const info=C.shapeInfo(n.spec),keys=[...info.fixed,...info.input];
   if(n.spec.shape==='sheet')for(const key of ['H','F'])if(new RegExp('\\b'+key+'\\b').test((n.ruleSpec?.width||'')+' '+(n.ruleSpec?.length||'')))keys.push(key);
@@ -24,7 +24,7 @@ function resolve(products){
         else value=link.mode==='fixed'?link.value:data(n)[key];
       }else if(n.paramLinks?.[key]){const p=paths.get(n.id).slice(0,-1).reverse().find(p=>p.kind==='product'&&p.params);if(!p)throw Error('Không còn sản phẩm nguồn của liên kết');value=get(p,n.paramLinks[key]);}
       else value=data(n)[key];
-      if(value==null||value===''||!Number.isFinite(Number(value))||Number(value)<0||(['L','W'].includes(key)&&Number(value)===0))throw Error('Thông số '+key+' cần số '+(['L','W'].includes(key)?'dương':'không âm'));
+      if(value==null||value===''||!Number.isFinite(Number(value))||Number(value)<0||(['L','W','T'].includes(key)&&Number(value)===0)||key==='T'&&Number(value)>100000)throw Error('Thông số '+key+' cần số '+(['L','W','T'].includes(key)?'dương'+(key==='T'?', không quá 100.000 mm':''):'không âm'));
       value=Number(value);state.set(token,2);values.set(token,value);return value;
     }catch(e){state.delete(token);throw e;}
   }
