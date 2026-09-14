@@ -13,6 +13,7 @@
     "test:batch-one:ui": "node tests/batch-one-browser.cjs",
     "test:batch-one:team": "node tests/batch-one-team-browser.cjs",
     "verify:batch-one": "node tools/verify-batch-one.cjs",
+    "verify:batch-one:complete": "node tools/verify-batch-one-complete.cjs",
     "test:phase1": "node tests/work-browser.cjs",
     "test:completion": "node tests/completion-browser.cjs",
     "test:manufacturing": "node tests/manufacturing-browser.cjs",

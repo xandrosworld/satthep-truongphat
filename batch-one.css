@@ -43,5 +43,20 @@
 .b1-brand-note{display:block;color:#204f6a;font-weight:650;font-size:12px}
 .b1-intake-dialog h3{margin:24px 0 14px;padding-bottom:8px;border-bottom:1px solid #c9d5df}
 #dialog [hidden]{display:none!important}
+.def-incomplete .quick-identity strong,.def-incomplete .cell-error{color:#922b17}
+.def-incomplete .quick-identity:after{content:'Chưa chọn mã';display:block;color:#922b17;font-weight:700}
+.def-state{display:block;color:#273b51!important;font-weight:700;font-size:11px}
+[data-b1-type] small,[data-b1-type] .subtext,[data-b1-type] .fixed-value{color:#465569!important}
+[data-b1-type] .cell-error{color:#922b17!important}
+.b1-tree-row:hover,.quick-row:hover{box-shadow:inset 4px 0 #365c86}
+.b1-tree-row:focus-within,.quick-row:focus-within{outline:2px solid #235cbc;outline-offset:-2px}
+.quick-product-head:hover{box-shadow:inset 4px 0 #365c86}
+.quick-product-head:focus-within,.quick-product:has([data-check-product]:checked)>.quick-product-head{outline:2px solid #235cbc;outline-offset:-2px}
+.quick-product:has([data-check-product]:checked) .quick-product-title:after{content:'Đã chọn các dòng';display:block;color:#174888;font-size:11px;font-weight:700}
+.quick-product-head.b1-problem{outline:2px solid #b74c27;outline-offset:-2px}
+.def-problem{display:block;color:#922b17!important;font-size:12px;font-weight:700}
+#definition-fields td{min-width:140px}#definition-fields .field{margin:0}
+#definition-preview[data-valid=false]{color:#922b17;background:#fff0e8;border:1px solid #ba472c}
+#definition-preview,#definition-dim-preview{display:block;line-height:1.7;margin:16px 0}
 .remnant-piece:disabled{cursor:not-allowed;opacity:.55;background:repeating-linear-gradient(45deg,#e8d4c4,#e8d4c4 5px,#f7ebdf 5px,#f7ebdf 10px)}
 @media(max-width:650px){.b1-record{grid-template-columns:1fr;gap:6px}.b1-record dd{margin-bottom:10px}.b1-legend{padding:0}.b1-remnant-rule{display:block}}

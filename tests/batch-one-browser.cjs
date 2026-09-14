@@ -1,6 +1,6 @@
 'use strict';
 const {chromium,expect}=require('@playwright/test'),fs=require('node:fs'),path=require('node:path'),{pathToFileURL}=require('node:url'),{createHash}=require('node:crypto');
-const url=process.env.BATCH_ONE_URL||pathToFileURL(path.resolve('dist/index.html')).href,remote=/^https:/.test(url),dir=path.resolve('artifacts/customer-review/batch-01-2026-09-14',remote?'live':'local');fs.mkdirSync(dir,{recursive:true});
+const url=process.env.BATCH_ONE_URL||pathToFileURL(path.resolve('dist/index.html')).href,remote=/^https:/.test(url),dir=path.resolve(process.env.BATCH_ONE_ARTIFACT_ROOT||'artifacts/customer-review/batch-01-2026-09-14',remote?'live':'local');fs.mkdirSync(dir,{recursive:true});
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({viewport:{width:1560,height:1080},acceptDownloads:true}),p=await context.newPage(),errors=[],checks=[],screens=[];p.on('pageerror',e=>errors.push(e.message));
 const check=s=>{checks.push(s);console.log('PASS '+s);},submit=async()=>{await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();},close=()=>p.locator('#dialog .dialog-head [data-action=close]').click(),b=action=>p.locator(`[data-batch-one="${action}"]`).first(),tab=async name=>{await p.locator(`[data-tab="${name}"]`).click();await p.evaluate(()=>scrollTo(0,0));},shot=async name=>{await p.screenshot({path:path.join(dir,name+'.png'),fullPage:true});screens.push(name+'.png');};
 try{

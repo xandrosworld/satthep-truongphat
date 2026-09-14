@@ -11,6 +11,8 @@ Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệ
 
 ## Theo dõi triển khai đợt 1 — 14/09/2026
 
+**Lượt hoàn thiện tiếp theo:** xem [báo cáo sáu mục](../../docs/BATCH-01-COMPLETE-2026-09-14.md) và chạy `npm run verify:batch-one:complete`. Quản lý quy ước, khổ chung máy/xưởng và dòng vật tư nháp đã được bổ sung trong mã; đang kiểm cuối/đối chiếu deploy trước khi đánh dấu hoàn thành. Các đoạn `3cf0b3c` phía dưới là lịch sử đợt đầu, không phải trạng thái phát hành lượt bổ sung.
+
 [Báo cáo đợt 1](../../docs/BATCH-01-2026-09-14.md) ghi phần đã sửa, phần còn lại, mã kiểm thử và vị trí ảnh thực tế. “Hiện trạng đã thấy” bên dưới vẫn là mốc trước sửa; không dùng nó để kết luận mã mới chưa có chức năng.
 
 Mã ứng dụng `3cf0b3c` đã push `main`; kiểm bản Netlify lúc **11:00 ngày 14/09/2026** đạt **7/7 nhóm tình huống**, có **12 ảnh thực tế**. Bộ kiểm cục bộ đạt **11/11 nhóm** (141 ca logic, 23 ca máy chủ và các nhóm giao diện). Mã web khớp build đã kiểm, ngoài thẻ thanh công cụ do Netlify nối cuối. Đây là kết quả phạm vi đợt 1, không phải nghiệm thu khách hoặc hoàn thành nguyên cả sáu mã; xem giới hạn từng mã trong báo cáo.

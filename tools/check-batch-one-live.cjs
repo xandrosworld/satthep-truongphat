@@ -4,7 +4,7 @@ const path = require('node:path');
 const { createHash } = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
-const dir = path.join(root, 'artifacts/customer-review/batch-01-2026-09-14/live');
+const dir = path.resolve(process.env.BATCH_ONE_VERIFY_ROOT || path.join(root, 'artifacts/customer-review/batch-01-2026-09-14'), 'live');
 const url = 'https://baogia-truongphat.netlify.app/';
 const sha = text => createHash('sha256').update(text).digest('hex');
 const lf = text => text.replace(/\r\n/g, '\n');

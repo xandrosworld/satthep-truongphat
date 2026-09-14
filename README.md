@@ -1,5 +1,9 @@
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
+## Hoàn thiện sáu mục đợt 1 — lượt tiếp theo
+
+Đang chốt BG-01, DM-01/02/03/04, UX-01 theo [báo cáo hoàn thiện](docs/BATCH-01-COMPLETE-2026-09-14.md). Đã bổ sung quản lý quy ước hình dạng, khổ dùng chung theo xưởng/máy, dòng vật tư nháp và kiểm trạng thái/tương phản. Chạy `npm run verify:batch-one:complete` để kiểm lại toàn gói. Trạng thái deploy/kiểm web cuối ghi trong báo cáo; các mốc `3cf0b3c` bên dưới là lịch sử đợt đầu.
+
 ## Đợt 1 đã lên web và kiểm trực tiếp — 14/09/2026
 
 Đã sửa gói đầu vào/cấu thành cho BG-01, DM-01/02/03/04 và UX-01. Xem [báo cáo đợt 1](docs/BATCH-01-2026-09-14.md) để biết chính xác phần đã làm, phần còn lại, cách chạy kiểm và trạng thái phát hành. Các câu “chỉ sửa tài liệu” bên dưới mô tả lượt rà checklist trước khi bắt đầu đợt này, không phải trạng thái mã hiện tại.
