@@ -1,12 +1,14 @@
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
-## Đang triển khai: đợt 1 ngày 14/09/2026
+## Đợt 1 đã lên web và kiểm trực tiếp — 14/09/2026
 
 Đã sửa gói đầu vào/cấu thành cho BG-01, DM-01/02/03/04 và UX-01. Xem [báo cáo đợt 1](docs/BATCH-01-2026-09-14.md) để biết chính xác phần đã làm, phần còn lại, cách chạy kiểm và trạng thái phát hành. Các câu “chỉ sửa tài liệu” bên dưới mô tả lượt rà checklist trước khi bắt đầu đợt này, không phải trạng thái mã hiện tại.
 
 Không suy ra cả sáu đầu mục đã xong: DM-02 còn quản lý cấu hình hình dạng tổng quát; DM-03 còn khổ chuẩn dùng chung theo máy/xưởng; DM-04 còn dòng vật tư nháp chưa chọn mã. Công thức liên kết DM-05, AI và các phần giá chưa nằm trong gói này. Giữ checklist làm đặc tả, không giảm tiêu chí để khớp giao diện đã có.
 
-Chạy `npm run verify:batch-one` để kiểm mã/giao diện/máy chủ mà không cần tài liệu khách bị ignore. Kết quả local không thay kiểm Netlify; theo dõi trạng thái và bằng chứng trong báo cáo đợt 1.
+Mã ứng dụng `3cf0b3c` đã push và kiểm trên `https://baogia-truongphat.netlify.app/` lúc 11:00 ngày 14/09: đạt 11 nhóm kiểm cục bộ và 7 nhóm tình huống trên web, lưu 12 ảnh. Xem báo cáo để biết phạm vi và giới hạn, không dùng số test làm xác nhận hoàn tất GĐ1. Máy chủ dùng chung mới được kiểm cục bộ; Netlify vẫn là chế độ trình duyệt.
+
+Chạy `npm run verify:batch-one` để kiểm mã/giao diện/máy chủ mà không cần tài liệu khách bị ignore. Chạy `node tools/check-batch-one-live.cjs` để đối chiếu nội dung Netlify với build đã kiểm trước khi chạy kịch bản web. Ảnh/log nằm trong `artifacts/customer-review/batch-01-2026-09-14/`, giữ cục bộ theo chính sách repo công khai.
 
 ## Nền yêu cầu: checklist v2.1 ngày 14/09/2026
 

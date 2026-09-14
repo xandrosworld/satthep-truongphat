@@ -13,6 +13,8 @@ Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệ
 
 [Báo cáo đợt 1](../../docs/BATCH-01-2026-09-14.md) ghi phần đã sửa, phần còn lại, mã kiểm thử và vị trí ảnh thực tế. “Hiện trạng đã thấy” bên dưới vẫn là mốc trước sửa; không dùng nó để kết luận mã mới chưa có chức năng.
 
+Mã ứng dụng `3cf0b3c` đã push `main`; kiểm bản Netlify lúc **11:00 ngày 14/09/2026** đạt **7/7 nhóm tình huống**, có **12 ảnh thực tế**. Bộ kiểm cục bộ đạt **11/11 nhóm** (141 ca logic, 23 ca máy chủ và các nhóm giao diện). Mã web khớp build đã kiểm, ngoài thẻ thanh công cụ do Netlify nối cuối. Đây là kết quả phạm vi đợt 1, không phải nghiệm thu khách hoặc hoàn thành nguyên cả sáu mã; xem giới hạn từng mã trong báo cáo.
+
 Đợt này xử lý hồ sơ tạo báo giá, vật tư/thương hiệu, dữ liệu tra kg/m–m²/m, khổ/phần dư theo mã, cây chung năm bước và bốn nhóm dòng. Chưa hoàn thành cả DM-02/03/04: còn bộ cấu hình hình dạng tổng quát, khổ mua dùng chung theo máy/xưởng và dòng vật tư nháp chưa mã. Chưa làm DM-05/AI/các công thức giá bổ sung; giữ nguyên yêu cầu và CĐ. Không đổi sang `[x]` chỉ vì các ca đầu vào đã chạy đạt.
 
 ## 1. Kết quả cần đạt
