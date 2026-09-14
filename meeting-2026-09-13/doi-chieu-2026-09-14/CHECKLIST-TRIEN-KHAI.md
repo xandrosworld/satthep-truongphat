@@ -1,6 +1,6 @@
 # Checklist triển khai sau cuộc họp 13/09
 
-Phiên bản tài liệu: 14/09/2026 — v2.2, giữ yêu cầu v2.1/F01–F14 và cập nhật kết quả triển khai đủ sáu mục đợt 1.
+Phiên bản tài liệu: 14/09/2026 — v2.3, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; cập nhật sáu mục đợt 1, năm mục đợt 2 đã kiểm chứng.
 
 Phạm vi: luồng báo giá Trường Phát — dùng để bàn giao cho người hoặc bot tiếp tục sửa phần mềm.  
 Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu của khách.
@@ -9,7 +9,13 @@ Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu c�
 
 Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệu được rà tại commit `e8c0cae6f56485f1a65dca88dbae8f0b2d8774ab`; phải kiểm lại khi mã thay đổi. Bản giải thích hiện hành là tài liệu này; các báo cáo phân tích cũ lưu để truy vết, không dùng diễn giải đã bị sửa để ghi đè v2. Ảnh/clip/phiên âm chủ yếu chỉ có trong gói nguồn nội bộ, không đi kèm clone GitHub; xem phần 12.
 
-## Theo dõi triển khai đợt 1 — 14/09/2026
+## Hiện hành — hoàn thành đợt 2, ngày 14/09/2026
+
+**DM-05, TC-01, TC-02, TC-03, TC-04** đã đạt triển khai/kiểm chứng nội bộ theo phần 11, đổi sang `[x]` sau kiểm đúng bản Netlify. Mã ứng dụng `3fc452dc00e2346851551511c8e235c3eaab0fe3`: **15/15 nhóm local, 168 ca logic, 28 ca máy chủ**; web thật **9/9 nhóm đợt 2 + 7/7 nhóm hồi quy**, **22 ảnh**, kết thúc **12:25:02 ngày 14/09/2026** (giờ Việt Nam). [Báo cáo từng mã, cách dùng, giới hạn và đường dẫn bằng chứng](../../docs/BATCH-02-2026-09-14.md).
+
+Tổng **11/25 mã `[x]`**. Yêu cầu/tiêu chí bên dưới giữ nguyên; “hiện trạng đã thấy” là mốc trước sửa. Netlify lưu trình duyệt; máy chủ và khóa bản duyệt được kiểm riêng tại localhost. Không phải nghiệm thu của khách hay hoàn thành toàn bộ GĐ1. AI và các mục giá chưa đánh dấu vẫn còn; CĐ-01/02/03 chưa được đóng. Bản nháp thiếu căn cứ diện tích hoàn thiện phải khai công thức/lượng thực hoặc xác nhận dùng lượng cấu thành trong chi tiết công việc, không gán ngầm từ tổng bề mặt con.
+
+## Lịch sử triển khai đợt 1 — 14/09/2026
 
 **Trạng thái hiện hành:** BG-01, DM-01/02/03/04 và UX-01 đã hoàn thành triển khai/kiểm chứng nội bộ, đánh dấu `[x]` theo phần 11. Ứng dụng `6a74c13` đã push và lên Netlify; 14 nhóm kiểm local (152 ca logic, 26 ca máy chủ), 15 nhóm tình huống web thật, 20 ảnh; kiểm web kết thúc 11:41:58 ngày 14/09/2026. [Báo cáo sáu mục và bằng chứng từng mã](../../docs/BATCH-01-COMPLETE-2026-09-14.md). Máy chủ được kiểm đúng môi trường máy chủ thử cục bộ; Netlify vẫn lưu trình duyệt. Không phải hoàn thành toàn bộ GĐ1 hay khách đã nghiệm thu. Các đoạn `3cf0b3c` phía dưới là lịch sử đợt đầu.
 
@@ -268,7 +274,7 @@ Tách lượng của một đơn vị với toàn đơn, kg phôi với kg mua s
 
 ![Dòng trống để thêm cấu thành trực tiếp](checklist-images/05-cau-thanh-dong-trong.png)
 
-### [ ] DM-05 — Liên kết kích thước bằng công thức, không sao chép bằng nhau
+### [x] DM-05 — Liên kết kích thước bằng công thức, không sao chép bằng nhau
 
 - Mỗi kích thước của sản phẩm, cấu kiện hoặc vật tư có thể là giá trị cố định, giá trị nhập tay hoặc kết quả công thức.
 - Công thức tham chiếu rõ tham số chính dòng và cấp cha/tổ tiên, ví dụ `vật_tư_A.L = sản_phẩm.W - 20` kể cả vật tư nằm trong cấu kiện. Đây là ví dụ khách nêu, không phải mặc định cho mọi vật tư. Việc cho phụ thuộc hai chiều hoặc tham chiếu dòng bất kỳ ngoài cây không phải yêu cầu khách đã chốt.
@@ -302,7 +308,7 @@ Dùng nền/viền có độ tương phản đủ rõ, đồng thời kết hợ
 
 ## 6. P1 — tính lượng, công đoạn và chi phí
 
-### [~] TC-01 — Số lượng xuyên các cấp, không phụ thuộc vị trí dòng
+### [x] TC-01 — Số lượng xuyên các cấp, không phụ thuộc vị trí dòng
 
 Số lượng thực hiện của một dòng = số lượng qua chuỗi cha × số lượng của dòng. Dùng khóa cha–con, không dùng “dòng gần nhất phía trên” như Excel. `XD Gia!BF4` là căn cứ XL về lượng theo đối tượng; chưa có quy tắc cộng gộp mọi dòng cùng mã ở nhiều sản phẩm thành một lô. Không tự bổ sung cơ chế tạo lô vào giai đoạn này.
 
@@ -310,7 +316,7 @@ Mỗi yếu tố ghi rõ lấy số sản phẩm, số cấu kiện hay số v�
 
 **Kiểm tra đạt:** sản phẩm 2 × cấu kiện 3 × vật tư 4 = 24; đổi thứ tự hiển thị không đổi kết quả; hai dòng cùng mã không tự cộng gộp nếu chưa có thao tác tạo lô.
 
-### [~] TC-02 — Công đoạn đúng cấp và không tính hai lần
+### [x] TC-02 — Công đoạn đúng cấp và không tính hai lần
 
 - Khai công đoạn tại vật tư/cấu kiện/sản phẩm.
 - Cấp trên chỉ bổ sung việc thực sự làm sau khi ghép cấp con.
@@ -327,7 +333,7 @@ Mỗi yếu tố ghi rõ lấy số sản phẩm, số cấu kiện hay số v�
 
 ![Bảng công đoạn của bản demo](checklist-images/08-cong-doan.png)
 
-### [~] TC-03 — Đơn giá nguyên công theo yếu tố tác động
+### [x] TC-03 — Đơn giá nguyên công theo yếu tố tác động
 
 `Đơn giá áp dụng = Giá gốc × (1 + hs1) × (1 + hs2) × ...`
 
@@ -344,7 +350,7 @@ Mỗi yếu tố ghi rõ lấy số sản phẩm, số cấu kiện hay số v�
 
 ![Cửa sổ sửa yếu tố và chọn kiểu bảng, chưa hiển thị các giá trị bậc](checklist-images/14-bang-yeu-to.png)
 
-### [~] TC-04 — Hoàn thiện bề mặt sinh vật tư theo định mức
+### [x] TC-04 — Hoàn thiện bề mặt sinh vật tư theo định mức
 
 - Sơn/mạ/làm sạch là công đoạn nhưng được nhóm riêng để thấy phần thuê ngoài và vật tư phát sinh.
 - Tiền công/máy tách khỏi vật tư hoàn thiện.

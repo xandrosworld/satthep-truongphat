@@ -1,10 +1,18 @@
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
+## Hiện hành — hoàn thành năm mục đợt 2, ngày 14/09/2026
+
+**DM-05, TC-01, TC-02, TC-03, TC-04 đã hoàn thành triển khai/kiểm chứng nội bộ.** Ứng dụng `3fc452d` đã commit/push `main` và xác minh đúng bản trên `https://baogia-truongphat.netlify.app/`. Đã qua **15 nhóm local (168 ca logic, 28 ca máy chủ)**; trên web thật **9 nhóm đợt 2 + 7 nhóm hồi quy**, lưu **22 ảnh**, kết thúc 12:25:02 ngày 14/09. [Báo cáo đợt 2, cách dùng và bằng chứng](docs/BATCH-02-2026-09-14.md). Chạy lại: `npm run verify:batch-two`.
+
+Đã có công thức kích thước theo cấp cha/tổ tiên, lượng theo cây, cách tính chung theo từng nguyên công, bậc/hệ số có nhãn rõ, vật tư hoàn thiện theo lượng thực và chống cộng trùng khi thuê. **Đơn cũ chưa xác nhận diện tích hoàn thiện có thể bị yêu cầu khai công thức/lượng thực hoặc xác nhận ngay trong chi tiết công việc**; không tự coi toàn bộ diện tích vật tư con là diện tích sơn.
+
+Checklist hiện **11/25 mã `[x]`**; không phải xong toàn bộ GĐ1 hay khách nghiệm thu. AI, các mục giá còn lại và CĐ-01/02/03 vẫn theo checklist. Netlify lưu trên trình duyệt, còn máy chủ/khóa bản duyệt được kiểm trên môi trường thử cục bộ. Các mục lịch sử dưới đây không ghi đè trạng thái hiện hành này.
+
 ## Đã hoàn thiện sáu mục đợt 1 — 14/09/2026
 
 **BG-01, DM-01, DM-02, DM-03, DM-04, UX-01 đã được đánh dấu `[x]`** sau khi hoàn thiện, kiểm local, commit/push và kiểm bản Netlify mới. Ứng dụng `6a74c13`: **14 nhóm kiểm local (152 ca logic, 26 ca máy chủ)**; web thật đạt **15 nhóm tình huống, 20 ảnh**, kết thúc 11:41:58 ngày 14/09/2026. Xem [báo cáo hoàn thiện và bằng chứng từng mã](docs/BATCH-01-COMPLETE-2026-09-14.md), chạy lại bằng `npm run verify:batch-one:complete`.
 
-Phần mới: quy ước hình dạng có trường cố định/biến, công thức và phiên bản; khổ mua chung theo xưởng/máy; dòng vật tư nháp chưa mã; trạng thái/tương phản bốn nhóm dòng. Netlify vẫn là bản lưu trình duyệt; máy chủ dùng chung được kiểm trên máy chủ thử cục bộ. **Không có nghĩa hoàn thành toàn bộ GĐ1 hoặc khách đã nghiệm thu.** DM-05, AI và các mục giá khác vẫn theo checklist.
+Phần mới ở đợt 1: quy ước hình dạng có trường cố định/biến, công thức và phiên bản; khổ mua chung theo xưởng/máy; dòng vật tư nháp chưa mã; trạng thái/tương phản bốn nhóm dòng. Netlify vẫn là bản lưu trình duyệt; máy chủ dùng chung được kiểm trên máy chủ thử cục bộ. **Không có nghĩa hoàn thành toàn bộ GĐ1 hoặc khách đã nghiệm thu.** DM-05 sau đó đã hoàn thành ở đợt 2 nêu trên; AI và các mục giá còn lại vẫn theo checklist.
 
 ## Lịch sử đợt 1 ban đầu — bản 3cf0b3c
 
