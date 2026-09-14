@@ -74,7 +74,7 @@ function readPaste(text,materials,rules,{format='auto',parentCount=1}={}){
 function searchTree(nodes,query){
   const tokens=normalize(query).split(/\s+/).filter(Boolean),visible=new Set(),matched=new Set(),context=new Set();
   function walk(n,inherited=false){
-    const text=normalize([n.name,n.materialId,n.spec?.grade,n.spec?.substance].filter(Boolean).join(' '));
+    const text=normalize([n.name,n.materialId,n.spec?.grade,n.spec?.substance,n.spec?.brand,n.spec?.specification].filter(Boolean).join(' '));
     const own=tokens.length>0&&tokens.every(t=>text.includes(t)),include=inherited||own||!tokens.length;
     if(own)matched.add(n.id);
     let descendant=false;

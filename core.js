@@ -6,7 +6,7 @@ let serial=0;
 const uid=()=> 'n'+Date.now().toString(36)+(++serial).toString(36);
 const groups=['Phôi gia công','Linh kiện, thiết bị','Tiêu hao sản xuất','Vật tư phụ','Dầu mỡ, hóa chất','Hoàn thiện bề mặt'];
 const shapes={sheet:{name:'Tấm',fixed:['T'],input:['L','W']},box:{name:'Hộp',fixed:['W','H','T'],input:['L']},pipe:{name:'Ống',fixed:['D','T'],input:['L']},round:{name:'Tròn đặc',fixed:['D'],input:['L']},solid:{name:'Vuông đặc',fixed:['W','H'],input:['L']},angle:{name:'Thép góc L / V',fixed:['W','H','T'],input:['L']},piece:{name:'Theo đơn vị',fixed:[],input:[]}};
-Object.assign(shapes,{u:{name:'Thép U',fixed:['W','H','T'],input:['L']},c:{name:'Thép C (không mép gấp)',fixed:['W','H','T'],input:['L']},h:{name:'Thép H',fixed:['W','H','T','TF'],input:['L']},i:{name:'Thép I',fixed:['W','H','T','TF'],input:['L']}});
+Object.assign(shapes,{profile:{name:'Thép hình theo bảng tra',fixed:[],input:['L']},u:{name:'Thép U',fixed:['W','H','T'],input:['L']},c:{name:'Thép C (không mép gấp)',fixed:['W','H','T'],input:['L']},h:{name:'Thép H',fixed:['W','H','T','TF'],input:['L']},i:{name:'Thép I',fixed:['W','H','T','TF'],input:['L']}});
 // Recursive-descent arithmetic only. Never execute user formulas as JavaScript.
 function formula(source,vars){
   if(String(source).length>500)throw Error('Công thức tối đa 500 ký tự');
@@ -43,14 +43,25 @@ function seed(){
 function cloneNode(node){const n=copy(node);if(node.templateKind){n.templateId=node.id;delete n.uses;}function walk(x){x.id=uid();if(x.children)x.children.forEach(walk);}walk(n);return n;}
 function findNode(products,id){for(const n of products){if(n.id===id)return n;const hit=n.children&&findNode(n.children,id);if(hit)return hit;}return null;}
 function removeNode(nodes,id){const i=nodes.findIndex(n=>n.id===id);if(i>=0){nodes.splice(i,1);return true;}return nodes.some(n=>n.children&&removeNode(n.children,id));}
-function section(m){const p=m.props,{W=0,H=0,T=0,D=0,TF=T}=p;switch(m.shape){case 'box':if(2*T>=Math.min(W,H))throw Error('Chiều dày hộp phải nhỏ hơn nửa tiết diện');return {cross:W*H-(W-2*T)*(H-2*T),perimeter:2*(W+H)};case 'pipe':if(2*T>=D)throw Error('Chiều dày ống phải nhỏ hơn nửa đường kính');return {cross:Math.PI*(D*D-(D-2*T)**2)/4,perimeter:Math.PI*D};case 'round':return {cross:Math.PI*D*D/4,perimeter:Math.PI*D};case 'solid':return {cross:W*H,perimeter:2*(W+H)};case 'angle':return {cross:T*(W+H-T),perimeter:2*(W+H)};case 'u':case 'c':if(T>=W||2*T>=H)throw Error('Chiều dày vượt tiết diện');return {cross:T*(2*W+H-2*T),perimeter:4*W+2*H-2*T};case 'h':case 'i':if(T>=W||2*TF>=H)throw Error('Chiều dày bụng/cánh vượt tiết diện');return {cross:2*W*TF+(H-2*TF)*T,perimeter:4*W+2*H-2*T};default:throw Error('Hình dạng chưa được hỗ trợ');}}
+function section(m){const p=m.props,{W=0,H=0,T=0,D=0,TF=T}=p;switch(m.shape){case 'profile':return {cross:0,perimeter:0};case 'box':if(2*T>=Math.min(W,H))throw Error('Chiều dày hộp phải nhỏ hơn nửa tiết diện');return {cross:W*H-(W-2*T)*(H-2*T),perimeter:2*(W+H)};case 'pipe':if(2*T>=D)throw Error('Chiều dày ống phải nhỏ hơn nửa đường kính');return {cross:Math.PI*(D*D-(D-2*T)**2)/4,perimeter:Math.PI*D};case 'round':return {cross:Math.PI*D*D/4,perimeter:Math.PI*D};case 'solid':return {cross:W*H,perimeter:2*(W+H)};case 'angle':return {cross:T*(W+H-T),perimeter:2*(W+H)};case 'u':case 'c':if(T>=W||2*T>=H)throw Error('Chiều dày vượt tiết diện');return {cross:T*(2*W+H-2*T),perimeter:4*W+2*H-2*T};case 'h':case 'i':if(T>=W||2*TF>=H)throw Error('Chiều dày bụng/cánh vượt tiết diện');return {cross:2*W*TF+(H-2*TF)*T,perimeter:4*W+2*H-2*T};default:throw Error('Hình dạng chưa được hỗ trợ');}}
 // Declared profile mass is kg/m for bars, kg/m² for sheets, applied to both phôi and purchased stock.
 function materialMass(m){
-  const nominal=m.shape==='sheet'?m.props.T/1000*m.density:section(m).cross*1e-6*m.density;
-  const x=m.massOverride;if(!x)return nominal;
+  const nominal=m.shape==='profile'?0:m.shape==='sheet'?m.props.T/1000*m.density:section(m).cross*1e-6*m.density;
+  const x=m.massOverride;if(!x){if(m.shape==='profile')throw Error('Thép hình cần khai kg/m theo bảng tra');return nominal;}
   if(!String(x.reason||'').trim())throw Error('Khối lượng phôi đặc thù cần ghi căn cứ');
   const vars={...m.props,RHO:m.density};for(const [key,value]of Object.entries(x.vars||{})){if(!/^[A-Za-z_][A-Za-z_0-9]*$/.test(key)||Object.hasOwn(vars,key)||['__proto__','constructor','prototype'].includes(key)||!Number.isFinite(Number(value)))throw Error('Biến khối lượng phôi không hợp lệ');vars[key]=Number(value);}
   const value=x.formula?formula(x.formula,vars):Number(x.value);if(x.value===null&&!x.formula||!Number.isFinite(value)||value<=0)throw Error('Khối lượng phôi đặc thù phải lớn hơn 0');return value;
+}
+function materialSurface(m){
+  if(m.areaOverride){const x=m.areaOverride;if(!String(x.reason||'').trim()||!Number.isFinite(x.value)||x.value<=0)throw Error('Diện tích trên mét cần giá trị dương và căn cứ');return x.value;}
+  if(m.shape==='profile')throw Error('Thép hình cần khai m²/m theo bảng tra');
+  return section(m).perimeter/1000;
+}
+function remnantRuleKey(m){return JSON.stringify([m.id,m.brand||'',m.shape]);}
+function remnantEligibility(m,r,rule){
+  if(!rule)return null;
+  if(!Number.isFinite(rule.minL)||rule.minL<=0||(m.shape==='sheet'&&(!Number.isFinite(rule.minW)||rule.minW<=0)))throw Error('Ngưỡng phần dư phải là kích thước dương theo mm');
+  return m.shape==='sheet'?Math.max(r.l,r.w)>=Math.max(rule.minL,rule.minW)&&Math.min(r.l,r.w)>=Math.min(rule.minL,rule.minW):r.l>=rule.minL;
 }
 function geometry(n,count){
   const m=n.spec,vars={...n.dims,...m.props},rule=n.ruleSpec;
@@ -60,7 +71,7 @@ function geometry(n,count){
   const length=formula(rule.length,vars),width=m.shape==='sheet'?formula(rule.width,vars):0;
   if(!(length>0)||(m.shape==='sheet'&&!(width>0)))throw Error('Kích thước khai triển phải lớn hơn 0');
   if(m.shape==='sheet'){const blankArea=length*width/1e6*count;return {length,width,blankArea,area:blankArea*2,volume:blankArea*m.props.T/1000,weight:blankArea*materialMass(m),quantity:count,measure:blankArea};}
-  const sec=section(m),meters=length/1000*count;return {length,width:0,blankArea:sec.perimeter/1000*meters,area:sec.perimeter/1000*meters,volume:sec.cross*1e-6*meters,weight:materialMass(m)*meters,quantity:count,measure:meters};
+  const sec=section(m),meters=length/1000*count;return {length,width:0,blankArea:materialSurface(m)*meters,area:materialSurface(m)*meters,volume:m.shape==='profile'?materialMass(m)*meters/m.density:sec.cross*1e-6*meters,weight:materialMass(m)*meters,quantity:count,measure:meters};
 }
 // Deterministic first-fit decreasing, guillotine split for rectangles. Kerf reserved per cut.
 function nest(items,spec,kerf,strategy='best'){
@@ -92,25 +103,25 @@ function calculate(db){
     for(const child of n.children||[])visit(child,count,product,[...path,n.name],covered);
   }
   for(const p of q.products)visit(p,1,p,[]);
-  const grouped={};for(const row of rows){if(row.externallySupplied){row.cost=row.purchaseCost=row.purchasedWeight=row.purchasedArea=row.recoverableCredit=0;continue;}if(row.spec.shape==='piece'){row.cost=row.purchaseCost=row.count*row.spec.price;row.recoverableCredit=0;continue;}const key=JSON.stringify([row.spec.id,row.spec.props,row.spec.stockL,row.spec.stockW,row.spec.price,row.spec.unit,row.spec.density,...(row.spec.massOverride?[materialMass(row.spec)]:[]),...(row.node.supplier||row.spec.supplier?[row.node.supplier||row.spec.supplier]:[])]);(grouped[key]??={spec:row.spec,rows:[]}).rows.push(row);}
+  const grouped={};for(const row of rows){if(row.externallySupplied){row.cost=row.purchaseCost=row.purchasedWeight=row.purchasedArea=row.recoverableCredit=0;continue;}if(row.spec.shape==='piece'){row.cost=row.purchaseCost=row.count*row.spec.price;row.recoverableCredit=0;continue;}const key=JSON.stringify([row.spec.id,row.spec.props,row.spec.stockL,row.spec.stockW,row.spec.price,row.spec.unit,row.spec.density,...(row.spec.brand?[row.spec.brand]:[]),...(row.spec.areaOverride?[materialSurface(row.spec)]:[]),...(row.spec.massOverride?[materialMass(row.spec)]:[]),...(row.node.supplier||row.spec.supplier?[row.node.supplier||row.spec.supplier]:[])]);(grouped[key]??={spec:row.spec,rows:[]}).rows.push(row);}
   const remnantMode=q.remnantMode==='exclude'?'exclude':'all',savedRemnants=q.remnantSelections||{};
   const groupsResult=[];
   for(const group of Object.values(grouped)){try{const layout=nest(group.rows,group.spec,Number(q.kerf));const m=group.spec,totalWeight=group.rows.reduce((s,r)=>s+r.geometry.weight,0),unitMeasure=m.shape==='sheet'?m.stockL*m.stockW/1e6:m.stockL/1000;
       const purchasedMeasure=layout.stocks.length*unitMeasure,purchasedWeight=purchasedMeasure*materialMass(m);
       const purchaseCost=m.unit==='kg'?purchasedWeight*m.price:m.unit==='m²'||m.unit==='m'?purchasedMeasure*m.price:layout.stocks.length*m.price;
       // Bind choices to the deterministic physical cutting plan, not to today's price.
-      const signature=JSON.stringify([1,m.id,m.shape,m.props,m.unit,m.density,...(m.massOverride?[materialMass(m)]:[]),layout.stockL,layout.stockW,Number(q.kerf),group.rows.map(r=>[r.id,r.count,r.geometry.length,r.geometry.width]),...(group.rows[0].node.supplier||m.supplier?[group.rows[0].node.supplier||m.supplier]:[])]);
+      const signature=JSON.stringify([1,m.id,m.shape,m.props,m.unit,m.density,...(m.brand?[m.brand]:[]),...(m.areaOverride?[materialSurface(m)]:[]),...(m.massOverride?[materialMass(m)]:[]),layout.stockL,layout.stockW,Number(q.kerf),group.rows.map(r=>[r.id,r.count,r.geometry.length,r.geometry.width]),...(group.rows[0].node.supplier||m.supplier?[group.rows[0].node.supplier||m.supplier]:[])]);
       const chosen=new Set(Array.isArray(savedRemnants[signature])?savedRemnants[signature]:[]);
       const remnants=layout.stocks.flatMap((s,stockIndex)=>{
         const free=m.shape==='sheet'?s.free:(s.remaining>0?[{x:layout.stockL-s.remaining,y:0,l:s.remaining,w:0}]:[]);
-        return free.map((f,i)=>{const measure=m.shape==='sheet'?f.l*f.w:f.l,id=stockIndex+':'+i,ratio=measure/layout.purchased;return {...f,id,stockIndex,measure,weight:purchasedWeight*ratio,value:purchaseCost*ratio,selected:chosen.has(id)};});
+        return free.map((f,i)=>{const measure=m.shape==='sheet'?f.l*f.w:f.l,id=stockIndex+':'+i,ratio=measure/layout.purchased;const eligible=remnantEligibility(m,f,q.remnantRules?.[remnantRuleKey(m)]);return {...f,id,stockIndex,measure,eligible,weight:purchasedWeight*ratio,value:purchaseCost*ratio,selected:eligible!==false&&chosen.has(id)};});
       });
       const reusableMeasure=remnants.filter(r=>r.selected).reduce((s,r)=>s+r.measure,0),recoverableCredit=purchaseCost*reusableMeasure/layout.purchased;
       const cost=purchaseCost-(remnantMode==='exclude'?recoverableCredit:0),kerfMeasure=Math.max(0,layout.purchased-layout.used-remnants.reduce((s,r)=>s+r.measure,0));
-      const totalMeasure=group.rows.reduce((s,r)=>s+r.geometry.measure,0);for(const r of group.rows){const share=r.geometry.measure/totalMeasure;r.cost=cost*share;r.purchaseCost=purchaseCost*share;r.recoverableCredit=recoverableCredit*share;r.purchasedWeight=purchasedWeight*share;r.purchasedArea=(m.shape==='sheet'?purchasedMeasure:purchasedMeasure*section(m).perimeter/1000)*share;}
+      const totalMeasure=group.rows.reduce((s,r)=>s+r.geometry.measure,0);for(const r of group.rows){const share=r.geometry.measure/totalMeasure;r.cost=cost*share;r.purchaseCost=purchaseCost*share;r.recoverableCredit=recoverableCredit*share;r.purchasedWeight=purchasedWeight*share;r.purchasedArea=(m.shape==='sheet'?purchasedMeasure:purchasedMeasure*materialSurface(m))*share;}
       groupsResult.push({...group,signature,remnants,layout,cost,purchaseCost,recoverableCredit,reusableMeasure,kerfMeasure,totalWeight,purchasedWeight,purchasedMeasure});
     }catch(e){errors.push(group.spec.id+': '+e.message);groupsResult.push({...group,error:e.message});}}
-  let staleCount=0;const activePlans=new Map(groupsResult.filter(g=>!g.error).map(g=>[g.signature,new Set(g.remnants.map(r=>r.id))]));
+  let staleCount=0;const activePlans=new Map(groupsResult.filter(g=>!g.error).map(g=>[g.signature,new Set(g.remnants.filter(r=>r.eligible!==false).map(r=>r.id))]));
   for(const [signature,ids]of Object.entries(savedRemnants))if(Array.isArray(ids))for(const id of new Set(ids))if(!activePlans.get(signature)?.has(id))staleCount++;
   if(staleCount&&remnantMode==='exclude')errors.push('Phương án cắt đã thay đổi. Rà soát phần dư tận dụng tại Khai triển & hao hụt trước khi xuất báo giá.');
   const rowMap=Object.fromEntries(rows.map(r=>[r.id,r]));
@@ -140,6 +151,6 @@ function configureProduct(p){
 function applyParam(p,key,value){if(!Number.isFinite(value)||value<0||(['L','W'].includes(key)&&value===0))throw Error('Kích thước không hợp lệ');p.params[key]=value;for(const n of scopedLeaves(p))for(const [dim,param]of Object.entries(n.paramLinks||{}))if(param===key)n.dims[dim]=value;formatName(p);}
 function setDimension(db,id,key,value){const n=findNode(db.quote.products,id),p=productOwner(db,id);if(p&&n.paramLinks?.[key])applyParam(p,n.paramLinks[key],value);else n.dims[key]=value;}
 function quoteSpecification(p){const leaves=flatten(p.children||[]).filter(n=>n.kind==='material'&&n.spec.shape!=='piece'),detail=n=>n.spec.id+': '+Object.entries(n.dims||{}).filter(([k])=>shapes[n.spec.shape].input.includes(k)||['H','F'].includes(k)&&(n.ruleSpec.width.match(/[A-Z]+/g)||[]).includes(k)).map(([k,v])=>k+' '+v).join(' × ')+' mm';if(p.params){const base=Object.entries(p.params).map(([k,v])=>k+' '+v).join(' × ')+' mm',custom=leaves.filter(n=>n.detached);return custom.length?'Kích thước chung: '+base+'; chi tiết riêng: '+custom.map(detail).join('; '):base;}return [...new Set(leaves.map(detail))].join('; ');}
-const api={copy,uid,groups,shapes,formula,seed,cloneNode,findNode,removeNode,materialMass,geometry,nest,calculate,flatten,nodePath,productOwner,scopedLeaves,formatName,configureProduct,applyParam,setDimension,quoteSpecification};
+const api={copy,uid,groups,shapes,formula,seed,cloneNode,findNode,removeNode,materialMass,materialSurface,remnantRuleKey,remnantEligibility,geometry,nest,calculate,flatten,nodePath,productOwner,scopedLeaves,formatName,configureProduct,applyParam,setDimension,quoteSpecification};
 if(typeof module!=='undefined')module.exports=api;else root.TP=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -7,10 +7,10 @@ const {chromium,expect}=require('@playwright/test'),fs=require('node:fs'),path=r
   const submit=()=>p.locator('#dialog button[type=submit]').click();
   const snapshot=()=>p.evaluate(()=>({grand:result.total.grand,material:result.total.material,credit:result.reuse.credit,count:result.reuse.selectedCount,buy:result.reuse.chargeAll.material,stock:result.groups.map(g=>g.layout?.stocks.length),weight:result.groups.map(g=>g.purchasedWeight),ops:result.total.ops,all:result.reuse.chargeAll.grand,exclude:result.reuse.excludeSelected.grand}));
   await p.goto(offline?pathToFileURL(path.resolve('dist/index.html')).href:'http://127.0.0.1:4173');
-  await p.locator('[data-tab=waste]').click();await expect(p.locator('.remnant-panel')).toHaveCount(2);
+  await p.locator('[data-tab=waste]').click();if(await p.locator('#b1-cut-details').count())await p.locator('#b1-cut-details summary').first().click();await expect(p.locator('.remnant-panel')).toHaveCount(2);
   const original=await snapshot();await expect(p.locator('[name=remnant-mode][value=all]')).toBeChecked();await expect(p.locator('[name=remnant-mode][value=exclude]')).toBeDisabled();
   await p.locator('[data-remnant=threshold][data-gi="0"]').click();
-  await p.locator('[name=minL]').fill('200');await p.locator('[name=minW]').fill('100');await submit();
+  await p.locator('[name=minL]').fill('200');await p.locator('[name=minW]').fill('100');await p.locator('[name=chooseEligible]').check();await submit();
   const selected=await snapshot();expect(selected.count).toBeGreaterThan(0);expect(selected.grand).toBe(original.grand);expect(selected.credit).toBeGreaterThan(0);
   await p.locator('[name=remnant-mode][value=exclude]').check();const excluded=await snapshot();
   expect(excluded.grand).toBe(excluded.exclude);expect(excluded.grand).toBeLessThan(original.grand);expect(excluded.all).toBe(original.grand);
@@ -40,7 +40,7 @@ const {chromium,expect}=require('@playwright/test'),fs=require('node:fs'),path=r
   await p.pdf({path:'artifacts/bao-gia-co-tan-dung.pdf',format:'A4',printBackground:true});
   await p.reload();expect(await snapshot()).toEqual(both);
   // A physical change invalidates affected choices; stale discounts cannot be exported.
-  await p.locator('[data-tab=waste]').click();const kerf=p.locator('[data-quote-field=kerf]');await kerf.fill('4');await kerf.press('Tab');
+  await p.locator('[data-tab=waste]').click();if(!(await p.locator('#b1-cut-details').evaluate(e=>e.open)))await p.locator('#b1-cut-details summary').first().click();const kerf=p.locator('[data-quote-field=kerf]');await kerf.fill('4');await kerf.press('Tab');
   await expect(p.locator('.remnant-stale')).toBeVisible();expect(await p.evaluate(()=>result.reuse.staleCount)).toBeGreaterThan(0);
   await p.locator('[data-tab=preview]').click();await p.evaluate(()=>{window.didPrint=false;window.print=()=>{window.didPrint=true;};});
   await p.locator('[data-action=print]').click();expect(await p.evaluate(()=>window.didPrint)).toBe(false);

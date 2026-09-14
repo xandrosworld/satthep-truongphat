@@ -19,10 +19,10 @@ function defaults(){return {version:2,selected:'detail',overhead:2,management:3,
 function enable(db){if(db.quote.pricing)return;db.quote.pricing=defaults();db.quote.status='draft';}
 function refreshPrices(db){
   for(const n of C.flatten(db.quote.products))if(n.kind==='material'){
-    const m=db.materials.find(m=>m.id===n.materialId);if(m&&m.unit===n.spec.unit)n.spec.price=m.price;
+    const m=db.materials.find(m=>m.id===n.materialId);if(m&&m.unit===n.spec.unit&&(m.brand||'')===(n.spec.brand||'')&&(m.specification||'')===(n.spec.specification||''))n.spec.price=m.price;
   }
   db.quote.ratesSnapshot=copy(db.rates);
-  for(const rate of db.quote.ratesSnapshot)for(const recipe of W.recipes(rate)){const spec=recipe.spec;if(!spec)continue;const m=db.materials.find(m=>m.id===spec.id);if(m&&m.unit===spec.unit)spec.price=m.price;}
+  for(const rate of db.quote.ratesSnapshot)for(const recipe of W.recipes(rate)){const spec=recipe.spec;if(!spec)continue;const m=db.materials.find(m=>m.id===spec.id);if(m&&m.unit===spec.unit&&(m.brand||'')===(spec.brand||'')&&(m.specification||'')===(spec.specification||''))spec.price=m.price;}
 }
 function tier(value,tiers,key='percent'){
   if(!finite(value)||Number(value)<0)throw Error('Thiếu giá trị đầu vào để tra bậc');

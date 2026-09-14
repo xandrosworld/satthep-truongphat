@@ -52,15 +52,25 @@ của chi tiết này
 Có thể tính theo % giá trị của thiết bị 20-30%
 Hoặc đơn giá cụ thể
 
+--- NỘI DUNG 4 — THƯƠNG HIỆU VẬT TƯ THIẾT BỊ ---
+
+Tin nhắn khách được người dùng chuyển bổ sung ngày 14/09/2026; chưa có mốc giờ riêng. Giữ nguyên câu chữ người dùng cung cấp:
+
+Đối với vật tư thiết bị ngoài thông số kỹ thuật em lưu ý cho anh Thương hiệu nhé
+Giá ảnh thay đổi nhiều khi thương hiệu khác nhau
+
 --- CÁCH HIỂU DÙNG ĐỂ TRIỂN KHAI ---
 
+Diễn giải đã rà lại ngày 14/09/2026 cùng checklist v2.1; không phải nguyên văn khách. Phần nguyên văn và chữ chép từ ảnh ở trên giữ nguyên. Khi tiếp tục làm, đọc CHECKLIST-TRIEN-KHAI.md phần 2 và 13 để phân biệt căn cứ, đề xuất và điểm còn cần đối chiếu.
+
 1. Từ “phiên tư” trong tin nhắn có khả năng là lỗi gõ của “chuyển từ”. Không sửa nguyên văn ở trên; yêu cầu được hiểu theo cả câu là có thể lấy các khoản chi phí của phương án tính toán sang bảng phân tích làm tham số đối chiếu.
-2. “Đã bao gồm toàn bộ các chi phí” đóng câu hỏi trước đây về việc có cộng thêm giao hàng, lắp đặt, quản lý sản xuất... vào giá kg/TMC/đối thủ hay không: không cộng lại các khoản này vào giá của ba phương án.
-3. Khách chưa nói thuế đã nằm trong ba giá này. Thuế phải là điều kiện thương mại tách riêng, không tự coi là một chi phí đã bao gồm.
-4. AI được bổ sung sau khi cấu trúc dữ liệu ổn định. Không được hiểu thành bỏ AI; cũng không tự mở rộng phạm vi đã xác nhận sang mọi định dạng CAD/3D.
+2. “Đã bao gồm toàn bộ các chi phí” xác nhận không cộng lại chi phí chỉ lấy từ phương án tính toán để đối chiếu lên tổng đầy đủ của kg/TMC/đối thủ. TMC vẫn cần công thức nội bộ và đầu vào thực sự của nó; không suy thành chỉ còn bảng nhân công hoặc mọi thay đổi chi phí đều không được làm đổi TMC. Chuỗi cuối và nhánh không TMC theo dõi tại CĐ-01.
+3. Khách chưa nói giá nhập đã hay chưa gồm thuế. Ghi rõ tình trạng/điều kiện thuế, đưa về cùng mặt bằng; không tự coi đã gồm cũng không tự cộng thêm. Chưa xác nhận thì giữ trạng thái chưa rõ trước khi phát hành chính thức (CĐ-03).
+4. Khách nhắc phải có AI và hỏi “Chắc em chờ ổn định cấu trúc rồi mới bổ sung à”; chưa có quyết định lịch hoãn trong nguồn này. Nối AI sau khi mô hình dữ liệu ổn định là kế hoạch kỹ thuật đề xuất, không phải khách đồng ý hoãn ra ngoài giai đoạn báo giá. Không tự mở rộng sang mọi định dạng CAD/3D.
 5. Tài liệu phải được đính kèm ngay lúc tạo báo giá và lưu cùng hồ sơ đó. AI bóc tách là bước xử lý sau khi có tài liệu, không phải điều kiện để lưu hồ sơ ban đầu.
 6. Liên kết kích thước là quan hệ bằng công thức giữa tham số của sản phẩm/cấu kiện/vật tư, không phải chỉ sao chép một số bằng nhau. Ví dụ khách đưa là một trường hợp minh họa, không phải công thức mặc định cho mọi mã.
 7. Bốn loại dòng phải nhận ra ngay: sản phẩm, cấu kiện, vật tư nằm trong cấu kiện và vật tư nằm trực tiếp trong sản phẩm. Màu cần tương phản cao hơn; khi triển khai nên có thêm nhãn, biểu tượng và thụt cấp để không phụ thuộc riêng vào màu.
 8. Thiết bị/linh kiện có thể có chi phí lắp đặt riêng ngoài giá mua vật tư. Cách tính phải cho chọn theo phần trăm giá trị thiết bị hoặc theo đơn giá cụ thể. Khoảng 20–30% là ví dụ khách nêu, không phải tỷ lệ cố định để hard-code.
-9. Chi phí lắp đặt của thiết bị/linh kiện phải tách khỏi lắp đặt toàn bộ sản phẩm tại công trình và khỏi công đoạn đã bao gồm lắp đặt; phải có cách đánh dấu đã gồm để tránh cộng hai lần.
+9. Chi phí lắp đặt thiết bị phải rõ đối tượng, công việc, cơ sở giá trị và số lượng. “Đã gồm” chỉ ngăn cộng hai lần cùng công việc; lắp ráp ở xưởng và lắp đặt công trình khác phạm vi vẫn có thể cùng tồn tại. Khách chưa xác định khoản mới luôn thuộc nơi thực hiện/lớp giá nào; không tự gán theo cấp dòng thiết bị (CĐ-02).
 10. Ba ảnh chú thích mới được cung cấp trong hội thoại ngày 14/09; văn bản trên ảnh đã được chép nguyên ý ở mục 3. Các ảnh local dùng trong checklist chỉ để chỉ đúng vùng giao diện hiện tại, không thay thế ảnh chú thích gốc của khách.
+11. Khách yêu cầu vật tư thiết bị có thông tin thương hiệu bên cạnh thông số kỹ thuật; giá có thể khác theo thương hiệu. Chưa có danh sách thương hiệu hay tỷ lệ chênh giá cố định trong tin nhắn này. Cách triển khai đề xuất: thương hiệu là trường dữ liệu riêng, giá tham chiếu và giá áp dụng phải phân biệt đúng mã/biến thể thiết bị và thương hiệu; không ghép các hãng chỉ vì cùng thông số. Chọn/đổi thương hiệu phải kiểm lại giá phù hợp, không tự lấy giá hãng cũ hoặc ghi đè báo giá đã duyệt. Nếu chi phí lắp đặt tính theo % giá thiết bị, phần tiền đó đi theo đúng giá trị thiết bị làm cơ sở, không tự đổi tỷ lệ chỉ vì đổi hãng.
