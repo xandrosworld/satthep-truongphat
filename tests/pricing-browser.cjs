@@ -3,7 +3,7 @@ const {pathToFileURL}=require('node:url');
 const path=require('node:path'),fs=require('node:fs');
 (async()=>{
   const browser=await chromium.launch({channel:'msedge',headless:true});
-  const folder=path.resolve('artifacts/pricing-2026-09-12');fs.mkdirSync(folder,{recursive:true});
+  const folder=path.resolve(process.env.PRICING_ARTIFACT_ROOT||'artifacts/pricing-2026-09-12');fs.mkdirSync(folder,{recursive:true});
   const page=await browser.newPage({viewport:{width:1440,height:1000},offline:true});
   const errors=[],passed=[];page.on('pageerror',e=>errors.push(e.message));
   const check=name=>{passed.push(name);console.log('PASS '+name);};
@@ -52,7 +52,7 @@ const path=require('node:path'),fs=require('node:fs');
     check('Editable operation matrix factors change actual applied rates');
     await page.screenshot({path:path.join(folder,'02-cong-doan-dinh-muc.png'),fullPage:true});
     await tab('pricing');const detailBefore=await page.evaluate(()=>result.alternatives.detail.total.grand);
-    await page.locator('[data-pa=tmc]').click();await page.locator('[name=loss]').fill('8');await submit();
+    await page.locator('[data-gp=configure]').first().click();await page.locator('#dialog [data-pa=tmc]').click();await page.locator('[name=loss]').fill('8');await submit();
     expect(await page.evaluate(()=>result.alternatives.detail.total.grand)).toBe(detailBefore);
     await page.locator('[data-pa=choose][data-method=tmc]').click();check('TMC loss edits do not rewrite the detailed cutting-cost method');
     await page.locator('[data-pa=final-price]').first().click();await page.locator('[name=value]').fill('1');await page.locator('[name=reason]').fill('Thử cảnh báo nội bộ');await submit();
