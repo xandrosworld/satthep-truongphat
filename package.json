@@ -3,6 +3,9 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
+    "verify:rules-catalog": "node tools/verify-rules-catalog.cjs",
+    "test:shape-row:ui": "node tests/shape-row-browser.cjs",
+    "test:rules-catalog:ui": "node tests/rules-catalog-browser.cjs",
     "verify:batch-six": "node tools/verify-batch-six.cjs",
     "verify:batch-five": "node tools/verify-batch-five.cjs",
     "verify:batch-four": "node tools/verify-batch-four.cjs",

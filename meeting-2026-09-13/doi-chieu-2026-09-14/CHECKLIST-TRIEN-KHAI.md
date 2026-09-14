@@ -1,5 +1,7 @@
 # Checklist triển khai sau cuộc họp 13/09
 
+**Bổ sung cấu trúc DM-02 từ phản hồi 21:59 ngày 14/09:** ngay trong bảng Thông tin hình dạng phôi, một dòng gồm dạng cấu kiện | hình dạng phôi | khai báo tại mã vật tư | bổ sung báo giá | công thức dài/rộng khai triển | công thức khối lượng phôi sản phẩm | công thức diện tích phôi sản phẩm; cuối dòng mở công thức tổng hợp. Công thức phôi sản phẩm trả kết quả một chi tiết, tách với định mức vật tư mua. Đợt sửa cũng gom mác/đặc tính dưới từng vật liệu tại DM-01. [Bản sửa và kiểm chứng](../../docs/CATALOG-REVIEW-2026-09-14.md). Đây là bổ sung yêu cầu và bằng chứng triển khai, không phải nghiệm thu khách; giữ nguyên 25 mã.
+
 Phiên bản tài liệu: 14/09/2026 — v2.13.
 
 **Hiện hành v2.13:** đã đóng **DM-05, TC-06, BG-02, BG-03, BG-05** sau xử lý và kiểm chứng: Dày liên kết tường minh với quy cách mã; bổ sung cơ sở CP chung TMC đầy đủ và tính một lần; đối chiếu 7 ô số gốc và 4 nhánh TMC thuần/hỗn hợp theo công thức/bảng của workbook. **22/25 [x], 0 [~], 3 [ ]**. Còn **BG-06, ERP-01, ERP-02**. Local 12/12 tác vụ, 254 ca logic + 47 ca máy chủ; web thật 65/65 nhóm, 58 ảnh; ứng dụng `90f7639` khớp Netlify. [Báo cáo và giới hạn nguồn](../../docs/SCOPE-COMPLETION-2026-09-14.md). Đây là kiểm chứng nội bộ, không phải khách nghiệm thu hoặc chốt đầu vào kinh doanh của mọi đơn.

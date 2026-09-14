@@ -1,5 +1,11 @@
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
+## Hiện hành — danh mục và công thức phôi, 14/09/2026
+
+Bảng **Thông tin hình dạng phôi** có đủ dạng cấu kiện, hình dạng phôi, thông số tại mã/báo giá, ô công thức dài–rộng, khối lượng và diện tích phôi trên từng dòng, cùng nút xem công thức tổng hợp. Mác/đặc tính được gom theo vật liệu. [Thay đổi, cách dùng và kiểm chứng](docs/CATALOG-REVIEW-2026-09-14.md).
+
+Kiểm bản này: `node tools/verify-rules-catalog.cjs`; đối chiếu web: `node tools/check-rules-catalog-live.cjs`. Trạng thái 25 mục và các giới hạn khác xem [checklist hiện hành](meeting-2026-09-13/doi-chieu-2026-09-14/CHECKLIST-TRIEN-KHAI.md). Các đợt bên dưới là lịch sử.
+
 ## Hiện hành — đợt 5, ngày 14/09/2026
 
 Đã push **`ce92dfd`** và kiểm đúng build Netlify. Local **19/19 nhóm, 202 ca logic, 37 ca máy chủ**; web thật **8 nhóm giá/thuế + 9 nhóm hồi quy thiết bị**, có **20 ảnh web**. [Báo cáo, cách dùng và giới hạn đợt 5](docs/BATCH-05-2026-09-14.md). Chạy lại: `npm run verify:batch-five`.

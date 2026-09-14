@@ -3,6 +3,9 @@
 'use strict';
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const units={mm:[0,1],number:[0,0],'kg/m':[1,-1],'m²/m':[0,1]};
+const blankVariables=['PHOI_D','PHOI_R','KL_DV','DT_DV'];
+function blankFormulas(d){const factor=d.base==='sheet'?'PHOI_D * PHOI_R / 1000000':'PHOI_D / 1000';return {blankMass:d.blankMass||factor+' * KL_DV',blankSurface:d.blankSurface||factor+' * DT_DV'};}
+function expandedFormulas(d){const replacements={PHOI_D:d.length,PHOI_R:d.width,KL_DV:d.mass,DT_DV:d.surface};return Object.fromEntries(Object.entries(blankFormulas(d)).map(([key,value])=>[key,value.replace(/\b(PHOI_D|PHOI_R|KL_DV|DT_DV)\b/g,name=>'('+replacements[name]+')')]));}
 const validKey=k=>/^[A-Z][A-Z0-9_]{0,23}$/.test(k)&&!['RHO','PI','BW','SA','CW','CA'].includes(k);
 const positive=(v,label,zero=false)=>{if(v===''||v==null||!Number.isFinite(Number(v))||(zero?Number(v)<0:Number(v)<=0))throw Error(label+' phải là số '+(zero?'không âm':'dương'));return Number(v);};
 function dimension(source,vars){
@@ -21,6 +24,15 @@ function validateShape(d){
   for(const f of d.fields){if(!validKey(f.key)||seen.has(f.key)||!['fixed','input'].includes(f.mode)||!Object.hasOwn(units,f.unit))throw Error('Thông số bị trùng, sai ký hiệu, nơi nhập hoặc đơn vị: '+f.key);seen.add(f.key);dims[f.key]=units[f.unit];positive(f.sample,'Số thử '+f.key,true);}
   const expected={length:[0,1],width:d.base==='sheet'?[0,1]:[0,0],mass:[1,d.base==='sheet'?-2:-1],surface:[0,d.base==='sheet'?0:1]};
   for(const [key,unit]of Object.entries(expected)){const result=dimension(d[key],dims);if(!result.literal&&result.d.some((v,i)=>v!==unit[i]))throw Error('Công thức '+key+' sai đơn vị đầu ra');if(result.literal&&key!=='width'&&key!=='surface')throw Error('Công thức '+key+' cần biến có đơn vị, không dùng số trần');}
+  if(d.blankShape&&(!Object.hasOwn(C.shapes,d.blankShape)||d.blankShape==='piece'||(d.blankShape==='sheet')!==(d.base==='sheet')))throw Error('Hình dạng phôi không khớp cách tính tấm/thanh');
+  if(d.sourceRuleId!==undefined&&(typeof d.sourceRuleId!=='string'||d.sourceRuleId.length>100))throw Error('Quy tắc nguồn không hợp lệ');
+  const blankDims={...dims,PHOI_D:[0,1],PHOI_R:[0,1],KL_DV:expected.mass,DT_DV:expected.surface};
+  for(const key of ['blankMass','blankSurface'])if(d[key]!==undefined&&typeof d[key]!=='string')throw Error('Công thức phôi phải là chuỗi ký tự');
+  for(const [key,unit]of [['blankMass',[1,0]],['blankSurface',[0,2]]])if(d[key]){
+    if(d.fields.some(f=>blankVariables.includes(f.key)))throw Error('PHOI_D, PHOI_R, KL_DV và DT_DV dành cho công thức phôi');
+    const result=dimension(d[key],blankDims);
+    if(result.literal||result.d.some((v,i)=>v!==unit[i]))throw Error('Công thức '+(key==='blankMass'?'khối lượng phôi':'diện tích phôi')+' sai đơn vị đầu ra');
+  }
   if(typeof(d.notes??'')!=='string'||(d.notes||'').length>2000||typeof(d.condition??'')!=='string'||(d.condition||'').length>2000)throw Error('Ghi chú/điều kiện tối đa 2.000 ký tự');
   return d;
 }
@@ -32,7 +44,10 @@ function coefficients(m,sample=false){const d=m.shapeDefinition;validateShape(d)
 function geometry(n,count){const m=n.spec,d=m.shapeDefinition;validateShape(d);if(m.shape!==(d.base==='sheet'?'sheet':'profile'))throw Error('Dạng vật tư không khớp quy ước đã lưu');if(!Number.isFinite(count)||count<0)throw Error('Số lượng không hợp lệ');const vars=values(m,n.dims),length=positive(C.formula(d.length,vars),'Dài khai triển'),width=d.base==='sheet'?positive(C.formula(d.width,vars),'Rộng khai triển'):0;
   const factor=d.base==='sheet'?length*width/1e6:length/1000,rates=coefficients(effective(n));
   const mass=m.massOverride?C.materialMass(effective(n)):rates.mass,surface=m.areaOverride?C.materialSurface(effective(n)):rates.surface;
-  return {length,width,weight:factor*mass*count,blankArea:factor*surface*count,area:factor*surface*count,volume:factor*mass*count/m.density,quantity:count,measure:factor*count};
+  const blankVars={...vars,PHOI_D:length,PHOI_R:width,KL_DV:mass,DT_DV:surface};
+  const weight=(d.blankMass?positive(C.formula(d.blankMass,blankVars),'Khối lượng phôi sản phẩm'):factor*mass)*count;
+  const area=(d.blankSurface?positive(C.formula(d.blankSurface,blankVars),'Diện tích phôi sản phẩm'):factor*surface)*count;
+  return {length,width,weight,blankArea:area,area,volume:weight/m.density,quantity:count,measure:factor*count};
 }
 function applyShape(m,d,fixed={}){validateShape(d);const updated=C.copy(m);updated.shapeDefinition=C.copy(d);updated.shape=d.base==='sheet'?'sheet':'profile';updated.props={};for(const f of d.fields.filter(f=>f.mode==='fixed'))updated.props[f.key]=positive(fixed[f.key],'Thông số cố định '+f.key,true);delete updated.massOverride;delete updated.areaOverride;return updated;}
 function testShape(d,inputs,density=7850){const m=applyShape({id:'PREVIEW',density},d,inputs),dims=Object.fromEntries(d.fields.filter(f=>f.mode==='input').map(f=>[f.key,inputs[f.key]]));return geometry({spec:m,dims},1);}
@@ -43,5 +58,5 @@ function stocks(db,m){return (db.stockSizes||[]).filter(s=>s.active!==false&&s.b
 function draft(name='Vật tư chưa chọn mã',qty=1){positive(qty,'Số lượng');return {id:C.uid(),kind:'material',draftMaterial:true,materialId:'',name,qty,dims:{},spec:{id:'UNASSIGNED',name,shape:'piece',props:{},unit:'cái',price:0},rule:'',ruleSpec:{name:'Chưa chọn mã',length:'0',width:'0'},ops:[]};}
 function assign(n,m,rules){if(!m)throw Error('Chọn mã vật tư');const original=C.copy(n),shape=m.shapeDefinition;Object.assign(n,{draftMaterial:false,materialId:m.id,spec:C.copy(m),name:m.name,dims:{L:1000,W:300,H:50,F:15,...original.dims},rule:shape?shape.id:m.shape==='sheet'?'flat':'bar',ruleSpec:C.copy(shape?{id:shape.id,name:shape.name,shape:shape.base,length:shape.length,width:shape.width}:rules.find(r=>r.id===(m.shape==='sheet'?'flat':'bar')))});if(shape)for(const f of shape.fields.filter(f=>f.mode==='input'))if(original.dims?.[f.key]===undefined)n.dims[f.key]=f.sample;delete n.paramLinks;return n;}
 function validateCatalog(db){for(const [key,validate]of [['shapeDefinitions',validateShape],['stockSizes',validateStock]]){const rows=db[key]||[];if(!Array.isArray(rows)||rows.length>2000)throw Error('Danh mục '+key+' không hợp lệ');const seen=new Set();for(const row of rows){validate(row);if(seen.has(row.id))throw Error('Trùng mã '+row.id);seen.add(row.id);}}for(const m of [...db.materials||[],...C.flatten([...db.quote?.products||[],...db.library||[]]).map(n=>n.spec).filter(Boolean)])if(m.shapeDefinition){validateShape(m.shapeDefinition);if(m.shape!==(m.shapeDefinition.base==='sheet'?'sheet':'profile'))throw Error('Dạng vật tư không khớp quy ước');}}
-const api={dimension,validateShape,info,values,effective,stockProperties,coefficients,geometry,applyShape,testShape,saveShape,validateStock,saveStock,stocks,draft,assign,validateCatalog};if(typeof module!=='undefined')module.exports=api;else root.TPDefinitions=api;
+const api={blankFormulas,expandedFormulas,dimension,validateShape,info,values,effective,stockProperties,coefficients,geometry,applyShape,testShape,saveShape,validateStock,saveStock,stocks,draft,assign,validateCatalog};if(typeof module!=='undefined')module.exports=api;else root.TPDefinitions=api;
 })(typeof window!=='undefined'?window:globalThis);
