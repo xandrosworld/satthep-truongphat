@@ -1,0 +1,38 @@
+/* Local quote workspace: independent documents, immutable approved snapshots. */
+'use strict';
+const Quotes={conflict:false,lastStored:null};
+function quoteCheckpoint(){db.savedQuotes??=[];db.quote.workspaceKey??=C.uid();const key=db.quote.workspaceKey,index=db.savedQuotes.findIndex(x=>x.key===key),previous=db.savedQuotes[index];
+  if(previous&&JSON.stringify(previous.quote)===JSON.stringify(db.quote))return;
+  const record={key,revision:(previous?.revision||0)+1,updated:new Date().toISOString(),quote:C.copy(db.quote)};
+  if(index<0)db.savedQuotes.push(record);else db.savedQuotes[index]=record;
+}
+function quoteList(){quoteCheckpoint();openDialog('Danh sách báo giá trên máy này',`<div class="actions">${workButton('+ Báo giá mới','new-quote','','primary')}${workButton('Nhân bản báo giá đang mở','copy-quote')}${workButton('Xuất Excel chi tiết','export-workbook')}</div><p class="help-text">Mỗi báo giá giữ cấu thành, đơn giá và hệ số riêng. Danh mục chung được dùng để tạo mới; giá đã lưu chỉ đổi khi chủ động cập nhật. Đây là dữ liệu trên trình duyệt, chưa phải dữ liệu dùng chung của nhiều người.</p><label class="field"><span>Tìm mã / khách hàng / công trình</span><input data-quote-list-search placeholder="Gõ để lọc danh sách"></label><div class="table-scroll"><table class="quotes-list"><thead><tr><th>Báo giá / khách hàng</th><th>Công trình</th><th>Trạng thái</th><th>Cập nhật</th><th></th></tr></thead><tbody>${db.savedQuotes.slice().sort((a,b)=>b.updated.localeCompare(a.updated)).map(x=>`<tr data-quote-list-row data-search="${esc(foldText(x.quote.id+' '+x.quote.customer+' '+x.quote.project))}"><td><strong>${esc(x.quote.id)}</strong><small class="subtext">${esc(x.quote.customer)}</small></td><td>${esc(x.quote.project)}</td><td>${x.quote.status==='approved'?'Đã duyệt nội bộ':'Nháp'}${x.key===db.quote.workspaceKey?'<small class="subtext">Đang mở</small>':''}</td><td>${esc(new Date(x.updated).toLocaleString('vi-VN'))}</td><td>${workButton('Mở','open-quote',`data-id="${x.key}"`,'small')}</td></tr>`).join('')}</tbody></table></div><div class="notice">Bản đã duyệt được giữ trong lịch sử. Chỉnh tiếp đưa báo giá về nháp, không ghi đè phiên bản đã duyệt. Nên sao lưu định kỳ.</div>`);$('#dialog').classList.add('wide-dialog');}
+function quoteSwitch(quote){closeDialog();quoteCheckpoint();db.quote=C.copy(quote);db.quote.workspaceKey??=C.uid();selected=db.quote.products[0]?.id;page='quote';tab='bom';UX.undo=[];UX.redo=[];UX.checked.clear();PA.query='';initUX();persist();render();window.scrollTo(0,0);}
+function quoteNew(copyCurrent=false,source=null){const base=source||db.quote,day=new Date().toLocaleDateString('en-CA');
+  openDialog(copyCurrent?'Nhân bản báo giá':'Tạo báo giá mới',`<div class="form-grid">${field('Mã báo giá','id',(copyCurrent?base.id+'-COPY':'BG-'+day.replaceAll('-','')+'-'+String((db.savedQuotes?.length||0)+1).padStart(3,'0')),'text','required')}${field('Ngày','date',day,'date','required')}</div>${field('Khách hàng','customer',copyCurrent?base.customer:'','text','required')}${field('Công trình / nội dung','project',copyCurrent?base.project:'','text','required')}<p class="help-text">${copyCurrent?'Giữ cấu thành, giá và hệ số thành bản độc lập; bỏ trạng thái duyệt và giá chốt tay để rà lại.':'Bắt đầu báo giá trống, sử dụng danh mục vật tư và công đoạn hiện có.'}</p>`,copyCurrent?'Tạo bản sao':'Tạo báo giá',f=>{
+    const id=String(f.get('id')).trim();if(db.savedQuotes?.some(x=>x.quote.id===id))throw Error('Mã báo giá đã tồn tại trên máy này');
+    const q=copyCurrent?C.copy(base):{...C.copy(base),products:[],ratesSnapshot:C.copy(db.rates),pricing:TPPrice.defaults(),expenses:[],remnantSelections:{},remnantMode:'all'};
+    Object.assign(q,{id,date:f.get('date'),customer:String(f.get('customer')).trim(),project:String(f.get('project')).trim(),status:'draft',commercial:{status:'draft',version:0,events:[]},workspaceKey:C.uid()});
+    if(q.pricing)q.pricing.overrides={};if(!copyCurrent){delete q.customerInfo;delete q.request;delete q.legacySource;delete q.approvedOffer;delete q.approvedBaseline;}const contact=inCustomers().find(c=>c.name===q.customer);if(contact)q.customerInfo=C.copy(contact);quoteSwitch(q);if(!copyCurrent){tab='intake';render();}
+  });
+}
+function quoteHistory(){const key=db.quote.workspaceKey,history=db.history.map((h,i)=>({...h,index:i})).filter(h=>h.quote.workspaceKey?h.quote.workspaceKey===key:h.quote.id===db.quote.id);
+  openDialog('Phiên bản đã duyệt · '+esc(db.quote.id),history.length?`<p class="help-text">Các phiên bản dưới đây không bị sửa theo dữ liệu hiện tại. Muốn dùng lại, mở thành một báo giá mới.</p>${history.slice().reverse().map(h=>`<div class="history-row"><div><strong>${esc(h.quote.id)}</strong><small>${esc(new Date(h.at).toLocaleString('vi-VN'))} · ${esc(h.quote.pricing?TPPrice.METHODS.find(x=>x[0]===h.quote.pricing.selected)?.[1]||'':'Cách tính cũ')}</small></div><strong>${money(h.total)} đ</strong>${workButton('Xem bản chào','view-version',`data-index="${h.index}"`,'small')}${workButton('Dùng làm bản mới','copy-version',`data-index="${h.index}"`,'small')}</div>`).join('')}`:empty('Chưa có phiên bản duyệt','Duyệt nội bộ tại Bản chào giá để lưu một phiên bản.'));$('#dialog').classList.add('wide-dialog');}
+function quoteViewVersion(index){const h=db.history[index];if(!h)return;const activeDb=db,activeResult=result;let html;
+  try{db={...db,quote:C.copy(h.quote)};result=C.calculate(db);html=paper();}finally{db=activeDb;result=activeResult;}
+  openDialog('Chỉ xem · '+esc(h.quote.id),`<div class="notice">Phiên bản lưu lúc ${esc(new Date(h.at).toLocaleString('vi-VN'))}; không thay báo giá đang làm.</div>${html}`);$('#dialog').classList.add('wide-dialog');
+}
+function installQuotesUI(){
+  const oldPersist=persist,oldMutation=mutation;
+  persist=()=>{if(Quotes.conflict){$('#save-status').textContent='Tab khác vừa thay dữ liệu — cần tải lại';return;}quoteCheckpoint();oldPersist();try{Quotes.lastStored=localStorage.getItem(STORE);}catch{}};
+  mutation=(action,options={})=>{if(Quotes.conflict)return toast('Một tab khác vừa thay dữ liệu. Sao lưu bản đang mở trước, rồi tải lại trang.');return oldMutation(action,options);};
+  actions['quote-list']=quoteList;
+  actions.history=quoteHistory;
+  const originalIntro=paIntro;paIntro=()=>originalIntro()+`<div class="quotes-tools">${btn('Danh sách báo giá','quote-list')}${workButton('+ Báo giá mới','new-quote')}${workButton('Nhân bản','copy-quote')}${workButton('Xuất Excel chi tiết','export-workbook')}<span>Lưu riêng từng báo giá · giữ phiên bản đã duyệt</span></div>`;
+  window.addEventListener('storage',e=>{if(e.key===STORE&&e.newValue!==Quotes.lastStored){Quotes.conflict=true;$('#save-status').textContent='Dữ liệu vừa thay đổi ở tab khác';toast('Tab khác vừa lưu dữ liệu. Sao lưu bản đang làm rồi tải lại để tránh ghi đè.');}});
+  document.addEventListener('input',e=>{if(e.target.hasAttribute('data-quote-list-search')){const value=foldText(e.target.value);document.querySelectorAll('[data-quote-list-row]').forEach(row=>row.hidden=!row.dataset.search.includes(value));}});
+  document.addEventListener('click',event=>{const el=event.target.closest('[data-work]');if(!el)return;const action=el.dataset.work;if(['new-quote','copy-quote','open-quote','copy-version'].includes(action)&&Quotes.conflict)return toast('Sao lưu và tải lại trước khi đổi báo giá.');
+    if(action==='new-quote')quoteNew();else if(action==='copy-quote')quoteNew(true);else if(action==='open-quote'){const record=db.savedQuotes.find(x=>x.key===el.dataset.id);if(record)quoteSwitch(record.quote);}
+    else if(action==='view-version')quoteViewVersion(Number(el.dataset.index));else if(action==='copy-version')quoteNew(true,db.history[Number(el.dataset.index)].quote);
+  });
+}

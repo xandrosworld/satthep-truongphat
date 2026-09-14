@@ -1,0 +1,12 @@
+Nguồn: tin nhắn khách được Mai Tấn Thành dán trong hội thoại ngày 12/09/2026. Không có timestamp riêng của khách trong đoạn dán.
+
+Công thức tính toán giá sản xuất
+Giá sản xuất = (Khối lượng VT * giá VT + KL vận chuyển * giá (nhập vật tư + thuê ngoài)+ KL theo nguyên công * giá Nguyên công + KL hoàn thiện BM * giá HTBM)*(1+hệ số sản xuất)* (1+Hệ số quản lý)*(1+ hệ số khác (nếu có))
+Giá gốc = giá sản xuất + giá vận chuyển + lắp đặt
+Giá bán = Giá gốc* (1 +HS lợi nhuận)*(1+HS Xly)*(1+HS đơn hàng)*(1+ hệ số khách hàng)*....(nếu có thêm yếu tố tác động)
+Giá vật tư: theo tham chiếu hoặc cập nhật mới theo mã VT theo đơn vị
+Giá vận chuyển: Phân loại khối lượng/ xác định đơn vị tính/ cách thức tính giá đã trao đổi
+Giá nguyên công: có lựa chọn phương pháp tính giá chọn phương pháp nào thì có giá tương ứng với cách đó (lưu ý: có giá tự sản xuất và giá thuê ngoài)
+Giá HTBM: tương tự
+Giá nguyên công và hoàn thiện bề mặt lưu ý: tính cho mã vật tư/ cấu kiện và sản phẩm. Bám theo tực tế sản xuất để xây dựng
+Mã vật tư có 1 số nguyên công ==> Cấu kiện bổ sung thêm 1 số nguyên công ==> hoàn thiện 1 số nguyên công. Hoặc khai báo toàn bộ trong mã vật tư nhưng khi đó lưu ý giá theo yếu tố tác động như khối lượng, số lượng bám theo đúng bản chất

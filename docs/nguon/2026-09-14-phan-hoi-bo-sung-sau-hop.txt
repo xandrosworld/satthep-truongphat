@@ -1,0 +1,66 @@
+PHẢN HỒI KHÁCH HÀNG BỔ SUNG SAU CUỘC HỌP 13/09/2026
+
+Nguồn: nội dung và ảnh người dùng chuyển lại trong cuộc trò chuyện ngày 14/09/2026.
+Trạng thái: nguồn nguyên văn do người dùng cung cấp; chưa có mốc giờ riêng và chưa đối chiếu với hệ thống nhắn tin của khách.
+
+--- NỘI DUNG 1 ---
+
+Anh lưu ý 1 điểm quan trọng nữa mà hôm qua a e mình chưa thảo luận là bóc tách chào giá bằng AI. Chắc em chờ ổn định cấu trúc rồi mới bổ sung à
+Em lưu ý đối với 4 phương án giá
+Thì các PA giá như kg, TMC, đối thủ thì đã bao gồm toàn bộ các chi phí rồi. 
+Những chi phí vận chuyển , qlsx... Có thể phiên tư phương án tính toán sang để có tham số đối chiếu
+
+--- NỘI DUNG 2 ---
+
+Phần tạo báo giá em đưa thông tin vào đây luôn em ạ
+
+Chữ khách ghi chú trực tiếp trên ảnh:
+
+1. Đưa luôn bổ sung tài liệu vào tạo báo giá
+- thông Tin khách hàng
+- Thông tin dự án công trình
+- Tiến độ, yêu cầu thực thực hiện
+- Tài liệu dữ liệu, yêu cầu kỹ thuật
+
+--- NỘI DUNG 3 ---
+
+Chữ khách ghi chú trực tiếp trên ba ảnh bổ sung:
+
+3.1. Liên kết kích thước
+
+em lưu ý
+Liên kết kích thước không phải số liệu giống nhau mà
+phải liên kết bằng công thức
+Cần có kết nối bằng công thức
+VD: Chiều dài của mã vật tư A = Chiều rộng SP - 20
+
+3.2. Phân biệt các loại dòng trong cấu thành
+
+4 nhóm màu này em để tương phản cao 1 chút
+để nhìn vào 1 cái biết ngay
+Đâu là sản phẩm
+Đâu là cấu kiện
+Đâu là vật tư trong cấu kiện
+Đâu là vật tư trong sản phẩm
+
+3.3. Chi phí lắp đặt của thiết bị/linh kiện
+
+Nội dung này hôm qua anh đã trao đổi
+Tuy nhiên chưa nói đến giá của mã vật tư thiết bị
+Các loại thiết bị linh kiện ngoài giá vật tư ra thì còn giá lắp đặt
+của chi tiết này
+Có thể tính theo % giá trị của thiết bị 20-30%
+Hoặc đơn giá cụ thể
+
+--- CÁCH HIỂU DÙNG ĐỂ TRIỂN KHAI ---
+
+1. Từ “phiên tư” trong tin nhắn có khả năng là lỗi gõ của “chuyển từ”. Không sửa nguyên văn ở trên; yêu cầu được hiểu theo cả câu là có thể lấy các khoản chi phí của phương án tính toán sang bảng phân tích làm tham số đối chiếu.
+2. “Đã bao gồm toàn bộ các chi phí” đóng câu hỏi trước đây về việc có cộng thêm giao hàng, lắp đặt, quản lý sản xuất... vào giá kg/TMC/đối thủ hay không: không cộng lại các khoản này vào giá của ba phương án.
+3. Khách chưa nói thuế đã nằm trong ba giá này. Thuế phải là điều kiện thương mại tách riêng, không tự coi là một chi phí đã bao gồm.
+4. AI được bổ sung sau khi cấu trúc dữ liệu ổn định. Không được hiểu thành bỏ AI; cũng không tự mở rộng phạm vi đã xác nhận sang mọi định dạng CAD/3D.
+5. Tài liệu phải được đính kèm ngay lúc tạo báo giá và lưu cùng hồ sơ đó. AI bóc tách là bước xử lý sau khi có tài liệu, không phải điều kiện để lưu hồ sơ ban đầu.
+6. Liên kết kích thước là quan hệ bằng công thức giữa tham số của sản phẩm/cấu kiện/vật tư, không phải chỉ sao chép một số bằng nhau. Ví dụ khách đưa là một trường hợp minh họa, không phải công thức mặc định cho mọi mã.
+7. Bốn loại dòng phải nhận ra ngay: sản phẩm, cấu kiện, vật tư nằm trong cấu kiện và vật tư nằm trực tiếp trong sản phẩm. Màu cần tương phản cao hơn; khi triển khai nên có thêm nhãn, biểu tượng và thụt cấp để không phụ thuộc riêng vào màu.
+8. Thiết bị/linh kiện có thể có chi phí lắp đặt riêng ngoài giá mua vật tư. Cách tính phải cho chọn theo phần trăm giá trị thiết bị hoặc theo đơn giá cụ thể. Khoảng 20–30% là ví dụ khách nêu, không phải tỷ lệ cố định để hard-code.
+9. Chi phí lắp đặt của thiết bị/linh kiện phải tách khỏi lắp đặt toàn bộ sản phẩm tại công trình và khỏi công đoạn đã bao gồm lắp đặt; phải có cách đánh dấu đã gồm để tránh cộng hai lần.
+10. Ba ảnh chú thích mới được cung cấp trong hội thoại ngày 14/09; văn bản trên ảnh đã được chép nguyên ý ở mục 3. Các ảnh local dùng trong checklist chỉ để chỉ đúng vùng giao diện hiện tại, không thay thế ảnh chú thích gốc của khách.

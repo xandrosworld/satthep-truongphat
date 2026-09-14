@@ -1,0 +1,33 @@
+Hãy chép lời từ đúng file MP3 tôi đính kèm, bằng ngôn ngữ được nói trong file. Đây là yêu cầu phiên âm, không phải tóm tắt hay phân tích cuộc họp.
+
+FILE: {{FILE}}
+MÃ ĐOẠN: {{ID}}
+THỜI LƯỢNG NỘI DUNG MP3: {{DURATION}}
+VỊ TRÍ TRONG VIDEO GỐC: {{START}} đến {{END}}
+ĐẦU ĐOẠN TRÙNG VỚI ĐOẠN TRƯỚC: {{OVERLAP}}
+
+Yêu cầu bắt buộc:
+1. Chỉ ghi những gì nghe được trong file. Không dùng nội dung từ cuộc trò chuyện trước, kiến thức ngành hay suy luận để điền lời. Nếu bạn không truy cập/nghe được âm thanh, nói rõ và dừng, không tạo bản chép giả.
+2. Giữ đúng ý và lời nói, kể cả câu nói dở, phủ định, sửa lời, điều kiện, câu hỏi và lời xác nhận. Được thêm dấu câu để dễ đọc; không viết lại thành văn bản trau chuốt, không biến gợi ý thành quyết định đã chốt.
+3. Đặc biệt thận trọng với số tiền, số lượng, kích thước, đơn vị, tỷ lệ, mã vật tư và công thức. Nghe không chắc thì ghi [không nghe rõ] tại đúng vị trí, không tự sửa số hoặc tính công thức. Không suy ra ký hiệu, dấu ngoặc hay thuật ngữ mà người nói không phát âm rõ.
+4. Phân biệt giọng nói bằng Người nói 1, Người nói 2... trong phạm vi file này. Không tự gán tên, chức danh hoặc bên khách/bên lập trình. Không chắc thì dùng [chưa rõ người nói]. Nhãn giữa các file không mặc nhiên là cùng một người. Khi nói chồng, ghi [nói chồng] và chỉ chép phần nghe rõ.
+5. Mốc thời gian tính từ 00:00:00 của CHÍNH MP3 này. Dùng thời gian thực đo được từ âm thanh/công cụ. Mỗi lượt nói có một mốc bắt đầu–kết thúc; nếu một người nói dài thì chia thành đoạn khoảng 15–30 giây, ưu tiên hết câu. Không cộng giờ bắt đầu video vào các mốc này: tôi sẽ tự đối chiếu bằng bảng thời gian.
+6. Không bịa mốc thời gian. Nếu công cụ không xác định được thời gian, báo rõ giới hạn và ghi [chưa xác định mốc] ở phần đó; không trình bày thời gian ước lượng như số đã đo chính xác. Không dồn toàn bộ file dài vào vài đoạn không có mốc.
+7. Khi nghe 'chỗ này', 'cái này', 'như trên màn hình', giữ nguyên lời đó. Bạn chỉ nhận âm thanh, không được tự mô tả màn hình hoặc gán tên ô/nút mà bạn không nhìn thấy. Ghi [tham chiếu màn hình] khi lời nói cho thấy cần xem hình để hiểu.
+8. Không tạo lời nói trong khoảng im lặng, nhạc hay âm thanh không phải lời nói. Khoảng im lặng đáng kể hoặc mất tiếng có thể ghi [im lặng/không có lời nói, thời gian ...]. Không thêm câu mở đầu, kết luận hoặc lời cảm ơn nếu file không có.
+9. Chép cả phần chồng ở đầu/cuối file, không tự bỏ vì thấy giống đoạn trước. Tôi sẽ xử lý trùng theo mốc video. Chỉ biết tên file và thời gian không đủ để đoán nội dung.
+10. Chép đến hết file. Nếu giới hạn trả lời buộc phải dừng, ghi rõ 'CHƯA HẾT FILE — đã chép đến ...', chỉ dùng mốc cuối thực sự xác định được. Không tự kết luận phần còn lại. Khi tôi yêu cầu tiếp tục, tiếp tục từ chỗ đã dừng và đánh dấu phần chồng nếu có.
+
+Định dạng trả lời, không cần lời dẫn:
+FILE: [tên file thực tế]
+MÃ ĐOẠN: [mã đoạn]
+MỐC THỜI GIAN: tính từ đầu MP3; ghi rõ nếu không đo được.
+
+[hh:mm:ss–hh:mm:ss] Người nói ...: lời nói nghe được
+
+Cuối bản chép, thêm:
+- TRẠNG THÁI: ĐÃ HẾT FILE hoặc CHƯA HẾT FILE.
+- ĐÃ CHÉP ĐẾN: mốc cuối xác định được; không lấy thời lượng khai báo làm bằng chứng đã nghe hết.
+- CẦN NGHE/XEM LẠI: các mốc có số liệu không rõ, nói chồng hoặc tham chiếu màn hình; không suy đoán nội dung còn thiếu.
+
+Không kèm phần phân tích yêu cầu, đề xuất giải pháp hay tóm tắt. Tôi sẽ đối chiếu bản chép với âm thanh và video sau.

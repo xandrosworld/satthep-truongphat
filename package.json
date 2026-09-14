@@ -1,0 +1,30 @@
+{
+  "name": "truong-phat-quotation-demo",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node tools/serve.cjs",
+    "start:team": "node server/app.cjs",
+    "backup:team": "node server/backup.cjs",
+    "test:team": "node --test tests/server.test.cjs tests/intake-server.test.cjs",
+    "test:intake": "node --test tests/intake.test.cjs tests/intake-server.test.cjs",
+    "test:intake:ui": "node tests/intake-browser.cjs",
+    "test:phase1": "node tests/work-browser.cjs",
+    "test:completion": "node tests/completion-browser.cjs",
+    "test:manufacturing": "node tests/manufacturing-browser.cjs",
+    "verify:phase1": "node tools/verify-phase1.cjs",
+    "test": "node --test tests/core.test.cjs tests/entry.test.cjs tests/remnants.test.cjs tests/model3d.test.cjs tests/model3d-render.test.cjs tests/pricing.test.cjs tests/work.test.cjs tests/manufacturing.test.cjs tests/completion.test.cjs tests/intake.test.cjs",
+    "test:pricing": "node tests/pricing-browser.cjs",
+    "test:ui": "node tests/browser.cjs",
+    "test:ux": "node tests/ux.cjs",
+    "test:customer": "node tests/customer-perspective.cjs",
+    "test:workflow": "node tests/workflow.cjs",
+    "test:remnants": "node tests/remnants-browser.cjs",
+    "test:3d": "node tests/model3d-browser.cjs",
+    "test:scroll": "node tests/scroll-browser.cjs",
+    "test:site": "node tests/site-review.cjs",
+    "test:offline": "node tests/offline.cjs && node tests/remnants-browser.cjs --offline && node tests/model3d-browser.cjs --offline && node tests/scroll-browser.cjs --offline && node tests/site-review.cjs --offline",
+    "build": "node tools/build.cjs"
+  },
+  "devDependencies": { "@playwright/test": "1.58.2" }
+}

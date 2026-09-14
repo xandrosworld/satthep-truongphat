@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#152c4b">
+  <meta name="description" content="Bản demo báo giá cơ khí Trường Phát: danh mục vật tư, cấu kiện, công thức khai triển, hao hụt và giá thành.">
+  <title>Chào giá cơ khí | Trường Phát</title>
+  <link rel="icon" href="data:,"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="pricing.css"><link rel="stylesheet" href="intake.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="#quote"><span class="brand-mark">TP</span><span><strong>TRƯỜNG PHÁT</strong><small>Manufacturing workspace</small></span></a>
+    <span class="nav-label">KINH DOANH</span>
+    <nav aria-label="Điều hướng chính">
+      <button data-page="customers"><span class="nav-symbol">◇</span> Đầu vào khách hàng</button>
+      <button data-page="quote"><span class="nav-symbol">▤</span> Báo giá <span class="nav-count">01</span></button>
+      <button data-page="materials"><span class="nav-symbol">▦</span> Danh mục vật tư</button>
+      <button data-page="library"><span class="nav-symbol">◇</span> Thư viện mẫu</button>
+      <button data-page="rates"><span class="nav-symbol">₫</span> Đơn giá đầu vào</button>
+      <button data-page="rules"><span class="nav-symbol">ƒ</span> Quy ước & công thức</button>
+    </nav>
+    <div class="side-bottom"><div class="demo-status">Bản demo nghiệp vụ</div><p>Dữ liệu minh họa được lưu trên trình duyệt đang sử dụng.</p><button class="side-help" data-action="guide">Hướng dẫn trình diễn <span>↗</span></button><div class="account"><span class="avatar">TP</span><span><strong>Kỹ thuật báo giá</strong><small>Trường Phát Group</small></span></div></div>
+  </aside>
+  <div class="main">
+    <header class="topbar"><div class="breadcrumbs"><button class="mobile-menu" data-action="menu" aria-label="Mở menu">☰</button><span>Không gian làm việc</span><span>/</span><strong id="page-label">Báo giá</strong></div><div class="top-actions"><span id="save-status" role="status">Đã lưu trên máy</span><button class="button small" data-action="backup">Sao lưu dữ liệu</button><span class="avatar small-avatar">TP</span></div></header>
+    <main id="content"></main>
+  </div>
+  <dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="print-area"></div>
+  <script src="core.js"></script><script src="completion-core.js"></script>
+<script src="source-core.js"></script>
+<script src="conventions-core.js"></script><script src="work-core.js"></script><script src="manufacturing-core.js"></script><script src="pricing-core.js"></script><script src="entry-core.js"></script><script src="model3d.js"></script><script src="model3d-render.js"></script><script src="ux.js"></script><script src="remnant-ui.js"></script><script src="model3d-ui.js"></script><script src="pricing-ui.js"></script><script src="work-ui.js"></script><script src="manufacturing-ui.js"></script><script src="quotes-ui.js"></script><script src="xlsx.js"></script><script src="export-ui.js"></script><script src="team-ui.js"></script><script src="team-access-ui.js"></script><script src="quote-output-ui.js"></script><script src="rate-lab-ui.js"></script><script src="catalog-price-ui.js"></script>
+<script src="completion-ui.js"></script>
+<script src="source-ui.js"></script>
+<script src="catalog-sync-ui.js"></script>
+<script src="conventions-ui.js"></script><script src="intake-core.js"></script><script src="intake-ui.js"></script><script src="quote-prices-ui.js"></script><script src="app.js"></script>
+</body>
+</html>

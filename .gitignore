@@ -1,0 +1,53 @@
+node_modules/
+artifacts/
+dist/
+truong-phat-demo.zip
+data/
+
+# Runtime data, local databases and generated evidence
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.log
+*.pyc
+__pycache__/
+
+# Customer recordings, screenshots and office deliverables are kept locally.
+# This repository is public; do not publish customer or financial records.
+*.mp3
+*.mp4
+*.wav
+*.m4a
+*.eml
+*.docx
+*.pdf
+*.xlsx
+*.xls
+*.zip
+*.jpg
+*.jpeg
+*.png
+
+# Private commercial/legal working folders
+/12.9/
+/bao-gia-truong-phat-2026-09-10/
+/chuan-bi-gap-khach-2026-09-11/
+/de-nghi-thanh-toan-truong-phat-2026-09-10/
+/hop-dong-truong-phat-2026-09-10/
+/khoi-dong-du-an-truong-phat-2026-09-10/
+/urd-truong-phat-2026-09-12/
+/giai-doan-1-2026-09-12/
+/meeting-2026-09-13/
+/readme-ghiam-13.9.md
+/index (1).html
+/docs/nguon/2026-09-11-ban-chep-loi-khach-hang.txt
+
+# Document-generation scripts contain contractual source data and are local-only.
+/tools/*.py
+
+# Keep the implementation checklist in Git; raw meeting media remains local.
+!/meeting-2026-09-13/
+/meeting-2026-09-13/*
+!/meeting-2026-09-13/doi-chieu-2026-09-14/
+/meeting-2026-09-13/doi-chieu-2026-09-14/*
+!/meeting-2026-09-13/doi-chieu-2026-09-14/CHECKLIST-TRIEN-KHAI.md
