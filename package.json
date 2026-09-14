@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
+    "verify:batch-two": "node tools/verify-batch-two.cjs",
     "start": "node tools/serve.cjs",
     "start:team": "node server/app.cjs",
     "backup:team": "node server/backup.cjs",

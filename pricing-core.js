@@ -53,9 +53,9 @@ function stockNet(row){const {spec:m,geometry:g}=row;
   return unitMeasure>0?g.measure/unitMeasure*m.price:0;
 }
 function calculate(db){
-  const base=legacyCalculate(db),q=db.quote,config=q.pricing;
+  const base=legacyCalculate(db),q={...db.quote,products:base.products.map(r=>r.node)},config=q.pricing;
   if(!config)return base;
-  const errors=base.errors.filter(e=>!e.startsWith('Biên lợi nhuận')),warnings=[];
+  const errors=[...base.errors.filter(e=>!e.startsWith('Biên lợi nhuận')),...W.methodErrors(q)],warnings=[],includedGenerated=[];
   if(!q.products.length)errors.push('Chưa có sản phẩm trong báo giá');
   const p={...defaults(),...config};
   for(const key of ['overhead','management','special','profit','processing','order','reserve','customer']){
@@ -76,16 +76,16 @@ function calculate(db){
     }
     for(const [i,op] of (n.ops||[]).entries()){
       let item={name:'Nguyên công chưa có giá',mode:op.mode,unit:'',basis:0,rate:0,cost:0,factors:[],index:i};
-      if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.id);r.ownOps.push({...item,name:rate?.name||op.id,skipped:true,reason:'Đã nằm trong gói thuê '+base.nodes[r.coveredBy].node.name});continue;}
+if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.id);r.ownOps.push({...item,name:rate?.name||op.id,skipped:true,reason:'Đã nằm trong gói thuê '+base.nodes[r.coveredBy].node.name});for(const [ri,recipe]of W.recipes(rate||{}).entries())try{const g=W.consume(recipe,n,r,ri,i,rate.name,W.methodFor(op,q)==='fixed'?'gói':W.methodFor(op,q)==='direct'?op.priceUnit:(rate[op.mode+'Unit']||rate.unit));includedGenerated.push({...g,referenceCost:g.cost,cost:0,included:true,reason:'Đã gồm trong gói thuê '+base.nodes[r.coveredBy].node.name});}catch(e){includedGenerated.push({ownerId:n.id,rateName:rate.name,materialId:recipe.spec?.id,error:e.message,included:true,cost:0});}continue;}
       try{
         const rate=q.ratesSnapshot.find(x=>x.id===op.id);if(!rate)throw Error('Không tìm thấy mã nguyên công');
         const ctx={...context(n,r),...W.context(n,r,q.products)};
-        const applied=W.operation(rate,op,ctx,r,tier),cost=applied.cost;
+        const applied=W.operation(rate,{...op,pricingMethod:W.methodFor(op,q)},ctx,r,tier),cost=applied.cost;
         item={...item,...applied,name:rate.name};
         parts[op.mode==='outside'?'outside':'factory']+=cost;
         if(op.mode==='inside'&&rate.tmcReplace){r.replaceableFactory+=cost;if(!op.afterPackage)r.ownReplaceableFactory+=cost;}
-        if(op.mode==='inside'||op.suppliesIncluded===false)for(const [recipeIndex,recipe] of W.recipes(rate).entries()){
-          const generated=W.consume(recipe,n,r,recipeIndex,i,rate.name);r.ownGenerated.push(generated);parts.finishing+=generated.cost;
+        for(const [recipeIndex,recipe] of W.recipes(rate).entries()){
+          const generated=W.consume(recipe,n,r,recipeIndex,i,rate.name,applied.unit);if(op.mode==='outside'&&op.suppliesIncluded!==false)includedGenerated.push({...generated,referenceCost:generated.cost,cost:0,included:true,reason:'Vật tư đã gồm trong giá thuê nguyên công'});else{r.ownGenerated.push(generated);parts.finishing+=generated.cost;}
         }
       }catch(e){item.error=e.message;errors.push(n.name+' / '+e.message);}
       r.ownOps.push(item);
@@ -166,7 +166,7 @@ function calculate(db){
   }));
   const total=totalOf(products);
   if(!Number.isFinite(total.grand))errors.push('Kết quả tính vượt giới hạn; kiểm tra số liệu');
-  return {...base,products,total,alternatives,pricing:{...p,selected:selected.id},warnings,generated,logistics,packages:Object.values(base.nodes).filter(r=>r.packageCharge).map(r=>r.packageCharge),
+  return {...base,products,total,alternatives,pricing:{...p,selected:selected.id},warnings,generated,includedGenerated,logistics,packages:Object.values(base.nodes).filter(r=>r.packageCharge).map(r=>r.packageCharge),
     reuse:{...base.reuse,chargeAll:reuseCost(false),excludeSelected:reuseCost(true)},errors:[...new Set(errors)]};
 }
 function demoSeed(){
@@ -186,7 +186,7 @@ function demoSeed(){
     const leaf=body.children[0];leaf.id=C.uid();leaf.spec=copy(material);leaf.dims={L:2000,W:width,H:50,F:0};delete leaf.paramLinks;
     const bolt=copy(db.quote.products[0].children[2]);bolt.id=C.uid();bolt.qty=4;bolt.spec=copy(db.materials.find(m=>m.id==='LK-M8'));
     const pack={id:C.uid(),kind:'material',materialId:packing.id,name:packing.name,qty:1,spec:copy(packing),dims:{},rule:'bar',ruleSpec:copy(db.rules.find(r=>r.id==='bar')),ops:[]};
-    const n={id:C.uid(),kind:'product',name:'Máng cáp',namePattern:'Máng cáp {W} × {H}, dài {L} mm',params:{L:2000,W:width,H:50},qty:10,unit:'cái',model:'tray',children:[body,bolt,pack],ops:[{id:finish,mode:finish==='paint'?'inside':'outside',amount:1,suppliesIncluded:true}],transport:0,install:0,tmcKind:'tray',pricePerKg:42000,competitorPrice:width===300?395000:320000};
+    const n={id:C.uid(),kind:'product',name:'Máng cáp',namePattern:'Máng cáp {W} × {H}, dài {L} mm',params:{L:2000,W:width,H:50},qty:10,unit:'cái',model:'tray',children:[body,bolt,pack],ops:[{id:finish,mode:finish==='paint'?'inside':'outside',amount:1,suppliesIncluded:true,measurementConfirmed:true}],transport:0,install:0,tmcKind:'tray',pricePerKg:42000,competitorPrice:width===300?395000:320000};
     leaf.paramLinks={L:'L',W:'W',H:'H'};C.formatName(n);return n;
   }
   db.quote.products=[product(300,'paint'),product(200,'galvanize')];

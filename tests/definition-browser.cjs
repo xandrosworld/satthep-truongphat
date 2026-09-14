@@ -1,7 +1,7 @@
 'use strict';
 const {chromium,expect}=require('@playwright/test'),fs=require('node:fs'),path=require('node:path'),{pathToFileURL}=require('node:url');
 const url=process.env.BATCH_ONE_URL||pathToFileURL(path.resolve('dist/index.html')).href;
-const dir=path.resolve('artifacts/customer-review/batch-01-complete-2026-09-14',url.startsWith('https:')?'live':'local');fs.mkdirSync(dir,{recursive:true});
+const dir=path.resolve(process.env.DEFINITION_ARTIFACT_ROOT||'artifacts/customer-review/batch-01-complete-2026-09-14',url.startsWith('https:')?'live':'local');fs.mkdirSync(dir,{recursive:true});
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true}),p=await browser.newPage({viewport:{width:1560,height:1080}}),errors=[],checks=[],screens=[];p.on('pageerror',e=>errors.push(e.message));p.setDefaultTimeout(10000);
 const click=a=>p.locator(`[data-definition="${a}"]`).first().click(),submit=async()=>{await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();},shot=async n=>{await p.screenshot({path:path.join(dir,n+'.png'),fullPage:true});screens.push(n+'.png');},pass=s=>{checks.push(s);console.log('PASS '+s);},tab=async n=>{await p.locator(`[data-tab="${n}"]`).click();};
 try{

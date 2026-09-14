@@ -9,16 +9,27 @@ const METHODS=[['kg_net','Theo kg vận chuyển'],['kg_purchase','Theo kg vật
 function context(n,r,products){
   const leaves=C.flatten([n]).filter(x=>x.kind==='material'&&x.spec.shape!=='piece');
   const unique=key=>{const values=[...new Set(leaves.map(x=>x.spec[key]).filter(x=>x!==undefined&&x!==''))];return values.length===1?values[0]:undefined;};
-  const product=C.findNode(products,r.productId);
-  return {substance:unique('substance'),grade:unique('grade'),complexity:n.complexity,finish:n.finishType,localQty:n.qty,productQty:product?.qty,unitWeight:r.count?(r.workWeight??r.weight)/r.count:0,unitArea:r.count?(r.workArea??r.area)/r.count:0};
+  const product=C.findNode(products,r.productId),path=C.nodePath(products,n.id)||[],parent=path.at(-2),component=path.slice(0,-1).reverse().find(x=>x.kind==='component'),componentPath=component?path.slice(0,path.indexOf(component)+1):[];
+  return {substance:unique('substance'),grade:unique('grade'),complexity:n.complexity,finish:n.finishType,localQty:n.qty,productQty:product?.qty,parentQty:parent?.qty,parentCount:parent?r.count/n.qty:undefined,componentCount:component?componentPath.reduce((s,x)=>s*x.qty,1):undefined,unitWeight:r.count?(r.workWeight??r.weight)/r.count:0,unitArea:r.count?(r.workArea??r.area)/r.count:0};
 }
 function factor(f,input,tier){
-  if(f.kind!=='category')return tier(input,f.tiers);
+  const convert=v=>{if(!finite(v))throw Error('Thiếu giá trị hệ số');const r=f.valueMode==='multiplier'?(Number(v)-1)*100:Number(v);if(r<=-100)throw Error('Hệ số nhân phải dương / tỷ lệ lớn hơn -100%');return r;};
+  if(f.valueMode&&!['percent','multiplier'].includes(f.valueMode))throw Error('Cách nhập hệ số không hợp lệ');
+  if(f.kind!=='category'){
+    const rows=(f.tiers||[]).map(t=>({...t,percent:convert(t.percent)})),mode=f.boundary||'upper';
+    if(!['upper','lower','exact'].includes(mode)||!['error','last'].includes(f.overflow||'error'))throw Error('Quy tắc tra bậc không hợp lệ');
+    if(mode==='upper'){try{return tier(input,rows);}catch(e){if(f.overflow==='last'&&e.message.includes('vượt các bậc'))return {...tier(rows.at(-1).max,rows),overflow:true};throw e;}}
+    number(input,'Giá trị tra');if(!rows.length)throw Error('Chưa khai báo các bậc');let prev=-1;
+    for(const row of rows){if(!finite(row.max)||Number(row.max)<0||Number(row.max)<=prev)throw Error('Mốc phải tăng dần; cách tra này không dùng mốc trống');prev=Number(row.max);}
+    const i=mode==='exact'?rows.findIndex(r=>Number(r.max)===Number(input)):rows.findLastIndex(r=>Number(r.max)<=Number(input));
+    if(i<0)throw Error('Không có bậc phù hợp với '+input);
+    return {value:rows[i].percent,min:Number(rows[i].max),max:rows[i+1]?.max??null,index:i,boundary:mode};
+  }
   if(input===null||input===undefined||String(input).trim()==='')throw Error('Thiếu giá trị để tra '+f.name);
   const rows=f.categories||[],seen=new Set();let found;
-  for(const row of rows){const key=String(row.key||'').trim().toLocaleLowerCase('vi-VN');if(!key||seen.has(key))throw Error('Nhóm của '+f.name+' bị trống/trùng');seen.add(key);if(!finite(row.percent)||Number(row.percent)<=-100)throw Error('Hệ số nhóm '+row.key+' phải lớn hơn -100%');if(key===String(input).trim().toLocaleLowerCase('vi-VN'))found=row;}
+  for(const row of rows){const key=String(row.key||'').trim().toLocaleLowerCase('vi-VN');if(!key||seen.has(key))throw Error('Nhóm của '+f.name+' bị trống/trùng');seen.add(key);if(!finite(row.percent)||convert(row.percent)<=-100)throw Error('Hệ số nhóm '+row.key+' phải lớn hơn -100%');if(key===String(input).trim().toLocaleLowerCase('vi-VN'))found=row;}
   if(!found)throw Error(f.name+': chưa có nhóm “'+input+'”');
-  return {value:Number(found.percent),label:String(found.key),kind:'category'};
+  return {value:convert(found.percent),label:String(found.key),kind:'category'};
 }
 function price(rate,op,ctx,tier){
   if(!['inside','outside'].includes(op.mode))throw Error('Nơi thực hiện không hợp lệ');
@@ -34,7 +45,7 @@ function price(rate,op,ctx,tier){
 }
 function operation(rate,op,ctx,r,tier){
   r={...r,weight:r.workWeight??r.weight,area:r.workArea??r.area};
-  const applied=price(rate,op,ctx,tier),method=applied.method;
+  const method=op.pricingMethod||'factors';
   const unit=method==='fixed'?'gói':method==='direct'?op.priceUnit:(rate[op.mode+'Unit']||rate.unit);
   if(!['kg','tấn','m²','m³','m','lần','bộ','cái','gói'].includes(unit)&&(!String(unit||'').trim()||!['manual_total','manual_unit'].includes(op.basisMode)))throw Error('Đơn vị riêng cần nhập lượng công việc rõ ràng, không quy đổi ngầm');
   let basis;
@@ -42,19 +53,26 @@ function operation(rate,op,ctx,r,tier){
   else if(op.basisMode==='manual_total')basis=number(op.workQuantity,'Lượng công việc');
   else if(op.basisMode==='manual_unit')basis=number(op.workQuantity,'Định mức mỗi đơn vị')*r.count;
   else{if(op.basisMode&&op.basisMode!=='auto')throw Error('Cơ sở khối lượng công việc chưa hợp lệ');basis=unit==='kg'?r.weight:unit==='tấn'?r.weight/1000:unit==='m²'?r.area:unit==='m³'?r.volume:r.count*number(op.amount,'Định mức nguyên công');if(!(basis>0))throw Error('Chưa có lượng '+unit+'; chọn nhập lượng công việc nếu không lấy theo phôi');}
+  const actual={...ctx,workQuantity:basis};if(['manual_total','manual_unit'].includes(op.basisMode)){if(unit==='m²'){actual.area=basis;actual.unitArea=basis/r.count;}if(unit==='kg'||unit==='tấn'){actual.weight=basis*(unit==='tấn'?1000:1);actual.unitWeight=actual.weight/r.count;}}const applied=price(rate,op,actual,tier);
   const cost=basis*applied.value;if(!Number.isFinite(cost))throw Error('Chi phí công đoạn vượt giới hạn');
   return {...applied,unit,basis,cost,rate:applied.value};
 }
+function methodFor(op,quote){return quote.operationMethods?.[op.id]||op.pricingMethod||'factors';}
+function setMethod(quote,id,method){if(!['factors','catalog','direct','fixed'].includes(method))throw Error('Cách tính chưa hợp lệ');quote.operationMethods??={};quote.operationMethods[id]=method;for(const n of C.flatten(quote.products))for(const op of n.ops||[])if(op.id===id)op.pricingMethod=method;}
+function methodErrors(quote){const seen=new Map(),errors=[];for(const n of C.flatten(quote.products))for(const op of n.ops||[]){const method=methodFor(op,quote);if(seen.has(op.id)&&seen.get(op.id)!==method)errors.push('Nguyên công '+op.id+': đang có nhiều cách tính. Chọn một cách tính chung cho nguyên công này trong báo giá.');seen.set(op.id,method);}return [...new Set(errors)];}
 function recipes(rate){return rate.consumptions!==undefined?rate.consumptions:rate.consumption?[rate.consumption]:[];}
-function consume(recipe,n,r,index,opIndex,rateName){
+function consume(recipe,n,r,index,opIndex,rateName,workUnit){
   r={...r,weight:r.workWeight??r.weight,area:r.workArea??r.area};
   const m=recipe.spec;if(!m)throw Error('Chưa chọn vật tư hoàn thiện');
   const norm=number(recipe.norm,'Định mức vật tư'),price=number(m.price,'Giá vật tư hoàn thiện');
   const layers=number(recipe.layers??1,'Số lớp',{positive:true}),loss=number(recipe.loss??0,'Hao hụt vật tư hoàn thiện');
-  const base=recipe.basis==='kg'?r.weight:recipe.basis==='m²'?r.area:recipe.basis==='cái'?r.count:recipe.basis==='m³'?r.volume:NaN;
+  const op=n.ops?.[opIndex]||{},manual=['manual_total','manual_unit'].includes(op.basisMode)&&workUnit===recipe.basis;
+  const rules=n.measurementRules||n.ruleSpec?.measurementRules||{},explicit=recipe.basis==='m²'?rules.area:recipe.basis==='kg'?rules.weight:true;
+  if(n.kind!=='material'&&!manual&&!explicit&&!op.measurementConfirmed)throw Error('Chưa xác nhận lượng hoàn thiện tại '+n.name+'. Khai công thức KL/DT, nhập lượng công việc đúng đơn vị hoặc xác nhận dùng lượng từ cấu thành.');
+  const base=manual?number(op.workQuantity,'Lượng hoàn thiện')*(op.basisMode==='manual_unit'?r.count:1):recipe.basis==='kg'?r.weight:recipe.basis==='m²'?r.area:recipe.basis==='cái'?r.count:recipe.basis==='m³'?r.volume:NaN;
   if(!Number.isFinite(base)||base<=0)throw Error('Chưa có lượng '+recipe.basis+' cho vật tư hoàn thiện');
   const quantity=base*norm*layers*(1+loss/100),cost=quantity*price;
-  return {ownerId:n.id,productId:r.productId,opIndex,recipeIndex:index,rateName,materialId:m.id,name:m.name,unit:m.unit,supplier:m.supplier||'',norm,basis:recipe.basis,layers,loss,quantity,price,cost};
+  return {id:n.id+':'+(n.ops?.[opIndex]?.instanceId||(n.ops?.[opIndex]?.id||'operation')+':'+opIndex)+':'+(recipe.id||index),ownerId:n.id,productId:r.productId,opIndex,recipeIndex:index,rateName,materialId:m.id,name:m.name,brand:m.brand||'',unit:m.unit,supplier:m.supplier||'',norm,basis:recipe.basis,layers,loss,quantity,price,cost};
 }
 function expenseRows(base,generated){
   const rows=base.rows.map(row=>({id:row.id,productId:row.productId,materialId:row.spec.id,supplier:row.node.supplier||row.spec.supplier||'',externallySupplied:!!row.externallySupplied,netKg:row.spec.shape==='piece'?(row.spec.unit==='kg'?row.count:0):row.geometry.weight,purchaseKg:row.externallySupplied?0:row.spec.shape==='piece'?(row.spec.unit==='kg'?row.count:0):row.purchasedWeight||0,area:row.geometry.area||0,length:row.geometry.length?row.geometry.length*row.count/1000:(row.spec.unit==='m'?row.count:0),count:row.count}));
@@ -87,6 +105,6 @@ function expenses(entries,base,generated){
   }
   return {totals,allocations,items,errors,rows:all};
 }
-const api={EXPENSES,METHODS,number,context,factor,price,operation,recipes,consume,expenses};
+const api={EXPENSES,METHODS,methodFor,setMethod,methodErrors,number,context,factor,price,operation,recipes,consume,expenses};
 if(typeof module!=='undefined')module.exports=api;else root.TPWork=api;
 })(typeof window!=='undefined'?window:globalThis);
