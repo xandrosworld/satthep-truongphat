@@ -1,6 +1,6 @@
 # Checklist triển khai sau cuộc họp 13/09
 
-Phiên bản tài liệu: 14/09/2026 — v2.5, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; bổ sung đợt 4 cho thiết bị, không tự đóng các điểm CĐ.
+Phiên bản tài liệu: 14/09/2026 — v2.6, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; bổ sung đợt 5 cho giá/thuế và chỉ số, không tự đóng các điểm CĐ.
 
 Phạm vi: luồng báo giá Trường Phát — dùng để bàn giao cho người hoặc bot tiếp tục sửa phần mềm.  
 Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu của khách.
@@ -9,7 +9,13 @@ Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu c�
 
 Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệu được rà tại commit `e8c0cae6f56485f1a65dca88dbae8f0b2d8774ab`; phải kiểm lại khi mã thay đổi. Bản giải thích hiện hành là tài liệu này; các báo cáo phân tích cũ lưu để truy vết, không dùng diễn giải đã bị sửa để ghi đè v2. Ảnh/clip/phiên âm chủ yếu chỉ có trong gói nguồn nội bộ, không đi kèm clone GitHub; xem phần 12.
 
-## Hiện hành — đợt 4, ngày 14/09/2026
+## Hiện hành — đợt 5, ngày 14/09/2026
+
+**BG-03 chuyển [ ] → [~]; BG-02/BG-05/GD-01/GD-03 giữ [~]. Tổng 13/25 mã [x], 8 mã [~], 4 mã [ ].** Ứng dụng `ce92dfd` đã push và khớp Netlify. Local **19/19 nhóm, 202 ca logic, 37 ca máy chủ**; web thật **8 nhóm giá/thuế + 9 nhóm hồi quy thiết bị**, thêm kiểm vùng chỉ số lúc 14:22:11. Có **20 ảnh web và 19 ảnh local** trong manifest. [Báo cáo đợt 5, cách dùng và giới hạn](../../docs/BATCH-05-2026-09-14.md).
+
+Đã khai thuế từng giá/kg/đối thủ, quy đổi về trước thuế, chỉ số chênh tiền/% và tập chi phí tham khảo không trùng; thiếu hoặc thay đổi căn cứ chặn bản chính thức. Bản làm việc có cảnh báo. Chi phí đầu vào tính toán vẫn cần rà/nhập số chưa thuế thủ công; chưa có metadata thuế tự động từng dòng. **CĐ-01/02/03 chưa đóng**; TMC chuẩn hóa/nhánh pha trộn, giá thị trường riêng, mẫu ký và AI còn mở. Netlify lưu trình duyệt; máy chủ kiểm localhost, không phải nghiệm thu khách.
+
+## Lịch sử — đợt 4, ngày 14/09/2026
 
 **TC-07 chuyển [ ] → [~]; TC-05, BG-04, GD-01, BG-02 giữ [~]. Tổng vẫn 13/25 mã [x].** Ứng dụng `10bc393` đã push và khớp Netlify; **18/18 nhóm local (192 ca logic, 36 ca máy chủ)**, **9/9 nhóm mới + 5/5 hồi quy web**, kết thúc 13:56:34 ngày 14/09. Có **21 ảnh web**, 21 ảnh local và 6 ảnh máy chủ thử trong manifest. [Báo cáo đợt 4 và giới hạn từng mã](../../docs/BATCH-04-2026-09-14.md).
 
@@ -119,6 +125,8 @@ Cho phép “Lưu nháp” khi thiếu dữ liệu chưa bắt buộc; nhưng tr
 
 ### [~] BG-02 — Sửa/khóa đúng bản chất ba phương án giá trọn gói
 
+**Đợt 5:** giá/kg và đối thủ khai riêng đã/chưa gồm thuế và thuế suất nguồn; quy đổi trước tính thuế đầu ra, giữ giá nhập. Chưa đủ/stale căn cứ chặn bản chính thức. TMC chưa đối chiếu đủ CĐ-01 nên cột chuẩn hóa/chỉ số TMC là N/A và chưa được phát hành chính thức; không tự sửa chuỗi TMC thành đã chốt.
+
 **Đợt 4:** kiểm riêng khoản công thiết bị mới của phương án tính toán không làm đổi giá bán kg/TMC/đối thủ. Không thay đầu vào thực sự của TMC, chưa hoàn tất chuỗi/nhánh TMC hoặc thuế.
 
 **Phải sửa phép tính:**
@@ -142,7 +150,9 @@ Cho phép “Lưu nháp” khi thiếu dữ liệu chưa bắt buộc; nhưng tr
 
 ![Khu vực giá kg, đối thủ và TMC trong demo](checklist-images/12-bon-phuong-an.png)
 
-### [ ] BG-03 — Bảng đối chiếu 4 phương án không cộng trùng chi phí
+### [~] BG-03 — Bảng đối chiếu 4 phương án không cộng trùng chi phí
+
+**Đợt 5 — mới [~]:** đã có nguồn giá/tình trạng thuế, đơn giá trước thuế/kg phôi, chênh tiền/% so tính toán và đối thủ, mẫu số 0 → N/A. Tập tham khảo cố định không trùng tương đương giá gốc chi tiết + xử lý; phần còn lại không gọi lợi nhuận ròng. Có sheet nội bộ và ảnh web chỉ số. Còn chỉ số TMC/CĐ-01, giá thị trường riêng và nếu cần cấu hình tập tham khảo; chưa đóng trọn mã.
 
 Mỗi cột phương án phải có tối thiểu:
 
@@ -190,6 +200,8 @@ Giá bán = Giá gốc
 **Nguồn:** [công thức khách gửi](../../docs/nguon/2026-09-12-cong-thuc-gia-khach-bo-sung.txt).
 
 ### [~] BG-05 — Chọn một phương án chung cho toàn báo giá
+
+**Đợt 5:** lựa chọn chung tiếp tục đi cùng đường quy đổi giá/thuế, giá chốt và đầu ra. Chọn phương án không làm đổi giá nguồn; giá chốt riêng vẫn cần lý do. Giữ mở nhánh TMC/pha trộn CĐ-01.
 
 Giữ bốn cột để so sánh nhưng chỉ có một lựa chọn cấp báo giá. Không đặt nút chọn phương án trên từng sản phẩm. Cho xem đơn giá từng sản phẩm do phương án đã chọn sinh ra; nếu sửa giá cuối từng sản phẩm thì phải có lý do và tổng vẫn ghi phương án gốc.
 
@@ -453,6 +465,8 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 ### [~] GD-01 — Giá tham chiếu và giá áp dụng của từng báo giá
 
+**Đợt 5:** lưu điều kiện thuế từng giá/kg/đối thủ và căn cứ/giờ khai trong snapshot; giá đổi làm hết hiệu lực điều kiện của giá đó. Chi phí có xác nhận mặt bằng chưa thuế, gắn đầu vào hiện tại; thay đầu vào phải rà lại. Chưa có metadata/quy đổi thuế tự động từng dòng vật tư, nguyên công, gói thuê, logistics; người lập phải quy đổi nguồn có thuế và cập nhật đúng trường trước. Lịch sử các đường danh mục vẫn chưa phủ đủ.
+
 **Đợt 4:** đổi thiết bị/hãng qua bảng công lắp phải xác nhận giá mới, giữ tỷ lệ và đơn giá công; % liên kết tính lại theo giá đúng hãng. Đổi ĐVT khi còn công không được quy đổi ngầm; đổi hãng làm hết xác nhận tổng tiền nhập riêng. Còn thuế/CĐ-03 và phủ đủ lịch sử các đường cập nhật danh mục.
 
 **Đợt 3:** đã kiểm xác nhận trước–sau khi chọn giá và lưu dấu vết riêng của đơn. Còn điều kiện thuế, quy trình đổi hãng/liên kết lắp đặt theo %, phủ lịch sử các đường sửa giá danh mục; chưa đánh dấu trọn mã.
@@ -488,6 +502,8 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 ![Khu vực hệ số trong demo cần tổ chức theo đúng lớp giá](checklist-images/13-he-so.png)
 
 ### [~] GD-03 — Bản chào giá chuyên nghiệp và nhất quán
+
+**Đợt 5:** kiểm bản chính thức 4.000.000 trước thuế + 320.000 thuế = 4.320.000 trên web; bản PDF/Excel giữ tổng chuẩn hóa, không cộng lại thuế trong giá nguồn. CSV/PDF/Excel làm việc có nhãn; bản chính thức thiếu/stale căn cứ bị chặn cả bộ tính/máy chủ. Mẫu ký và điều kiện thực tế/CĐ-03 vẫn chưa được khách chấp thuận; không đánh dấu xong trọn mã.
 
 - Thông tin khách/người nhận/công trình lấy từ hồ sơ, không nhập lại.
 - Một ô “Thông số kỹ thuật” cho từng sản phẩm như khách góp ý.

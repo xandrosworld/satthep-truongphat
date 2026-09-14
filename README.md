@@ -1,6 +1,14 @@
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
-## Hiện hành — đợt 4, ngày 14/09/2026
+## Hiện hành — đợt 5, ngày 14/09/2026
+
+Đã push **`ce92dfd`** và kiểm đúng build Netlify. Local **19/19 nhóm, 202 ca logic, 37 ca máy chủ**; web thật **8 nhóm giá/thuế + 9 nhóm hồi quy thiết bị**, có **20 ảnh web**. [Báo cáo, cách dùng và giới hạn đợt 5](docs/BATCH-05-2026-09-14.md). Chạy lại: `npm run verify:batch-five`.
+
+Mở **Giá & hệ số / Phân tích giá → Khai giá và điều kiện thuế**. Giá/kg và đối thủ có trạng thái đã/chưa gồm thuế, được quy đổi trước so sánh; thay giá phải rà lại. Bảng có chênh tiền/%, N/A khi thiếu căn cứ hoặc mẫu số 0, tập chi phí tham khảo không trùng. Bản chính thức chặn thiếu căn cứ; bản làm việc được ghi nhãn rõ.
+
+**BG-03 đã làm một phần; tổng vẫn 13/25 mã [x].** Chi phí đầu vào chi tiết vẫn cần rà số chưa thuế thủ công; chưa hoàn tất TMC, CĐ-03 thực tế, mẫu ký hay AI. Netlify lưu trình duyệt, máy chủ kiểm localhost.
+
+## Lịch sử — đợt 4, ngày 14/09/2026
 
 Đã push **`10bc393`**, kiểm đúng build Netlify và chạy **9 nhóm mới + 5 nhóm hồi quy trên web thật**. Có **21 ảnh web**; local đạt **18/18 nhóm, 192 ca logic, 36 ca máy chủ**. [Báo cáo đợt 4, cách dùng và giới hạn](docs/BATCH-04-2026-09-14.md). Chạy lại: `npm run verify:batch-four`.
 
