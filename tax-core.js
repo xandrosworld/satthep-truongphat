@@ -7,7 +7,7 @@ const rate=v=>valid(v)&&Number(v)>=0&&Number(v)<=100;
 function stable(value){if(Array.isArray(value))return value.map(stable);if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().filter(k=>value[k]!==undefined).map(k=>[k,stable(value[k])]));return value;}
 function identity(q){return JSON.stringify(stable({id:q.id,date:q.date,customer:q.customer,project:q.project}));}
 function costSignature(q){
-  const pricing={...q.pricing};delete pricing.taxReview;delete pricing.selected;delete pricing.overrides;
+  const pricing={...q.pricing};delete pricing.taxReview;delete pricing.selected;delete pricing.overrides;delete pricing.comparisonMethods;
   const products=JSON.parse(JSON.stringify(q.products||[]));for(const n of products){delete n.pricePerKg;delete n.competitorPrice;delete n.marketPrice;delete n.marketSource;}
   return JSON.stringify(stable({products,rates:q.ratesSnapshot,expenses:q.expenses,devices:q.deviceInstallations,pricing,costSources:q.costPriceSources,kerf:q.kerf,remnantMode:q.remnantMode,remnantSelections:q.remnantSelections,remnantRules:q.remnantRules,operationMethods:q.operationMethods}));
 }
@@ -20,7 +20,7 @@ function input(value,declaration){
 function declaration(q,node,method){const d=q.pricing?.taxReview?.inputs?.[node.id]?.[method],value=node[method==='kg'?'pricePerKg':method==='market'?'marketPrice':'competitorPrice'];return input(value,method==='market'&&(!String(node.marketSource||'').trim()||d?.source!==node.marketSource)?null:d);}
 function review(q,data,at=new Date().toISOString()){
   if(['approved','submitted'].includes(q.status))throw Error('Bản đã khóa; tạo bản sửa trước');
-  if(!q.pricing)throw Error('Cần báo giá bốn phương án');
+  if(!q.pricing)throw Error('Cần bật luồng báo giá');
   if(!String(data.reason||'').trim())throw Error('Ghi căn cứ đối chiếu giá và thuế');
   if(data.outputConfirmed&&!rate(q.vat))throw Error('Thuế suất đầu ra chưa hợp lệ');
   const inputs={};for(const n of q.products){inputs[n.id]={};for(const m of ['kg','competitor','market']){
@@ -54,7 +54,7 @@ function assess(q,result){
       if(Cost.view(q).some(r=>used.has(r.key)&&!r.known))reasons.push('TMC: chưa khai nguồn giá/thuế của bậc nhân công hoặc khoản tiền đang dùng');
       if(!costKnown)reasons.push('TMC: đầu vào chi phí chưa xác nhận mặt bằng thuế hoặc đã đổi');
     }
-    if(id==='detail'&&!costKnown)reasons.push('Chưa xác nhận các đầu vào tính toán cùng mặt bằng chưa thuế, hoặc đầu vào đã đổi');
+    if((id==='detail'||id.startsWith('group:'))&&!costKnown)reasons.push('Chưa xác nhận các đầu vào tính toán cùng mặt bằng chưa thuế, hoặc đầu vào đã đổi');
     if(inputs.some(i=>!i.known))reasons.push('Chưa khai đủ điều kiện thuế từng giá, hoặc giá đã đổi');
     if(!a.ready)reasons.push('Còn dữ liệu tính giá chưa hợp lệ');
     const comparable=!reasons.length,net=comparable?a.total.beforeTax:null;

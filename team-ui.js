@@ -15,7 +15,7 @@ async function teamLoad(id,revision){if(Team.loaded&&Team.dirty){openDialog('B�
 }
 function teamDocument(){return {version:2,shapeDefinitions:C.copy(db.shapeDefinitions||[]),stockSizes:C.copy(db.stockSizes||[]),catalogPriceBaseline:db.catalogPriceBaseline?C.copy(db.catalogPriceBaseline):null,conventions:C.copy(db.conventions||{}),materialPrices:C.copy(db.materialPrices||[]),materials:C.copy(db.materials),rates:C.copy(db.rates),rules:C.copy(db.rules),library:C.copy(db.library),quote:C.copy(db.quote)};}
 async function teamSave(){if(!Team.user)return teamLogin();if(!Team.permissions.edit)throw Error('Tài khoản không có quyền lập/sửa');const link=teamCurrent();if(link&&(link.status!=='draft'||link.readOnly))throw Error('Bản này đang khóa. Tạo bản sửa trước.');
-  if(!db.quote.pricing)throw Error('Chuyển sang luồng bốn phương án trước khi đưa lên máy chủ');
+  if(!db.quote.pricing)throw Error('Chuyển sang luồng báo giá mới trước khi đưa lên máy chủ');
   const payload={document:teamDocument(),expectedVersion:link?.version},saved=await teamApi('quotes'+(link?'/'+link.id:''),link?'PUT':'POST',payload);
   if(!Team.loaded){quoteCheckpoint();Team.local=C.copy(db);}Team.loaded=true;Team.dirty=false;Team.link={...saved,workspaceKey:db.quote.workspaceKey};closeDialog();render();$('#save-status').textContent='Đã lưu máy chủ · phiên bản '+saved.version;toast('Đã lưu máy chủ; bản tính được kiểm tra lại phía máy chủ');
 }

@@ -1,7 +1,7 @@
 PHẢN HỒI KHÁCH HÀNG BỔ SUNG SAU CUỘC HỌP 13/09/2026
 
 Nguồn: nội dung và ảnh người dùng chuyển lại trong cuộc trò chuyện ngày 14/09/2026.
-Trạng thái: gồm nguyên văn người dùng cung cấp, chữ đọc từ ảnh và mô tả quan sát được ghi riêng; các mục 1–5 chưa có mốc giờ riêng; mục 6 có giờ do người dùng chuyển lại, chưa đối chiếu trực tiếp với hệ thống nhắn tin của khách.
+Trạng thái: gồm nguyên văn người dùng cung cấp, chữ đọc từ ảnh và mô tả quan sát được ghi riêng; các mục 1–5 chưa có mốc giờ riêng; mục 6–7 có giờ do người dùng chuyển lại. Mục 8 ghi tin người dùng đã gửi và việc khách đồng ý theo người dùng thuật lại, chưa có nguyên văn/giờ trả lời của khách. Chưa đối chiếu trực tiếp với hệ thống nhắn tin của khách.
 
 --- NỘI DUNG 1 ---
 
@@ -88,12 +88,37 @@ Phần ngoài TMC mình tính theo phương án chi tiết hay có quy tắc ri�
 
 Quan sát ảnh, không phải nguyên văn khách: nhóm “Thang máng cáp (27)” được khoanh, trong bảng “Thông số cấu kiện”. Có máng, thang, nắp và phụ kiện đi kèm. Ảnh chỉ hiển thị một phần danh sách; một số công thức bị rút gọn. Không suy ra toàn bộ 27 mã, không lấy công thức khối lượng/khổ khai triển trên ảnh thay chuỗi giá bán. Ảnh đã xem trong hội thoại, chưa có bản gốc local; không dựng lại ảnh làm chứng cứ.
 
+--- NỘI DUNG 7 — SO SÁNH GIÁ THEO NHÓM VÀ PHẠM VI TỪNG ĐƠN ---
+
+Nguồn: phần tiếp theo của hội thoại tại nội dung 6, do người dùng chuyển lại ngày 14/09/2026. Giữ nguyên câu chữ và mốc giờ được cung cấp:
+
+[14/09/2026 16:18:03] Trường Phát Group: Em thử tư duy mình phân loại theo các yếu tố tác động của nhóm sản phẩm TMC. Trong đó mình cài đặt tham số có gọn hơn không nhỉ
+[14/09/2026 16:23:27] Trường Phát Group: Tư duy để có thể mở rộng cho các nhóm sản phẩm khác nữa
+[14/09/2026 16:23:31] Trường Phát Group: Ví dụ cửa gió
+[14/09/2026 16:23:36] Trường Phát Group: Ví dụ tủ điện
+[14/09/2026 16:23:49] Trường Phát Group: Nếu cần thiết áp dụng
+[14/09/2026 16:24:28] Trường Phát Group: Hoặc em đưa ra phương pháp đối chiếu giá
+[14/09/2026 16:25:23] Trường Phát Group: Lựa chọn khai báo giá theo tính toán với cách thức báo giá nào thì phần phân tích giá sẽ hiện theo các cách thức đó để so sánh
+[14/09/2026 16:30:04] Trường Phát Group: Không phải đơn nào cũng có TMC nên đưa vào so sánh sẽ không phù hợp. Nếu có thì mới hiển thị so sánh
+[14/09/2026 16:33:53] Trường Phát Group: Tư duy chỗ này cho khoa học giúp a chút
+
+--- NỘI DUNG 8 — KHÁCH ĐỒNG Ý CÁCH TỔ CHỨC THEO NHÓM ---
+
+Người dùng xác nhận đã gửi tin sau và khách đã đồng ý. Nội dung tin đã gửi (nguyên văn do người dùng cung cấp, không phải lời của khách):
+
+Dạ a ạ, để em sắp lại chỗ này cho gọn hơn ạ  Đơn có nhóm hàng nào thì mình chọn cách so sánh phù hợp với nhóm đó, không có TMC thì không hiện TMC nữa ạ. Phần cơ khí khác vẫn tính chi tiết như a đã nói  E sẽ gom phần cài đặt theo nhóm, sau này cần thêm cách tính cho cửa gió hay tủ điện thì bổ sung vào nhóm đó anh nha
+
+Lời người dùng xác nhận (nguyên văn):
+Ta gửi tin nhắn này thì khách ok rồi
+
+Giới hạn nguồn: không được tự gán giờ gửi/giờ đồng ý, dựng lời trả lời “OK” thành trích dẫn trực tiếp của khách hoặc coi đây là nghiệm thu phần mềm. Xác nhận này chốt cách tổ chức/hiển thị trong tin đã gửi; không bổ sung công thức, tham số số học hay bảng giá cửa gió/tủ điện.
+
 --- CÁCH HIỂU DÙNG ĐỂ TRIỂN KHAI ---
 
-Diễn giải đã rà lại ngày 14/09/2026 cùng checklist v2.1, bổ sung mục 12 theo ảnh mới tại v2.8 và mục 13 theo phản hồi TMC tại v2.9; không phải nguyên văn khách. Phần nguyên văn và chữ chép từ ảnh ở trên giữ nguyên. Khi tiếp tục làm, đọc CHECKLIST-TRIEN-KHAI.md phần 2 và 13 để phân biệt căn cứ, đề xuất và điểm còn cần đối chiếu.
+Diễn giải đã rà lại ngày 14/09/2026 cùng checklist v2.1, bổ sung mục 12 theo ảnh mới tại v2.8, mục 13 theo phản hồi TMC tại v2.9, mục 14–17 theo nội dung 7–8 tại v2.11; không phải nguyên văn khách. Phần nguyên văn và chữ chép từ ảnh ở trên giữ nguyên. Khi tiếp tục làm, đọc CHECKLIST-TRIEN-KHAI.md phần 2 và 13 để phân biệt căn cứ, đề xuất và điểm còn cần đối chiếu.
 
 1. Từ “phiên tư” trong tin nhắn có khả năng là lỗi gõ của “chuyển từ”. Không sửa nguyên văn ở trên; yêu cầu được hiểu theo cả câu là có thể lấy các khoản chi phí của phương án tính toán sang bảng phân tích làm tham số đối chiếu.
-2. “Đã bao gồm toàn bộ các chi phí” xác nhận không cộng lại chi phí chỉ lấy từ phương án tính toán để đối chiếu lên tổng đầy đủ của kg/TMC/đối thủ. TMC vẫn cần công thức nội bộ và đầu vào thực sự của nó; không suy thành chỉ còn bảng nhân công hoặc mọi thay đổi chi phí đều không được làm đổi TMC. Chuỗi cuối và nhánh không TMC theo dõi tại CĐ-01.
+2. “Đã bao gồm toàn bộ các chi phí” xác nhận không cộng lại chi phí chỉ lấy từ phương án tính toán để đối chiếu lên tổng đầy đủ của kg/TMC/đối thủ. TMC vẫn cần công thức nội bộ và đầu vào thực sự của nó; không suy thành chỉ còn bảng nhân công hoặc mọi thay đổi chi phí đều không được làm đổi TMC. Chuỗi cuối còn theo dõi tại CĐ-01; nhánh không TMC dùng chi tiết đã chốt tại mục 13.
 3. Khách chưa nói giá nhập đã hay chưa gồm thuế. Ghi rõ tình trạng/điều kiện thuế, đưa về cùng mặt bằng; không tự coi đã gồm cũng không tự cộng thêm. Chưa xác nhận thì giữ trạng thái chưa rõ trước khi phát hành chính thức (CĐ-03).
 4. Khách nhắc phải có AI và hỏi “Chắc em chờ ổn định cấu trúc rồi mới bổ sung à”; chưa có quyết định lịch hoãn trong nguồn này. Nối AI sau khi mô hình dữ liệu ổn định là kế hoạch kỹ thuật đề xuất, không phải khách đồng ý hoãn ra ngoài giai đoạn báo giá. Không tự mở rộng sang mọi định dạng CAD/3D.
 5. Tài liệu phải được đính kèm ngay lúc tạo báo giá và lưu cùng hồ sơ đó. AI bóc tách là bước xử lý sau khi có tài liệu, không phải điều kiện để lưu hồ sơ ban đầu.
@@ -105,3 +130,7 @@ Diễn giải đã rà lại ngày 14/09/2026 cùng checklist v2.1, bổ sung m�
 11. Khách yêu cầu vật tư thiết bị có thông tin thương hiệu bên cạnh thông số kỹ thuật; giá có thể khác theo thương hiệu. Chưa có danh sách thương hiệu hay tỷ lệ chênh giá cố định trong tin nhắn này. Cách triển khai đề xuất: thương hiệu là trường dữ liệu riêng, giá tham chiếu và giá áp dụng phải phân biệt đúng mã/biến thể thiết bị và thương hiệu; không ghép các hãng chỉ vì cùng thông số. Chọn/đổi thương hiệu phải kiểm lại giá phù hợp, không tự lấy giá hãng cũ hoặc ghi đè báo giá đã duyệt. Nếu chi phí lắp đặt tính theo % giá thiết bị, phần tiền đó đi theo đúng giá trị thiết bị làm cơ sở, không tự đổi tỷ lệ chỉ vì đổi hãng.
 12. Ảnh mới yêu cầu bổ sung ô Dày tại kích thước chung của sản phẩm, sau Dài/Rộng/Cao (DM-05). Nhãn “Dày T (mm)” là cách triển khai đề xuất, phù hợp hàng kích thước đang dùng mm; khách chỉ viết “dày”. Ảnh chưa xác định đổi ô này sẽ tác động vào vật tư nào, có đổi mã vật tư hay không, hoặc xử lý sản phẩm có nhiều độ dày thế nào. Không tự gán mặc định 1,5 mm, ghi đè độ dày cố định của mọi mã, đổi giá/hãng hay coi ảnh là xác nhận quy tắc TMC. Tách phần thêm trường/lưu dữ liệu với quy tắc liên kết/chọn mã cần đối chiếu tại CĐ-04.
 13. Khách đã xác nhận trong đơn có nhiều loại sản phẩm, công thức TMC chỉ áp cho sản phẩm thang máng cáp. Không hỏi lại phạm vi này; không ép sản phẩm cơ khí khác dùng công thức TMC. Khách đã trả lời “Chính xác rồi em” lúc 15:46:38 cho đề nghị 15:33:49: sản phẩm cơ khí khác trong cùng đơn dùng phương án chi tiết. Không hỏi lại nhánh này. Câu “cơ sở so sánh” không có nghĩa cộng giá của hai phương án cho cùng sản phẩm. Chưa nhận thêm bảng số mẫu trong đoạn chat; CĐ-01 chỉ còn đối chiếu chuỗi/tổng, không còn chờ xác nhận nhánh ngoài TMC. Chỉ yêu cầu ca một sản phẩm gộp hai phần nếu thực tế có, không tự coi đây là nghiệp vụ khách bắt buộc hỗ trợ chỉ vì đã xuất hiện trong câu hỏi của bên lập trình.
+14. Nội dung 7–8 thay yêu cầu hiển thị cố định bốn phương án: đơn không có TMC thì không hiện so sánh TMC; đơn có TMC cho chọn cách TMC để đối chiếu. Các cách so sánh hiện theo lựa chọn khai báo và phạm vi áp dụng trong đơn, không chỉ theo việc phần mềm đang có bốn bộ tính. Với đơn hỗn hợp, tổng phương án TMC gồm phần TMC tính theo TMC cộng phần ngoài TMC tính chi tiết, cùng phạm vi toàn đơn khi đối chiếu.
+15. Theo xác nhận người dùng tại nội dung 8, khách đã đồng ý gom phần cài đặt theo nhóm sản phẩm, lựa chọn cách so sánh phù hợp và mở rộng nhóm khi cần. Không tiếp tục ghi hướng tổ chức này là đang chờ khách đồng ý. Cửa gió/tủ điện là ví dụ mở rộng có điều kiện, chưa phải yêu cầu triển khai ngay công thức cho hai nhóm hoặc dùng lại công thức TMC cho chúng. Chi tiết mô hình dữ liệu/giao diện/bộ tham số vẫn là đề xuất triển khai, không phải khách đã duyệt từng trường.
+16. Kiểm soát đề xuất: phân biệt “Không áp dụng”, “Chưa chọn so sánh” và “Chưa đủ dữ liệu”. Không có TMC không bắt nhập bảng/giá TMC; chưa phân loại không tự coi là ngoài TMC. Cách đã chọn và thuộc phạm vi nhưng thiếu đầu vào phải báo thiếu, không giấu lỗi bằng cách ẩn cột hoặc trả 0. Các ca này cần kiểm ở BG-03/TC-06, chưa được chứng minh bởi ảnh/test của đợt TMC trước phản hồi mới.
+17. Lựa chọn cách đối chiếu và lựa chọn giá cuối là hai thao tác khác nhau. Nguồn mới không hủy quy tắc một phương án chào giá chung cho báo giá (BG-05). Đề xuất kiểm soát: bật/tắt cột không tự đổi giá chào, không cộng tổng các phương án với nhau; nếu phương án đang chọn mất điều kiện áp dụng thì báo rõ để chọn lại trước phát hành, không tự thay giá hoặc sửa bản đã duyệt. CĐ-01 về chuỗi/số trung gian vẫn mở; khách đồng ý cách tổ chức không thay bằng chứng đối chiếu Excel.

@@ -1,6 +1,6 @@
 # Checklist triển khai sau cuộc họp 13/09
 
-Phiên bản tài liệu: 14/09/2026 — v2.10, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; cập nhật xác nhận TMC lúc 15:46/15:49 và đợt triển khai phân nhánh/chuỗi riêng/giá thị trường. Còn bảng đối chiếu chuỗi/tổng XL, không còn chờ trả lời câu hỏi 15:33:49.
+Phiên bản tài liệu: 14/09/2026 — v2.12. Giữ đủ 25 mã; đã triển khai phần lựa chọn/cài đặt/so sánh theo nhóm của v2.11. Local đạt 248 ca logic + 46 ca máy chủ và 14 nhóm trình duyệt mới; đang xác minh triển khai Netlify. Các tiêu chí đạt được ghi riêng tại ca E và [báo cáo đợt nhóm](../../docs/GROUP-PRICING-2026-09-14.md). Không đóng trọn TC-06/BG-02/BG-03/BG-05 vì CĐ-01 về chuỗi/tổng XL còn mở. Tổng 17/25 [x], 5 [~], 3 [ ].
 
 Phạm vi: luồng báo giá Trường Phát — dùng để bàn giao cho người hoặc bot tiếp tục sửa phần mềm.  
 Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu của khách.
@@ -9,7 +9,11 @@ Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu c�
 
 Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệu được rà tại commit `e8c0cae6f56485f1a65dca88dbae8f0b2d8774ab`; phải kiểm lại khi mã thay đổi. Bản giải thích hiện hành là tài liệu này; các báo cáo phân tích cũ lưu để truy vết, không dùng diễn giải đã bị sửa để ghi đè v2. Ảnh/clip/phiên âm chủ yếu chỉ có trong gói nguồn nội bộ, không đi kèm clone GitHub; xem phần 12.
 
-## Hiện hành — ô Dày và phạm vi TMC, ngày 14/09/2026
+## Hiện hành — so sánh theo nhóm, phạm vi TMC và ô Dày, ngày 14/09/2026
+
+**Yêu cầu mới đã được đồng ý — v2.11:** khách yêu cầu đơn không có TMC thì không hiện so sánh TMC (16:30:04); các cách đối chiếu hiện theo lựa chọn khai báo (16:25:23). Người dùng xác nhận khách đã đồng ý tin gom phần cài đặt theo nhóm, chọn cách so sánh phù hợp với nhóm trong đơn, ngoài TMC vẫn tính chi tiết, mở rộng cửa gió/tủ điện khi cần. [Nguồn — nội dung 7–8](../../docs/nguon/2026-09-14-phan-hoi-bo-sung-sau-hop.txt). Đây là xác nhận hướng tổ chức/hiển thị, không phải nghiệm thu phần mềm hay chốt công thức cho nhóm mới.
+
+**Phạm vi cập nhật:** BG-03 về lựa chọn/hiển thị; TC-06 về cấu hình theo nhóm; BG-05 về tách so sánh và giá chào cuối; BG-02 về phạm vi tính/thiếu dữ liệu. Đợt nhóm đã triển khai và kiểm phần mới, có bộ kiểm riêng; giữ bốn mã `[~]` vì thiếu đối chiếu số CĐ-01, không thêm ID và không lấy bằng chứng bốn cột cũ thay cho đợt này. Hướng dẫn cũ “giữ bốn cột” không còn hiệu lực; các báo cáo đợt cũ bên dưới là lịch sử. Cửa gió/tủ điện chỉ là hướng mở rộng khi cần, không tự thêm công thức hay bảng giá.
 
 **Mốc trước đợt TMC: 17/25 mã [x], 4 mã [~], 4 mã [ ].** DM-05 chuyển `[x] → [~]` vì có yêu cầu mới về ô **Dày** tại hàng kích thước chung, không phải kết luận phần liên kết công thức đã kiểm ở đợt 2 bị lỗi. Giữ 25 mã, không thêm mã đầu mục trùng. Phần ô nhập/lưu Dày đã triển khai tại `b4b8840`, kiểm **224 ca logic, 41 ca máy chủ**, **27 nhóm web thật/24 ảnh**, Netlify khớp build. **Chưa tự đổi mã vật tư theo T**, còn CĐ-04 nên giữ DM-05 `[~]`. [Báo cáo và giới hạn](../../docs/THICKNESS-2026-09-14.md).
 
@@ -17,7 +21,7 @@ Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệ
 
 **Đợt TMC — cập nhật triển khai:** đã thêm phân loại tường minh, nhánh cơ khí giữ nguyên chi tiết, hệ số TMC riêng có căn cứ, nguồn/thuế bậc TMC, chỉ số bốn phương án và giá thị trường độc lập. Kiểm cục bộ 234 ca logic + 43 ca máy chủ; [báo cáo, đáp án và giới hạn](../../docs/TMC-2026-09-14.md). TC-06 đổi `[ ] → [~]`. Tổng **17/25 [x], 5 [~], 3 [ ]**, vẫn **8 mã chưa hoàn tất toàn bộ**. Không lấy ca số QA thay bảng đối chiếu số trung gian của workbook khách để tích xong bốn mã.
 
-**8 mã chưa hoàn tất:** DM-05, BG-02, BG-03, BG-05, TC-06, BG-06, ERP-01, ERP-02. Bảy mã cũ giữ nguyên trạng thái. Căn cứ mới: [phản hồi khách — nội dung 5](../../docs/nguon/2026-09-14-phan-hoi-bo-sung-sau-hop.txt). Phần cần làm/kiểm nằm tại DM-05; giới hạn liên kết độ dày theo dõi tại CĐ-04. Ảnh không bổ sung quy tắc TMC, không đóng CĐ-01.
+**8 mã chưa hoàn tất:** DM-05, BG-02, BG-03, BG-05, TC-06, BG-06, ERP-01, ERP-02. Tổng vẫn **17/25 [x], 5 [~], 3 [ ]**. Nguồn mới và xác nhận được lưu tại [nội dung 5–8](../../docs/nguon/2026-09-14-phan-hoi-bo-sung-sau-hop.txt). DM-05 còn liên kết/chọn mã theo Dày tại CĐ-04; nhóm BG-02/03/05 và TC-06 đã có so sánh/cấu hình theo nhóm, còn đối chiếu chuỗi/tổng tại CĐ-01. Cập nhật checklist không đóng các điểm này.
 
 ## Lịch sử — đợt 6, ngày 14/09/2026
 
@@ -74,7 +78,8 @@ Tạo báo giá
   → Khai triển + hao hụt + khối lượng + diện tích
   → Công đoạn + hoàn thiện + thuê ngoài + vận chuyển + lắp đặt
   → Tính phương án chi tiết
-  → So sánh 4 phương án trên cùng mặt bằng
+  → Chọn các cách đối chiếu phù hợp với nhóm hàng trong đơn
+  → So sánh các cách đã chọn trên cùng phạm vi và mặt bằng giá (không có TMC thì không hiện TMC)
   → Chọn 1 phương án cho toàn báo giá
   → Duyệt và xuất bản chào khách
   → Chuyển dữ liệu đã chốt sang sản xuất để đối chiếu thực tế
@@ -84,7 +89,7 @@ Tạo báo giá
 
 Nhãn nguồn dùng xuyên tài liệu:
 
-- `KH`: tin nhắn/chú thích ảnh khách do người dùng cung cấp; phần nguyên văn khác với diễn giải bên dưới.
+- `KH`: tin nhắn/chú thích ảnh khách do người dùng cung cấp; phần nguyên văn khác với diễn giải bên dưới. Nếu người dùng thuật lại việc khách đồng ý (nội dung 8), ghi đúng nguồn thuật lại, không dựng nguyên văn hay mốc giờ trả lời.
 - `PA`: phiên âm AI của cuộc họp; chưa nghe xác minh toàn bộ. `PA1/PA2` là file P1/P2, không phải mức ưu tiên P1/P2 của công việc. Số dòng là vị trí trong bản chép, không phải mốc video đã xác minh.
 - `XL`: hành vi công thức Excel mẫu đã đọc trực tiếp; không mặc nhiên là công thức cuối cùng sau tin nhắn mới.
 - `ĐX`: cách triển khai/kiểm soát do bên làm đề xuất. Là mục tiêu kỹ thuật trong checklist, không phải trích lời khách đã duyệt mọi chi tiết.
@@ -108,6 +113,8 @@ Các tiêu chí kiểm thử và số giả lập trong tài liệu là `ĐX`, t
 | D12 | KH; dấu hiệu bổ sung là ĐX | Tăng tương phản bốn loại dòng: sản phẩm, cấu kiện, vật tư trong cấu kiện, vật tư trực tiếp trong sản phẩm. Kèm nhãn/thụt cấp để không chỉ dựa vào màu. |
 | D13 | KH + CĐ-02 | Thiết bị/linh kiện có lắp đặt riêng theo % giá trị hoặc đơn giá cụ thể. Chống cộng trùng **cùng công việc**; không tự loại mọi công việc lắp ráp/lắp đặt khác. Cơ sở tiền, số lượng và lớp giá phải rõ; 20–30% không phải tỷ lệ mặc định. |
 | D14 | KH ảnh mới nội dung 5; triển khai là ĐX, liên kết là CĐ-04 | Bổ sung ô Dày sau L/W/H ở kích thước chung sản phẩm. Ảnh chỉ ghi “dày”, không chốt mặc định, phạm vi truyền xuống vật tư hay tự đổi mã/giá. Không ghi đè thông số cố định của mã vật tư bằng giá trị chung khi chưa có quy tắc rõ. |
+| D15 | KH nội dung 7 lúc 16:25/16:30; nội dung 8 do người dùng xác nhận khách đồng ý | So sánh theo các cách đã chọn khai báo và phù hợp với nhóm hàng trong đơn, không bắt hiện bốn cột. Không có TMC thì không hiện so sánh TMC. Đơn hỗn hợp: phần TMC dùng TMC, phần cơ khí khác dùng chi tiết. D02 về giá chào chung vẫn giữ; chọn cách so sánh không phải tự đổi giá cuối. |
+| D16 | KH nội dung 7–8; chi tiết thực hiện là ĐX | Gom cài đặt/tham số theo nhóm sản phẩm để dùng cách tính phù hợp và mở rộng khi cần. Khách đã đồng ý hướng này theo người dùng xác nhận; không còn là hướng đang chờ đồng ý. Cửa gió/tủ điện là ví dụ mở rộng có điều kiện, chưa có công thức/số giá được chốt và không mặc nhiên phải triển khai ngay. Không dùng công thức TMC cho mọi nhóm. |
 
 Nguồn KH mới nhất: [phản hồi bổ sung sau họp](../../docs/nguon/2026-09-14-phan-hoi-bo-sung-sau-hop.txt). Giữ nguyên lời khách khi sửa phần diễn giải. Không coi mọi quy tắc trong bảng là “khách đã chốt”.
 
@@ -146,6 +153,8 @@ Cho phép “Lưu nháp” khi thiếu dữ liệu chưa bắt buộc; nhưng tr
 
 ### [~] BG-02 — Sửa/khóa đúng bản chất ba phương án giá trọn gói
 
+**Cập nhật v2.12 — phần phạm vi/hiển thị đã kiểm; CĐ-01 còn mở:** áp dụng D15/BG-03, không buộc mọi đơn có đủ cả ba cách trọn gói. Đơn đã phân loại không có TMC thì TMC không áp dụng, không hiện cột và không bắt nhập giá/tham số TMC để phát hành theo cách hợp lệ khác. Cách đã chọn, thuộc phạm vi nhưng thiếu đầu vào vẫn phải báo thiếu, không trả 0 hoặc âm thầm tính sang nhánh khác. Đợt TMC đã có nhánh cơ khí/chuỗi riêng/nguồn thuế ([báo cáo](../../docs/TMC-2026-09-14.md)); vẫn cần đối chiếu số XL, các ghi nhận đợt 4–5 dưới đây là lịch sử.
+
 **Đợt 5:** giá/kg và đối thủ khai riêng đã/chưa gồm thuế và thuế suất nguồn; quy đổi trước tính thuế đầu ra, giữ giá nhập. Chưa đủ/stale căn cứ chặn bản chính thức. TMC chưa đối chiếu đủ CĐ-01 nên cột chuẩn hóa/chỉ số TMC là N/A và chưa được phát hành chính thức; không tự sửa chuỗi TMC thành đã chốt.
 
 **Đợt 4:** kiểm riêng khoản công thiết bị mới của phương án tính toán không làm đổi giá bán kg/TMC/đối thủ. Không thay đầu vào thực sự của TMC, chưa hoàn tất chuỗi/nhánh TMC hoặc thuế.
@@ -154,7 +163,7 @@ Cho phép “Lưu nháp” khi thiếu dữ liệu chưa bắt buộc; nhưng tr
 
 - Chi tiết: tính từ các khoản chi phí và hệ số theo BG-04.
 - Kg: `khối lượng phôi sản phẩm × đơn giá/kg`; kết quả này là giá đầy đủ của phương án.
-- TMC: kết quả đầy đủ từ công thức riêng theo yêu cầu TC-06; chuỗi cuối và cách xử lý nhánh không TMC phải làm rõ tại CĐ-01 trước khi khóa kết quả tiền.
+- TMC: kết quả đầy đủ từ công thức riêng theo yêu cầu TC-06 cho phần TMC; phần cơ khí khác trong cùng đơn dùng chi tiết, đã chốt 15:46:38. CĐ-01 chỉ còn đối chiếu chuỗi/số trung gian/tổng, không hỏi lại nhánh ngoài TMC.
 - Đối thủ: `số lượng × giá đối thủ từng sản phẩm`; kết quả này là giá đầy đủ của phương án.
 - Không lấy các chi phí **chỉ dùng đối chiếu** rồi cộng/nhân tiếp lên kết quả đầy đủ của kg, TMC hoặc đối thủ.
 - TMC có thể dùng vật tư, hoàn thiện và các khoản khác làm đầu vào thực sự của công thức riêng. Không loại chúng chỉ vì ba phương án là giá trọn gói; cũng không tự sao chép toàn bộ chuỗi hệ số của phương án tính toán.
@@ -171,11 +180,21 @@ Cho phép “Lưu nháp” khi thiếu dữ liệu chưa bắt buộc; nhưng tr
 
 ![Khu vực giá kg, đối thủ và TMC trong demo](checklist-images/12-bon-phuong-an.png)
 
-### [~] BG-03 — Bảng đối chiếu 4 phương án không cộng trùng chi phí
+### [~] BG-03 — So sánh theo nhóm hàng và cách đã chọn, không cộng trùng chi phí
+
+**Căn cứ mới v2.11:** D15–D16, nguồn KH nội dung 7–8. Khách đã đồng ý cách tổ chức qua tin người dùng gửi; phần mới đã triển khai và kiểm trong đợt nhóm v2.12. Đợt TMC trước đã có chỉ số TMC/giá thị trường, nhưng bảng bốn cột cố định không chứng minh đạt yêu cầu này; còn đối chiếu số tại CĐ-01. Ghi nhận đợt 5 dưới đây là lịch sử.
+
+**Phải sửa lựa chọn/hiển thị:**
+
+- Không cố định bốn cột. Các cách tính đang có là lựa chọn có thể dùng; chỉ đưa vào phân tích những cách được chọn khai báo và phù hợp với nhóm hàng trong đơn.
+- Đơn đã phân loại không có TMC: không hiện cột so sánh TMC. Đơn có TMC: cho chọn cách TMC để đối chiếu. Cơ sở chi tiết vẫn được dùng để tính chênh theo các tiêu chí bên dưới; không vì ẩn cột mà đổi công thức cơ sở.
+- Đơn hỗn hợp: cột TMC so tổng toàn đơn = phần TMC tính theo TMC + phần cơ khí khác tính chi tiết. Ghi rõ phạm vi hai phần; không lấy giá riêng TMC đối chiếu với giá toàn đơn.
+- Kiểm soát ĐX: tách ba trạng thái “Không áp dụng”, “Chưa chọn so sánh”, “Chưa đủ dữ liệu”. Nhóm chưa xác định không tự coi là ngoài TMC. Cách đã chọn và thuộc phạm vi mà thiếu giá/tham số/điều kiện thuế phải hiện lý do chưa so được, không tự biến thành cột giá 0 hoặc ẩn để che thiếu dữ liệu.
+- Kiểm soát ĐX: lưu lựa chọn so sánh theo báo giá, không áp cấu hình của đơn A sang đơn B. Mở lại hoặc chuyển bước giữ đúng lựa chọn. Ẩn/hiện cách so sánh chỉ đổi cách trình bày, không tự đổi giá chào, đầu vào hay tập khoản dùng tính chỉ số. Quy tắc chọn giá cuối xem BG-05.
 
 **Đợt 5 — mới [~]:** đã có nguồn giá/tình trạng thuế, đơn giá trước thuế/kg phôi, chênh tiền/% so tính toán và đối thủ, mẫu số 0 → N/A. Tập tham khảo cố định không trùng tương đương giá gốc chi tiết + xử lý; phần còn lại không gọi lợi nhuận ròng. Có sheet nội bộ và ảnh web chỉ số. Còn chỉ số TMC/CĐ-01, giá thị trường riêng và nếu cần cấu hình tập tham khảo; chưa đóng trọn mã.
 
-Mỗi cột phương án phải có tối thiểu:
+Mỗi cột phương án được đưa vào so sánh phải có tối thiểu (chỉ số thiếu dữ liệu được ghi rõ, không suy số):
 
 - giá nhập và điều kiện thuế; tổng quy đổi trước thuế để so sánh khi đã đủ điều kiện thuế, nếu chưa rõ thì đánh dấu chưa so được cùng mặt bằng;
 - giá quy đổi/kg phôi;
@@ -186,9 +205,11 @@ Mỗi cột phương án phải có tối thiểu:
 
 Excel mẫu `BC Chao gia!AD22 = AD14-SUM(AD15:AD21)` dùng tập khoản cố định: vật tư, sản xuất, vận chuyển nội bộ, giao hàng, lắp đặt, quản lý, xử lý. Đây là căn cứ XL để đối chiếu, không tự cộng cả tổng chi phí sản xuất đã gồm quản lý với quản lý thêm lần nữa. Nếu cho đổi tập khoản tính chỉ số, đó là cấu hình công thức có lưu lại, không phải nút chọn/ẩn cột. Ghi mẫu số của tỷ lệ; kg phôi hoặc giá so sánh bằng 0 thì ghi không áp dụng, không ra Infinity/NaN.
 
-Người dùng chọn một cột làm căn cứ cho toàn báo giá. Mọi điều chỉnh giá cuối phải lưu lý do, người sửa và phiên bản.
+Tách điều khiển chọn các cách đối chiếu khỏi lựa chọn một phương án giá cuối cho toàn báo giá (BG-05). Mọi điều chỉnh giá cuối phải lưu lý do, người sửa và phiên bản; không tự chọn phương án rẻ nhất khi bật/tắt cột.
 
 **Kiểm tra đạt:** tổng giá và phần chênh còn lại không đổi khi chỉ ẩn/hiện cơ cấu; không trừ hai lần khoản cha/con; chọn phương án không sửa ngược đầu vào cột khác. Giá có/không gồm thuế được đưa về cùng mặt bằng sau khi khai đủ điều kiện.
+
+**Kiểm thêm v2.12 (đã chạy bằng dữ liệu QA, xem ca E/báo cáo):** đơn chỉ cơ khí không hiện TMC; đơn TMC có/bỏ chọn cách TMC; đơn hỗn hợp so cùng tổng lượng/phạm vi; thiếu nhóm/giá báo đúng lý do; thay nhóm/thêm hoặc bỏ TMC cập nhật điều kiện hiển thị, không tự đổi giá chốt. Lưu/mở lại và bảng phân tích xuất nội bộ phản ánh lựa chọn. Kiểm bật/tắt cột không làm đổi các đáp án số của BG-02/TC-06 hay bản đã duyệt.
 
 ### [x] BG-04 — Giữ đúng ba lớp giá của phương án tính toán
 
@@ -224,11 +245,15 @@ Giá bán = Giá gốc
 
 ### [~] BG-05 — Chọn một phương án chung cho toàn báo giá
 
+**Cập nhật v2.12 — đã kiểm tách lựa chọn và chặn phương án hết áp dụng:** nguồn mới chốt cách lựa chọn đối chiếu/hiển thị theo nhóm, không hủy quy tắc một phương án giá chào chung. Cách TMC trong đơn hỗn hợp vẫn có nhánh chi tiết cho phần ngoài TMC đã được khách xác nhận. Lựa chọn/điều kiện áp dụng đã kiểm mới; còn bảng đối chiếu số CĐ-01. Đợt 5 bên dưới là lịch sử.
+
 **Đợt 5:** lựa chọn chung tiếp tục đi cùng đường quy đổi giá/thuế, giá chốt và đầu ra. Chọn phương án không làm đổi giá nguồn; giá chốt riêng vẫn cần lý do. Giữ mở nhánh TMC/pha trộn CĐ-01.
 
-Giữ bốn cột để so sánh nhưng chỉ có một lựa chọn cấp báo giá. Không đặt nút chọn phương án trên từng sản phẩm. Cho xem đơn giá từng sản phẩm do phương án đã chọn sinh ra; nếu sửa giá cuối từng sản phẩm thì phải có lý do và tổng vẫn ghi phương án gốc.
+Hiện các cách so sánh theo BG-03, không bắt giữ bốn cột; chỉ có một lựa chọn **giá chào cuối** cấp báo giá, tách khỏi lựa chọn các cách đối chiếu. Không đặt nút chọn phương án giá cuối trên từng sản phẩm. Cho xem đơn giá từng sản phẩm do phương án đã chọn sinh ra; nếu sửa giá cuối từng sản phẩm thì phải có lý do và tổng vẫn ghi phương án gốc.
 
-**Kiểm tra đạt:** một phương án cấp báo giá chi phối toàn bộ các dòng, không cho A tự chọn kg và B tự chọn đối thủ. Với TMC, chạy cả đơn có sản phẩm TMC và không TMC theo nhánh đã đối chiếu tại TC-06/CĐ-01; ca một sản phẩm có cấu thành pha trộn chỉ bắt buộc nếu thực tế có và đã xác định cách phân loại. Chọn chung không có nghĩa ép mọi sản phẩm dùng bảng nhân công TMC.
+Kiểm soát ĐX: bật/tắt cách so sánh không tự đổi phương án/giá chào đang chọn. Khi sửa bản nháp khiến phương án đang chọn không còn áp dụng (ví dụ bỏ hết TMC trong khi giá chào đang chọn TMC), báo rõ cần chọn lại phương án hợp lệ trước phát hành, không tự đổi sang chi tiết hay ra giá 0. Không sửa ngược snapshot bản đã duyệt.
+
+**Kiểm tra đạt:** một phương án cấp báo giá chi phối toàn bộ các dòng, không cho A tự chọn kg và B tự chọn đối thủ. Với TMC, chạy đơn TMC thuần và đơn hỗn hợp theo nhánh đã chốt tại TC-06; đối chiếu chuỗi/tổng tại CĐ-01. Đơn không có TMC không hiện/chọn TMC làm phương án áp dụng. Kiểm bật/tắt cách so sánh và trường hợp phương án giá cuối mất điều kiện mà không đổi giá âm thầm. Ca một sản phẩm có cấu thành pha trộn chỉ bắt buộc nếu thực tế có và đã xác định cách phân loại. Chọn chung không có nghĩa ép mọi sản phẩm dùng bảng nhân công TMC.
 
 ### [ ] BG-06 — AI bóc tách tạo bản nháp có kiểm soát
 
@@ -456,9 +481,20 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 ![Các nhóm vận chuyển và lắp đặt trong demo](checklist-images/10-van-chuyen-lap-dat.png)
 
-### [~] TC-06 — TMC là bảng giá riêng nhưng tổng phương án là trọn gói
+### [~] TC-06 — Cấu hình theo nhóm, TMC có công thức riêng và tổng phương án trọn gói
 
 **Căn cứ:** KH về giá đầy đủ, PA2 dòng 305–329 về nhân công/hao hụt đặc thù, XL về các nhánh công thức. KH mới nội dung 6 lúc 15:46:38 đã chốt sản phẩm thang máng cáp dùng TMC, sản phẩm cơ khí khác trong cùng đơn dùng chi tiết; ảnh 15:49 chỉ nhóm TMC. Còn đối chiếu đầy đủ chuỗi/tổng tại CĐ-01. [Đợt triển khai mới và giới hạn](../../docs/TMC-2026-09-14.md); các ghi nhận đợt 5 phía trên là lịch sử.
+
+**Cập nhật v2.12 — KH đã đồng ý hướng tổ chức; cơ chế nhóm đã triển khai/kiểm:** nguồn nội dung 7–8 xác nhận gom phần cài đặt theo nhóm sản phẩm, chọn cách so sánh phù hợp với nhóm có trong đơn. Không hỏi lại việc gom theo nhóm/ẩn TMC khi không có. Việc cấu hình theo nhóm không xác nhận công thức số chưa đối chiếu tại CĐ-01.
+
+**Phải tổ chức lại:**
+
+- Gom cài đặt và tham số/yếu tố tác động của TMC theo nhóm phù hợp, dùng lại khi khai báo giá thay vì cấu hình rời rạc. Liên kết phạm vi nhóm với các cách so sánh ở BG-03.
+- ĐX mô hình: mỗi cách tính thuộc nhóm có định danh, điều kiện áp dụng, tham số kèm đơn vị, công thức/bảng giá có nguồn và phạm vi chi phí đã gồm. Tách đầu vào tính thật khỏi khoản chỉ dùng đối chiếu; tái sử dụng cơ chế danh mục/quy ước hiện có khi phù hợp. Chi tiết trường/giao diện là ĐX, không ghi thành khách đã duyệt từng trường.
+- Cho phép bổ sung cách tính riêng cho nhóm khác khi cần. Cửa gió/tủ điện chỉ là ví dụ mở rộng có điều kiện: chưa triển khai ngay công thức của hai nhóm, chưa có bộ giá/đáp án được cung cấp. Không nhân bản công thức/hệ số TMC sang mọi nhóm để coi là đã hỗ trợ.
+- ĐX kiểm soát: nhóm dựa trên khai báo/định danh có căn cứ, không suy từ tên hoặc từ việc thiếu giá TMC. Phân biệt TMC gồm thân/nắp/phụ kiện như nguồn ảnh; ảnh không cung cấp đủ 27 định nghĩa. Sửa cấu hình nhóm không tự ghi đè giá/bản duyệt cũ; báo giá nháp cần kiểm lại căn cứ tính chịu tác động.
+
+**Kiểm thêm v2.12 (đã chạy bằng dữ liệu QA):** cấu hình TMC được lưu/mở lại đúng nhóm; đổi tham số chỉ tác động phạm vi được khai, phần cơ khí ngoài TMC giữ nhánh chi tiết; đơn không TMC không bị buộc khai tham số TMC. Dùng nhóm/công thức giả lập có nhãn QA để kiểm khả năng mở rộng riêng, không phát hành nó như công thức cửa gió/tủ điện của khách. Kiểm hồi quy dữ liệu cũ, cảnh báo thiếu nhóm/giá và khóa bản duyệt. Giữ `[~]` cho đến khi đạt cả phần mới lẫn đối chiếu chuỗi/tổng dưới đây.
 
 - Chỉ áp công thức TMC cho sản phẩm thang máng cáp; bảng nhân công/hao hụt theo nhóm thang/máng/phụ kiện phù hợp. Sản phẩm cơ khí khác dùng chi tiết theo KH 15:46:38. Không ép khung máy thành TMC; phân loại chưa rõ hoặc giá TMC thiếu phải báo rõ, không âm thầm trả 0/đổi nhánh.
 - Hao hụt riêng, nhân công theo chủng loại/khổ/kích thước. Đơn vị thân/nắp/phụ kiện phải tách. Số minh họa 1,5%, 2.000 đồng... không phải số bất biến.
@@ -646,7 +682,9 @@ Thứ tự dưới đây là **ĐX**, không phải lịch khách chốt. Mỗi 
 - [ ] Lắp đặt theo cái/mét/kg và yếu tố lấy đúng lượng từng đối tượng; giá gói không nhân thêm lượng.
 - [ ] Vận chuyển đi/về theo đúng lượng, tuyến/cự ly; tổng phân bổ bằng tiền chuyến, không phân bổ sang sản phẩm ngoài phạm vi.
 
-### Ca E — bốn phương án
+### Ca E — cách tính giá và so sánh theo nhóm/lựa chọn
+
+Các ô mới tích dưới đây là kết quả kiểm cơ chế bằng dữ liệu QA của đợt nhóm v2.12, không thay đối chiếu workbook khách tại CĐ-01 và không thay trạng thái 25 mã.
 
 - [ ] Phương án chi tiết khớp công thức ba lớp.
 - [ ] Kg = kg phôi × giá/kg; không cộng thêm chi phí chi tiết.
@@ -655,9 +693,16 @@ Thứ tự dưới đây là **ĐX**, không phải lịch khách chốt. Mỗi 
 - [ ] Thay chi phí tham khảo của chi tiết không làm đổi ba tổng trọn gói.
 - [ ] Thay đầu vào thực sự của TMC làm tính lại TMC theo công thức riêng; không đánh đồng với ca giữ nguyên giá phía trên.
 - [ ] Đúng đơn vị thân/nắp/phụ kiện; không nhân mét/số lượng hai lần.
-- [ ] Đối chiếu TMC thuần và đơn có sản phẩm TMC cùng sản phẩm khác theo CĐ-01; ca một sản phẩm pha trộn nếu thực tế có. Không tự gán TMC cho hàng không thuộc nhóm hoặc tự coi hàng đó đã được chốt dùng phương án chi tiết.
+- [ ] Đối chiếu TMC thuần và đơn có sản phẩm TMC cùng sản phẩm khác theo CĐ-01; phần ngoài TMC giữ chi tiết theo xác nhận 15:46:38. Ca một sản phẩm pha trộn chỉ cần nếu thực tế có. Không tự gán TMC cho hàng không thuộc nhóm.
 - [ ] Thiếu giá đầu vào hiển thị “Chưa đủ dữ liệu”, không phải 0 đồng.
 - [ ] Chỉ chọn được một phương án cho toàn báo giá.
+- [x] Đơn đã phân loại chỉ có cơ khí khác: không hiện cột TMC, không bắt nhập bảng/giá TMC để phát hành theo phương án hợp lệ khác.
+- [x] Đơn có TMC: chỉ hiện đối chiếu TMC khi chọn cách này; các cách khác theo khai báo/phạm vi, không bắt hiện đủ bốn cột.
+- [x] Đơn hỗn hợp: tổng phương án TMC = phần TMC theo TMC + phần cơ khí khác theo chi tiết; cùng lượng/phạm vi toàn đơn khi so sánh.
+- [x] Nhóm chưa xác định không bị coi là không có TMC. Cách đã chọn/thuộc phạm vi nhưng thiếu giá/tham số/thuế phải báo thiếu; không tự ẩn hoặc trả 0 để cho qua.
+- [x] Lưu/mở lại/chuyển bước giữ lựa chọn so sánh của từng báo giá. Bảng phân tích xuất nội bộ phản ánh đúng lựa chọn, không áp cài đặt của đơn khác.
+- [x] Bật/tắt cách so sánh không tự đổi giá cuối. Nếu bản nháp bỏ hết TMC mà giá chào đang chọn TMC, phải báo chọn lại phương án hợp lệ trước phát hành, không âm thầm thay giá. Snapshot bản đã duyệt không đổi.
+- [x] Cấu hình TMC/đơn vị/yếu tố lưu theo nhóm; đổi tham số chỉ tác động đúng phạm vi. Nhóm thử mở rộng dùng công thức QA có nhãn, không biến thành công thức cửa gió/tủ điện đã được khách chốt.
 - [ ] Ẩn/hiện khoản tham chiếu không đổi phần chênh còn lại; không trừ cả tổng cha và khoản con.
 - [ ] Kg phôi/giá so sánh bằng 0 không ra Infinity/NaN; điều kiện thuế chưa rõ không được coi đã so cùng mặt bằng.
 
@@ -738,9 +783,9 @@ Các cách lưu phiên bản, chặn lỗi, chống ghi đè và toàn bộ ca t
 | --- | --- | --- |
 | BG-01 | KH chú thích form mới; PA1 dòng 200–206, PA2 dòng 4–15 | Lưu nháp/snapshot là ĐX. |
 | BG-02 | KH ba giá đầy đủ, kg phôi, đối thủ theo sản phẩm; XL tại TC-06 | CĐ-01/CĐ-03; phân biệt tham khảo và đầu vào TMC. |
-| BG-03 | KH bảng tổng thể bốn phương án; XL `BC Chao gia!AD22` | Công thức chỉ số không theo bộ lọc hiển thị; CĐ-03. |
+| BG-03 | KH nội dung 7–8 cập nhật bảng so sánh theo nhóm/lựa chọn, thay luôn hiện bốn cột; XL `BC Chao gia!AD22` | Không có TMC không hiện TMC; có nhưng thiếu giá phải báo thiếu. Công thức chỉ số không đổi theo ẩn/hiện; CĐ-01/CĐ-03. |
 | BG-04 | KH công thức ba lớp ngày 12/09 | Không tự phân lớp khoản mới CĐ-02. |
-| BG-05 | KH chọn chung cả báo giá | CĐ-01 với nhánh TMC; lưu điều chỉnh là ĐX. |
+| BG-05 | KH chọn chung cả báo giá; nội dung 7–8 về chọn cách đối chiếu không hủy quy tắc này | Tách so sánh khỏi giá cuối. Nhánh ngoài TMC dùng chi tiết đã chốt; CĐ-01 còn số/chuỗi. Chặn lựa chọn hết áp dụng và lưu điều chỉnh là ĐX. |
 | BG-06 | KH nhắc AI sau họp; phạm vi ảnh/PDF trong hồ sơ dự án | Thứ tự làm/kiểm soát bản nháp là ĐX, không phải lịch hoãn khách đã duyệt. |
 | DM-01 | KH chọn vật liệu/mác/đặc tính, tên gợi ý; KH mới nội dung 4 yêu cầu thương hiệu thiết bị; PA1 dòng 23–26 và phần danh mục | Sinh mã/lọc có nguồn PA; cách tổ chức trường thương hiệu/chọn hãng là ĐX. |
 | DM-02 | PA1 phần quy ước; PA2 dòng 173–193 | Nhập dữ liệu tra ngay trong đơn, không ép hình học. |
@@ -753,7 +798,7 @@ Các cách lưu phiên bản, chặn lỗi, chống ghi đè và toàn bộ ca t
 | TC-03 | KH công thức yếu tố; PA2 dòng 77–95, 355–363; XL `Data!AB4` | Không biến hệ số nhân thành phần tăng, không chung độ khó mọi việc. |
 | TC-04 | KH hoàn thiện sinh vật tư; PA1 phần định mức, PA2 dòng 53–65 | Theo diện tích xử lý thực, không đếm vật tư phát sinh hai lần. |
 | TC-05 | KH tách vận chuyển; PA2 dòng 201–257 | Nhiều cách đo và công thức yếu tố, không chỉ giá gói. |
-| TC-06 | KH trọn gói; PA2 dòng 305–329; XL công thức nêu ngay tại mục; KH mới nội dung 6 xác nhận phạm vi TMC | CĐ-01 đã rõ phạm vi; cách tính hàng ngoài TMC và đối chiếu tổng vẫn mở. |
+| TC-06 | KH trọn gói; PA2 dòng 305–329; XL công thức tại mục; KH nội dung 6 xác nhận hai nhánh; nội dung 7–8 xác nhận gom theo nhóm/mở rộng khi cần | Ngoài TMC dùng chi tiết đã chốt. Cấu hình nhóm/so sánh mới đã kiểm; còn đối chiếu số CĐ-01. Cửa gió/tủ điện chưa có công thức chốt. |
 | TC-07 | KH chú thích thiết bị 20–30%/đơn giá; KH mới thương hiệu ảnh hưởng giá thiết bị | Kiểm cơ sở phần trăm theo giá đúng hãng là ĐX; CĐ-02 vẫn cần đối chiếu. |
 | GD-01 | KH giá danh mục để chọn giá trong đơn; KH mới nội dung 4 giá khác theo thương hiệu; PA2 dòng 261–301 | Snapshot/cập nhật có xác nhận và tách giá theo đúng thiết bị/hãng là ĐX; CĐ-03. |
 | GD-02 | KH hệ số mở; PA2 dòng 335–363 | Phân quyền là ĐX cần thiết lập người thật, không gán theo chức danh tự suy. |
@@ -806,7 +851,7 @@ Bản chép P1/P2 do AI tạo, chưa nghe xác minh toàn bộ 90 phút. P1 có 
 
 ## 13. Các điểm còn cần đối chiếu — không tự quyết thay khách
 
-**Trạng thái sau đợt 6:** CĐ-01 vẫn là thiếu quy tắc tính và giữ các mã phụ thuộc mở. Với CĐ-02/CĐ-03 và mẫu ký, đã triển khai/kiểm cơ chế khai và xác nhận trên từng báo giá; chưa có xác nhận cho dữ liệu kinh doanh thực. Bảng dưới tiếp tục là việc phải đối chiếu khi nhập hồ sơ. Nếu công việc/lớp giá, thuế hay quyền dùng mẫu còn chưa rõ thì hồ sơ đó chưa được phát hành chính thức; dấu [x] của cơ chế không thay người lập xác nhận.
+**Trạng thái v2.12:** CĐ-01 còn đối chiếu chuỗi/số trung gian/tổng XL, giữ các mã phụ thuộc mở; không còn chờ khách xác nhận nhánh ngoài TMC hoặc hướng gom cài đặt/so sánh theo nhóm. Yêu cầu mới D15–D16 đã triển khai/kiểm bằng bộ đợt nhóm riêng; không lấy kết quả đợt cũ thay thế. Với CĐ-02/CĐ-03 và mẫu ký, đã triển khai/kiểm cơ chế khai và xác nhận trên từng báo giá; chưa có xác nhận cho dữ liệu kinh doanh thực. Bảng dưới tiếp tục là việc phải đối chiếu khi nhập hồ sơ. Nếu công việc/lớp giá, thuế hay quyền dùng mẫu còn chưa rõ thì hồ sơ đó chưa được phát hành chính thức; dấu [x] của cơ chế không thay người lập xác nhận.
 
 Các điểm dưới đây không làm dừng toàn bộ dự án. Làm phần đã đủ căn cứ; chưa đóng mục tính tiền liên quan khi chưa giải quyết điểm CĐ. Khi có câu trả lời, lưu nguyên văn, ngày/nguồn và cập nhật đúng ID, không ghi đè lời cũ.
 
@@ -819,7 +864,7 @@ Các điểm dưới đây không làm dừng toàn bộ dự án. Làm phần �
 | CĐ-03 | Giá nhập thực tế đã/chưa gồm thuế và điều kiện thuế của ca báo giá. | Cho khai rõ tại đầu vào, đưa về cùng mặt bằng, kiểm bản xuất. Chưa xác nhận thì để trạng thái chưa xác nhận trước phát hành, không cộng thêm hoặc coi đã gồm ngầm. | BG-02/BG-03, GD-01/GD-03. |
 | CĐ-04 | Khi đổi Dày chung, vật tư nào nhận liên kết; có cần đổi mã cố định theo độ dày; xử lý sản phẩm gồm nhiều độ dày. Ảnh chỉ xác định ô/vị trí, chưa trả lời các quy tắc này. | Rà nguồn và quy tắc cố định/liên kết hiện có trước. Chỉ hỏi khách phần còn thiếu bằng một ca cụ thể nếu nguồn chưa đủ, không hỏi lại việc thêm ô. Tách trường/lưu dữ liệu khỏi tự động đổi vật tư; không ghi đè mã, giá, hãng hay mọi dòng con theo suy đoán. Ghi căn cứ và ca kiểm trước khi đóng. | Bổ sung DM-05; hồi quy mã vật tư, khối lượng và giá của dòng chịu tác động. |
 
-Không hỏi lại khách: chọn chung toàn báo giá; kg theo phôi; đối thủ nhập theo sản phẩm; ba giá đã đầy đủ và khoản chuyển sang chỉ để đối chiếu; hệ số sửa được; cần AI, form đầu vào, công thức kích thước, bốn nhóm màu, lắp đặt thiết bị theo %/đơn giá; cần bổ sung ô Dày ở kích thước chung theo ảnh mới; trong đơn nhiều loại sản phẩm, công thức TMC chỉ áp cho sản phẩm thang máng cáp.
+Không hỏi lại khách: chọn chung toàn báo giá; kg theo phôi; đối thủ nhập theo sản phẩm; ba giá đã đầy đủ và khoản chuyển sang chỉ để đối chiếu; hệ số sửa được; cần AI, form đầu vào, công thức kích thước, bốn nhóm màu, lắp đặt thiết bị theo %/đơn giá; cần bổ sung ô Dày ở kích thước chung theo ảnh mới; trong đơn nhiều loại sản phẩm, TMC chỉ áp cho thang máng cáp và phần cơ khí khác dùng chi tiết; gom cài đặt theo nhóm để mở rộng khi cần; so sánh theo lựa chọn phù hợp với nhóm trong đơn và không có TMC thì không hiện TMC. Xác nhận hướng tổ chức không đồng nghĩa có sẵn công thức cửa gió/tủ điện hay đã nghiệm thu số tiền.
 
 Danh sách người/quyền thực, mẫu xuất cuối cùng, bộ mẫu/đáp án và tiêu chí nghiệm thu AI cần ghi nhận khi thiết lập/kiểm cùng khách. Không tự coi chính sách đề xuất là đã được duyệt, nhưng cũng không dùng việc chưa có tên tài khoản thật để dừng xây cơ chế phân quyền.
 
@@ -854,3 +899,14 @@ Nguồn: tin nhắn mới của khách, lưu nguyên văn tại **nội dung 4**
 - GD-01: giá áp dụng/giá tham chiếu gắn đúng mã hoặc biến thể và thương hiệu; đổi hãng phải kiểm lại giá, không dùng nhầm hãng cũ.
 - TC-07: thêm kiểm phần trăm lắp đặt tính từ giá trị thiết bị đúng hãng; không tự đổi tỷ lệ/giá công cố định.
 - Ca B/F và bảng căn cứ được cập nhật tương ứng. Giữ đủ 25 mã và trạng thái cũ; đây là cập nhật yêu cầu, chưa phải tính năng đã thực hiện. Danh sách hãng/số giá/tỷ lệ chênh giá không được tự coi đã có; các điểm CĐ cũ không bị đóng bởi tin nhắn này.
+
+### Bổ sung v2.11 — khách đồng ý cài đặt/so sánh theo nhóm
+
+Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung 8** giữ tin người dùng đã gửi và xác nhận “Ta gửi tin nhắn này thì khách ok rồi” trong [nguồn sau họp](../../docs/nguon/2026-09-14-phan-hoi-bo-sung-sau-hop.txt). Không có nguyên văn/giờ trả lời khách cho nội dung 8; không dựng thêm hoặc coi đó là nghiệm thu.
+
+- D15–D16 và luồng phần 1: thay hiển thị cố định bốn phương án bằng lựa chọn/phạm vi từng đơn, gom cài đặt theo nhóm đã được khách đồng ý.
+- BG-03: quy tắc không có TMC thì không hiện; có/đã chọn nhưng thiếu dữ liệu phải báo rõ; đơn hỗn hợp so cùng phạm vi toàn đơn.
+- TC-06: tổ chức tham số/yếu tố/cách tính theo nhóm để mở rộng khi cần; các trường dữ liệu và ca QA là ĐX. Cửa gió/tủ điện chưa có công thức để triển khai ngay.
+- BG-05: tách chọn cách đối chiếu và giá chào cuối; không đổi giá âm thầm khi bật/tắt cột hoặc khi phương án mất điều kiện.
+- BG-02, ca E, bảng nguồn và phần 13: cập nhật nhất quán, bỏ diễn giải còn chờ nhánh cơ khí dùng chi tiết. Giữ CĐ-01 về chuỗi/số/tổng và CĐ-04 về Dày.
+- Giữ đủ 25 ID, **17 [x], 5 [~], 3 [ ]**, còn 8 mã chưa hoàn tất. Lượt này chỉ sửa checklist và nguồn văn bản, không sửa ứng dụng, không chạy/nhận đã đạt yêu cầu mới trên web, không đánh dấu xong vì khách đồng ý hướng làm.
