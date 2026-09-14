@@ -1,6 +1,14 @@
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
-## Hiện hành — hoàn thành năm mục đợt 2, ngày 14/09/2026
+## Hiện hành — đợt 3, ngày 14/09/2026
+
+Đã push ứng dụng `59fc6e0` và kiểm đúng bản trên `https://baogia-truongphat.netlify.app/`: **17/17 nhóm local (177 ca logic, 33 ca máy chủ)**; **5 nhóm mới + 9 nhóm hồi quy trên web thật**, kết thúc 13:32:31. Đã lưu 19 ảnh web thật, 9 ảnh local và 6 ảnh máy chủ thử. [Kết quả, cách dùng và giới hạn đợt 3](docs/BATCH-03-2026-09-14.md). Chạy lại: `npm run verify:batch-three`.
+
+**GD-02, GD-04 hoàn thành nội bộ; TC-05, BG-04, GD-01 đã bổ sung nhưng còn [~].** Tổng checklist **13/25 mã [x]**. Mới có tuyến/lượt và đối tượng lắp đặt, yếu tố SX bổ sung đúng lớp, xác nhận giá trước–sau, quyền nội bộ/sửa/duyệt tách biệt, dùng lại phiên bản cũ mà không ghi đè bản duyệt. Yếu tố SX mới không tự nhân vào giá bán TMC/kg/đối thủ. Còn phần thiết bị/CĐ-02, thuế/CĐ-03 và các tiêu chí chi tiết của GD-01; không coi xanh test là đã xong mọi mã.
+
+Netlify vẫn lưu trình duyệt. Phân quyền/đa người/khóa phiên bản được kiểm ở máy chủ thử cục bộ, không phải đã triển khai server sản xuất. AI và CĐ-01/TMC vẫn cần làm; không phải khách nghiệm thu GĐ1. Các phần hiện hành cũ bên dưới là lịch sử.
+
+## Lịch sử — hoàn thành năm mục đợt 2, ngày 14/09/2026
 
 **DM-05, TC-01, TC-02, TC-03, TC-04 đã hoàn thành triển khai/kiểm chứng nội bộ.** Ứng dụng `3fc452d` đã commit/push `main` và xác minh đúng bản trên `https://baogia-truongphat.netlify.app/`. Đã qua **15 nhóm local (168 ca logic, 28 ca máy chủ)**; trên web thật **9 nhóm đợt 2 + 7 nhóm hồi quy**, lưu **22 ảnh**, kết thúc 12:25:02 ngày 14/09. [Báo cáo đợt 2, cách dùng và bằng chứng](docs/BATCH-02-2026-09-14.md). Chạy lại: `npm run verify:batch-two`.
 

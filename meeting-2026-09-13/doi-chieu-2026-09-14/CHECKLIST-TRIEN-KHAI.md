@@ -1,6 +1,6 @@
 # Checklist triển khai sau cuộc họp 13/09
 
-Phiên bản tài liệu: 14/09/2026 — v2.3, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; cập nhật sáu mục đợt 1, năm mục đợt 2 đã kiểm chứng.
+Phiên bản tài liệu: 14/09/2026 — v2.4, giữ yêu cầu v2.1/F01–F14 và đủ 25 mã; cập nhật đợt 3 có hai mã hoàn thành nội bộ, ba mã bổ sung một phần.
 
 Phạm vi: luồng báo giá Trường Phát — dùng để bàn giao cho người hoặc bot tiếp tục sửa phần mềm.  
 Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu của khách.
@@ -9,7 +9,13 @@ Trạng thái tài liệu: nội bộ, chưa phải biên bản nghiệm thu c�
 
 Các ghi nhận “hiện trạng” và số dòng mã nguồn trong tài liệu được rà tại commit `e8c0cae6f56485f1a65dca88dbae8f0b2d8774ab`; phải kiểm lại khi mã thay đổi. Bản giải thích hiện hành là tài liệu này; các báo cáo phân tích cũ lưu để truy vết, không dùng diễn giải đã bị sửa để ghi đè v2. Ảnh/clip/phiên âm chủ yếu chỉ có trong gói nguồn nội bộ, không đi kèm clone GitHub; xem phần 12.
 
-## Hiện hành — hoàn thành đợt 2, ngày 14/09/2026
+## Hiện hành — đợt 3, ngày 14/09/2026
+
+**GD-02, GD-04 đổi sang [x]; TC-05, BG-04, GD-01 giữ [~].** Ứng dụng `59fc6e0` đã push và khớp Netlify. **17/17 nhóm local (177 ca logic, 33 ca máy chủ), 5/5 nhóm mới + 9/9 nhóm hồi quy trên web**, kết thúc 13:32:31 ngày 14/09/2026. Có 19 ảnh web thật, 9 ảnh local và 6 ảnh máy chủ thử. [Báo cáo đợt 3, bằng chứng và giới hạn từng mã](../../docs/BATCH-03-2026-09-14.md).
+
+Tổng hiện **13/25 mã [x]**, không phải khách nghiệm thu. Giữ TC-05/BG-04 mở cho phần công việc thiết bị/CĐ-02; GD-01 còn thuế/CĐ-03, đổi hãng/liên kết lắp đặt và lịch sử giá danh mục đầy đủ. Không tự đóng CĐ-01/02/03. Phân quyền/đa người được kiểm trên máy chủ localhost; Netlify vẫn là chế độ trình duyệt. Các số 11/25 phía dưới là lịch sử đợt 2, không thay trạng thái này.
+
+## Lịch sử — hoàn thành đợt 2, ngày 14/09/2026
 
 **DM-05, TC-01, TC-02, TC-03, TC-04** đã đạt triển khai/kiểm chứng nội bộ theo phần 11, đổi sang `[x]` sau kiểm đúng bản Netlify. Mã ứng dụng `3fc452dc00e2346851551511c8e235c3eaab0fe3`: **15/15 nhóm local, 168 ca logic, 28 ca máy chủ**; web thật **9/9 nhóm đợt 2 + 7/7 nhóm hồi quy**, **22 ảnh**, kết thúc **12:25:02 ngày 14/09/2026** (giờ Việt Nam). [Báo cáo từng mã, cách dùng, giới hạn và đường dẫn bằng chứng](../../docs/BATCH-02-2026-09-14.md).
 
@@ -146,6 +152,8 @@ Người dùng chọn một cột làm căn cứ cho toàn báo giá. Mọi đi�
 **Kiểm tra đạt:** tổng giá và phần chênh còn lại không đổi khi chỉ ẩn/hiện cơ cấu; không trừ hai lần khoản cha/con; chọn phương án không sửa ngược đầu vào cột khác. Giá có/không gồm thuế được đưa về cùng mặt bằng sau khi khai đủ điều kiện.
 
 ### [~] BG-04 — Giữ đúng ba lớp giá của phương án tính toán
+
+**Đợt 3:** đã kiểm công thức ba lớp và yếu tố SX bổ sung có căn cứ; yếu tố mới không tự nhân sang TMC/kg/đối thủ. Phần công việc thiết bị mới chưa rõ lớp vẫn giữ CĐ-02, chưa đánh dấu trọn mã.
 
 ```text
 Giá sản xuất =
@@ -363,6 +371,8 @@ Mỗi yếu tố ghi rõ lấy số sản phẩm, số cấu kiện hay số v�
 
 ### [~] TC-05 — Tách vận chuyển và lắp đặt theo bản chất
 
+**Đợt 3:** đã kiểm tuyến/lượt, chọn cấu kiện/chi tiết, lượng/đơn vị, yếu tố riêng, giá gói và phân bổ làm tròn. Còn chống trùng công việc thiết bị theo TC-07/CĐ-02 nên chưa đánh dấu trọn mã. Xem báo cáo đợt 3; yêu cầu dưới đây giữ nguyên.
+
 Tách ít nhất:
 
 - vận chuyển nhập vật tư;
@@ -429,6 +439,8 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 ### [~] GD-01 — Giá tham chiếu và giá áp dụng của từng báo giá
 
+**Đợt 3:** đã kiểm xác nhận trước–sau khi chọn giá và lưu dấu vết riêng của đơn. Còn điều kiện thuế, quy trình đổi hãng/liên kết lắp đặt theo %, phủ lịch sử các đường sửa giá danh mục; chưa đánh dấu trọn mã.
+
 - Danh mục giữ lịch sử giá theo mã/đơn vị/ngày.
 - Báo giá chọn hoặc nhập giá áp dụng rồi lưu snapshot.
 - Sửa danh mục không tự đổi báo giá đã lưu/đã duyệt.
@@ -443,7 +455,9 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 **Kiểm thêm thương hiệu:** dữ liệu thử cùng thông số, A = 1.000.000 đồng/chiếc và B = 1.500.000 đồng/chiếc. Chọn hai chiếc lần lượt cho tiền thiết bị 2.000.000 và 3.000.000 đồng, chưa xét khoản/hệ số khác; thiếu giá B không được dùng giá A hoặc 0. Giữ nguyên số lượng/thông số; nếu lắp đặt theo 20% giá trị thiết bị thì lần lượt 400.000 và 600.000 đồng sau xác nhận cơ sở. Sửa giá A không đổi B hay bản duyệt. Các hãng/giá/tỷ lệ trên chỉ là số thử.
 
-### [~] GD-02 — Hệ số mở, chia đúng lớp và có quyền sửa
+### [x] GD-02 — Hệ số mở, chia đúng lớp và có quyền sửa
+
+**Đợt 3:** đã đạt cơ chế triển khai/kiểm chứng nội bộ: yếu tố mở, căn cứ, audit máy chủ, quyền tách biệt và chặn API. Đã kiểm UI Netlify, riêng quyền/phiên/tệp kiểm trên máy chủ localhost. Chính sách người thật chưa phải khách đã duyệt; không coi demo tĩnh là bảo mật đa người.
 
 - Nhóm hệ số chia theo lớp giá đã định nghĩa ở BG-04, có cơ sở tính rõ; không tự thêm một lớp nhân hệ số vào giá gốc chỉ vì có ba nhóm giao diện.
 - Cho thêm yếu tố có tên/căn cứ; không dùng một ô “khác” để che mọi khoản.
@@ -469,7 +483,9 @@ Tổng phân bổ phải bằng tổng khoản chi, kể cả làm tròn; không
 
 **Kiểm tra đạt:** bản phát hành chính thức chỉ chứa giá bán đã duyệt, không lộ giá vốn/hệ số; nếu cho xem/in nháp thì ghi rõ “Nháp” và không coi đã duyệt. Tổng dòng, khoản đã bao gồm, thuế và tổng thanh toán nhất quán; thông tin khách đúng snapshot.
 
-### [~] GD-04 — Trạng thái, lịch sử và không ghi đè
+### [x] GD-04 — Trạng thái, lịch sử và không ghi đè
+
+**Đợt 3:** kiểm máy chủ tạo phiên bản nháp từ nội dung cũ, giữ bản đã duyệt, lý do/người thực hiện và chống ghi đè phiên cũ. Kiểm riêng trạng thái giao dịch trong hồi quy; không đồng nhất giao dịch với duyệt nội bộ. Bằng chứng máy chủ localhost, không phải server sản xuất trên Netlify.
 
 Giữ trạng thái giao dịch riêng với duyệt nội bộ. Bản đã duyệt là bất biến; chỉnh tiếp tạo phiên bản mới. Lưu lịch sử ai sửa, ai trình, ai duyệt, phương án được chọn, giá chốt và lý do điều chỉnh.
 
