@@ -43,12 +43,8 @@ function rcShapeRow(key){
   const fields=mode=>d.fields.filter(f=>f.mode===mode).map(f=>`<small title="${esc(f.name||TPConventions.parameterName(db,f.key))}">${esc(f.key)} (${esc(f.unit)})</small>`).join('')||'Không có';
   return `<tr data-rc-definition="${esc(key)}"><td><strong>${esc(d.name)}</strong><small>${source?'Từ quy tắc đang có':esc(d.id)}</small></td><td>${esc(C.shapes[d.blankShape||(d.base==='sheet'?'sheet':'profile')].name)}</td><td>${fields('fixed')}</td><td>${fields('input')}</td><td><small>Dài: <code>${esc(d.length)}</code></small>${d.base==='sheet'?`<small>Rộng: <code>${esc(d.width)}</code></small>`:''}</td><td><code>${esc(formulas.blankMass)}</code><small>kg / chi tiết</small></td><td><code>${esc(formulas.blankSurface)}</code><small>m² / chi tiết</small></td><td><div class="rc-row-actions">${source?rcButton('Sửa công thức','declare-rule',`data-key="${esc(key)}"`):dfButton('Sửa công thức','shape-edit',d.id)}${reviewButton('shape',key)}${rcButton('Công thức tổng hợp','summary',`data-key="${esc(key)}"`)}${!source?dfButton('Tạo mã vật tư','shape-material',d.id):''}</div></td></tr>`;
 }
-function rcSummary(key){
-  const d=rcRowModel(key),full=DFC().expandedFormulas(d),input=Object.fromEntries(d.fields.map(f=>[f.key,f.sample]));
-  let resultText;try{const g=DFC().testShape(d,input);resultText=`Số thử: ${num(g.length)}${g.width?' × '+num(g.width):''} mm; ${num(g.weight,4)} kg; ${num(g.blankArea,4)} m² / chi tiết. RHO thử = 7.850 kg/m³.`;}catch(e){resultText=e.message;}
-  openDialog('Công thức tổng hợp · '+esc(d.name),`<p>Công thức theo khai báo đã lưu. Mở Sửa công thức để thay đổi.</p><dl class="rc-summary"><dt>Dạng cấu kiện</dt><dd>${esc(d.name)}</dd><dt>Hình dạng phôi</dt><dd>${esc(C.shapes[d.blankShape||(d.base==='sheet'?'sheet':'profile')].name)}</dd><dt>Dài khai triển (mm)</dt><dd><code>${esc(d.length)}</code></dd><dt>Rộng khai triển (mm)</dt><dd><code>${d.base==='sheet'?esc(d.width):'Không áp dụng'}</code></dd><dt>Khối lượng phôi sản phẩm (kg/chi tiết)</dt><dd><code>${esc(full.blankMass)}</code></dd><dt>Diện tích phôi sản phẩm (m²/chi tiết)</dt><dd><code>${esc(full.blankSurface)}</code></dd></dl><p class="notice">${esc(resultText)}</p><p>Toàn dòng = kết quả một chi tiết × số lượng tại dòng × số lượng các cấp cha. Khổ mua được tính riêng từ kích thước khai triển và định mức vật tư.</p>${rcFormulaRows(d)}`);
-  $('#dialog').classList.add('wide-dialog');
-}
+function rcSummary(key){const d=rcRowModel(key);dfShapeEdit(key.startsWith('source:')?undefined:d.id,d);}
+
 function rcShapes(){
   const all=db.shapeDefinitions||[],defs=all.filter(d=>rcMatch(d.name)||rcMatch(d.id));
   const sources=db.rules.filter(r=>!all.some(d=>d.sourceRuleId===r.id)&&(rcMatch(r.name)||rcMatch(r.id)));
@@ -76,9 +72,7 @@ function installRulesCatalogUI(){
   dfShapeEdit=(...args)=>{
     shapeEdit(...args);
     const form=$('#dialog-form');
-    form.elements.mass.closest('label').firstElementChild.textContent='K · Công thức khối lượng trên đơn vị';
-    form.elements.surface.closest('label').firstElementChild.textContent='A · Công thức diện tích trên đơn vị';
-    form.elements.surface.closest('.form-grid').insertAdjacentHTML('afterend','<div id="rc-formulas"></div>');
+    form.querySelector('#definition-calculations').closest('.table-scroll').insertAdjacentHTML('afterend','<details class="rc-expanded"><summary>Xem công thức tổng hợp đã khai triển</summary><div id="rc-formulas" class="rc-summary"></div></details>');
     const show=()=>{const data=Object.fromEntries(new FormData(form));$('#rc-formulas').innerHTML=rcFormulaRows(data);};
     form.addEventListener('input',show);form.addEventListener('change',show);show();
   };

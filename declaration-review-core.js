@@ -11,7 +11,7 @@ function shape(d,db,inputs,density=7850,stock={length:6000,width:1220}){
   out.check('Tên thông số',()=>{const missing=d.fields.filter(f=>!(f.name||CV.parameterName(db,f.key)));if(missing.length)throw Error('Bổ sung tên cho '+missing.map(f=>f.key).join(', '));});
   const values=inputs||Object.fromEntries(d.fields.map(f=>[f.key,f.sample]));
   out.check('Khai triển, khối lượng và diện tích phôi',()=>{g=D.testShape(d,values,density);return `${g.length} × ${g.width} mm; ${g.weight} kg; ${g.blankArea} m² / chi tiết`;});
-  out.check('Khổ mua và lượng vật tư mua',()=>{if(!g)throw Error('Sửa công thức phôi trước khi kiểm tra khổ mua');D.validateStock({id:'TEST',name:'Khổ thử',base:d.base,...stock});const m=D.applyShape({id:'TEST',density,stockL:Number(stock.length),stockW:Number(stock.width)},d,values),effective=D.effective({spec:m,dims:values}),layout=C.nest([{id:'test',label:'Phôi thử',count:1,geometry:g}],effective,0),measure=layout.stocks.length*Number(stock.length)/1000*(d.base==='sheet'?Number(stock.width)/1000:1),rates=D.coefficients(effective);return `${layout.stocks.length} khổ; ${measure*rates.mass} kg; ${measure*rates.surface} m²`;});
+  out.check('Khổ mua và lượng vật tư mua',()=>{if(!g)throw Error('Sửa công thức phôi trước khi kiểm tra khổ mua');const v=D.trial(d,{inputs:values,density,stockL:stock.length,stockW:stock.width,count:stock.count??1,kerf:stock.kerf??0});return `${v.stocks} khổ; ${v.buyKg} kg; ${v.buyArea} m²; ${v.count} chi tiết`;});
   return {...out.result(),geometry:g};
 }
 function rate(rate,tier){

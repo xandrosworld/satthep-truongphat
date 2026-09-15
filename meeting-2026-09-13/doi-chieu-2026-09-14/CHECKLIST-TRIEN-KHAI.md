@@ -1,5 +1,7 @@
 # Checklist triển khai sau cuộc họp 13/09
 
+**Ảnh Công thức tổng hợp sáng 15/09 — DM-02:** gom sửa/thử vào chính màn tổng hợp; bảng hiện công thức, số thay vào và kết quả. Bổ sung công cụ phép tính/hàm theo ảnh demo tham khảo, định mức kg/m và m²/m của thép hình, thử số lượng/khổ mua/mạch cắt, kết quả phôi và vật tư mua. [Hành vi, ca số và bằng chứng](../../docs/FORMULA-WORKBENCH-2026-09-15.md). Thay cách mở bảng tổng hợp chỉ đọc của v2.14; bảng danh mục bên ngoài vẫn chỉ xem. Đây là lượt riêng, không đóng phần đơn giá khách đang ghi chú.
+
 **Ảnh tiếp theo sáng 15/09 — DM-02:** liên kết ký hiệu trong form hình dạng với Thông số cấu kiện; chọn lấy tên/đơn vị, khai thêm ngay trong form, chèn biến và cập nhật công thức khi đổi ký hiệu. Bảo toàn phiên bản cũ, kiểm tham chiếu trước khi xóa thông số. [Hành vi và kiểm chứng](../../docs/SHAPE-PARAMETERS-2026-09-15.md). Vẫn xử lý từng bảng, không gộp phần đơn giá vào lượt này.
 
 **Cập nhật sáng 15/09 — làm từng bảng:** DM-01 bỏ hai tab Mác vật liệu/Đặc tính trên thanh chính, giữ quản lý từ từng dòng Vật liệu theo ảnh khách. [Phạm vi và kiểm chứng](../../docs/MATERIAL-TABS-2026-09-15.md). Phản hồi đơn giá nguyên công chưa kết nối, vận chuyển/lắp đặt khai tương tự, báo giá chỉ chọn phương thức là yêu cầu tiếp theo của TC-02/TC-03/TC-05/GD-01; đang chờ ghi chú cụ thể để xử lý lượt riêng. Các dấu kiểm và bằng chứng giá v2.14 bên dưới không có nghĩa đã đáp ứng phản hồi mới này. Không gom sửa giá vào lượt bảng vật liệu.

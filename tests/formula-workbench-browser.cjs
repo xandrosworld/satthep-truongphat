@@ -1,0 +1,48 @@
+'use strict';
+const {chromium,expect}=require('@playwright/test'),fs=require('node:fs'),path=require('node:path'),{pathToFileURL}=require('node:url');
+const dir=path.resolve(process.env.FORMULA_WORKBENCH_ROOT||'artifacts/customer-review/formula-workbench-2026-09-15/local'),url=process.env.FORMULA_WORKBENCH_URL||pathToFileURL(path.resolve('dist/index.html')).href;
+fs.mkdirSync(dir,{recursive:true});
+(async()=>{
+ const browser=await chromium.launch({channel:'msedge',headless:true}),p=await browser.newPage({viewport:{width:1680,height:1080}}),checks=[],errors=[];
+ p.on('pageerror',e=>errors.push(e.message));p.setDefaultTimeout(10000);
+ const submit=async()=>{await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();},close=()=>p.locator('#dialog .dialog-head [data-action=close]').click(),pass=s=>{checks.push(s);console.log('PASS '+s);};
+ const value=async(key,expected)=>expect(Number(await p.locator('[data-df-result="'+key+'"]').getAttribute('data-value'))).toBeCloseTo(expected,8);
+ const shot=async name=>{await p.locator('#definition-calculations').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(dir,name+'.png'),fullPage:true});};
+ try{
+  await p.goto(url);const quote=await p.evaluate(()=>JSON.stringify(db.quote));await p.locator('[data-page=rules]').click();await p.locator('[data-rc-definition="source:flat"] [data-rc=summary]').click();
+  await expect(p.locator('#dialog-title')).toContainText('Công thức tổng hợp');await expect(p.locator('[name=length]')).toHaveValue('L');await expect(p.locator('[name=sample0]')).toBeVisible();
+  await value('blankMass',3.14);await value('blankSurface',.2);await value('buyKg',114.924);await value('buyArea',7.32);
+  await p.locator('[name=testStockL]').fill('1000');await p.locator('[name=testStockW]').fill('1000');await p.locator('[name=testCount]').fill('3');
+  await value('totalKg',9.42);await value('totalArea',.6);await value('stocks',1);await value('buyKg',15.7);await value('buyArea',1);
+  await expect(p.locator('[data-df-substitute=mass]')).toContainText('7.850');await expect(p.locator('[data-df-substitute=buyKg]')).toContainText('15,7');
+  await shot('01-tam-cong-thuc-thay-so-ket-qua');pass('Summary opens an editable trial: 3 sheet pieces total 9.42 kg / 0.6 m², purchased stock is 15.7 kg / 1 m² with substitutions on each row');
+  await p.locator('[name=mass]').selectText();await p.locator('#df-formula-tools details > summary').click();await p.locator('[data-df-function=ROUND]').click();
+  await expect(p.locator('[name=mass]')).toHaveValue('ROUND(T / 1000 * RHO, 2)');await value('mass',15.7);
+  await p.locator('[name=length]').fill('MAX(L, W)');await p.locator('[name=width]').fill('MIN(L, W)');
+  await p.locator('[name=blankMass]').fill('IF(PHOI_D > 500, PHOI_D * PHOI_R / 2000000 * KL_DV, PHOI_D * PHOI_R / 1000000 * KL_DV)');await p.locator('[name=blankSurface]').fill('PHOI_D * PHOI_R / 2000000');
+  await value('totalKg',4.71);await value('totalArea',.3);await value('buyKg',15.7);
+  await p.locator('[name=testStockL]').fill('100');await p.locator('[name=testStockW]').fill('100');await expect(p.locator('#definition-calculations')).toHaveAttribute('data-valid','false');
+  await expect(p.locator('[data-df-result=buyKg]')).toHaveText('—');expect(await p.locator('[data-df-result=buyKg]').getAttribute('data-value')).toBeNull();await p.locator('#review-shape-check').click();await expect(p.locator('#review-shape-report [data-review-ok]')).toHaveAttribute('data-review-ok','false');
+  await p.locator('[name=testStockL]').fill('1000');await p.locator('[name=testStockW]').fill('1000');await p.locator('[name=mass]').fill('L');await expect(p.locator('#definition-preview')).toContainText('sai đơn vị');
+  await p.locator('[name=mass]').fill('KM / 0');await expect(p.locator('#definition-calculations')).toHaveAttribute('data-valid','false');
+  await p.locator('[name=mass]').fill('ROUND(T / 1000 * RHO, 2)');await submit();expect(await p.evaluate(()=>JSON.stringify(db.quote))).toBe(quote);
+  await p.reload();await p.locator('[data-page=rules]').click();await p.locator('[data-rc-definition="QD-NGUON-flat"] [data-rc=summary]').click();await expect(p.locator('[name=mass]')).toHaveValue('ROUND(T / 1000 * RHO, 2)');await value('blankMass',1.57);await close();
+  pass('Formula helpers insert real functions; MIN/MAX/ROUND/IF compute correctly, invalid units/stock clear stale results, and saved formulas survive reload without changing the quote');
+  await p.locator('[data-definition=shape-new]').click();await p.locator('[name=id]').fill('QD-PROFILE-TRIAL');await p.locator('[name=name]').fill('Thép hình kiểm thử');await p.locator('[name=blankShape]').selectOption('h');
+  await expect(p.locator('[name=key1]')).toHaveValue('KM');await expect(p.locator('[name=unit1]')).toHaveValue('kg/m');await expect(p.locator('[name=key2]')).toHaveValue('AM');await expect(p.locator('[name=unit2]')).toHaveValue('m²/m');
+  await p.locator('[name=sample1]').fill('12');await p.locator('[name=sample2]').fill('0.6');await p.locator('[name=testCount]').fill('4');
+  await value('blankMass',24);await value('blankSurface',1.2);await value('totalKg',96);await value('totalArea',4.8);await value('stocks',2);await value('buyKg',144);await value('buyArea',7.2);
+  await p.locator('[name=testCount]').fill('3');await value('stocks',1);await p.locator('[name=testKerf]').fill('5');await value('stocks',2);await p.locator('#review-shape-check').click();await expect(p.locator('#review-shape-report')).toContainText('2 khổ');
+  await shot('02-thep-hinh-kg-met-dien-tich-met');await p.locator('[name=testCount]').fill('4');await p.locator('[name=testKerf]').fill('0');await submit();
+  pass('Profile trial exposes KM 12 kg/m and AM 0.6 m²/m: four 2 m pieces give 96 kg / 4.8 m²; two 6 m stocks give 144 kg / 7.2 m²; kerf changes the actual stock count');
+  await p.locator('[data-definition=shape-material][data-id=QD-PROFILE-TRIAL]').click();await p.locator('[name=id]').fill('VT-PROFILE-TRIAL');await p.locator('[name=price]').fill('20000');await expect(p.locator('[name=KM]')).toHaveValue('12');await expect(p.locator('[name=AM]')).toHaveValue('0.6');await submit();
+  await p.locator('[data-page=quote]').click();await p.locator('[data-work=new-quote]').first().click();await p.locator('[name=id]').fill('BG-PROFILE-TRIAL');await p.locator('[name=customer]').fill('Khách kiểm thử công thức');await p.locator('[name=customer]').blur();await submit();await p.locator('[data-tab=bom]').click();await p.locator('[data-action=add-product]').first().click();await p.locator('[name=template]').selectOption('');await p.locator('[name=name]').fill('Bốn thanh thử');await submit();
+  const product=await p.evaluate(()=>db.quote.products[0].id);await p.locator(`[data-action=add-material][data-parent="${product}"]`).click();await p.locator('[data-basket-id=VT-PROFILE-TRIAL]').check();await p.locator('[data-basket-qty=VT-PROFILE-TRIAL]').fill('4');await submit();await p.locator('[data-tab=mass]').click();
+  expect(await p.evaluate(()=>result.rows[0].geometry.weight)).toBeCloseTo(96,8);expect(await p.evaluate(()=>result.rows[0].purchasedWeight)).toBeCloseTo(144,8);expect(await p.evaluate(()=>result.rows[0].purchasedArea)).toBeCloseTo(7.2,8);
+  await p.locator('[data-page=rules]').click();await p.locator('[data-rc-definition=QD-PROFILE-TRIAL] [data-rc=summary]').click();await p.locator('[name=mass]').fill('KM * 2');await submit();expect(await p.evaluate(()=>result.rows[0].geometry.weight)).toBeCloseTo(96,8);
+  await p.locator('[data-rc-definition=QD-PROFILE-TRIAL] [data-rc=summary]').click();await p.locator('[name=mass]').fill('KM * 3');await close();expect(await p.evaluate(()=>db.shapeDefinitions.find(d=>d.id==='QD-PROFILE-TRIAL').mass)).toBe('KM * 2');
+  pass('The same declared profile and fixed coefficients flow through actual material selection to BOM totals; saved quote and cancelled edits preserve their versions');
+  await p.locator('[data-rc-definition=QD-PROFILE-TRIAL] [data-rc=summary]').click();await p.setViewportSize({width:390,height:844});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await shot('03-man-hinh-hep');expect(errors).toEqual([]);pass('The calculation table scrolls within a narrow screen without JavaScript errors');
+  fs.writeFileSync(path.join(dir,'results.json'),JSON.stringify({passed:true,url,checks,errors,at:new Date().toISOString()},null,2));
+ }catch(e){console.error(e);await p.screenshot({path:path.join(dir,'FAILURE.png'),fullPage:true}).catch(()=>{});fs.writeFileSync(path.join(dir,'results.json'),JSON.stringify({passed:false,url,checks,errors,error:e.stack},null,2));process.exitCode=1;}finally{await browser.close();}
+})();
