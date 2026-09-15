@@ -1,5 +1,7 @@
 # Checklist triển khai sau cuộc họp 13/09
 
+**Hai ảnh ký hiệu/trạng thái công thức sáng 15/09 — DM-02:** dùng L0/W0 cho kết quả khai triển, tách L/W đầu vào; bảng ngoài chỉ hiện ký hiệu và tick đã khai, công thức nằm trong màn tổng hợp. Bảo toàn công thức và dữ liệu cũ, kiểm phép tính W0 = W + 2H + 2F đến báo giá. [Phạm vi và bằng chứng](../../docs/UNFOLD-SYMBOLS-2026-09-15.md). Thay cách hiển thị nguyên biểu thức trên bảng tổng của các lượt trước; dấu tick không phải xác nhận công thức đúng hay khách nghiệm thu.
+
 **Ảnh Công thức tổng hợp sáng 15/09 — DM-02:** gom sửa/thử vào chính màn tổng hợp; bảng hiện công thức, số thay vào và kết quả. Bổ sung công cụ phép tính/hàm theo ảnh demo tham khảo, định mức kg/m và m²/m của thép hình, thử số lượng/khổ mua/mạch cắt, kết quả phôi và vật tư mua. [Hành vi, ca số và bằng chứng](../../docs/FORMULA-WORKBENCH-2026-09-15.md). Thay cách mở bảng tổng hợp chỉ đọc của v2.14; bảng danh mục bên ngoài vẫn chỉ xem. Đây là lượt riêng, không đóng phần đơn giá khách đang ghi chú.
 
 **Ảnh tiếp theo sáng 15/09 — DM-02:** liên kết ký hiệu trong form hình dạng với Thông số cấu kiện; chọn lấy tên/đơn vị, khai thêm ngay trong form, chèn biến và cập nhật công thức khi đổi ký hiệu. Bảo toàn phiên bản cũ, kiểm tham chiếu trước khi xóa thông số. [Hành vi và kiểm chứng](../../docs/SHAPE-PARAMETERS-2026-09-15.md). Vẫn xử lý từng bảng, không gộp phần đơn giá vào lượt này.

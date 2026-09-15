@@ -5,8 +5,13 @@ const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const E=typeof module!=='undefined'?require('./shape-expression-core.js'):root.TPShapeExpression;
 const units={mm:[0,1],number:[0,0],'kg/m':[1,-1],'m²/m':[0,1]};
 const blankVariables=['PHOI_D','PHOI_R','KL_DV','DT_DV'];
+// Keep any historic input named L0/W0 intact; use legacy output aliases in that definition only.
+function unfoldSymbols(d){const used=new Set((d.fields||[]).map(f=>f.key));return {length:used.has('L0')?'PHOI_D':'L0',width:used.has('W0')?'PHOI_R':'W0'};}
+function unfoldAliases(d,length,width){const names=unfoldSymbols(d);return {PHOI_D:length,PHOI_R:width,[names.length]:length,[names.width]:width};}
+function editorFormulas(d){const names=unfoldSymbols(d);return Object.fromEntries(Object.entries(blankFormulas(d)).map(([key,value])=>[key,value.replace(/\b(PHOI_D|PHOI_R)\b/g,name=>name==='PHOI_D'?names.length:names.width)]));}
 function blankFormulas(d){const factor=d.base==='sheet'?'PHOI_D * PHOI_R / 1000000':'PHOI_D / 1000';return {blankMass:d.blankMass||factor+' * KL_DV',blankSurface:d.blankSurface||factor+' * DT_DV'};}
-function expandedFormulas(d){const replacements={PHOI_D:d.length,PHOI_R:d.width,KL_DV:d.mass,DT_DV:d.surface};return Object.fromEntries(Object.entries(blankFormulas(d)).map(([key,value])=>[key,value.replace(/\b(PHOI_D|PHOI_R|KL_DV|DT_DV)\b/g,name=>'('+replacements[name]+')')]));}
+function expandedFormulas(d){const names=unfoldSymbols(d),replacements={PHOI_D:d.length,PHOI_R:d.width,[names.length]:d.length,[names.width]:d.width,KL_DV:d.mass,DT_DV:d.surface};return Object.fromEntries(Object.entries(blankFormulas(d)).map(([key,value])=>[key,value.replace(/\b(PHOI_D|PHOI_R|L0|W0|KL_DV|DT_DV)\b/g,name=>Object.hasOwn(replacements,name)?'('+replacements[name]+')':name)]));}
+
 const validKey=k=>/^[A-Za-z][A-Za-z0-9_]{0,23}$/.test(k)&&!['RHO','PI','BW','SA','CW','CA','constructor','prototype','__proto__'].includes(k);
 const positive=(v,label,zero=false)=>{if(v===''||v==null||!Number.isFinite(Number(v))||(zero?Number(v)<0:Number(v)<=0))throw Error(label+' phải là số '+(zero?'không âm':'dương'));return Number(v);};
 function dimension(source,vars){return E.dimension(E.parse(source),vars);}
@@ -20,7 +25,7 @@ function validateShape(d){
   for(const [key,unit]of Object.entries(expected)){const result=dimension(d[key],dims);if(!result.literal&&result.d.some((v,i)=>v!==unit[i]))throw Error('Công thức '+key+' sai đơn vị đầu ra');if(result.literal&&key!=='width'&&key!=='surface')throw Error('Công thức '+key+' cần biến có đơn vị, không dùng số trần');}
   if(d.blankShape&&(!Object.hasOwn(C.shapes,d.blankShape)||d.blankShape==='piece'||(d.blankShape==='sheet')!==(d.base==='sheet')))throw Error('Hình dạng phôi không khớp cách tính tấm/thanh');
   if(d.sourceRuleId!==undefined&&(typeof d.sourceRuleId!=='string'||d.sourceRuleId.length>100))throw Error('Quy tắc nguồn không hợp lệ');
-  const blankDims={...dims,PHOI_D:[0,1],PHOI_R:[0,1],KL_DV:expected.mass,DT_DV:expected.surface};
+  const blankDims={...dims,...unfoldAliases(d,[0,1],[0,1]),KL_DV:expected.mass,DT_DV:expected.surface};
   for(const key of ['blankMass','blankSurface'])if(d[key]!==undefined&&typeof d[key]!=='string')throw Error('Công thức phôi phải là chuỗi ký tự');
   for(const [key,unit]of [['blankMass',[1,0]],['blankSurface',[0,2]]])if(d[key]){
     if(d.fields.some(f=>blankVariables.includes(f.key)))throw Error('PHOI_D, PHOI_R, KL_DV và DT_DV dành cho công thức phôi');
@@ -38,7 +43,7 @@ function coefficients(m,sample=false){const d=m.shapeDefinition;validateShape(d)
 function geometry(n,count){const m=n.spec,d=m.shapeDefinition;validateShape(d);if(m.shape!==(d.base==='sheet'?'sheet':'profile'))throw Error('Dạng vật tư không khớp quy ước đã lưu');if(!Number.isFinite(count)||count<0)throw Error('Số lượng không hợp lệ');const vars=values(m,n.dims),length=positive(E.formula(d.length,vars),'Dài khai triển'),width=d.base==='sheet'?positive(E.formula(d.width,vars),'Rộng khai triển'):0;
   const factor=d.base==='sheet'?length*width/1e6:length/1000,rates=coefficients(effective(n));
   const mass=m.massOverride?C.materialMass(effective(n)):rates.mass,surface=m.areaOverride?C.materialSurface(effective(n)):rates.surface;
-  const blankVars={...vars,PHOI_D:length,PHOI_R:width,KL_DV:mass,DT_DV:surface};
+  const blankVars={...vars,...unfoldAliases(d,length,width),KL_DV:mass,DT_DV:surface};
   const weight=(d.blankMass?positive(E.formula(d.blankMass,blankVars),'Khối lượng phôi sản phẩm'):factor*mass)*count;
   const area=(d.blankSurface?positive(E.formula(d.blankSurface,blankVars),'Diện tích phôi sản phẩm'):factor*surface)*count;
   return {length,width,weight,blankArea:area,area,volume:weight/m.density,quantity:count,measure:factor*count};
@@ -52,7 +57,7 @@ function trial(d,options={}){
   if(stockL>100000||stockW>100000)throw Error('Khổ mua thử tối đa 100.000 mm');
   const g=testShape(d,inputs,density),m=applyShape({id:'PREVIEW',density,stockL,stockW},d,inputs),n={spec:m,dims:inputs},spec=effective(n),rates=coefficients(spec),layout=C.nest([{id:'preview',label:'Chi tiết thử',count,geometry:g}],spec,kerf);
   const stocks=layout.stocks.length,measure=stocks*stockL/1000*(d.base==='sheet'?stockW/1000:1);
-  const vars={...inputs,RHO:density,PI:Math.PI,PHOI_D:g.length,PHOI_R:g.width,KL_DV:rates.mass,DT_DV:rates.surface};
+  const vars={...inputs,RHO:density,PI:Math.PI,...unfoldAliases(d,g.length,g.width),KL_DV:rates.mass,DT_DV:rates.surface};
   return {g,vars,rates,stocks,stockL,stockW,count,kerf,measure,buyKg:measure*rates.mass,buyArea:measure*rates.surface,totalKg:g.weight*count,totalArea:g.blankArea*count};
 }
 function saveShape(db,d){validateShape(d);testShape(d,Object.fromEntries(d.fields.map(f=>[f.key,f.sample])));db.shapeDefinitions??=[];const old=db.shapeDefinitions.find(x=>x.id===d.id),next={...C.copy(d),version:(old?.version||0)+1};if(old)Object.assign(old,next);else db.shapeDefinitions.push(next);return next;}
@@ -62,5 +67,5 @@ function stocks(db,m){return (db.stockSizes||[]).filter(s=>s.active!==false&&s.b
 function draft(name='Vật tư chưa chọn mã',qty=1){positive(qty,'Số lượng');return {id:C.uid(),kind:'material',draftMaterial:true,materialId:'',name,qty,dims:{},spec:{id:'UNASSIGNED',name,shape:'piece',props:{},unit:'cái',price:0},rule:'',ruleSpec:{name:'Chưa chọn mã',length:'0',width:'0'},ops:[]};}
 function assign(n,m,rules){if(!m)throw Error('Chọn mã vật tư');const original=C.copy(n),shape=m.shapeDefinition;Object.assign(n,{draftMaterial:false,materialId:m.id,spec:C.copy(m),name:m.name,dims:{L:1000,W:300,H:50,F:15,...original.dims},rule:shape?shape.id:m.shape==='sheet'?'flat':'bar',ruleSpec:C.copy(shape?{id:shape.id,name:shape.name,shape:shape.base,length:shape.length,width:shape.width}:rules.find(r=>r.id===(m.shape==='sheet'?'flat':'bar')))});if(shape)for(const f of shape.fields.filter(f=>f.mode==='input'))if(original.dims?.[f.key]===undefined)n.dims[f.key]=f.sample;delete n.paramLinks;return n;}
 function validateCatalog(db){for(const [key,validate]of [['shapeDefinitions',validateShape],['stockSizes',validateStock]]){const rows=db[key]||[];if(!Array.isArray(rows)||rows.length>2000)throw Error('Danh mục '+key+' không hợp lệ');const seen=new Set();for(const row of rows){validate(row);if(seen.has(row.id))throw Error('Trùng mã '+row.id);seen.add(row.id);}}for(const m of [...db.materials||[],...C.flatten([...db.quote?.products||[],...db.library||[]]).map(n=>n.spec).filter(Boolean)])if(m.shapeDefinition){validateShape(m.shapeDefinition);if(m.shape!==(m.shapeDefinition.base==='sheet'?'sheet':'profile'))throw Error('Dạng vật tư không khớp quy ước');}}
-const api={trial,expression:E,blankFormulas,expandedFormulas,dimension,validateShape,info,values,effective,stockProperties,coefficients,geometry,applyShape,testShape,saveShape,validateStock,saveStock,stocks,draft,assign,validateCatalog};if(typeof module!=='undefined')module.exports=api;else root.TPDefinitions=api;
+const api={unfoldSymbols,editorFormulas,trial,expression:E,blankFormulas,expandedFormulas,dimension,validateShape,info,values,effective,stockProperties,coefficients,geometry,applyShape,testShape,saveShape,validateStock,saveStock,stocks,draft,assign,validateCatalog};if(typeof module!=='undefined')module.exports=api;else root.TPDefinitions=api;
 })(typeof window!=='undefined'?window:globalThis);
