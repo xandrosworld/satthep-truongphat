@@ -1,5 +1,7 @@
 # Yếu tố dùng chung, ma trận áp dụng và lưu đơn giá
 
+Cập nhật tiếp theo: [PRICING-DECLARATIONS-2026-09-15](PRICING-DECLARATIONS-2026-09-15.md) đổi chiều ma trận thành hàng công việc, cột yếu tố và đặt ngay dưới bảng giá. Nội dung dưới đây ghi nhận đợt trước.
+
 Nguồn: hai ảnh khách hỏi TMC là gì, phản ánh chưa lưu được Cắt phôi và yêu cầu khai yếu tố một lần rồi có ma trận xác định công đoạn chịu tác động.
 
 - Nhãn lựa chọn ghi rõ dùng bảng giá thang máng cáp thay tiền công tại xưởng. Có giải thích chỉ thay khi chọn phương án thang máng cáp, không cộng tiền công hai lần. Tab đơn giá cũng ghi Thang máng cáp. Mã dữ liệu tmc giữ tương thích.

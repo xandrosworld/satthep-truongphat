@@ -967,3 +967,10 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - Bổ sung bảng yếu tố khai một lần, ma trận tích công việc chịu tác động, cập nhật cùng định nghĩa cho các công việc đã liên kết. Giữ bản chụp báo giá.
 - Ghi rõ Thang máng cáp, kiểm tra lưu Cắt phôi và hiện lỗi nhập liệu ngay cạnh nút lưu. Chi tiết giới hạn tái hiện lỗi và kiểm chứng: `docs/FACTOR-MATRIX-2026-09-15.md`.
 - 303 logic, 56 API cục bộ, 34 nhóm trình duyệt đạt; chưa phải nghiệm thu khách hàng.
+
+
+### 15/09/2026 — Chốt hai bảng theo ảnh ma trận và lựa chọn cách giá
+
+- Đổi ma trận sang hàng công việc, cột yếu tố; đặt ngay dưới bảng giá. Hiển thị số/mã/tên yếu tố và công thức, xem trước và lưu riêng, giữ cấu trúc cách giá theo đơn vị.
+- Bổ sung lựa chọn giá cơ sở/có hệ số cho phương thức vận chuyển và lắp đặt; khai đầy đủ đơn vị, bậc khổ, hao hụt, phụ/chung của bảng giá thang máng cáp. Kiểm tra khai → lưu → chọn trong báo giá → tính lại.
+- 305 logic, 56 API cục bộ, 39 nhóm trình duyệt đạt. Chi tiết: [PRICING-DECLARATIONS-2026-09-15](../../docs/PRICING-DECLARATIONS-2026-09-15.md). Chưa đánh dấu nghiệm thu khách hàng hoặc hoàn tất các bảng ngoài phạm vi.

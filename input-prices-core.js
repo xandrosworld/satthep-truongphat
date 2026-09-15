@@ -10,7 +10,7 @@ function validateExpense(r){
  if(!r||typeof r.id!=='string'||!r.id.trim()||typeof r.name!=='string'||!r.name.trim())throw Error('Nhập mã và tên phương thức');
  if(!W.EXPENSES.some(x=>x[0]===r.category))throw Error('Chọn loại vận chuyển / lắp đặt');
  if(!W.METHODS.some(x=>x[0]===r.method))throw Error('Chọn cách tính phí');
- amount(r.rate,'Đơn giá');amount(r.minimum??0,'Phí tối thiểu');
+ amount(r.rate,'Đơn giá');amount(r.minimum??0,'Phí tối thiểu');if(r.priceMode!==undefined&&!['catalog','factors'].includes(r.priceMode))throw Error('Chọn đơn giá cơ sở hoặc giá có hệ số');
  if(r.method==='ton_km'&&!['net','purchase'].includes(r.massBasis))throw Error('Chọn cơ sở khối lượng');
  if(r.factors!==undefined&&!Array.isArray(r.factors))throw Error('Bảng hệ số không hợp lệ');
  for(const f of r.factors||[]){if(!['weight','area','length','count','quantity','distance','trips','complexity','from','to'].includes(f.param))throw Error('Tham số hệ số khoản chi không hợp lệ');W.validateFactor(f,P.tier);}
@@ -18,9 +18,9 @@ function validateExpense(r){
 }
 function validateTmc(t){
  if(!t||!t.id?.trim()||!t.name?.trim())throw Error('Nhập mã và tên bảng TMC');
- if(!['m','cái'].includes(t.unit))throw Error('Chọn đơn vị TMC');
+ if(!['m','cái','kg','m²'].includes(t.unit))throw Error('Chọn đơn vị TMC');
  P.tier(0,t.tiers,'price');for(const b of t.tiers)amount(b.price,'Đơn giá TMC');
- if(t.loss!==undefined)amount(t.loss,'Hao hụt TMC');return t;
+ if(t.loss!==undefined)amount(t.loss,'Hao hụt TMC');if(t.thresholdMode!==undefined&&!['upper','exact'].includes(t.thresholdMode))throw Error('Chọn cách tra bậc TMC');for(const key of ['ancillary','common']){const x=t[key];if(x===undefined)continue;if(!x||!['fixed','percent'].includes(x.kind))throw Error('Chọn cách tính khoản phụ/chung');amount(x.value,'Khoản phụ/chung');if(x.kind==='percent'&&!["material","labor","direct",...(key==='common'?["scope"]:[])].includes(x.basis))throw Error('Chọn cơ sở tính khoản phụ/chung');}return t;
 }
 function validateMaster(p){
  if(!p||typeof p!=='object'||Array.isArray(p))throw Error('Bảng đơn giá chung không hợp lệ');
@@ -35,7 +35,7 @@ function recordChanges(before,after,at=new Date().toISOString()){
   m.priceHistory=[{at,from:Number(old.price),to:Number(m.price),unit:m.unit},...(old.priceHistory||[])];
  }
 }
-function applyExpense(entry,rate){validateExpense(rate);return {...copy(entry),category:rate.category,method:rate.method,rate:Number(rate.rate),minimum:Number(rate.minimum||0),massBasis:rate.massBasis||'net',factors:copy(rate.factors||[]),priceSource:copy(rate)};}
+function applyExpense(entry,rate){validateExpense(rate);return {...copy(entry),category:rate.category,method:rate.method,rate:Number(rate.rate),minimum:Number(rate.minimum||0),massBasis:rate.massBasis||'net',factors:rate.priceMode==='catalog'?[]:copy(rate.factors||[]),priceSource:copy(rate)};}
 function refresh(db){const p=defaults(db);db.quote.expenses=(db.quote.expenses||[]).map(e=>{const r=p.expenseRates?.find(r=>r.id===e.priceSource?.id&&r.enabled!==false);return r?applyExpense(e,r):e;});if(db.quote.pricing){db.quote.pricing.tmcTables=copy(p.tmcTables);db.quote.pricing.tmcLoss=p.tmcLoss;}}
 const api={defaults,validateExpense,validateTmc,validateMaster,save,recordChanges,applyExpense,refresh};if(typeof module!=='undefined')module.exports=api;else root.TPInputPrices=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
