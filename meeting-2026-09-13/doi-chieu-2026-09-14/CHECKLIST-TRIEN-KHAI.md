@@ -954,3 +954,9 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 ### Ghi nhận ảnh 15/09 — tập trung quy ước hệ số
 
 Đã gom khách hàng/độ phức tạp vào Hệ số tính toán, đưa bảng hệ số khối lượng, số lượng, kích thước và các hệ số nguyên công hiện có về cùng màn quản lý. Giá đầu vào tham chiếu bảng dùng chung; báo giá giữ bản chụp khi sửa danh mục. Chi tiết: [FACTOR-CATALOG-2026-09-15](../../docs/FACTOR-CATALOG-2026-09-15.md). Đây là cập nhật cho ảnh quy ước hệ số, không đóng các phản hồi về phương thức đơn giá hoặc trạng thái nghiệm thu khác.
+
+
+### 15/09/2026 — Đơn giá đầu vào theo ba ảnh khách gửi
+
+- Đã triển khai lịch sử ba lần đổi giá vật tư; các bảng giá vận chuyển, lắp đặt và TMC; hiển thị mã yếu tố tác động. Phương thức được chọn và chụp giá trong báo giá, hệ số khai tập trung trong Danh mục quy ước.
+- Chi tiết và phạm vi kiểm chứng: `docs/INPUT-PRICES-2026-09-15.md`. 300 logic, 55 API cục bộ, 29 nhóm trình duyệt đạt. Chưa đánh dấu nghiệm thu khách hàng.

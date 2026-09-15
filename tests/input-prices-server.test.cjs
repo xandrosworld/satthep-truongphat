@@ -1,0 +1,12 @@
+'use strict';
+const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js'),W=require('../work-core.js');
+async function run(t){const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));const base='http://127.0.0.1:'+app.server.address().port;let session;const call=async(route,method='GET',body)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-CSRF-Token':session.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};};const s=await call('setup','POST',{username:'admin',name:'Kiểm thử quy ước',password:'Only-for-definition-tests-42!'});session={cookie:s.cookie,csrf:s.data.csrf};return {call};}
+
+
+
+const I=require('../input-prices-core.js');
+test('master expense and TMC prices, factor links and material history round-trip through local API without changing stored quotes',async t=>{
+ const {call}=await run(t),db=P.demoSeed(),before=structuredClone(db.materials);db.materials[0].price+=100;I.recordChanges(before,db.materials,'2026-09-15T00:00:00Z');I.save(db,'expenseRates',{id:'VC-SERVER',name:'Vận chuyển',category:'delivery',method:'trip',rate:100000,minimum:0});I.save(db,'tmcTables',{id:'TMC-SERVER',name:'Phụ kiện mới',unit:'cái',tiers:[{max:null,price:5000}]});const saved=await call('quotes','POST',{document:db});A.equal(saved.status,201,JSON.stringify(saved));const original=(await call('quotes/'+saved.data.id)).data.document;A.equal(original.pricingDefaults.expenseRates[0].rate,100000);A.equal(original.materials[0].priceHistory[0].from,before[0].price);
+ const master=(await call('catalog')).data,put=await call('catalog','PUT',{expectedVersion:master.version,catalog:{...master.catalog,materials:db.materials,pricingDefaults:db.pricingDefaults}});A.equal(put.status,200,JSON.stringify(put));const pulled=(await call('catalog')).data;A.equal(pulled.catalog.pricingDefaults.tmcTables.at(-1).id,'TMC-SERVER');A.equal(pulled.catalog.materials[0].priceHistory.length,1);A.deepEqual((await call('quotes/'+saved.data.id)).data.document,original);
+ const invalid=structuredClone(pulled.catalog);invalid.pricingDefaults.expenseRates[0].rate=-1;A.equal((await call('catalog','PUT',{expectedVersion:pulled.version,catalog:invalid})).status,400);A.equal((await call('catalog')).data.version,pulled.version);
+});

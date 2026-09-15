@@ -130,7 +130,7 @@ document.addEventListener('change',e=>{const el=e.target;if(el.closest('#dialog'
   else if(d.quoteField)mutation(()=>db.quote[d.quoteField]=Number(el.value));
   else if(d.cost)mutation(()=>C.findNode(db.quote.products,d.id)[d.cost]=Number(el.value));
   else if(d.rateUnit){undoState=C.copy(db);db.rates.find(r=>r.id===d.id)[d.rateUnit+'Unit']=el.value;persist();toast('Đã lưu cơ sở tính. Áp dụng vào báo giá để tính lại.');}
-  else if(d.materialPrice){undoState=C.copy(db);db.materials.find(m=>m.id===d.materialPrice).price=Number(el.value);persist();toast('Đã lưu giá danh mục. Báo giá hiện tại giữ giá đã chọn.');}
+  else if(d.materialPrice){if(el.value===''||!Number.isFinite(Number(el.value))||Number(el.value)<0){toast('Nhập giá vật tư không âm');render();return;}dfCatalogWrite(()=>{db.materials.find(m=>m.id===d.materialPrice).price=Number(el.value);});toast('Đã lưu giá danh mục. Báo giá hiện tại giữ giá đã chọn.');}
   else if(d.rateId){undoState=C.copy(db);db.rates.find(r=>r.id===d.rateId)[d.rateMode]=Number(el.value);persist();toast('Đã cập nhật đơn giá nguyên công trong danh mục.');}
 });
 document.addEventListener('input',e=>{if(e.target.id==='catalog-search'){const pos=e.target.selectionStart;search=e.target.value;render();$('#catalog-search').focus();$('#catalog-search').setSelectionRange(pos,pos);}});
@@ -138,4 +138,4 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){
 const legacyPaper=paper,legacyRatebook=renderRates;
 paper=()=>db.quote.pricing?renderAdvancedPaper():legacyPaper();
 renderRates=()=>db.quote.pricing&&rateTab==='operations'?renderRatebookAdvanced():legacyRatebook();
-initUX();setupUXActions();installPricingUI();installWorkUI();installManufacturingUI();installQuotesUI();installExportUI();installTeamUI();installTeamAccessUI();installQuoteOutputUI();installRateLabUI();installCompletionUI();installSourceUI();installCatalogSyncUI();installConventionsUI();installIntakeUI();installQuotePrices();installBatchOneUI();installDefinitionUI();installBatchTwoUI();installBatchThreeUI();installDeviceUI();installTaxUI();installBatchSixUI();installRulesCatalogUI();installDeclarationReviewUI();render();persist();
+initUX();setupUXActions();installPricingUI();installWorkUI();installManufacturingUI();installQuotesUI();installExportUI();installTeamUI();installTeamAccessUI();installQuoteOutputUI();installRateLabUI();installCompletionUI();installSourceUI();installCatalogSyncUI();installConventionsUI();installIntakeUI();installQuotePrices();installBatchOneUI();installDefinitionUI();installBatchTwoUI();installBatchThreeUI();installDeviceUI();installTaxUI();installBatchSixUI();installRulesCatalogUI();installDeclarationReviewUI();installInputPricesUI();render();persist();
