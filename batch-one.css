@@ -4,10 +4,10 @@
 .b1-legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;padding:0 16px;font-size:12px;color:#203349}
 .b1-legend>span{padding:7px 10px;border:1px solid #b0bac6;border-radius:4px}
 .b1-legend b{margin-right:5px}
-.b1-product{background:#b5c1c9!important;color:#243540}
-.b1-component{background:#d9e0e4!important;color:#2e404b}
-.b1-component-material{background:#f0f3f4!important;color:#344550}
-.b1-product-material{background:#fafbfc!important;color:#243349}
+.b1-product{background:var(--level-product)!important;color:#243540}
+.b1-component{background:var(--level-component)!important;color:#2e404b}
+.b1-component-material{background:var(--level-component-material)!important;color:#344550}
+.b1-product-material{background:var(--level-product-material)!important;color:#243349}
 .quick-row.b1-component>td{border-top:2px solid #9aaab4}
 .quick-row.b1-component-material .quick-identity{border-left:3px solid #aab5bb;padding-left:10px}
 .quick-row.b1-product-material .quick-identity{border-left:3px dashed #7189a4;padding-left:10px}
@@ -81,7 +81,7 @@
 .quick-product-head .button.quiet,.quick-product-head .text-button,.quick-product-head .muted,.quick-product-head .product-quantity,.quick-product-head .product-quantity small,.quick-product-head .fold-product,.quick-product-head .row-more{color:#2d414f}
 .quick-product-head .product-quantity{margin:0;font-size:12px;gap:6px}
 .quick-product-head .product-head-actions{margin:0;gap:6px}
-.quick-product .product-params{display:grid;grid-template-columns:125px minmax(0,1fr) auto;align-items:center;gap:10px 16px;background:#e8edf0;padding:12px 16px;border-color:#a2b0ba}
+.quick-product .product-params{display:grid;grid-template-columns:125px minmax(0,1fr) auto;align-items:center;gap:10px 16px;background:var(--level-component-material);padding:12px 16px;border-color:#a2b0ba}
 .product-params .param-label{font-size:12px;font-weight:600;min-width:0;color:#314653}
 .product-params .param-label small{display:block;font-size:11px;color:#405664;margin:2px 0 0}
 .product-param-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;min-width:0}

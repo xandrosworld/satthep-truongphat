@@ -1,0 +1,82 @@
+/* Trường Phát workspace, adapted from the published ZaUI 1.11 palette and
+   the customer's light-chat screenshot. Not an official Zalo chat theme.
+   Source: https://docs.zaloplatforms.com/docs/MA/zaui/foundation/Colors */
+
+/* Quiet white navigation and surfaces; blue is reserved for actions/selection. */
+.sidebar{background:var(--surface);color:var(--ink);border-right:1px solid var(--line)}
+.sidebar .brand{color:var(--ink)}
+.sidebar .brand-mark{color:var(--blue-deep);border-color:var(--line);background:var(--blue-soft)}
+.sidebar .brand small,.sidebar .nav-label,.sidebar .side-bottom p,.sidebar .side-help,.sidebar .account small{color:var(--muted)}
+.sidebar nav button{color:var(--ink)}
+.sidebar nav button:hover{background:var(--blue-soft);color:var(--blue-deep)}
+.sidebar nav button.active{background:#dbebff;color:var(--blue-deep);box-shadow:inset 3px 0 var(--blue)}
+.sidebar .nav-count,.sidebar .avatar{background:var(--blue-soft);color:var(--blue-deep)}
+.sidebar .demo-status,.sidebar .account{color:var(--ink)}
+.sidebar .side-help,.sidebar .account{border-color:var(--line)}
+.topbar,.panel,dialog,.dialog-head{background:var(--surface)}
+.dialog-foot,.dialog-footer{background:var(--level-component-material);border-color:var(--line)}
+.button{border-color:var(--line);color:var(--ink);background:var(--surface)}
+.button:hover{background:var(--blue-soft);border-color:#8eabcd;color:var(--blue-deep)}
+.button.primary,.button.primary:hover{background:var(--blue);border-color:var(--blue);color:#fff}
+.button.primary:hover{background:var(--blue-deep);border-color:var(--blue-deep)}
+.button.quiet{background:transparent;color:var(--muted)}
+.button.quiet:hover{background:var(--blue-soft);color:var(--blue-deep)}
+.text-button,.code-link{color:var(--blue-deep)}
+input[type=checkbox],input[type=radio]{accent-color:var(--blue)}
+
+/* Keep white input fields distinct from every hierarchy level. */
+input:not([type=checkbox]):not([type=radio]),select,textarea,
+.quick-input input,.product-quantity input,.product-params .product-param-fields input{
+  background:var(--surface);color:var(--ink);border-color:var(--control-border);box-shadow:none;
+}
+input::placeholder,textarea::placeholder{color:#575757;opacity:1}
+input[readonly],textarea[readonly],.quick-input input[readonly],.product-params input[readonly]{background:var(--level-component);color:var(--muted);border-style:dashed}
+input:disabled,select:disabled,textarea:disabled{background:var(--canvas);color:#575757;border-style:dashed}
+input:focus,select:focus,textarea:focus,.quick-input input:focus,.product-params input:focus{
+  border-color:var(--blue);outline:2px solid var(--blue);outline-offset:2px;box-shadow:none;
+}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* Secondary information remains readable on gray/blue-gray surfaces. */
+.inline-divider,.quotes-tools>span,.tabs button,.tabs button span,.segmented button,
+.quick-toolbar p,.searchbox>span,.entry-autosave,.cell-na,.row-more,.fold-product,
+.quick-input>span,.quick-product-footer>span,.quick-bottom,.table-swipe-hint,
+.quick-table th,.quick-identity small,.fixed-value,.fixed-value small,.calc-col small,
+.quick-product-head .quick-product-title>span,.quick-product-head .button.quiet,
+.quick-product-head .product-quantity,.quick-product-head .product-quantity small,
+.product-params .param-label,.product-params .param-label small,.param-link-note,
+.product-params .product-param-fields code,.product-params .product-param-help .thickness-note,
+.quick-product .quick-table thead th,.quick-product .quick-row .button.quiet,.quick-product .fixed-value,.quick-product .calc-col small{
+  color:var(--muted);
+}
+.quick-product-heading>strong,.quick-identity strong,.product-params .product-param-fields label{color:var(--ink)}
+.tabs button.active,.segmented button.active{color:var(--blue-deep)}
+.tabs button.active{border-color:var(--blue)}
+.tabs button.active span{background:var(--blue);color:#fff}
+.quick-product .product-params{border-color:var(--line)}
+.quick-product-head.b1-product{border-top-color:#426d9e;border-bottom-color:#b2c5dc}
+.quick-row.b1-component>td,.b1-tree-row.b1-component>td{border-top-color:#b2c5dc}
+.b1-product,.b1-component,.b1-component-material,.b1-product-material{color:var(--ink)}
+[data-b1-type] small,[data-b1-type] .subtext,[data-b1-type] .fixed-value{color:var(--muted)!important}
+.b1-tree-row.b1-product>td{border-top-color:#426d9e}
+.b1-legend{color:var(--ink)}
+.b1-legend>span{border-color:#b2c5dc}
+.quick-row:has([data-check-id]:checked),.tree-node.selected,
+.b1-tree-row:focus-within,.quick-row:focus-within,.quick-product-head:focus-within,
+.quick-product:has([data-check-product]:checked)>.quick-product-head{outline-color:var(--blue)}
+.quick-row:has([data-check-id]:checked) .quick-identity:after,
+.quick-product:has([data-check-product]:checked) .quick-product-title:after{color:var(--blue-deep)}
+
+/* Warnings and invalid values retain their own meaning, distinct from selection. */
+.invalid-input{outline-color:var(--red)!important}
+.b1-tree-row.b1-problem,.quick-row.has-problem,.quick-product-head.b1-problem{outline-color:#ad4500}
+[data-b1-type] .cell-error,.def-problem{color:#8a3700!important}
+@media print{body{background:#fff}}
+
+.sidebar .nav-symbol,.sidebar .account strong{color:var(--muted)}
+.sidebar nav button.active .nav-symbol{color:var(--blue-deep)}
+.workspace-tabs button,.workspace-tabs button span{color:var(--muted)}
+.workspace-tabs button.active{color:var(--blue-deep)}
+.workspace-tabs button.active span{background:var(--blue);color:#fff}
+th{color:var(--muted)}
+.pa-operation-tools>span,.group-list>button span,.catalog-filters label>span{color:var(--muted)}

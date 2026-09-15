@@ -1034,3 +1034,12 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - [ ] Bài completion-browser cũ dừng ở phần dư vật tư cả trên baseline 3b286d4; theo dõi riêng.
 
 Chi tiết: `docs/QUOTE-VERSIONS-2026-09-16.md`. Mobile đầy đủ vẫn để xét sau theo khách.
+
+
+### 16/09/2026 — Màu và tương phản theo ảnh Zalo
+
+- [x] Đối chiếu bảng màu ZaUI chính thức và ảnh khách; nền sáng, khung trắng, chữ tối.
+- [x] Sản phẩm đậm hơn cấu kiện và vật tư; ô nhập rõ viền, trạng thái chọn rõ.
+- [x] Rà 12 màn hình/trạng thái, 2.863 mẫu chữ đạt tối thiểu 4,5:1; 10 nhóm kiểm tra trình duyệt đạt.
+
+Chi tiết: `docs/ZALO-COLORS-2026-09-16.md`. Chưa đánh dấu khách nghiệm thu; mobile đầy đủ vẫn xét sau.
