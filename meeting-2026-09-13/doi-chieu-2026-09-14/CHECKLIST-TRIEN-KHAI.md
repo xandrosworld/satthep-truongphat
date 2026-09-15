@@ -993,3 +993,10 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - Bảng giá có đơn vị, cự ly, xe/tải trọng, mức sàn mỗi chuyến, giá đối chiếu và ba lịch sử thay đổi. Lắp đặt tính theo đơn vị sản phẩm, kiểm tra phạm vi cùng đơn vị.
 - Chọn phương thức trong báo giá và giữ giá đã lưu; liên kết nhóm sản phẩm TMC với bảng giá đầu vào và phương án so sánh. Không tự chọn giá bán.
 - Chi tiết phép tính và kiểm chứng: [TRANSPORT-INSTALL-TMC-2026-09-15](../../docs/TRANSPORT-INSTALL-TMC-2026-09-15.md). Chưa đánh dấu khách nghiệm thu.
+
+
+### 15/09/2026 — Thư viện gọn theo danh mục và form vật tư
+
+- Thư viện dùng bảng theo nhóm; lọc/tìm, phân nhóm cả cấu kiện mẫu, giữ xem và sử dụng mẫu.
+- Nhóm vật tư dùng danh mục chung. Form phôi theo quy ước; linh kiện không hiện thông tin phôi; mật độ lấy theo vật liệu, tên gợi ý theo đúng loại khai báo.
+- Chi tiết: [LIBRARY-MATERIAL-2026-09-15](../../docs/LIBRARY-MATERIAL-2026-09-15.md). Chưa đánh dấu khách nghiệm thu.
