@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),{createApp}=require('../se
   const browser=await chromium.launch({channel:'msedge',headless:true}),folder=path.resolve('artifacts/phase1-2026-09-12');fs.mkdirSync(folder,{recursive:true});
   const p=await browser.newPage({viewport:{width:1440,height:1050},offline:true}),errors=[],passed=[];
   p.on('pageerror',e=>errors.push(e.message));const check=s=>{passed.push(s);console.log('PASS '+s);};
-  const tab=n=>p.locator(`[data-tab="${n}"]`).click(),submit=()=>p.locator('#dialog button[type=submit]').click(),close=()=>p.locator('#dialog .dialog-head [data-action=close]').click();
+  const tab=async n=>{await p.locator(`[data-tab="${n==='logistics'?'prices':n}"]`).click();if(n==='logistics')await p.locator('[data-intake=price-tab][data-id=logistics]').click();},submit=()=>p.locator('#dialog button[type=submit]').click(),close=()=>p.locator('#dialog .dialog-head [data-action=close]').click();
   const reset=async()=>{await p.locator('[data-pa=sample]').click();await submit();};let server;
   try{
     await p.goto(pathToFileURL(path.resolve('dist/index.html')).href);await tab('operations');const first=await p.evaluate(()=>db.quote.products[0].id);
