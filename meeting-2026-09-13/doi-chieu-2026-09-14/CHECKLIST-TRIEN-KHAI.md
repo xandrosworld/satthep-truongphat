@@ -974,3 +974,9 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - Đổi ma trận sang hàng công việc, cột yếu tố; đặt ngay dưới bảng giá. Hiển thị số/mã/tên yếu tố và công thức, xem trước và lưu riêng, giữ cấu trúc cách giá theo đơn vị.
 - Bổ sung lựa chọn giá cơ sở/có hệ số cho phương thức vận chuyển và lắp đặt; khai đầy đủ đơn vị, bậc khổ, hao hụt, phụ/chung của bảng giá thang máng cáp. Kiểm tra khai → lưu → chọn trong báo giá → tính lại.
 - 305 logic, 56 API cục bộ, 39 nhóm trình duyệt đạt. Chi tiết: [PRICING-DECLARATIONS-2026-09-15](../../docs/PRICING-DECLARATIONS-2026-09-15.md). Chưa đánh dấu nghiệm thu khách hàng hoặc hoàn tất các bảng ngoài phạm vi.
+
+
+### 15/09/2026 — Báo giá chọn một cách giá nguyên công
+
+- Theo ảnh khách mới: thay bảng liệt kê cách khai bằng một ô chọn cho mỗi nguyên công ở Giá áp dụng cho báo giá này. Đổi lựa chọn lưu và tính lại; hiện giá áp dụng và tổng tiền công, giữ lượng/độ phức tạp riêng.
+- 24 nhóm trình duyệt cục bộ đạt. Chi tiết: [QUOTE-OPERATION-CHOICE-2026-09-15](../../docs/QUOTE-OPERATION-CHOICE-2026-09-15.md). Khách vẫn đang rà hai bảng; chưa đánh dấu nghiệm thu.
