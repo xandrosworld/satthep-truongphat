@@ -1010,3 +1010,5 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - 15/09: Tách hao hụt dự tính khỏi tổ hợp mua toàn đơn; thêm cột %, bốn đại lượng KL/DT và công thức chỉ xem. Áp dụng phương pháp mới mới đổi chi phí đã lưu. Xem docs/MATERIAL-ESTIMATE-2026-09-15.md. 324 logic, 58 máy chủ và 12 nhóm trình duyệt cục bộ đạt; chưa đánh dấu khách nghiệm thu.
 
 - 15/09: Gom vận chuyển/lắp đặt vào Giá & hệ số; thanh chọn giá lên đầu; chọn phương thức theo vật tư và sản phẩm, giữ khoản chung và giá đã lưu. Sửa lưu chuyến không bắt buộc cự ly. 324 logic và 20 nhóm trình duyệt cục bộ đạt; xem docs/QUOTE-LOGISTICS-2026-09-15.md. Chưa đánh dấu khách nghiệm thu.
+
+- 15/09: Màu trầm theo cấp sản phẩm > cấu kiện > vật tư; thêm mục Giá đối thủ và Giá theo kg riêng trong Giá & hệ số, dùng chung dữ liệu so sánh. 29 logic và 13 nhóm trình duyệt cục bộ đạt; xem docs/QUOTE-BENCHMARK-COLORS-2026-09-15.md. Chưa đánh dấu khách nghiệm thu.

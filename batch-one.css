@@ -4,14 +4,14 @@
 .b1-legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;padding:0 16px;font-size:12px;color:#203349}
 .b1-legend>span{padding:7px 10px;border:1px solid #b0bac6;border-radius:4px}
 .b1-legend b{margin-right:5px}
-.b1-product{background:#d4e4f6!important;color:#172f4b}
-.b1-component{background:#d7e9dd!important;color:#163c2c}
-.b1-component-material{background:#f1eee4!important;color:#343222}
-.b1-product-material{background:#fff!important;color:#243349}
-.quick-row.b1-component>td{border-top:2px solid #649378}
-.quick-row.b1-component-material .quick-identity{border-left:3px solid #a2956b;padding-left:10px}
+.b1-product{background:#b5c1c9!important;color:#243540}
+.b1-component{background:#d9e0e4!important;color:#2e404b}
+.b1-component-material{background:#f0f3f4!important;color:#344550}
+.b1-product-material{background:#fafbfc!important;color:#243349}
+.quick-row.b1-component>td{border-top:2px solid #9aaab4}
+.quick-row.b1-component-material .quick-identity{border-left:3px solid #aab5bb;padding-left:10px}
 .quick-row.b1-product-material .quick-identity{border-left:3px dashed #7189a4;padding-left:10px}
-.quick-product-head.b1-product{border-top:3px solid #416b99;border-bottom:1px solid #8faac8}
+.quick-product-head.b1-product{border-top:3px solid #627b8c;border-bottom:1px solid #8d9fa9}
 .quick-row .node-icon,.b1-tree .b1-type{min-width:43px;width:auto;flex-shrink:0;font-size:10px;font-weight:750;border:1px solid currentColor;background:transparent;color:inherit}
 .quick-row.b1-component-material small,.quick-row.b1-component small,.quick-row.b1-product-material small,.quick-product-head.b1-product small{color:#465569}
 .quick-row.b1-component-material .fixed-value,.quick-row.b1-component-material .muted{color:#4b514e}
@@ -23,8 +23,8 @@
 .b1-identity .b1-type{display:inline-flex;align-items:center;justify-content:center;padding:5px 4px;border-radius:4px}
 .b1-identity small{display:block;color:#465569;margin-top:4px;white-space:normal}
 .b1-tree .button{margin:3px;white-space:nowrap}
-.b1-tree-row.b1-component>td{border-top:2px solid #649378}
-.b1-tree-row.b1-product>td{border-top:3px solid #416b99}
+.b1-tree-row.b1-component>td{border-top:2px solid #9aaab4}
+.b1-tree-row.b1-product>td{border-top:3px solid #627b8c}
 .b1-tree-row.b1-product-material .b1-identity{border-left-style:dashed}
 .b1-tree-row.b1-problem,.quick-row.has-problem{outline:2px solid #b74c27;outline-offset:-2px}
 .tree-node.b1-product,.tree-node.b1-component,.tree-node.b1-component-material,.tree-node.b1-product-material{margin-bottom:3px}
@@ -65,3 +65,6 @@
 .device-confirm{display:flex!important;align-items:flex-start;gap:9px;margin:12px 0;line-height:1.6}
 .device-confirm input[type=checkbox]{width:16px!important;height:16px;flex:0 0 16px;margin:4px 0 0}
 .product-params .thickness-note{flex-basis:100%;font-size:11px;line-height:1.5;color:#53657a}
+
+/* Keep parent names legible on the darker hierarchy backgrounds. */
+.b1-product .text-button,.b1-product .code-link,.b1-component .text-button,.b1-component .code-link{color:inherit}
