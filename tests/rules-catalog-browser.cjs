@@ -9,7 +9,12 @@ fs.mkdirSync(dir,{recursive:true});
   const p=await browser.newPage({viewport:{width:1560,height:1080}}),errors=[],checks=[];
   p.on('pageerror',e=>errors.push(e.message));p.setDefaultTimeout(10000);
   const check=s=>{checks.push(s);console.log('PASS '+s);};
-  const section=kind=>p.locator(`[data-rc-tab="${kind}"]`).click();
+  const section=async kind=>{
+    if(['grades','characteristics'].includes(kind)){
+      await p.locator('[data-rc-tab="substances"]').click();
+      await p.locator(`[data-rc=related][data-kind="${kind}"][data-parent="Thép thử quy ước"]`).click();
+    }else await p.locator(`[data-rc-tab="${kind}"]`).click();
+  };
   const submit=async()=>{await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();};
   const close=()=>p.locator('#dialog .dialog-head [data-action=close]').click();
   const shot=name=>p.screenshot({path:path.join(dir,name+'.png'),fullPage:true});
@@ -18,12 +23,14 @@ fs.mkdirSync(dir,{recursive:true});
     // A marked snapshot isolates the catalogue-only edit regression. Real server approval is tested separately.
     const original=await p.evaluate(()=>{db.quote.status='approved';return JSON.stringify(db.quote);});
     await p.locator('[data-page=rules]').click();await section('substances');
+    await expect(p.locator('.rc-tabs [data-rc-tab=grades],.rc-tabs [data-rc-tab=characteristics]')).toHaveCount(0);
+    await shot('00-vat-lieu-thanh-tab-gon');
     await p.locator('[data-rc=edit][data-kind=substances][data-name=""]').click();
     await p.locator('[name=name]').fill('Thép thử quy ước');await p.locator('[name=density]').fill('7850');await p.locator('[name=price]').fill('20000');await submit();
     await section('grades');const group=p.locator('[data-rc-parent="Thép thử quy ước"]');
     await group.locator('[data-rc=edit]').click();await expect(p.locator('[name=parent]')).toHaveValue('Thép thử quy ước');
     await p.locator('[name=name]').fill('Mác minh họa');await p.locator('[name=price]').fill('20000');await submit();
-    await expect(group).toContainText('Mác minh họa');await expect(p.locator('[data-rc-parent="Inox"]')).not.toContainText('Mác minh họa');
+    await expect(group).toContainText('Mác minh họa');expect(await p.evaluate(()=>TPConventions.entries(db,'grades').some(x=>x.parent==='Inox'&&x.name==='Mác minh họa'))).toBe(false);await expect(p.locator('[data-rc-tab=substances]')).toHaveAttribute('aria-current','page');
     await section('characteristics');await p.locator('[data-rc-parent="Thép thử quy ước"] [data-rc=edit]').click();
     await expect(p.locator('[name=parent]')).toHaveValue('Thép thử quy ước');await p.locator('[name=name]').fill('Cán thử');await submit();
     expect(await p.evaluate(()=>JSON.stringify(db.quote))).toBe(original);
