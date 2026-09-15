@@ -942,3 +942,7 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 ### Ghi nhận ảnh demo 15/09 — bộ nút chèn công thức
 
 Đã bổ sung bộ chọn biến, phép tính và hàm ngay dưới từng ô công thức; nút gắn với đúng ô, biến kèm tên/đơn vị và phân biệt đầu vào với kết quả khai triển. Chi tiết triển khai và ca kiểm tại [FORMULA-BUTTONS-2026-09-15](../../docs/FORMULA-BUTTONS-2026-09-15.md). Đây là kết quả kiểm nội bộ cho ảnh này, không thay xác nhận nghiệm thu của khách hoặc đóng các mục đơn giá đang chờ xử lý riêng.
+
+### Ghi nhận ảnh 15/09 — nhóm sản phẩm dùng chung
+
+Đã bổ sung nhóm Cơ khí, Cửa gió, Thang máng cáp, Lan can, Tủ điện và quản lý nhóm khác tại Danh mục quy ước. Liên kết lựa chọn với sản phẩm, mẫu thư viện, lọc nhóm và kiểm nơi dùng. Chi tiết, phạm vi và ca kiểm: [PRODUCT-GROUPS-2026-09-15](../../docs/PRODUCT-GROUPS-2026-09-15.md). Phân nhóm giữ nguyên giá/công thức đang chọn; không thay trạng thái nghiệm thu của các mục khác.
