@@ -44,7 +44,7 @@ try{
  let amounts=await p.evaluate(ids=>ids.map(id=>result.nodes[id].ownOps[0]),caseIds);
  expect(amounts[0].rate).toBeCloseTo(1379.4,7);expect(amounts[1].rate).toBeCloseTo(1504.8,7);expect(amounts[0].cost).toBeCloseTo(25987.896,7);expect(amounts[1].cost).toBeCloseTo(56700.864,7);
  expect(amounts[0].factors.map(f=>f.input)).toEqual([1,24,'qa-A',6]);
- await expect(p.locator('[data-job-price=qa-thin]')).toContainText('Components QA: 6');await p.locator('[data-qoc-table]').screenshot({path:path.join(dir,'04-linked-inputs.png')});
+ await expect(p.locator('[data-job-price=qa-thin]')).toContainText('Components QA: 6');await expect(p.locator('[data-job-price=qa-thin]')).toContainText('1.379,4 đ/kg');await expect(p.locator('[data-job-price=qa-thin]')).toContainText('18,84 kg × 1.379,4 ≈ 25.988 đ');await p.locator('[data-qoc-table]').screenshot({path:path.join(dir,'04-linked-inputs.png')});
  await p.locator('[data-tab=preview]').click();await p.locator('[data-action=quote-info]').click();await f('customer').fill('Customer B');await submit();
  expect(await p.evaluate(()=>result.nodes['qa-thin'].ownOps[0].error)).toContain('Customer QA / customerId');
  await p.locator('[data-tab=intake]').click();await p.locator('[data-intake=choose-customer]').click();await f('customerId').selectOption('qa-B');await submit();

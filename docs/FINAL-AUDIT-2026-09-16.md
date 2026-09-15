@@ -18,7 +18,8 @@
 1. **Đổi tên khách còn dùng mã khách cũ để tính hệ số.** Đã tái hiện giá cơ sở 1.000 thành 1.500 do mã cũ vẫn nhận +50%. Nay tên không khớp hồ sơ thì không dùng mã cũ; yếu tố theo mã báo thiếu, chọn hồ sơ mới sẽ tính lại đúng. Kiểm tra qua nút Chỉnh thông tin và Chọn khách hàng.
 2. **Suy ra mác/vật liệu tại cấp tổng khi một dòng con thiếu dữ liệu.** Chỉ suy ra khi tất cả các phôi con đều đủ và giống nhau; khác hoặc thiếu phải khai rõ.
 3. **Chỉ ghi giao dịch cho bản duyệt mới nhất.** Bổ sung chọn phiên bản cũ, giữ riêng trạng thái/hiệu lực và nhật ký; có kiểm tra xung đột và quyền máy chủ. Ví dụ đã có V2 vẫn ghi khách chốt V1 đúng vào V1.
-4. Thanh sáu tab Đơn giá đầu vào gây tràn khung ở 390px: giữ cuộn trong thanh tab. Đây là sửa lỗi hiển thị hiện có, không triển khai toàn bộ luồng mobile.
+4. Đơn giá sau hệ số có phần lẻ được hiển thị đến 6 số lẻ. Phép tính tiền dùng dấu ≈ để phân biệt số hiển thị làm tròn đồng với giá trị đầy đủ trong bộ tính.
+5. Thanh sáu tab Đơn giá đầu vào gây tràn khung ở 390px: giữ cuộn trong thanh tab. Đây là sửa lỗi hiển thị hiện có, không triển khai toàn bộ luồng mobile.
 
 ## Số đối chiếu độc lập
 
