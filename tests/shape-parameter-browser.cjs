@@ -29,7 +29,7 @@ fs.mkdirSync(dir,{recursive:true});
     await p.locator('[name=dfNewKey]').fill('L1');await p.locator('[name=dfNewLabel]').fill('Chiều dài nối thêm');await p.locator('#df-save-parameter').click();
     await expect(p.locator('[name=key3]')).toHaveValue('L1');await expect(p.locator('[name=fieldName3]')).toHaveValue('Chiều dài nối thêm');
     await expect(p.locator('[name=testDensity]')).toHaveValue('8000');await expect(p.locator('[name=testStockL]')).toHaveValue('9000');
-    await p.locator('[name=sample3]').fill('200');await p.locator('[name=length]').fill('Len + ');await p.locator('[data-df-insert=L1]').click();
+    await p.locator('[name=sample3]').fill('200');await p.locator('[name=length]').fill('Len + ');await p.locator('[data-df-for=length] [data-df-insert=L1]').click();
     await expect(p.locator('[name=length]')).toHaveValue('Len + L1');
     await p.locator('[name=blankMass]').fill('PHOI_D / 1000 * KM');await p.locator('[name=blankSurface]').fill('PHOI_D / 1000 * AM');
     await p.locator('[name=key0]').selectOption('W');await expect(p.locator('[name=length]')).toHaveValue('W + L1');

@@ -16,7 +16,7 @@ fs.mkdirSync(dir,{recursive:true});
   await value('totalKg',9.42);await value('totalArea',.6);await value('stocks',1);await value('buyKg',15.7);await value('buyArea',1);
   await expect(p.locator('[data-df-substitute=mass]')).toContainText('7.850');await expect(p.locator('[data-df-substitute=buyKg]')).toContainText('15,7');
   await shot('01-tam-cong-thuc-thay-so-ket-qua');pass('Summary opens an editable trial: 3 sheet pieces total 9.42 kg / 0.6 m², purchased stock is 15.7 kg / 1 m² with substitutions on each row');
-  await p.locator('[name=mass]').selectText();await p.locator('#df-formula-tools details > summary').click();await p.locator('[data-df-function=ROUND]').click();
+  await p.locator('[name=mass]').selectText();await p.locator('[data-df-for=mass] [data-df-function=ROUND]').click();
   await expect(p.locator('[name=mass]')).toHaveValue('ROUND(T / 1000 * RHO, 2)');await value('mass',15.7);
   await p.locator('[name=length]').fill('MAX(L, W)');await p.locator('[name=width]').fill('MIN(L, W)');
   await p.locator('[name=blankMass]').fill('IF(PHOI_D > 500, PHOI_D * PHOI_R / 2000000 * KL_DV, PHOI_D * PHOI_R / 1000000 * KL_DV)');await p.locator('[name=blankSurface]').fill('PHOI_D * PHOI_R / 2000000');

@@ -938,3 +938,7 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - BG-05: tách chọn cách đối chiếu và giá chào cuối; không đổi giá âm thầm khi bật/tắt cột hoặc khi phương án mất điều kiện.
 - BG-02, ca E, bảng nguồn và phần 13: cập nhật nhất quán, bỏ diễn giải còn chờ nhánh cơ khí dùng chi tiết. Giữ CĐ-01 về chuỗi/số/tổng và CĐ-04 về Dày.
 - Giữ đủ 25 ID, **17 [x], 5 [~], 3 [ ]**, còn 8 mã chưa hoàn tất. Lượt này chỉ sửa checklist và nguồn văn bản, không sửa ứng dụng, không chạy/nhận đã đạt yêu cầu mới trên web, không đánh dấu xong vì khách đồng ý hướng làm.
+
+### Ghi nhận ảnh demo 15/09 — bộ nút chèn công thức
+
+Đã bổ sung bộ chọn biến, phép tính và hàm ngay dưới từng ô công thức; nút gắn với đúng ô, biến kèm tên/đơn vị và phân biệt đầu vào với kết quả khai triển. Chi tiết triển khai và ca kiểm tại [FORMULA-BUTTONS-2026-09-15](../../docs/FORMULA-BUTTONS-2026-09-15.md). Đây là kết quả kiểm nội bộ cho ảnh này, không thay xác nhận nghiệm thu của khách hoặc đóng các mục đơn giá đang chờ xử lý riêng.
