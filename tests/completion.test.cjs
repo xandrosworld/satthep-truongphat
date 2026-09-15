@@ -25,3 +25,16 @@ test('completion: resend is explicit, preserves recipients and keeps past versio
  const second=F.transition(nextQ,again,{...input,expectedVersion:2},'Sale',{today:'2026-10-01',offerVersion:2});
  A.equal(second.events[2].offerVersion,2);A.equal(second.validUntil,'2026-10-31');A.equal(second.events[0].channel,'Zalo');
 });
+
+test('completion: returning to an older offer restores its own state and expiry without rewriting other events',()=>{
+ const q1={status:'approved',date:'2026-09-16',valid:15},q2={...q1,valid:30},today='2026-09-16';
+ const send={status:'sent',reason:'Sent QA',confirmedSent:true};
+ let state=F.transition(q1,{}, {...send,expectedVersion:0},'Sale',{today,offerVersion:1});
+ state=F.transition(q2,state,{...send,expectedVersion:1},'Sale',{today,offerVersion:2});
+ const before=JSON.stringify(state.events),old=F.workflow(q1,state,today,1);
+ A.equal(old.status,'sent');A.equal(old.validUntil,'2026-10-01');
+ state=F.transition(q1,state,{status:'accepted',reason:'Customer chose V1',expectedVersion:2},'Sale',{today,offerVersion:1});
+ A.equal(state.events.at(-1).offerVersion,1);A.equal(JSON.stringify(state.events.slice(0,2)),before);
+ const latest=F.workflow(q2,state,today,2);A.equal(latest.status,'sent');A.equal(latest.validUntil,'2026-10-16');
+ A.equal(F.workflow(q1,state,today,1).status,'accepted');
+});

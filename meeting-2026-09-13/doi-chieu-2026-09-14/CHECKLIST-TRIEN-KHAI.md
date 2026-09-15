@@ -1043,3 +1043,14 @@ Chi tiết: `docs/QUOTE-VERSIONS-2026-09-16.md`. Mobile đầy đủ vẫn để
 - [x] Rà 12 màn hình/trạng thái, 2.863 mẫu chữ đạt tối thiểu 4,5:1; 10 nhóm kiểm tra trình duyệt đạt.
 
 Chi tiết: `docs/ZALO-COLORS-2026-09-16.md`. Chưa đánh dấu khách nghiệm thu; mobile đầy đủ vẫn xét sau.
+
+
+### 16/09/2026 — Rà toàn bộ phản hồi 22:25–23:33
+
+- [x] Tính giá theo dòng, liên kết chiều dày/khách/tổng cấu kiện; chặn mã khách cũ khi đổi tên và mác không đủ ở các dòng con.
+- [x] Gán nhiều nguyên công, mặc định tại xưởng, giữ đầu vào riêng và chống gán trùng cha/con.
+- [x] Nhóm giá khác có công thức, tham số, đơn vị, áp dụng chủ động vào báo giá.
+- [x] Chọn lại bản gửi cũ để ghi khách phản hồi/chốt; giữ trạng thái và dữ liệu riêng từng bản.
+- [x] 394 logic/API và 60 nhóm trình duyệt đạt, gồm định mức sơn và toàn luồng duyệt/gửi/chốt.
+
+Chi tiết và giới hạn lưu trữ: `docs/FINAL-AUDIT-2026-09-16.md`. Khách nạp tham số thực để nghiệm thu; mobile đầy đủ vẫn xét sau.

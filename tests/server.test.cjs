@@ -162,6 +162,13 @@ test('server: commercial tracking is independent, versioned and tied to immutabl
   A.equal((await call(base,'quotes',{session:sales})).data[0].commercialStatus,'sent');A.equal((await call(base,'quotes/'+id,{session:admin})).data.version,3);A.equal((await call(base,'quotes/'+id,{session:sales})).data.document,undefined);
   const reopen=await call(base,'quotes/'+id+'/reopen',{method:'POST',session:admin,body:{expectedVersion:3,reason:'Điều chỉnh'}});A.equal(reopen.status,200);A.equal((await call(base,'quotes/'+id+'/workflow',{session:sales})).data.offerVersion,3);body={...body,status:'accepted',expectedVersion:1};A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body})).status,200);
   await call(base,'quotes/'+id+'/submit',{method:'POST',session:admin,body:{expectedVersion:4}});await call(base,'quotes/'+id+'/approve',{method:'POST',session:admin,body:{expectedVersion:5}});state=(await call(base,'quotes/'+id+'/workflow',{session:sales})).data;A.equal(state.status,'draft');A.equal(state.offerVersion,6);A.equal(state.events.length,2);A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body:{...body,expectedVersion:2}})).status,409);
+  const previous=(await call(base,'quotes/'+id+'/workflow/3',{session:sales})).data;
+  A.equal(previous.status,'accepted');A.equal(previous.latestOfferVersion,6);A.deepEqual(previous.approvedVersions,[{version:6},{version:3}]);
+  A.equal((await call(base,'quotes/'+id+'/workflow/4',{session:sales})).status,409);
+  A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body:{...body,status:'negotiating',expectedVersion:2,expectedLatestVersion:3}})).status,409);
+  const followup=await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body:{...body,status:'negotiating',expectedVersion:2,expectedLatestVersion:6}});
+  A.equal(followup.status,200);A.equal(followup.data.events.at(-1).offerVersion,3);
+  A.equal((await call(base,'quotes/'+id+'/workflow',{session:sales})).data.status,'draft');
   const stored=(await call(base,'backup',{session:admin})).data;A.equal(stored.commercial.length,1);A.ok(!JSON.stringify((await call(base,'quotes',{session:sales})).data).includes('materialPrices'));
 });
 

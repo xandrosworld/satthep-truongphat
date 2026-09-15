@@ -8,10 +8,13 @@ const EXPENSES=[['incoming','Vận chuyển nhập vật tư'],['outgoing','Vậ
 const METHODS=[['kg_km','Theo kg × km'],['vehicle','Theo xe / tải trọng'],['product_unit','Theo đơn vị sản phẩm'],['kg_net','Theo kg vận chuyển'],['kg_purchase','Theo kg vật tư mua'],['ton_net','Theo tấn vận chuyển'],['ton_purchase','Theo tấn vật tư mua'],['ton_km','Theo tấn × km'],['m2','Theo m² bề mặt'],['m','Theo mét dài'],['unit','Theo số lượng đối tượng đã chọn'],['trip','Theo chuyến'],['km','Theo km'],['fixed','Trọn gói']];
 function context(n,r,products,quote={}){
   const leaves=C.flatten([n]).filter(x=>x.kind==='material'&&x.spec.shape!=='piece');
-  const unique=key=>{const values=[...new Set(leaves.map(x=>x.spec[key]).filter(x=>x!==undefined&&x!==''))];return values.length===1?values[0]:undefined;};
+  const unique=key=>{const raw=leaves.map(x=>x.spec[key]),values=[...new Set(raw)];return raw.length&&raw.every(x=>x!==undefined&&x!==null&&String(x).trim()!=='')&&values.length===1?values[0]:undefined;};
   const product=C.findNode(products,r.productId),path=C.nodePath(products,n.id)||[],parent=path.at(-2),component=path.slice().reverse().find(x=>x.kind==='component'),componentPath=component?path.slice(0,path.indexOf(component)+1):[];
   let totalComponentCount=0;const countComponents=(nodes,multiplier=1)=>{for(const node of nodes){const count=multiplier*Number(node.qty);if(node.kind==='component')totalComponentCount+=count;countComponents(node.children||[],count);}};countComponents(products);
-  return {customer:quote.customerInfo?.name||quote.customer||undefined,customerId:quote.customerInfo?.id||undefined,totalComponentCount,substance:unique('substance'),grade:unique('grade'),complexity:n.complexity,finish:n.finishType,localQty:n.qty,productQty:product?.qty,parentQty:parent?.qty,parentCount:parent?r.count/n.qty:undefined,componentCount:component?componentPath.reduce((s,x)=>s*x.qty,1):undefined,unitWeight:r.count?(r.workWeight??r.weight)/r.count:0,unitArea:r.count?(r.workArea??r.area)/r.count:0};
+  // A free-text customer change must not retain another customer's pricing identity.
+  const customerName=String(quote.customer||'').trim(),contact=quote.customerInfo;
+  const linkedCustomer=contact&&(!customerName||customerName===String(contact.name||'').trim())?contact:null;
+  return {customer:customerName||linkedCustomer?.name||undefined,customerId:linkedCustomer?.id||undefined,totalComponentCount,substance:unique('substance'),grade:unique('grade'),complexity:n.complexity,finish:n.finishType,localQty:n.qty,productQty:product?.qty,parentQty:parent?.qty,parentCount:parent?r.count/n.qty:undefined,componentCount:component?componentPath.reduce((s,x)=>s*x.qty,1):undefined,unitWeight:r.count?(r.workWeight??r.weight)/r.count:0,unitArea:r.count?(r.workArea??r.area)/r.count:0};
 }
 function factor(f,input,tier){
   const convert=v=>{if(!finite(v))throw Error('Thiếu giá trị hệ số');const r=f.valueMode==='multiplier'?(Number(v)-1)*100:Number(v);if(r<=-100)throw Error('Hệ số nhân phải dương / tỷ lệ lớn hơn -100%');return r;};

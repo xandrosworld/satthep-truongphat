@@ -80,3 +80,5 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var
 .workspace-tabs button.active span{background:var(--blue);color:#fff}
 th{color:var(--muted)}
 .pa-operation-tools>span,.group-list>button span,.catalog-filters label>span{color:var(--muted)}
+.filter-tabs[aria-label="Các bảng đơn giá"]{max-width:100%;overflow-x:auto}
+.filter-tabs[aria-label="Các bảng đơn giá"]>button{flex-shrink:0;white-space:nowrap}

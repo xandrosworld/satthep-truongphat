@@ -6,7 +6,7 @@ function fixture(){
  Object.assign(a,{id:'thin',qty:4,dims:{L:1000,W:100},params:{T:99},ops:[{id:'cut',mode:'inside',amount:1}]});a.spec.props.T=1;delete a.paramLinks;a.ruleSpec={id:'flat',name:'Flat',shape:'sheet',length:'L',width:'W'};a.rule='flat';
  const b=C.copy(a);b.id='thick';b.spec.props.T=2;
  d.quote.products=[{id:'p',name:'Product',kind:'product',qty:2,params:{T:77},ops:[],children:[{id:'c',name:'Component',kind:'component',qty:3,ops:[],children:[a,b]}]}];
- d.quote.customerInfo={id:'KH-A',name:'Customer A'};
+ d.quote.customer='Customer A';d.quote.customerInfo={id:'KH-A',name:'Customer A'};
  d.quote.ratesSnapshot.find(r=>r.id==='cut').factors=[
  {id:'t',name:'Thickness',param:'T',tiers:[{max:1,percent:10},{max:null,percent:20}]},
  {id:'q',name:'Quantity',param:'count',tiers:[{max:20,percent:0},{max:null,percent:-5}]},
@@ -51,4 +51,17 @@ test('group price catalogue validates custom parameters and quote copies calcula
  near(P.calculate(d).products[0].sell,24690);g.parameters[0].value=999;near(P.calculate(d).products[0].sell,24690);
  A.throws(()=>IP.validateMaster({...d.pricingDefaults,productGroups:[g,g]}),/Trùng/);
  A.throws(()=>IP.validateMaster({...d.pricingDefaults,productGroups:[{...g,formula:'UNKNOWN'}]}),/Biến/);
+});
+
+test('renaming a quote customer cannot reuse stale customer ID factors',()=>{
+ const d=fixture();d.quote.customer='Customer B';const r=P.calculate(d),n=d.quote.products[0].children[0].children[0],ctx=W.context(n,r.nodes.thin,d.quote.products,d.quote);
+ A.equal(ctx.customer,'Customer B');A.equal(ctx.customerId,undefined);A.match(r.nodes.thin.ownOps[0].error,/Customer.*customerId/);
+ d.quote.customerInfo={id:'KH-B',name:'Customer B'};near(P.calculate(d).nodes.thin.ownOps[0].rate,1045);
+});
+
+test('an assembly cannot infer a material category while any child lacks it',()=>{
+ const d=fixture(),c=d.quote.products[0].children[0];c.children[0].spec.grade='CT3';c.children[1].spec.grade='';
+ const r=P.calculate(d);A.equal(W.context(c,r.nodes.c,d.quote.products,d.quote).grade,undefined);
+ c.children[1].spec.grade='CT3';A.equal(W.context(c,r.nodes.c,d.quote.products,d.quote).grade,'CT3');
+ c.children[1].spec.grade='SS400';A.equal(W.context(c,r.nodes.c,d.quote.products,d.quote).grade,undefined);
 });

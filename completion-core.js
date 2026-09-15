@@ -8,7 +8,12 @@ const validDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'
 const NEXT={draft:['sent'],sent:['negotiating','accepted','rejected','expired'],negotiating:['sent','accepted','rejected','expired'],accepted:['negotiating'],rejected:['negotiating','sent'],expired:['sent','negotiating','rejected']};
 const fold=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
 function expiry(q){if(q.validUntil)return q.validUntil;const d=new Date(q.date+'T00:00:00Z');if(!Number.isFinite(d.getTime()))return '';d.setUTCDate(d.getUTCDate()+Number(q.valid||0));return d.toISOString().slice(0,10);}
-function workflow(q,state={},today=todayVN(),offerVersion=0){const changed=offerVersion&&state.offerVersion&&state.offerVersion!==offerVersion,saved=changed?'draft':state.status||'draft',due=changed?expiry(q):state.validUntil||expiry(q);return {...state,status:['sent','negotiating'].includes(saved)&&due&&today>due?'expired':saved,storedStatus:saved,version:state.version||0,validUntil:due,events:state.events||[]};}
+function workflow(q,state={},today=todayVN(),offerVersion=0){
+ const events=state.events||[],changed=offerVersion&&state.offerVersion!==offerVersion;
+ const prior=changed?events.findLast(e=>e.offerVersion===offerVersion):null;
+ const saved=changed?(prior?.to||'draft'):state.status||'draft',due=changed?(prior?.validUntil||expiry(q)):state.validUntil||expiry(q);
+ return {...state,offerVersion:offerVersion||state.offerVersion,status:['sent','negotiating'].includes(saved)&&due&&today>due?'expired':saved,storedStatus:saved,version:state.version||0,validUntil:due,events};
+}
 function transition(q,state,input,actor,{today=todayVN(),at=new Date().toISOString(),offerVersion=0}={}){
   const current=workflow(q,state,today,offerVersion),next=String(input.status||'');if(!STATES.some(x=>x[0]===next))throw Error('Trạng thái giao dịch không hợp lệ');
   if(input.expectedVersion!==current.version)throw Error('Giao dịch đã được người khác cập nhật; tải lại trước khi sửa');
