@@ -1012,3 +1012,5 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - 15/09: Gom vận chuyển/lắp đặt vào Giá & hệ số; thanh chọn giá lên đầu; chọn phương thức theo vật tư và sản phẩm, giữ khoản chung và giá đã lưu. Sửa lưu chuyến không bắt buộc cự ly. 324 logic và 20 nhóm trình duyệt cục bộ đạt; xem docs/QUOTE-LOGISTICS-2026-09-15.md. Chưa đánh dấu khách nghiệm thu.
 
 - 15/09: Màu trầm theo cấp sản phẩm > cấu kiện > vật tư; thêm mục Giá đối thủ và Giá theo kg riêng trong Giá & hệ số, dùng chung dữ liệu so sánh. 29 logic và 13 nhóm trình duyệt cục bộ đạt; xem docs/QUOTE-BENCHMARK-COLORS-2026-09-15.md. Chưa đánh dấu khách nghiệm thu.
+
+- 15/09: Nhãn PRODUCT_L/W/H/T trên kích thước sản phẩm; bảng biến ghi rõ cấp nguồn và giá trị, tăng tương phản ô nhập. 28 logic và 8 nhóm trình duyệt cục bộ đạt; xem docs/DIMENSION-SCOPE-2026-09-15.md. Chưa đánh dấu khách nghiệm thu.

@@ -56,3 +56,17 @@ dialog.wide-dialog{width:780px;max-width:calc(100vw - 30px)}.batch-picker-top .s
 .library-category{margin-top:14px}.library-category>summary{padding:14px 18px;cursor:pointer;background:var(--subtle,#f5f7fa)}.library-category table{width:100%;min-width:680px}.library-category td{vertical-align:middle}.library-category .template-card{box-shadow:none;border-radius:0}.library-category .actions{flex-wrap:nowrap}
 
 .dimension-product-links{padding:14px;background:#f2f6fc;border:1px solid #dce4ee;border-radius:8px;margin-bottom:16px}.dimension-variable-buttons{display:flex;flex-wrap:wrap;gap:8px}.dimension-variable-buttons .button{white-space:normal;text-align:left}.product-params .b2-formula{max-width:180px;overflow-wrap:anywhere}
+
+/* Strong control boundaries on muted surfaces; explicit product variable labels. */
+input,select,textarea{border-color:#71818c;color:#243540}
+.product-params{background:#c8d2d9;border-color:#8a9ba7}
+.product-params label{align-items:flex-start;flex-direction:column;gap:4px;color:#243540}
+.product-params label>span{font-weight:600}.product-params label code{display:block;font:11px var(--mono);color:#344c5d}
+.product-params .param-label,.product-params .param-label small,.param-link-note{color:#344c5d}
+.product-params input,.quick-input input,.product-quantity input{background:#fff;color:#182e3f;border:1px solid #536978;box-shadow:0 1px 2px #24354018}
+.product-params input{width:104px}.quick-input.linked input{border-color:#536978;color:#243540}
+.quick-input input[readonly],.product-params input[readonly]{background:#e3e9ed;color:#243540;border-style:dashed}
+.quick-input input:focus,.product-params input:focus{outline:3px solid #365c78;outline-offset:2px}
+.dimension-scope-reference td{vertical-align:middle}.dimension-scope-reference code{white-space:nowrap}
+
+input:disabled,select:disabled,textarea:disabled{background:#e3e9ed;color:#465967;border-style:dashed}
