@@ -1,0 +1,12 @@
+'use strict';
+const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js'),W=require('../work-core.js');
+async function run(t){const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));const base='http://127.0.0.1:'+app.server.address().port;let session;const call=async(route,method='GET',body)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-CSRF-Token':session.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};};const s=await call('setup','POST',{username:'admin',name:'Kiểm thử quy ước',password:'Only-for-definition-tests-42!'});session={cookie:s.cookie,csrf:s.data.csrf};return {call};}
+
+
+
+const F=require('../factor-matrix-core.js');
+test('shared factor definitions and matrix links persist in the master catalogue and quote snapshots remain independent',async t=>{
+ const {call}=await run(t),db=P.demoSeed(),saved=await call('quotes','POST',{document:db});A.equal(saved.status,201);const original=(await call('quotes/'+saved.data.id)).data.document.quote;
+ F.save(db,{id:'HS-SHARED',name:'Khối lượng dùng chung',param:'weight',tiers:[{max:null,percent:10}]});const links=F.catalog(db).bindings.filter(b=>b.enabled).map(({key,target})=>({key,target}));F.applyMatrix(db,[...links,{key:'HS-SHARED',target:'weld'},{key:'HS-SHARED',target:'pack'}]);const master=(await call('catalog')).data;const published=await call('catalog','PUT',{expectedVersion:master.version,catalog:{...master.catalog,rates:db.rates,pricingDefaults:db.pricingDefaults}});A.equal(published.status,200,JSON.stringify(published));const pulled=(await call('catalog')).data.catalog;A.equal(pulled.pricingDefaults.factorDefinitions.find(f=>f.id==='HS-SHARED').tiers[0].percent,10);A.equal(pulled.rates.find(r=>r.id==='pack').factors[0].sharedFactorId,'HS-SHARED');A.deepEqual((await call('quotes/'+saved.data.id)).data.document.quote,original);
+ db.quote.id='BG-SHARED-SNAPSHOT';db.quote.ratesSnapshot=structuredClone(db.rates);const next=await call('quotes','POST',{document:db});A.equal(next.status,201,JSON.stringify(next));A.equal((await call('quotes/'+next.data.id)).data.document.quote.ratesSnapshot.find(r=>r.id==='pack').factors[0].sharedFactorId,'HS-SHARED');
+});

@@ -27,7 +27,7 @@ function validateMaster(p){
  for(const [key,validate] of [['expenseRates',validateExpense],['tmcTables',validateTmc]]){
   if(p[key]===undefined)continue;if(!Array.isArray(p[key])||p[key].length>2000)throw Error('Bảng đơn giá quá lớn hoặc sai định dạng');
   const ids=new Set();for(const row of p[key]){validate(row);if(ids.has(row.id))throw Error('Trùng mã đơn giá: '+row.id);ids.add(row.id);}
- }if(p.tmcLoss!==undefined)amount(p.tmcLoss,'Hao hụt TMC');return p;
+ }if(p.factorDefinitions!==undefined){if(!Array.isArray(p.factorDefinitions)||p.factorDefinitions.length>2000)throw Error('Bảng yếu tố dùng chung không hợp lệ');const ids=new Set();for(const f of p.factorDefinitions){W.validateFactor(f,P.tier);if(ids.has(f.id))throw Error('Trùng mã yếu tố dùng chung');ids.add(f.id);}}if(p.tmcLoss!==undefined)amount(p.tmcLoss,'Hao hụt TMC');return p;
 }
 function save(db,key,row){const p=defaults(db),rows=p[key]||[],next=copy(row);(key==='expenseRates'?validateExpense:validateTmc)(next);const i=rows.findIndex(r=>r.id===next.id);if(i<0)rows.push(next);else rows[i]=next;p[key]=rows;validateMaster(p);db.pricingDefaults=p;return next;}
 function recordChanges(before,after,at=new Date().toISOString()){

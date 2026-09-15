@@ -960,3 +960,10 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 
 - Đã triển khai lịch sử ba lần đổi giá vật tư; các bảng giá vận chuyển, lắp đặt và TMC; hiển thị mã yếu tố tác động. Phương thức được chọn và chụp giá trong báo giá, hệ số khai tập trung trong Danh mục quy ước.
 - Chi tiết và phạm vi kiểm chứng: `docs/INPUT-PRICES-2026-09-15.md`. 300 logic, 55 API cục bộ, 29 nhóm trình duyệt đạt. Chưa đánh dấu nghiệm thu khách hàng.
+
+
+### 15/09/2026 — Yếu tố dùng chung và ma trận áp dụng
+
+- Bổ sung bảng yếu tố khai một lần, ma trận tích công việc chịu tác động, cập nhật cùng định nghĩa cho các công việc đã liên kết. Giữ bản chụp báo giá.
+- Ghi rõ Thang máng cáp, kiểm tra lưu Cắt phôi và hiện lỗi nhập liệu ngay cạnh nút lưu. Chi tiết giới hạn tái hiện lỗi và kiểm chứng: `docs/FACTOR-MATRIX-2026-09-15.md`.
+- 303 logic, 56 API cục bộ, 34 nhóm trình duyệt đạt; chưa phải nghiệm thu khách hàng.
