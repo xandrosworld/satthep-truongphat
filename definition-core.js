@@ -6,7 +6,7 @@ const units={mm:[0,1],number:[0,0],'kg/m':[1,-1],'m²/m':[0,1]};
 const blankVariables=['PHOI_D','PHOI_R','KL_DV','DT_DV'];
 function blankFormulas(d){const factor=d.base==='sheet'?'PHOI_D * PHOI_R / 1000000':'PHOI_D / 1000';return {blankMass:d.blankMass||factor+' * KL_DV',blankSurface:d.blankSurface||factor+' * DT_DV'};}
 function expandedFormulas(d){const replacements={PHOI_D:d.length,PHOI_R:d.width,KL_DV:d.mass,DT_DV:d.surface};return Object.fromEntries(Object.entries(blankFormulas(d)).map(([key,value])=>[key,value.replace(/\b(PHOI_D|PHOI_R|KL_DV|DT_DV)\b/g,name=>'('+replacements[name]+')')]));}
-const validKey=k=>/^[A-Z][A-Z0-9_]{0,23}$/.test(k)&&!['RHO','PI','BW','SA','CW','CA'].includes(k);
+const validKey=k=>/^[A-Za-z][A-Za-z0-9_]{0,23}$/.test(k)&&!['RHO','PI','BW','SA','CW','CA','constructor','prototype','__proto__'].includes(k);
 const positive=(v,label,zero=false)=>{if(v===''||v==null||!Number.isFinite(Number(v))||(zero?Number(v)<0:Number(v)<=0))throw Error(label+' phải là số '+(zero?'không âm':'dương'));return Number(v);};
 function dimension(source,vars){
   // The arithmetic parser checks syntax/size first; dimensional checking never executes code.
