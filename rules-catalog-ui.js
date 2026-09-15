@@ -3,7 +3,7 @@
 // One catalogue workspace; calculation and saved quotation snapshots stay in their existing engines.
 const RulesCatalog = {kind:'shapes',query:'',factorKind:'customers',shapeGroup:null,expandedShapes:new Set()};
 const RC_FACTOR_KINDS={customers:'Hệ số khách hàng',complexity:'Độ phức tạp',mass:'Hệ số khối lượng',other:'Hệ số khác'};
-const rcKinds = {materialGroups:'Nhóm vật tư',factors:'Hệ số tính toán',productGroups:'Nhóm sản phẩm',substances:'Vật liệu',grades:'Mác vật liệu',characteristics:'Đặc tính',shapes:'Hình dạng & công thức',parameters:'Thông số cấu kiện',stocks:'Khổ chuẩn',units:'Đơn vị tính',customers:'Nhóm khách hàng',complexity:'Độ phức tạp'};
+const rcKinds = {operations:'Công đoạn',materialGroups:'Nhóm vật tư',factors:'Hệ số tính toán',productGroups:'Nhóm sản phẩm',substances:'Vật liệu',grades:'Mác vật liệu',characteristics:'Đặc tính',shapes:'Hình dạng & công thức',parameters:'Thông số cấu kiện',stocks:'Khổ chuẩn',units:'Đơn vị tính',customers:'Nhóm khách hàng',complexity:'Độ phức tạp'};
 const rcButton = (label,action,attrs='') => `<button type="button" class="button small" data-rc="${action}" ${attrs}>${label}</button>`;
 const rcMatch = value => B1.fold(value).includes(B1.fold(RulesCatalog.query));
 const rcEditButton = (label,kind,name='',parent='') => rcButton(label,'edit',`data-kind="${kind}" data-name="${esc(name)}" data-parent="${esc(parent)}"`);
@@ -62,7 +62,7 @@ function rcWorkspace(){
   const kind=RulesCatalog.kind;
   return `<div class="rc-workspace">${heading('Danh mục quy ước','Vật liệu, mác, đặc tính và công thức dùng khi lập báo giá.',clButton('Excel danh mục','catalog-export'))}<nav class="rc-tabs" aria-label="Các nhóm quy ước">${Object.entries(rcKinds).filter(([k])=>!['grades','characteristics','customers','complexity'].includes(k)).map(([k,label])=>`<button type="button" data-rc-tab="${k}" aria-current="${(kind===k||(k==='substances'&&['grades','characteristics'].includes(kind)))?'page':'false'}">${label}</button>`).join('')}</nav><label class="rc-search"><span>Tìm trong ${esc(rcKinds[kind].toLocaleLowerCase('vi'))}</span><input id="rc-search" type="search" value="${esc(RulesCatalog.query)}" placeholder="Nhập tên hoặc mã"></label><div id="rc-results">${rcContent(kind)}</div><div class="actions">${clButton('Quản lý / kiểm tra nơi dùng','catalog','data-kind="rules"')}</div></div>`;
 }
-function rcContent(kind){return kind==='factors'?rcFactors():kind==='shapes'?rcShapes():kind==='stocks'?rcStocks():rcCatalog(kind);}
+function rcContent(kind){return kind==='operations'?qocOperationCatalog():kind==='factors'?rcFactors():kind==='shapes'?rcShapes():kind==='stocks'?rcStocks():rcCatalog(kind);}
 function rcSelect(kind,query=''){if(['customers','complexity'].includes(kind)){RulesCatalog.factorKind=kind;kind='factors';}RulesCatalog.kind=kind;RulesCatalog.query=query;closeDialog();page='rules';render();}
 function installRulesCatalogUI(){
   renderRules=rcWorkspace;
@@ -87,7 +87,7 @@ function installRulesCatalogUI(){
   const editRule=mfgEditRule;
   mfgEditRule=(...args)=>{editRule(...args);const detail=$('#dialog details');if(detail)detail.open=true;};
   const stockList=dfStockList;dfStockList=()=>page==='rules'?rcSelect('stocks'):stockList();
-  document.addEventListener('input',e=>{if(e.target.id!=='rc-search')return;RulesCatalog.query=e.target.value;const kind=RulesCatalog.kind;$('#rc-results').innerHTML=kind==='shapes'?rcShapes():kind==='stocks'?rcStocks():rcCatalog(kind);});
+  document.addEventListener('input',e=>{if(e.target.id!=='rc-search')return;RulesCatalog.query=e.target.value;const kind=RulesCatalog.kind;$('#rc-results').innerHTML=rcContent(kind);});
   document.addEventListener('click',e=>{
     const tabButton=e.target.closest('[data-rc-tab]');if(tabButton){rcSelect(tabButton.dataset.rcTab);return;}
     const b=e.target.closest('[data-rc]');if(!b)return;
