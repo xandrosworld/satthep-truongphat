@@ -1002,3 +1002,5 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - Chi tiết: [LIBRARY-MATERIAL-2026-09-15](../../docs/LIBRARY-MATERIAL-2026-09-15.md). Chưa đánh dấu khách nghiệm thu.
 
 - 15/09: Khổ mua chuyển sang Thẻ kho; thêm cấu kiện trống hoặc từ mẫu. Đã kiểm tra local, xem docs/STOCK-CARD-COMPONENT-2026-09-15.md và chứng cứ stock-card-component-2026-09-15. Chưa đánh dấu khách nghiệm thu.
+
+- 15/09: Hiện L/W/H mọi sản phẩm; nút liên kết trực tiếp và chọn biến sản phẩm trong công thức. Xem docs/PRODUCT-DIMENSIONS-2026-09-15.md, chứng cứ product-dimensions-2026-09-15. Chưa đánh dấu khách nghiệm thu.
