@@ -6,7 +6,7 @@ fs.mkdirSync(dir,{recursive:true});
 const submit=async()=>{await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();},check=s=>{checks.push(s);console.log('PASS '+s);};
 try{
  await p.goto(url);await p.locator('[data-page=rules]').click();
- expect(await p.locator('.rc-complete-shapes thead th').allTextContents()).toEqual(['Dạng cấu kiện','Hình dạng phôi','Khai báo tại mã vật tư','Bổ sung báo giá','Kích thước khai triển','Khối lượng phôi sản phẩm','Diện tích phôi sản phẩm','Công thức tổng hợp / thao tác']);
+ expect(await p.locator('.rc-complete-shapes thead th').allTextContents()).toEqual(['Nhóm chi tiết / dạng cấu kiện','Hình dạng phôi','Khai báo tại mã vật tư','Bổ sung báo giá','Kích thước khai triển','Khối lượng phôi sản phẩm','Diện tích phôi sản phẩm','Công thức tổng hợp / thao tác']);
  const legacy=p.locator('[data-rc-definition="source:flat"]');
  expect(await p.locator('.rc-complete-shapes input,.rc-complete-shapes textarea').count()).toBe(0);
  await legacy.locator('[data-rc=declare-rule]').click();await expect(p.locator('[name=length]')).toHaveValue('L');await expect(p.locator('[name=width]')).toHaveValue('W');await expect(p.locator('[name=blankMass]')).not.toHaveValue('');

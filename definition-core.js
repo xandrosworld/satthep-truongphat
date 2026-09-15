@@ -2,6 +2,7 @@
 (function(root){
 'use strict';
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
+const CV=typeof module!=='undefined'?require('./conventions-core.js'):root.TPConventions;
 const E=typeof module!=='undefined'?require('./shape-expression-core.js'):root.TPShapeExpression;
 const units={mm:[0,1],number:[0,0],'kg/m':[1,-1],'m²/m':[0,1]};
 const blankVariables=['PHOI_D','PHOI_R','KL_DV','DT_DV'];
@@ -17,6 +18,7 @@ const positive=(v,label,zero=false)=>{if(v===''||v==null||!Number.isFinite(Numbe
 function dimension(source,vars){return E.dimension(E.parse(source),vars);}
 function validateShape(d){
   if(!d||!/^[A-Za-z0-9_-]{1,80}$/.test(d.id)||!String(d.name||'').trim()||d.name.length>200||!['sheet','bar'].includes(d.base))throw Error('Quy ước cần mã, tên và dạng tấm/thanh');
+  if(d.productGroup!==undefined&&(typeof d.productGroup!=='string'||d.productGroup.length>80))throw Error('Nhóm lớn tối đa 80 ký tự');
   if(!Array.isArray(d.fields)||!d.fields.length||d.fields.length>24)throw Error('Khai từ 1 đến 24 thông số');
   const seen=new Set(),dims={RHO:[1,-3],PI:[0,0]};
   for(const f of d.fields)if(f.name!==undefined&&(typeof f.name!=='string'||f.name.length>120))throw Error('Tên thông số tối đa 120 ký tự');
@@ -60,7 +62,7 @@ function trial(d,options={}){
   const vars={...inputs,RHO:density,PI:Math.PI,...unfoldAliases(d,g.length,g.width),KL_DV:rates.mass,DT_DV:rates.surface};
   return {g,vars,rates,stocks,stockL,stockW,count,kerf,measure,buyKg:measure*rates.mass,buyArea:measure*rates.surface,totalKg:g.weight*count,totalArea:g.blankArea*count};
 }
-function saveShape(db,d){validateShape(d);testShape(d,Object.fromEntries(d.fields.map(f=>[f.key,f.sample])));db.shapeDefinitions??=[];const old=db.shapeDefinitions.find(x=>x.id===d.id),next={...C.copy(d),version:(old?.version||0)+1};if(old)Object.assign(old,next);else db.shapeDefinitions.push(next);return next;}
+function saveShape(db,d){validateShape(d);testShape(d,Object.fromEntries(d.fields.map(f=>[f.key,f.sample])));db.shapeDefinitions??=[];const old=db.shapeDefinitions.find(x=>x.id===d.id),next={...C.copy(d),version:(old?.version||0)+1};if(d.productGroup!==undefined)next.productGroup=CV.productGroup(db,d.productGroup,old?.productGroup);if(old)Object.assign(old,next);else db.shapeDefinitions.push(next);return next;}
 function validateStock(s){if(!s||!/^[A-Za-z0-9_-]{1,80}$/.test(s.id)||!String(s.name||'').trim()||!['sheet','bar'].includes(s.base))throw Error('Khổ chuẩn cần mã, tên và dạng tấm/thanh');positive(s.length,'Chiều dài khổ');if(s.base==='sheet')positive(s.width,'Chiều rộng khổ');if(s.length>100000||s.width>100000)throw Error('Khổ mua tối đa 100.000 mm');for(const k of ['name','workshop','machine'])if(typeof(s[k]??'')!=='string'||(s[k]||'').length>200)throw Error('Tên/xưởng/máy tối đa 200 ký tự');return s;}
 function saveStock(db,s){validateStock(s);db.stockSizes??=[];const old=db.stockSizes.find(x=>x.id===s.id),v={...C.copy(s),version:(old?.version||0)+1};if(old)Object.assign(old,v);else db.stockSizes.push(v);return v;}
 function stocks(db,m){return (db.stockSizes||[]).filter(s=>s.active!==false&&s.base===(m.shape==='sheet'?'sheet':'bar'));}

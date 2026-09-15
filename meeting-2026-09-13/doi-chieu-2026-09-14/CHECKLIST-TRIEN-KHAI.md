@@ -946,3 +946,7 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 ### Ghi nhận ảnh 15/09 — nhóm sản phẩm dùng chung
 
 Đã bổ sung nhóm Cơ khí, Cửa gió, Thang máng cáp, Lan can, Tủ điện và quản lý nhóm khác tại Danh mục quy ước. Liên kết lựa chọn với sản phẩm, mẫu thư viện, lọc nhóm và kiểm nơi dùng. Chi tiết, phạm vi và ca kiểm: [PRODUCT-GROUPS-2026-09-15](../../docs/PRODUCT-GROUPS-2026-09-15.md). Phân nhóm giữ nguyên giá/công thức đang chọn; không thay trạng thái nghiệm thu của các mục khác.
+
+### Ghi nhận ảnh 15/09 — nhóm lớn chứa nhóm chi tiết
+
+Đã nối nhóm sản phẩm dùng chung với quy ước hình dạng, chia bảng theo nhóm lớn, lọc nhóm/tên, thêm chi tiết trong nhóm và mở mã vật tư liên kết từng dòng. Chi tiết: [SHAPE-GROUPS-2026-09-15](../../docs/SHAPE-GROUPS-2026-09-15.md). Quy ước cũ chưa khai nhóm vẫn hiển thị; thay nhóm không viết lại bản chụp trong báo giá đã lưu. Giữ nguyên trạng thái nghiệm thu và các mục đơn giá khác.
