@@ -127,6 +127,14 @@ function expenses(entries,base,generated){
   }
   return {totals,allocations,items,errors,rows:all};
 }
-const api={EXPENSES,METHODS,optionFor,methodFor,setMethod,setPriceOption,resolvePriceOption,validatePriceOptions,validateComplexity,methodErrors,number,context,factor,price,operation,recipes,consume,expenses};
+function validateFactor(f,tier){
+ if(!f||typeof f.id!=='string'||!f.id||f.id.length>100||typeof f.name!=='string'||!f.name.trim()||f.name.length>160||typeof f.param!=='string'||!f.param||f.param.length>60)throw Error('Hệ số cần mã, tên và đại lượng tra');
+ if(f.kind&&!['number','category'].includes(f.kind))throw Error('Kiểu bảng hệ số không hợp lệ');
+ const rows=f.kind==='category'?f.categories:f.tiers;if(!Array.isArray(rows)||!rows.length||rows.length>200)throw Error('Khai từ 1 đến 200 bậc hệ số');
+ for(const [i,row]of rows.entries())factor(f,f.kind==='category'?row.key:row.max??(Number(rows[i-1]?.max)||0)+1,tier);
+ return f;
+}
+function saveFactor(db,rateId,f,tier){validateFactor(f,tier);const rate=db.rates.find(r=>r.id===rateId);if(!rate)throw Error('Chọn nguyên công áp dụng');const rows=rate.factors||[],copy=C.copy(f);if(rows.some(x=>x.id!==f.id&&x.name.trim()===f.name.trim()))throw Error('Tên hệ số đã có trong nguyên công');rate.factors=rows.some(x=>x.id===f.id)?rows.map(x=>x.id===f.id?copy:x):[...rows,copy];return copy;}
+const api={validateFactor,saveFactor,EXPENSES,METHODS,optionFor,methodFor,setMethod,setPriceOption,resolvePriceOption,validatePriceOptions,validateComplexity,methodErrors,number,context,factor,price,operation,recipes,consume,expenses};
 if(typeof module!=='undefined')module.exports=api;else root.TPWork=api;
 })(typeof window!=='undefined'?window:globalThis);

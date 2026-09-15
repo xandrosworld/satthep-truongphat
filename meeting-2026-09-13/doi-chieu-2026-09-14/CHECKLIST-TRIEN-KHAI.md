@@ -950,3 +950,7 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 ### Ghi nhận ảnh 15/09 — nhóm lớn chứa nhóm chi tiết
 
 Đã nối nhóm sản phẩm dùng chung với quy ước hình dạng, chia bảng theo nhóm lớn, lọc nhóm/tên, thêm chi tiết trong nhóm và mở mã vật tư liên kết từng dòng. Chi tiết: [SHAPE-GROUPS-2026-09-15](../../docs/SHAPE-GROUPS-2026-09-15.md). Quy ước cũ chưa khai nhóm vẫn hiển thị; thay nhóm không viết lại bản chụp trong báo giá đã lưu. Giữ nguyên trạng thái nghiệm thu và các mục đơn giá khác.
+
+### Ghi nhận ảnh 15/09 — tập trung quy ước hệ số
+
+Đã gom khách hàng/độ phức tạp vào Hệ số tính toán, đưa bảng hệ số khối lượng, số lượng, kích thước và các hệ số nguyên công hiện có về cùng màn quản lý. Giá đầu vào tham chiếu bảng dùng chung; báo giá giữ bản chụp khi sửa danh mục. Chi tiết: [FACTOR-CATALOG-2026-09-15](../../docs/FACTOR-CATALOG-2026-09-15.md). Đây là cập nhật cho ảnh quy ước hệ số, không đóng các phản hồi về phương thức đơn giá hoặc trạng thái nghiệm thu khác.

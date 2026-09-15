@@ -1,0 +1,11 @@
+'use strict';
+const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js'),W=require('../work-core.js');
+async function run(t){const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));const base='http://127.0.0.1:'+app.server.address().port;let session;const call=async(route,method='GET',body)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-CSRF-Token':session.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};};const s=await call('setup','POST',{username:'admin',name:'Kiểm thử quy ước',password:'Only-for-definition-tests-42!'});session={cookie:s.cookie,csrf:s.data.csrf};return {call};}
+
+
+test('shared operation coefficients persist on server and quoted factors remain independent of catalogue edits',async t=>{
+ const {call}=await run(t),db=P.demoSeed(),saved=await call('quotes','POST',{document:db});A.equal(saved.status,201);const before=(await call('quotes/'+saved.data.id)).data.document.quote;
+ W.saveFactor(db,'pack',{id:'HS-SERVER',name:'Khối lượng thử',param:'weight',kind:'number',valueMode:'multiplier',tiers:[{max:10,percent:1.2},{max:null,percent:1.1}]},P.tier);
+ const master=(await call('catalog')).data,result=await call('catalog','PUT',{expectedVersion:master.version,catalog:{...master.catalog,rates:db.rates}});A.equal(result.status,200,JSON.stringify(result));const rate=(await call('catalog')).data.catalog.rates.find(r=>r.id==='pack');A.equal(rate.factors[0].name,'Khối lượng thử');A.equal(W.price(rate,{mode:'inside',pricingMethod:'factors'},{weight:10},P.tier).value,30000);A.deepEqual((await call('quotes/'+saved.data.id)).data.document.quote,before);
+ db.quote.id='BG-HS-SERVER';db.quote.ratesSnapshot=structuredClone(db.rates);const next=await call('quotes','POST',{document:db});A.equal(next.status,201);A.equal((await call('quotes/'+next.data.id)).data.document.quote.ratesSnapshot.find(r=>r.id==='pack').factors[0].valueMode,'multiplier');
+});
