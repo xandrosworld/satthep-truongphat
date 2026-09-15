@@ -2,7 +2,7 @@
 'use strict';
 const C=typeof module!=='undefined'?require('./core.js'):root.TP,P=typeof module!=='undefined'?require('./pricing-core.js'):root.TPPrice,W=typeof module!=='undefined'?require('./work-core.js'):root.TPWork,copy=C.copy;
 const EXPENSE_PARAMS=['weight','area','length','count','quantity','distance','trips','complexity','from','to'];
-const OP_PARAMS=['T','W','L','H','count','workQuantity','localQty','productQty','parentQty','parentCount','componentCount','weight','unitWeight','area','unitArea','substance','grade','complexity','finish'];
+const OP_PARAMS=['customer','customerId','totalComponentCount','T','W','L','H','count','workQuantity','localQty','productQty','parentQty','parentCount','componentCount','weight','unitWeight','area','unitArea','substance','grade','complexity','finish'];
 function targets(db){return [...db.rates.map(rate=>({id:rate.id,name:rate.name,rate})),...(db.pricingDefaults?.expenseRates||[]).map(rate=>({id:'expense:'+rate.id,name:rate.name,rate,expense:true}))];}
 function definition(f){const d=copy(f);delete d.sharedFactorId;delete d.enabled;return d;}
 function fingerprint(f){const d=definition(f);delete d.id;function sort(v){return Array.isArray(v)?v.map(sort):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,sort(v[k])])):v;}return JSON.stringify(sort(d));}

@@ -6,11 +6,12 @@ const finite=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 function number(v,name,{positive=false}={}){if(!finite(v)||Number(v)<0||(positive&&Number(v)===0))throw Error(name+' phải là số '+(positive?'lớn hơn 0':'không âm'));return Number(v);}
 const EXPENSES=[['incoming','Vận chuyển nhập vật tư'],['outgoing','Vận chuyển thuê ngoài'],['delivery','Vận chuyển giao hàng'],['install','Lắp đặt']];
 const METHODS=[['kg_km','Theo kg × km'],['vehicle','Theo xe / tải trọng'],['product_unit','Theo đơn vị sản phẩm'],['kg_net','Theo kg vận chuyển'],['kg_purchase','Theo kg vật tư mua'],['ton_net','Theo tấn vận chuyển'],['ton_purchase','Theo tấn vật tư mua'],['ton_km','Theo tấn × km'],['m2','Theo m² bề mặt'],['m','Theo mét dài'],['unit','Theo số lượng đối tượng đã chọn'],['trip','Theo chuyến'],['km','Theo km'],['fixed','Trọn gói']];
-function context(n,r,products){
+function context(n,r,products,quote={}){
   const leaves=C.flatten([n]).filter(x=>x.kind==='material'&&x.spec.shape!=='piece');
   const unique=key=>{const values=[...new Set(leaves.map(x=>x.spec[key]).filter(x=>x!==undefined&&x!==''))];return values.length===1?values[0]:undefined;};
-  const product=C.findNode(products,r.productId),path=C.nodePath(products,n.id)||[],parent=path.at(-2),component=path.slice(0,-1).reverse().find(x=>x.kind==='component'),componentPath=component?path.slice(0,path.indexOf(component)+1):[];
-  return {substance:unique('substance'),grade:unique('grade'),complexity:n.complexity,finish:n.finishType,localQty:n.qty,productQty:product?.qty,parentQty:parent?.qty,parentCount:parent?r.count/n.qty:undefined,componentCount:component?componentPath.reduce((s,x)=>s*x.qty,1):undefined,unitWeight:r.count?(r.workWeight??r.weight)/r.count:0,unitArea:r.count?(r.workArea??r.area)/r.count:0};
+  const product=C.findNode(products,r.productId),path=C.nodePath(products,n.id)||[],parent=path.at(-2),component=path.slice().reverse().find(x=>x.kind==='component'),componentPath=component?path.slice(0,path.indexOf(component)+1):[];
+  let totalComponentCount=0;const countComponents=(nodes,multiplier=1)=>{for(const node of nodes){const count=multiplier*Number(node.qty);if(node.kind==='component')totalComponentCount+=count;countComponents(node.children||[],count);}};countComponents(products);
+  return {customer:quote.customerInfo?.name||quote.customer||undefined,customerId:quote.customerInfo?.id||undefined,totalComponentCount,substance:unique('substance'),grade:unique('grade'),complexity:n.complexity,finish:n.finishType,localQty:n.qty,productQty:product?.qty,parentQty:parent?.qty,parentCount:parent?r.count/n.qty:undefined,componentCount:component?componentPath.reduce((s,x)=>s*x.qty,1):undefined,unitWeight:r.count?(r.workWeight??r.weight)/r.count:0,unitArea:r.count?(r.workArea??r.area)/r.count:0};
 }
 function factor(f,input,tier){
   const convert=v=>{if(!finite(v))throw Error('Thiếu giá trị hệ số');const r=f.valueMode==='multiplier'?(Number(v)-1)*100:Number(v);if(r<=-100)throw Error('Hệ số nhân phải dương / tỷ lệ lớn hơn -100%');return r;};
@@ -39,7 +40,7 @@ function price(rate,op,ctx,tier){
   const raw=['direct','fixed'].includes(method)?op.unitPrice:rate[op.mode];
   let value=number(raw,'Đơn giá '+rate.name);const base=value,factors=[];
   if(method==='factors'&&(op.mode==='inside'||rate.outsideFactors))for(const f of rate.factors||[]){if(f.enabled===false||op.complexity&&f.param==='complexity')continue;
-    const input=op.inputs?.[f.param]??ctx[f.param],b=factor(f,input,tier);value*=1+b.value/100;factors.push({name:f.name,param:f.param,input,...b});
+    const overridden=op.inputs?.[f.param]!=null&&op.inputs[f.param]!=='';const input=overridden?op.inputs[f.param]:ctx[f.param];let b;try{b=factor(f,input,tier);}catch(error){throw Error(f.name+' / '+f.param+': '+error.message);}value*=1+b.value/100;factors.push({id:f.sharedFactorId||f.id,name:f.name,param:f.param,input,source:overridden?'override':'linked',...b});
   }
   if(op.complexity){validateComplexity(op.complexity);const multiplier=Number(op.complexity.multiplier);value*=multiplier;factors.push({name:'Mức độ phức tạp',param:'complexity',input:op.complexity.label,value:(multiplier-1)*100,multiplier,source:'declared',kind:'category'});}
   if(!Number.isFinite(value))throw Error('Đơn giá tính được vượt giới hạn');

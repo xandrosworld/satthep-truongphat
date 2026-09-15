@@ -111,7 +111,7 @@ function installRulesCatalogUI(){
   });
 }
 
-const RC_MASS_PARAMS=['weight','unitWeight','count','workQuantity','localQty','productQty','parentQty','parentCount','componentCount'];
+const RC_MASS_PARAMS=['totalComponentCount','weight','unitWeight','count','workQuantity','localQty','productQty','parentQty','parentCount','componentCount'];
 function rcFactorCategory(f){return f.param==='complexity'?'complexity':RC_MASS_PARAMS.includes(f.param)?'mass':'other';}
 function rcFactorTargets(){return [...db.rates,...(db.pricingDefaults?.expenseRates||[]).map(r=>({...r,id:'expense:'+r.id,name:'Vận chuyển / lắp đặt · '+r.name,expenseRate:r}))];}
 function rcFactorRows(){return rcFactorTargets().flatMap(rate=>(rate.factors||[]).map(factor=>({rate,factor})));}

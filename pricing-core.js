@@ -44,8 +44,8 @@ function tier(value,tiers,key='percent'){
 }
 function context(n,r){
   const leaves=C.flatten([n]).filter(x=>x.kind==='material'&&x.spec.shape!=='piece');
-  const unique=k=>{const values=[...new Set(leaves.map(x=>({...x.dims,...x.spec.props})[k]).filter(finite).map(Number))];return values.length===1?values[0]:undefined;};
-  return {...Object.fromEntries(['T','W','H','L'].map(k=>[k,n.params?.[k]??(n.kind==='material'?({...n.dims,...n.spec.props})[k]:unique(k))])),count:r.count,weight:r.workWeight??r.weight,area:r.workArea??r.area};
+  const unique=k=>{const raw=leaves.map(x=>({...x.dims,...x.spec.props})[k]);const values=[...new Set(raw.filter(finite).map(Number))];return raw.length&&raw.every(finite)&&values.length===1?values[0]:undefined;};
+  return {...Object.fromEntries(['T','W','H','L'].map(k=>[k,n.kind==='material'?({...n.dims,...n.spec.props})[k]:(n.params?.[k]??unique(k))])),count:r.count,weight:r.workWeight??r.weight,area:r.workArea??r.area};
 }
 function appliedRate(rate,op,ctx){
   return W.price(rate,op,ctx,tier);
@@ -84,7 +84,7 @@ function calculate(db){
 if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.id);r.ownOps.push({...item,name:rate?.name||op.id,skipped:true,reason:'Đã nằm trong gói thuê '+base.nodes[r.coveredBy].node.name});for(const [ri,recipe]of W.recipes(rate||{}).entries())try{const g=W.consume(recipe,n,r,ri,i,rate.name,W.methodFor(op,q)==='fixed'?'gói':W.methodFor(op,q)==='direct'?op.priceUnit:(rate[op.mode+'Unit']||rate.unit));includedGenerated.push({...g,referenceCost:g.cost,cost:0,included:true,reason:'Đã gồm trong gói thuê '+base.nodes[r.coveredBy].node.name});}catch(e){includedGenerated.push({ownerId:n.id,rateName:rate.name,materialId:recipe.spec?.id,error:e.message,included:true,cost:0});}continue;}
       try{
         const rate=q.ratesSnapshot.find(x=>x.id===op.id);if(!rate)throw Error('Không tìm thấy mã nguyên công');
-        const ctx={...context(n,r),...W.context(n,r,q.products)};
+        const ctx={...context(n,r),...W.context(n,r,q.products,q)};
         const applied=W.operation(rate,{...op,pricingMethod:W.methodFor(op,q),priceOptionId:W.optionFor(op,q)},ctx,r,tier),cost=applied.cost;
         item={...item,...applied,name:rate.name};
         parts[op.mode==='outside'?'outside':'factory']+=cost;
