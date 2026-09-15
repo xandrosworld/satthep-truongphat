@@ -100,6 +100,15 @@ function nest(items,spec,kerf,strategy='best'){
   const used=pieces.reduce((s,p)=>s+(isSheet?p.l*p.w:p.l),0),purchased=stocks.length*(isSheet?stockL*stockW:stockL);
   return {stocks,stockL,stockW,used,purchased,util:purchased?used/purchased:0};
 }
+function materialEstimate(n,g){
+  if(!n.materialEstimate||n.spec.shape==='piece')return null;
+  const {method,percent}=n.materialEstimate;
+  if(!['net','percent'].includes(method)||!Number.isFinite(percent)||percent<0||percent>100||method==='net'&&percent!==0)throw Error('Hao hụt dự tính phải từ 0 đến 100%; theo phôi dùng 0%');
+  const multiplier=1+percent/100,weight=g.weight*multiplier,area=g.blankArea*multiplier,measure=g.measure*multiplier,m=n.spec;
+  const basis=m.unit==='kg'?weight:m.unit==='m²'&&m.shape==='sheet'||m.unit==='m'&&m.shape!=='sheet'?measure:null;
+  if(basis===null)throw Error('Dự tính theo phôi cần đơn giá kg, m² tấm hoặc m dài; khai đơn vị giá phù hợp trước');
+  return {method,percent,weight,area,measure,basis,unit:m.unit,cost:basis*m.price};
+}
 function calculate(db){
   const linked=flatten(db.quote.products).some(n=>Object.keys(n.dimensionLinks||{}).length||n.thicknessRequirement);const q=linked?copy(db.quote):db.quote;const dependency=linked?(api.dimensionLinks||(typeof module!=='undefined'?require('./dimension-links-core.js'):null)).resolve(q.products):{errors:[],byNode:{}};
   const rows=[],nodes={},errors=[...dependency.errors],colors=['#3568aa','#518782','#ad8654','#8574a9','#6083a1','#9a6979'];
@@ -126,10 +135,15 @@ function calculate(db){
       const cost=purchaseCost-(remnantMode==='exclude'?recoverableCredit:0),kerfMeasure=Math.max(0,layout.purchased-layout.used-remnants.reduce((s,r)=>s+r.measure,0));
       const totalMeasure=group.rows.reduce((s,r)=>s+r.geometry.measure,0);for(const r of group.rows){const share=r.geometry.measure/totalMeasure;r.cost=cost*share;r.purchaseCost=purchaseCost*share;r.recoverableCredit=recoverableCredit*share;r.purchasedWeight=purchasedWeight*share;r.purchasedArea=(m.shape==='sheet'&&!m.shapeDefinition?purchasedMeasure:purchasedMeasure*materialSurface(m))*share;}
       groupsResult.push({...group,signature,remnants,layout,cost,purchaseCost,recoverableCredit,reusableMeasure,kerfMeasure,totalWeight,purchasedWeight,purchasedMeasure});
-    }catch(e){errors.push(group.spec.id+': '+e.message);groupsResult.push({...group,error:e.message});}}
+    }catch(e){if(group.rows.some(r=>!r.node.materialEstimate))errors.push(group.spec.id+': '+e.message);groupsResult.push({...group,error:e.message});}}
+  // Estimation is independent of the order-wide purchasing proposal. Old quotes opt in explicitly.
+  for(const row of rows)if(row.node.materialEstimate&&row.spec.shape!=='piece')try{
+    row.estimate=materialEstimate({...row.node,spec:row.spec},row.geometry);
+    row.cost=row.purchaseCost=row.externallySupplied?0:row.estimate.cost;row.recoverableCredit=0;
+  }catch(e){row.cost=row.purchaseCost=0;row.estimateError=e.message;errors.push(row.label+': '+e.message);(nodes[row.id].declarationErrors??=[]).push(e.message);}
   let staleCount=0;const activePlans=new Map(groupsResult.filter(g=>!g.error).map(g=>[g.signature,new Set(g.remnants.filter(r=>r.eligible!==false).map(r=>r.id))]));
   for(const [signature,ids]of Object.entries(savedRemnants))if(Array.isArray(ids))for(const id of new Set(ids))if(!activePlans.get(signature)?.has(id))staleCount++;
-  if(staleCount&&remnantMode==='exclude')errors.push('Phương án cắt đã thay đổi. Rà soát phần dư tận dụng tại Khai triển & hao hụt trước khi xuất báo giá.');
+  if(staleCount&&remnantMode==='exclude'&&rows.some(r=>r.spec.shape!=='piece'&&!r.node.materialEstimate))errors.push('Phương án cắt đã thay đổi. Rà soát phần dư tận dụng tại Khai triển & hao hụt trước khi xuất báo giá.');
   const rowMap=Object.fromEntries(rows.map(r=>[r.id,r]));
   function sum(n){const r=nodes[n.id];r.materialPurchase=0;r.materialRecoverable=0;if(n.kind==='material'){r.material=rowMap[n.id]?.cost||0;r.materialPurchase=rowMap[n.id]?.purchaseCost||0;r.materialRecoverable=rowMap[n.id]?.recoverableCredit||0;}else{for(const c of n.children||[]){const cr=sum(c);r.material+=cr.material;r.materialPurchase+=cr.materialPurchase;r.materialRecoverable+=cr.materialRecoverable;r.ops+=cr.ops;r.weight+=cr.weight;r.area+=cr.area;r.volume+=cr.volume;r.transport+=cr.transport;r.install+=cr.install;}}r.ownTransport=(n.transport||0)*r.count;r.ownInstall=(n.install||0)*r.count;r.transport+=r.ownTransport;r.install+=r.ownInstall;
     if(q.pricing&&api.manufacturing){try{Object.assign(r,api.manufacturing.measure(n,r,nodes));const row=rowMap[n.id];if(row){row.geometry.processWeight=r.workWeight;row.geometry.processArea=r.workArea;}}catch(e){errors.push(n.name+': '+e.message);(r.declarationErrors??=[]).push(e.message);}}
@@ -158,6 +172,6 @@ function configureProduct(p){
 function applyParam(p,key,value){if(p.dimensionLinks?.[key]&&p.dimensionLinks[key].mode!=='manual')return;const blankThickness=key==='T'&&value===null;if(!blankThickness&&(!Number.isFinite(value)||value<0||(['L','W','T'].includes(key)&&value===0)||key==='T'&&value>100000))throw Error('Kích thước không hợp lệ');p.params??={};p.params[key]=value;for(const n of scopedLeaves(p))for(const [dim,param]of Object.entries(n.paramLinks||{}))if(param===key&&!n.dimensionLinks?.[dim]&&!shapeInfo(n.spec).fixed.includes(dim))n.dims[dim]=value;formatName(p);}
 function setDimension(db,id,key,value){const n=findNode(db.quote.products,id),p=productOwner(db,id);if(n.dimensionLinks?.[key]&&n.dimensionLinks[key].mode!=='manual')throw Error('Thông số theo công thức/cố định; chuyển sang nhập tay trước khi sửa');if(p&&n.paramLinks?.[key])applyParam(p,n.paramLinks[key],value);else n.dims[key]=value;}
 function quoteSpecification(p){const leaves=flatten(p.children||[]).filter(n=>n.kind==='material'&&n.spec.shape!=='piece'),detail=n=>n.spec.shapeDefinition?n.spec.id+': '+n.spec.shapeDefinition.fields.filter(f=>f.mode==='input').map(f=>f.key+' '+n.dims[f.key]+' '+f.unit).join(' × '):n.spec.id+': '+Object.entries(n.dims||{}).filter(([k])=>shapeInfo(n.spec).input.includes(k)||['H','F'].includes(k)&&(n.ruleSpec.width.match(/[A-Z]+/g)||[]).includes(k)).map(([k,v])=>k+' '+v).join(' × ')+' mm';if(p.params){const base=Object.entries(p.params).filter(([k])=>k!=='T').map(([k,v])=>k+' '+v).join(' × ')+' mm'+(p.params.T==null?'':'; Dày chung (tham số): '+p.params.T+' mm; không tự đổi quy cách vật tư'),custom=leaves.filter(n=>n.detached);return custom.length?'Kích thước chung: '+base+'; chi tiết riêng: '+custom.map(detail).join('; '):base;}return [...new Set(leaves.map(detail))].join('; ');}
-const api={copy,uid,groups,shapes,shapeInfo,formula,seed,cloneNode,findNode,removeNode,materialMass,materialSurface,remnantRuleKey,remnantEligibility,geometry,nest,calculate,flatten,nodePath,productOwner,scopedLeaves,formatName,productParamEntries,configureProduct,applyParam,setDimension,quoteSpecification};
+const api={copy,uid,groups,shapes,shapeInfo,formula,seed,cloneNode,findNode,removeNode,materialMass,materialSurface,remnantRuleKey,remnantEligibility,geometry,materialEstimate,nest,calculate,flatten,nodePath,productOwner,scopedLeaves,formatName,productParamEntries,configureProduct,applyParam,setDimension,quoteSpecification};
 if(typeof module!=='undefined')module.exports=api;else root.TP=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -1006,3 +1006,5 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - 15/09: Hiện L/W/H mọi sản phẩm; nút liên kết trực tiếp và chọn biến sản phẩm trong công thức. Xem docs/PRODUCT-DIMENSIONS-2026-09-15.md, chứng cứ product-dimensions-2026-09-15. Chưa đánh dấu khách nghiệm thu.
 
 - 15/09: Công đoạn lấy từ danh mục và chọn cách giá đã khai; bảng thu gọn; xem mã/định mức/lượng sơn ngay tại công đoạn. Mặc định tại xưởng, thuê ngoài chọn riêng. 314 logic và 24 nhóm trình duyệt cục bộ đạt; xem docs/OPERATIONS-REVIEW-2026-09-15.md. Chưa đánh dấu khách nghiệm thu.
+
+- 15/09: Tách hao hụt dự tính khỏi tổ hợp mua toàn đơn; thêm cột %, bốn đại lượng KL/DT và công thức chỉ xem. Áp dụng phương pháp mới mới đổi chi phí đã lưu. Xem docs/MATERIAL-ESTIMATE-2026-09-15.md. 324 logic, 58 máy chủ và 12 nhóm trình duyệt cục bộ đạt; chưa đánh dấu khách nghiệm thu.
