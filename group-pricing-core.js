@@ -16,7 +16,7 @@ function profileErrors(q){
  return errors;
 }
 function resolve(q,n){
- const id=n.priceGroupId??(n.tmcScope==='tmc'?'tmc':n.tmcScope==='detail'?'detail':n.tmcScope?'unknown':n.tmcKind||n.tmcBreakdown?.length?'tmc':'unknown');
+ const id=n.productGroup==='Thang máng cáp'&&(!n.priceGroupId||n.priceGroupId==='unknown')?'tmc':n.priceGroupId??(n.tmcScope==='tmc'?'tmc':n.tmcScope==='detail'?'detail':n.tmcScope?'unknown':n.tmcKind||n.tmcBreakdown?.length?'tmc':'unknown');
  const matches=groups(q).filter(g=>g.id===id),group=matches.length===1?matches[0]:null;
  return {id,group,known:!!group,scope:group?(group.engine==='tmc'?'tmc':'detail'):'unknown',reason:group?'':n.name+': chưa xác định nhóm sản phẩm hợp lệ'};
 }

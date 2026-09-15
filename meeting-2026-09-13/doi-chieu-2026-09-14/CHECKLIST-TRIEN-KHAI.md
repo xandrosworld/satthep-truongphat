@@ -986,3 +986,10 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 
 - Sửa ô chọn đọc thêm cách mới từ đúng nguyên công trong Đơn giá đầu vào; chọn mới chụp dữ liệu vào báo giá, không phải lấy cả bảng trước. Giữ giá đã lưu khi chỉ mở danh sách.
 - Kiểm bằng luồng khai trực tiếp → vào báo giá cũ → thấy đủ bốn cách → chọn và tính. 24 nhóm cục bộ đạt. Chi tiết: [QUOTE-METHOD-SYNC-2026-09-15](../../docs/QUOTE-METHOD-SYNC-2026-09-15.md). Chưa thay nghiệm thu khách.
+
+
+### 15/09/2026 — Vận chuyển, lắp đặt và liên kết nhóm TMC
+
+- Bảng giá có đơn vị, cự ly, xe/tải trọng, mức sàn mỗi chuyến, giá đối chiếu và ba lịch sử thay đổi. Lắp đặt tính theo đơn vị sản phẩm, kiểm tra phạm vi cùng đơn vị.
+- Chọn phương thức trong báo giá và giữ giá đã lưu; liên kết nhóm sản phẩm TMC với bảng giá đầu vào và phương án so sánh. Không tự chọn giá bán.
+- Chi tiết phép tính và kiểm chứng: [TRANSPORT-INSTALL-TMC-2026-09-15](../../docs/TRANSPORT-INSTALL-TMC-2026-09-15.md). Chưa đánh dấu khách nghiệm thu.
