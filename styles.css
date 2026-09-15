@@ -70,3 +70,6 @@ input,select,textarea{border-color:#71818c;color:#243540}
 .dimension-scope-reference td{vertical-align:middle}.dimension-scope-reference code{white-space:nowrap}
 
 input:disabled,select:disabled,textarea:disabled{background:#e3e9ed;color:#465967;border-style:dashed}
+
+/* Version history keeps actions at their natural height beside the audit details. */
+.quote-version-row{align-items:center;flex-wrap:wrap}.quote-version-row>div:first-child{flex:1 1 260px}

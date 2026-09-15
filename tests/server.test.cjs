@@ -170,3 +170,17 @@ test('server: new catalog codes are reviewable, used codes protected and materia
   const catalog=candidates.catalog;catalog.materials.push(d.materials.at(-1));catalog.materialPrices=[{substance:'Thép',grade:'CT3',unit:'kg',price:21111}];assert.equal((await call(base,'catalog',{method:'PUT',session:admin,body:{expectedVersion:0,catalog}})).status,200);assert.equal((await call(base,'catalog',{session:admin})).data.catalog.materialPrices[0].price,21111);
   const used=d.quote.products[0].children[0].children[0].materialId;catalog.materials=catalog.materials.filter(x=>x.id!==used);const invalid=await call(base,'catalog',{method:'PUT',session:admin,body:{expectedVersion:1,catalog}});assert.equal(invalid.status,400);assert.match(invalid.data.error,/Không xóa/);
 });
+
+test('server: resending pins the immutable offer, audits recipient, rejects stale retries and hides costing',async t=>{
+ const {base}=await harness(t),admin=await setup(base);await call(base,'users',{method:'POST',session:admin,body:account('sales','sales')});const sales=await login(base,'sales'),document=P.demoSeed();document.quote.date=require('../completion-core.js').todayVN();
+ const created=await call(base,'quotes',{method:'POST',session:admin,body:{document}}),id=created.data.id,route='quotes/'+id;
+ assert.equal((await call(base,route+'/submit',{method:'POST',session:admin,body:{expectedVersion:1}})).status,200);assert.equal((await call(base,route+'/approve',{method:'POST',session:admin,body:{expectedVersion:2}})).status,200);
+ const original=(await call(base,route+'/revision/3',{session:admin})).data.document;
+ let body={status:'sent',offerVersion:3,expectedVersion:0,reason:'Gửi QA',confirmedSent:true,recipient:'Khách QA',channel:'Zalo'};
+ assert.equal((await call(base,route+'/workflow',{method:'POST',session:sales,body})).status,200);
+ body={...body,expectedVersion:1,resend:true,reason:'Gửi lại QA',channel:'Email'};const resent=await call(base,route+'/workflow',{method:'POST',session:sales,body});assert.equal(resent.status,200);assert.equal(resent.data.events[1].recipient,'Khách QA');assert.equal(resent.data.events[1].channel,'Email');assert.equal(resent.data.events[1].resend,true);
+ assert.equal((await call(base,route+'/workflow',{method:'POST',session:sales,body})).status,409);
+ assert.deepEqual((await call(base,route+'/revision/3',{session:admin})).data.document,original);
+ const visible=(await call(base,route+'/revision/3',{session:sales})).data;assert.equal(visible.document,undefined);assert.ok(visible.offer);assert.ok(!JSON.stringify(visible).includes('ratesSnapshot'));
+ const stored=(await call(base,'backup',{session:admin})).data;assert.equal(JSON.parse(stored.commercial[0].document).events.length,2);
+});

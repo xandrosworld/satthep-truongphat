@@ -1021,3 +1021,16 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 ## Cập nhật tính giá 15/09/2026 cuối ngày
 
 Đã kiểm tra liên kết yếu tố theo công việc, gán nhiều nguyên công và bảng giá nhóm dùng chung. Chi tiết và số đối chiếu: docs/OPERATION-LINKAGE-2026-09-15.md. Mobile và nghiệm thu khách hàng chưa nằm trong xác nhận này.
+
+
+### 16/09/2026 — Phiên bản và lần gửi báo giá
+
+- [x] Đánh số các bản duyệt cùng hồ sơ; tạo bản sửa có lý do.
+- [x] Snapshot dữ liệu/bản chào/Excel lúc duyệt; giữ giá cũ khi đổi danh mục.
+- [x] Lịch sử gửi, gửi lại, phản hồi/chốt gắn đúng bản duyệt; ghi người nhận/kênh.
+- [x] Mở bản gửi trên máy chủ không làm mất bản nháp, bảo toàn quyền chỉ xem giá bán.
+- [x] Kiểm tra V1 → gửi lại → sửa V2 → gửi/chốt V2, F5 và tải bản V1.
+- [ ] Bản duyệt cũ trước thay đổi không đủ snapshot: giữ dữ liệu gốc và ghi rõ hạn chế; không tự điền giả dữ liệu lịch sử.
+- [ ] Bài completion-browser cũ dừng ở phần dư vật tư cả trên baseline 3b286d4; theo dõi riêng.
+
+Chi tiết: `docs/QUOTE-VERSIONS-2026-09-16.md`. Mobile đầy đủ vẫn để xét sau theo khách.

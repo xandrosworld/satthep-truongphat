@@ -12,3 +12,16 @@ test('completion: auxiliary allowance is explicit per raw row, TMC recomputes on
 test('completion: named conventions generate reference prices, keep snapshots and protect used values',()=>{const CV=require('../conventions-core'),d=P.demoSeed(),old=C.copy(d.quote);CV.save(d,'substances',{name:'Nhôm thử',density:2700,price:80000});A.ok(d.materialPrices.some(x=>x.substance==='Nhôm thử'&&x.price===80000));CV.save(d,'grades',{name:'A6061',parent:'Nhôm thử',price:90000});A.equal(F.priceFor({substance:'Nhôm thử',grade:'A6061',unit:'kg'},d.materialPrices).value,90000);A.deepEqual(d.quote,old);A.throws(()=>CV.remove(d,'substances','Thép'),/Đang dùng/);CV.save(d,'parameters',{name:'KHE',unit:'mm'});A.ok(CV.entries(d,'parameters').some(x=>x.name==='KHE'));A.throws(()=>CV.save(d,'parameters',{name:'BW'}),/không hợp lệ/);CV.remove(d,'parameters','KHE');A.ok(!CV.entries(d,'parameters').some(x=>x.name==='KHE'));});
 test('completion: convention rename updates editable references without rewriting approved documents',()=>{const CV=require('../conventions-core'),d=P.demoSeed();d.savedQuotes=[{quote:{...C.copy(d.quote),id:'APPROVED',status:'approved'}}];const saved=C.copy(d.savedQuotes);CV.save(d,'substances',{name:'Thép mới',density:7900,price:21000},'Thép');A.equal(d.quote.products[0].children[0].children[0].spec.substance,'Thép mới');A.equal(d.quote.products[0].children[0].children[0].spec.density,7850);A.equal(d.materials.find(x=>x.id==='PH-T15').density,7900);A.deepEqual(d.savedQuotes,saved);});
 test('completion: custom work units require an explicit quantity rather than inventing a conversion',()=>{const W=require('../work-core'),r={count:2,weight:10,area:4},rate={name:'Thử',unit:'ca máy',inside:500};A.throws(()=>W.operation(rate,{mode:'inside',amount:1},{},r,P.tier),/lượng công việc/);const x=W.operation(rate,{mode:'inside',basisMode:'manual_unit',workQuantity:3},{},r,P.tier);near(x.basis,6);near(x.cost,3000);});
+
+test('completion: resend is explicit, preserves recipients and keeps past version expiry separate',()=>{
+ const q={status:'approved',date:'2026-09-16',valid:15},opts={today:'2026-09-16',offerVersion:1},input={status:'sent',confirmedSent:true,expectedVersion:0,reason:'Gửi lần đầu',recipient:'Anh A',channel:'Zalo'};
+ const one=F.transition(q,{},input,'Sale',opts);
+ A.throws(()=>F.transition(q,one,{...input,expectedVersion:1},'Sale',opts),/đã được ghi nhận/);
+ A.throws(()=>F.transition(q,one,{...input,expectedVersion:1,resend:true,confirmedSent:false},'Sale',opts),/thực sự/);
+ const again=F.transition(q,one,{...input,expectedVersion:1,resend:true,reason:'Gửi lại bản cũ'},'Sale',opts);
+ A.equal(again.events.length,2);A.equal(again.events[1].resend,true);A.equal(again.events[1].offerVersion,1);A.equal(again.events[1].recipient,'Anh A');A.equal(one.events.length,1);
+ const nextQ={...q,date:'2026-10-01',valid:30},fresh=F.workflow(nextQ,again,'2026-10-01',2);
+ A.equal(fresh.status,'draft');A.equal(fresh.validUntil,'2026-10-31');A.equal(fresh.events[0].validUntil,'2026-10-01');
+ const second=F.transition(nextQ,again,{...input,expectedVersion:2},'Sale',{today:'2026-10-01',offerVersion:2});
+ A.equal(second.events[2].offerVersion,2);A.equal(second.validUntil,'2026-10-31');A.equal(second.events[0].channel,'Zalo');
+});

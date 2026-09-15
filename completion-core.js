@@ -8,19 +8,20 @@ const validDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'
 const NEXT={draft:['sent'],sent:['negotiating','accepted','rejected','expired'],negotiating:['sent','accepted','rejected','expired'],accepted:['negotiating'],rejected:['negotiating','sent'],expired:['sent','negotiating','rejected']};
 const fold=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
 function expiry(q){if(q.validUntil)return q.validUntil;const d=new Date(q.date+'T00:00:00Z');if(!Number.isFinite(d.getTime()))return '';d.setUTCDate(d.getUTCDate()+Number(q.valid||0));return d.toISOString().slice(0,10);}
-function workflow(q,state={},today=todayVN(),offerVersion=0){const saved=offerVersion&&state.offerVersion&&state.offerVersion!==offerVersion?'draft':state.status||'draft',due=state.validUntil||expiry(q);return {...state,status:['sent','negotiating'].includes(saved)&&due&&today>due?'expired':saved,storedStatus:saved,version:state.version||0,validUntil:due,events:state.events||[]};}
+function workflow(q,state={},today=todayVN(),offerVersion=0){const changed=offerVersion&&state.offerVersion&&state.offerVersion!==offerVersion,saved=changed?'draft':state.status||'draft',due=changed?expiry(q):state.validUntil||expiry(q);return {...state,status:['sent','negotiating'].includes(saved)&&due&&today>due?'expired':saved,storedStatus:saved,version:state.version||0,validUntil:due,events:state.events||[]};}
 function transition(q,state,input,actor,{today=todayVN(),at=new Date().toISOString(),offerVersion=0}={}){
   const current=workflow(q,state,today,offerVersion),next=String(input.status||'');if(!STATES.some(x=>x[0]===next))throw Error('Trạng thái giao dịch không hợp lệ');
   if(input.expectedVersion!==current.version)throw Error('Giao dịch đã được người khác cập nhật; tải lại trước khi sửa');
-  if(next===current.status)throw Error('Trạng thái này đã được ghi nhận');
+  const resend=next==='sent'&&current.status==='sent'&&input.resend===true;
+  if(next===current.status&&!resend)throw Error('Trạng thái này đã được ghi nhận');
   if(next!=='draft'&&q.status!=='approved')throw Error('Cần bản giá đã duyệt trước khi ghi nhận giao dịch');
   const allowed=NEXT;
-  if(!allowed[current.status]?.includes(next))throw Error('Bước giao dịch không phù hợp với trạng thái hiện tại');
+  if(!resend&&!allowed[current.status]?.includes(next))throw Error('Bước giao dịch không phù hợp với trạng thái hiện tại');
   const reason=String(input.reason||'').trim();if(!reason)throw Error('Ghi nội dung trao đổi / căn cứ thay đổi');
   const validUntil=input.validUntil||current.validUntil;if(!validDate(validUntil))throw Error('Ngày hiệu lực không hợp lệ');
   if(['sent','negotiating','accepted'].includes(next)&&validUntil<today)throw Error('Bản chào hết hiệu lực; xác nhận ngày gia hạn trước khi tiếp tục');
   if(next==='sent'&&!input.confirmedSent)throw Error('Chỉ ghi Đã gửi sau khi thực sự chuyển bản chào cho khách');
-  return {status:next,validUntil,offerVersion,version:current.version+1,events:[...current.events,{from:current.status,to:next,reason:reason.slice(0,1500),actor:String(actor).slice(0,100),at,offerVersion,validUntil}]};
+  return {status:next,validUntil,offerVersion,version:current.version+1,events:[...current.events,{from:current.status,to:next,reason:reason.slice(0,1500),actor:String(actor).slice(0,100),at,offerVersion,validUntil,recipient:String(input.recipient||'').trim().slice(0,300),channel:String(input.channel||'').trim().slice(0,100),...(resend?{resend:true}:{})}]};
 }
 function filterQuotes(rows,f={}){const query=fold(f.search),status=f.status||'',from=f.from||'',to=f.to||'';return rows.filter(r=>{const day=String(r.date||r.updated||'').slice(0,10);return (!query||fold([r.code||r.id,r.customer,r.project].join(' ')).includes(query))&&(!status||(r.commercialStatus||'draft')===status)&&(!from||day>=from)&&(!to||day<=to);});}
 function priceFor(material,book=[]){if(material.group==='Linh kiện, thiết bị'||material.brand)return {value:material.price,source:'code'};const candidates=book.filter(r=>fold(r.substance)===fold(material.substance)&&(!r.grade||fold(r.grade)===fold(material.grade))&&(!r.unit||r.unit===material.unit)),specific=candidates.filter(r=>r.grade),selected=specific.length?specific:candidates.filter(r=>!r.grade);if(selected.length>1)throw Error('Bảng giá vật liệu/mác trùng phạm vi');if(!selected.length)return {value:material.price,source:'code'};const row=selected[0];if(row.price===null||row.price===''||!Number.isFinite(Number(row.price))||Number(row.price)<0)throw Error('Đơn giá vật liệu chưa hợp lệ');return {value:Number(row.price),source:row.grade?'grade':'substance'};}
