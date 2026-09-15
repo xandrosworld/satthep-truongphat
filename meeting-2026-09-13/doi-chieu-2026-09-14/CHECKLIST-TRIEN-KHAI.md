@@ -980,3 +980,9 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 
 - Theo ảnh khách mới: thay bảng liệt kê cách khai bằng một ô chọn cho mỗi nguyên công ở Giá áp dụng cho báo giá này. Đổi lựa chọn lưu và tính lại; hiện giá áp dụng và tổng tiền công, giữ lượng/độ phức tạp riêng.
 - 24 nhóm trình duyệt cục bộ đạt. Chi tiết: [QUOTE-OPERATION-CHOICE-2026-09-15](../../docs/QUOTE-OPERATION-CHOICE-2026-09-15.md). Khách vẫn đang rà hai bảng; chưa đánh dấu nghiệm thu.
+
+
+### 15/09/2026 — Khai 4 cách nhưng báo giá chỉ thấy 2
+
+- Sửa ô chọn đọc thêm cách mới từ đúng nguyên công trong Đơn giá đầu vào; chọn mới chụp dữ liệu vào báo giá, không phải lấy cả bảng trước. Giữ giá đã lưu khi chỉ mở danh sách.
+- Kiểm bằng luồng khai trực tiếp → vào báo giá cũ → thấy đủ bốn cách → chọn và tính. 24 nhóm cục bộ đạt. Chi tiết: [QUOTE-METHOD-SYNC-2026-09-15](../../docs/QUOTE-METHOD-SYNC-2026-09-15.md). Chưa thay nghiệm thu khách.
