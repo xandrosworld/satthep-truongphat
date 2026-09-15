@@ -90,14 +90,19 @@ function pickerTarget(parent){
   return `<div class="picker-target">${select('Đích thêm vật tư','target',options,parent.id,'id="picker-target"')}<div><span class="target-kind">${parent.kind==='component'?'Cấu kiện':'Sản phẩm'}</span><span>Định mức cho <b>1 ${parent.kind==='component'?'cấu kiện':'sản phẩm'}</b> · Toàn báo giá có <b>${num(result.nodes[parent.id]?.count)} đơn vị</b></span></div></div>`;
 }
 function addComponentGuided(parentId){
-  const parent=C.findNode(db.quote.products,parentId);if(!parent)return;
-  openDialog('Thêm cấu kiện',`<div class="import-destination"><span>Thuộc sản phẩm</span><strong>${esc(parent.name)}</strong></div>${field('Tên cấu kiện','name','','text','required placeholder="Ví dụ: Giá đỡ máng cáp"')}${field('Số cấu kiện trong 1 sản phẩm','qty',1,'number','min="1" max="5000" required')}<label class="continue-materials"><input type="checkbox" name="addMaterials" ${UX.mode==='quick'?'checked':''}><span><strong>Chọn vật tư ngay sau khi tạo</strong><small>Vật tư được thêm đúng vào cấu kiện này.</small></span></label>`,UX.mode==='quick'?'Tạo & chọn vật tư':'Tạo cấu kiện',f=>{
-    const n={id:C.uid(),kind:'component',name:f.get('name').trim(),qty:Number(f.get('qty')),children:[],ops:[]};
-    if(!n.name)throw Error('Nhập tên cấu kiện');const next=f.has('addMaterials');
-    saveAndClose(()=>{parent.children.push(n);selected=n.id;UX.query='';UX.onlyErrors=false;const owner=(C.nodePath(db.quote.products,n.id)||[])[0];if(owner)UX.folded.delete(owner.id);},'Đã tạo cấu kiện '+n.name);
+  const parent=C.findNode(db.quote.products,parentId);if(!parent||parent.kind!=='product')return;
+  const templates=db.library.filter(n=>n.kind==='component');
+  openDialog('Thêm cấu kiện',`<div class="import-destination"><span>Thuộc sản phẩm</span><strong>${esc(parent.name)}</strong></div>${select('Tạo từ','componentTemplate',[['','Cấu kiện trống'],...templates.map(t=>[t.id,(t.productGroup?t.productGroup+' / ':'')+t.name])],'')}${field('Tên cấu kiện','name','','text','maxlength="200" placeholder="Để trống sẽ dùng tên Cấu kiện mới"')}${field('Số cấu kiện trong 1 sản phẩm','qty',1,'number','min="1" max="5000" step="1" required')}<p id="component-template-preview" class="help-text">Tạo dòng cấu kiện trước, bổ sung tên và vật tư sau.</p><label class="continue-materials"><input type="checkbox" name="addMaterials"><span><strong>Chọn vật tư ngay sau khi tạo</strong><small>Vật tư được thêm đúng vào cấu kiện này.</small></span></label>`,'Tạo cấu kiện',f=>{
+    inWritable();if(C.findNode(db.quote.products,parentId)!==parent)throw Error('Sản phẩm đã thay đổi, hãy mở lại');
+    const template=templates.find(t=>t.id===f.get('componentTemplate')),qty=Number(f.get('qty'));
+    if(f.get('componentTemplate')&&!template)throw Error('Mẫu không còn tồn tại');if(!Number.isInteger(qty)||qty<1||qty>5000)throw Error('Số cấu kiện phải từ 1 đến 5.000');
+    const n=template?C.cloneNode(template):{id:C.uid(),kind:'component',children:[],ops:[]};delete n.templateKind;
+    n.name=String(f.get('name')||'').trim()||template?.name||'Cấu kiện mới';n.qty=qty;const next=f.has('addMaterials');
+    saveAndClose(()=>{parent.children??=[];parent.children.push(n);selected=n.id;UX.query='';UX.onlyErrors=false;UX.folded.delete(parent.id);},'Đã tạo cấu kiện '+n.name);
     if(next)batchMaterialPicker(n.id);else focusQuickNode(n.id);
   });
-  $('[name=addMaterials]').onchange=e=>{$('#dialog button[type=submit]').textContent=e.target.checked?'Tạo & chọn vật tư':'Tạo cấu kiện';};$('[name=name]').focus();
+  const form=$('#dialog-form');form.elements.componentTemplate.onchange=()=>{const t=templates.find(t=>t.id===form.elements.componentTemplate.value);form.elements.name.value=t?.name||'';$('#component-template-preview').textContent=t?(t.children?.length||0)+' thành phần · Sao chép cấu thành và công đoạn từ mẫu. Có thể sửa riêng trong báo giá.':'Tạo dòng cấu kiện trước, bổ sung tên và vật tư sau.';};
+  form.elements.addMaterials.onchange=e=>{$('#dialog button[type=submit]').textContent=e.target.checked?'Tạo & chọn vật tư':'Tạo cấu kiện';};
 }
 function setupUXActions(){
   actions['add-component']=el=>addComponentGuided(el.dataset.parent);

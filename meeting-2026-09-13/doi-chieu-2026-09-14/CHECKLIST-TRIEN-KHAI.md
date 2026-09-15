@@ -1000,3 +1000,5 @@ Nguồn: **nội dung 7** giữ nguyên lời khách 16:18–16:33; **nội dung
 - Thư viện dùng bảng theo nhóm; lọc/tìm, phân nhóm cả cấu kiện mẫu, giữ xem và sử dụng mẫu.
 - Nhóm vật tư dùng danh mục chung. Form phôi theo quy ước; linh kiện không hiện thông tin phôi; mật độ lấy theo vật liệu, tên gợi ý theo đúng loại khai báo.
 - Chi tiết: [LIBRARY-MATERIAL-2026-09-15](../../docs/LIBRARY-MATERIAL-2026-09-15.md). Chưa đánh dấu khách nghiệm thu.
+
+- 15/09: Khổ mua chuyển sang Thẻ kho; thêm cấu kiện trống hoặc từ mẫu. Đã kiểm tra local, xem docs/STOCK-CARD-COMPONENT-2026-09-15.md và chứng cứ stock-card-component-2026-09-15. Chưa đánh dấu khách nghiệm thu.
