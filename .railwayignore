@@ -1,0 +1,13 @@
+node_modules/
+artifacts/
+data/
+dist/
+.git/
+meeting-2026-09-13/
+12.9/
+*.pdf
+*.docx
+*.xlsx
+*.zip
+*.mp4
+*.mp3

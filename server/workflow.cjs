@@ -7,7 +7,7 @@ function createWorkflow({sql,fail,transaction,audit,readBody,getQuote,currentOff
   async function handle({req,route,user,rights,send}){
     const match=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/workflow(?:\/(\d+))?$/);if(!match)return false;
     if(!['GET','POST'].includes(req.method)||req.method==='POST'&&match[2])fail(405,'Phương thức không hỗ trợ');
-    if(req.method==='POST'&&!rights.edit&&user.role!=='sales')fail(403,'Không có quyền cập nhật giao dịch');
+    if(req.method==='POST'&&!rights.commercial)fail(403,'Không có quyền cập nhật giao dịch');
     const body=req.method==='POST'?await readBody(req):null,id=match[1],quote=getQuote(id);let document=JSON.parse(quote.document),version=quote.version;
     // Commercial events refer to an immutable approved offer even if a newer internal draft exists.
     const versions=sql.prepare("SELECT version FROM revisions WHERE id=? AND status='approved' ORDER BY version DESC").all(id),latestVersion=versions[0]?.version||0;

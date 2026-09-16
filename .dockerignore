@@ -1,0 +1,10 @@
+**
+!Dockerfile
+!package.json
+!*.js
+!*.css
+!index.html
+!tools/
+!tools/build.cjs
+!server/
+!server/**
