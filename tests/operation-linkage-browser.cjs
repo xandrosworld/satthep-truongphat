@@ -16,7 +16,7 @@ try{
  expect(await p.evaluate(ids=>[C.findNode(db.quote.products,ids.c).ops.some(o=>o.id==='pack'),C.findNode(db.quote.products,ids.a).ops.some(o=>o.id==='pack')],ids)).toEqual([true,false]);
  await p.reload({waitUntil:'domcontentloaded'});expect(await p.evaluate(id=>C.findNode(db.quote.products,id).ops.some(o=>o.id==='bend'),ids.z)).toBe(true);pass('Chọn cha và con chỉ gán cấp cha; F5 giữ nhiều nguyên công');
  await p.locator('[data-page=quote]').click();await p.locator('[data-tab=prices]').click();await p.locator('[data-intake=price-tab][data-id=operations]').click();
- await expect(p.locator('[data-qoc-rate=cut] [data-job-price="'+ids.a+'"]')).toContainText('nhập riêng');await expect(p.locator('[data-qoc-rate=cut] [data-job-price="'+ids.a+'"]')).toContainText('2 → 10%');await expect(p.locator('[data-qoc-rate=cut] [data-job-price="'+ids.z+'"]')).toContainText('liên kết dữ liệu');await p.locator('[data-qoc-table]').screenshot({path:path.join(dir,'02-prices-per-job.png')});pass('Bảng giá hiện mã/dòng, giá cơ sở, đơn giá thực tế, lượng và nguồn từng yếu tố');
+ await expect(p.locator('[data-qoc-operation=cut] [data-job-price="'+ids.a+'"]')).toContainText('nhập riêng');await expect(p.locator('[data-qoc-operation=cut] [data-job-price="'+ids.a+'"]')).toContainText('2 → 10%');await expect(p.locator('[data-qoc-operation=cut] [data-job-price="'+ids.z+'"]')).toContainText('liên kết dữ liệu');await p.locator('[data-qoc-table]').screenshot({path:path.join(dir,'02-prices-per-job.png')});pass('Bảng giá hiện mã/dòng, giá cơ sở, đơn giá thực tế, lượng và nguồn từng yếu tố');
  const before=await p.evaluate(()=>JSON.stringify(db.quote));
  await p.locator('[data-page=rates]').click();await p.locator('[data-rate-tab=tmc]').click();await p.locator('[data-gp=master-add]').click();await f('gp-group-name').fill('Tủ điện QA');await f('gp-formula').fill('Q * P_RATE');await f('gp-source').fill('Dữ liệu kiểm thử, không phải đơn giá khách hàng');await p.locator('[data-gp=add-param]').click();await f('gp-key').fill('P_RATE');await f('gp-name').fill('Đơn giá mỗi bộ');await f('gp-unit').fill('đ/bộ');await f('gp-value').fill('12345');await f('gp-net').check();await submit();
  expect(await p.evaluate(()=>JSON.stringify(db.quote))).toBe(before);await p.locator('[data-rate-tab=groups]').click();await expect(p.locator('[data-master-group]')).toContainText('Tủ điện QA');await p.screenshot({path:path.join(dir,'03-master-group.png')});
@@ -44,6 +44,12 @@ try{
  let amounts=await p.evaluate(ids=>ids.map(id=>result.nodes[id].ownOps[0]),caseIds);
  expect(amounts[0].rate).toBeCloseTo(1379.4,7);expect(amounts[1].rate).toBeCloseTo(1504.8,7);expect(amounts[0].cost).toBeCloseTo(25987.896,7);expect(amounts[1].cost).toBeCloseTo(56700.864,7);
  expect(amounts[0].factors.map(f=>f.input)).toEqual([1,24,'qa-A',6]);
+ await expect(p.locator('thead [data-qoc-choice=cut]')).toHaveCount(1);
+ await expect(p.locator('[data-qoc-node=qa-product] [data-qoc-operation=cut]')).toHaveText('—');
+ await expect(p.locator('[data-qoc-node=qa-component] [data-qoc-operation=cut]')).toHaveText('—');
+ await expect(p.locator('[data-qoc-node=qa-thick] [data-qoc-operation=cut]')).toContainText('1.504,8 đ/kg');
+ await expect(p.locator('[data-qoc-total=cut]')).toHaveText('82.689 đ');
+ await p.locator('[data-job-price=qa-thin] summary').click();
  await expect(p.locator('[data-job-price=qa-thin]')).toContainText('Components QA: 6');await expect(p.locator('[data-job-price=qa-thin]')).toContainText('1.379,4 đ/kg');await expect(p.locator('[data-job-price=qa-thin]')).toContainText('18,84 kg × 1.379,4 ≈ 25.988 đ');await p.locator('[data-qoc-table]').screenshot({path:path.join(dir,'04-linked-inputs.png')});
  await p.locator('[data-tab=preview]').click();await p.locator('[data-action=quote-info]').click();await f('customer').fill('Customer B');await submit();
  expect(await p.evaluate(()=>result.nodes['qa-thin'].ownOps[0].error)).toContain('Customer QA / customerId');
