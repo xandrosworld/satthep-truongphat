@@ -12,3 +12,5 @@ Theo phản hồi khách: TMC đã gồm vận chuyển phôi nhưng khó tìm k
 Kiểm tra: `node --test tests/technical-access.test.cjs`, `node tests/technical-pricing-browser.cjs`. Bộ logic/API toàn dự án và các luồng hồi quy lựa chọn giá nguyên công, vận chuyển, phân quyền được chạy trước phát hành. Bằng chứng cục bộ/live ở `artifacts/customer-review/technical-pricing-2026-09-16/` (không commit dữ liệu và ảnh nội bộ).
 
 Kiểm Railway dùng HTTPS thật, đăng nhập, tài khoản kỹ thuật tạm và dữ liệu thử trong phiên trình duyệt. Tài khoản thử được khóa sau kiểm tra; không lưu thay đổi vào báo giá khách.
+
+Lượt kiểm HTTPS phát hiện phản hồi kiểm tra phiên cũ có thể về sau khi đăng nhập mới. Đã gắn việc nhận/xóa phiên với đúng phiên yêu cầu, tránh phản hồi cũ ghi đè phiên mới; kiểm thử trình duyệt chủ động trì hoãn phản hồi 401 để tái hiện và xác minh.

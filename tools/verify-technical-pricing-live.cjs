@@ -15,7 +15,7 @@ const fs=require('fs'),path=require('path'),crypto=require('crypto'),{chromium,e
   temporaryUser=await admin.evaluate(u=>teamApi('users','POST',u),user);
   const tech=await browser.newPage({viewport:{width:1600,height:1000}});tech.on('pageerror',e=>errors.push(e.message));await tech.goto(url);
   await tech.evaluate(async u=>{teamSession(await teamApi('login','POST',u));render();},user);
-  const restricted=await tech.evaluate(id=>teamApi('quotes/'+id),id);expect(restricted.document).toEqual(Technical.project(original.document));
+  const restricted=await tech.evaluate(id=>teamApi('quotes/'+id),id);if(JSON.stringify(restricted.document)!==JSON.stringify(Technical.project(original.document)))throw Error('Technical API projection mismatch (customer data omitted from log)');
   const list=await tech.evaluate(()=>teamApi('quotes'));expect(list.every(q=>!Object.hasOwn(q,'total'))).toBe(true);
   const denied=await tech.evaluate(async id=>{const codes=[];for(const route of ['catalog','backup','quotes/'+id+'/revisions','quotes/'+id+'/revision/1','orders'])try{await teamApi(route);codes.push(200);}catch(e){codes.push(e.status);}return codes;},id);expect(denied).toEqual([403,403,403,403,403]);pass('Actual technical account receives only technical projection; price APIs return 403');
   await tech.evaluate(id=>teamLoad(id),id);await expect(tech.locator('[data-tab=prices]')).toHaveCount(0);await expect(tech.locator('[data-team=save]')).toBeVisible();
@@ -29,7 +29,7 @@ const fs=require('fs'),path=require('path'),crypto=require('crypto'),{chromium,e
   await admin.evaluate(()=>{tab='operations';render();});await admin.screenshot({path:path.join(dir,'02-technical-steps.png'),fullPage:true});
   await admin.locator('[data-pa=op-detail]').first().click();await expect(admin.locator('#dialog [name=unitPrice]')).toHaveCount(0);await expect(admin.locator('#dialog [name=amount]')).toBeVisible();await admin.evaluate(()=>closeDialog());
   await admin.evaluate(()=>{tab='prices';Intake.priceTab='operations';render();});await expect(admin.locator('[data-qoc-table]')).toBeVisible();pass('Live UI: freight states, all five price-free steps and price editor at step 6');
-  const unchanged=await admin.evaluate(id=>teamApi('quotes/'+id),id);expect(unchanged.version).toBe(original.version);expect(unchanged.document).toEqual(original.document);
+  const unchanged=await admin.evaluate(id=>teamApi('quotes/'+id),id);expect(unchanged.version).toBe(original.version);if(JSON.stringify(unchanged.document)!==JSON.stringify(original.document))throw Error('Quote changed during read-only verification (customer data omitted from log)');
   await admin.evaluate(id=>teamApi('users/'+id+'/disable','POST',{}),temporaryUser.id);temporaryUser=null;
   const revoked=await tech.evaluate(async()=>{try{await teamApi('me');return 200;}catch(e){return e.status;}});expect(revoked).toBe(401);pass('Customer quote unchanged; temporary technical account disabled and session revoked');
   expect(errors).toEqual([]);fs.writeFileSync(path.join(dir,'results.json'),JSON.stringify({passed:true,url,buildHash:expected,checks,errors,at:new Date().toISOString()},null,2));
