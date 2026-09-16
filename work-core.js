@@ -4,7 +4,7 @@
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const finite=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 function number(v,name,{positive=false}={}){if(!finite(v)||Number(v)<0||(positive&&Number(v)===0))throw Error(name+' phải là số '+(positive?'lớn hơn 0':'không âm'));return Number(v);}
-const EXPENSES=[['incoming','Vận chuyển nhập vật tư'],['outgoing','Vận chuyển thuê ngoài'],['delivery','Vận chuyển giao hàng'],['install','Lắp đặt']];
+const EXPENSES=[['incoming','Vận chuyển nhập phôi / vật tư'],['outgoing','Vận chuyển thuê ngoài'],['delivery','Vận chuyển giao hàng'],['install','Lắp đặt']];
 const METHODS=[['kg_km','Theo kg × km'],['vehicle','Theo xe / tải trọng'],['product_unit','Theo đơn vị sản phẩm'],['kg_net','Theo kg vận chuyển'],['kg_purchase','Theo kg vật tư mua'],['ton_net','Theo tấn vận chuyển'],['ton_purchase','Theo tấn vật tư mua'],['ton_km','Theo tấn × km'],['m2','Theo m² bề mặt'],['m','Theo mét dài'],['unit','Theo số lượng đối tượng đã chọn'],['trip','Theo chuyến'],['km','Theo km'],['fixed','Trọn gói']];
 // Empty scope is the legacy shared catalogue; explicit scopes match declared product groups only.
 function validateGroups(value){if(value===undefined)return;if(!Array.isArray(value)||value.length>100||value.some(x=>typeof x!=='string'||!x.trim()||x!==x.trim()||x.length>80)||new Set(value).size!==value.length)throw Error('Nhóm sản phẩm phải là danh sách tên không trống, không trùng');}

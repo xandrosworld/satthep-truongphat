@@ -51,7 +51,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const attempts=new Map();
   function accessValue(body){try{return body.sections===undefined?null:JSON.stringify(SA.parse(body.sections));}catch(e){fail(400,e.message);}}
   function requireSection(user,key){if(!permissions(user).sections.includes(key))fail(403,'Chưa được cấp quyền: '+SA.labels[key]);}
-  function guardSections(user,before,after,catalog=false){if(user.section_access==null||user.role==='admin')return;const denied=SA.denied(before,after,permissions(user),{catalog});if(denied.length)fail(403,'Không được sửa: '+denied.map(k=>SA.labels[k]||k).join(', '));}
+  function guardSections(user,before,after,catalog=false){if(user.role==='admin'||user.section_access==null&&user.role!=='technical')return;if(user.role==='technical'){const T=require('../technical-core.js');before=T.project(before);after=T.project(after);}const denied=SA.denied(before,after,permissions(user),{catalog});if(denied.length)fail(403,'Không được sửa: '+denied.map(k=>SA.labels[k]||k).join(', '));}
 
   const run=(query,...args)=>sql.prepare(query).run(...args),one=(query,...args)=>sql.prepare(query).get(...args),all=(query,...args)=>sql.prepare(query).all(...args);
   const transaction=fn=>{sql.exec('BEGIN IMMEDIATE');try{const result=fn();sql.exec('COMMIT');return result;}catch(e){sql.exec('ROLLBACK');throw e;}};
@@ -99,6 +99,23 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       }
       const user=session(req);if(!user)fail(401,'Cần đăng nhập');const rights=permissions(user);
       if(!['GET','HEAD'].includes(req.method)&&req.headers['x-csrf-token']!==user.csrf)fail(403,'Phiên yêu cầu không hợp lệ; tải lại trang');
+      if(rights.technical){
+        const Technical=require('../technical-core.js');
+        if(route==='/api/quotes'&&req.method==='GET')return send(200,all('SELECT id,code,customer,project,version,status,updated FROM quotes ORDER BY updated DESC'));
+        const technicalQuote=route.match(/^\/api\/quotes\/([a-f0-9-]+)$/);
+        if(technicalQuote){const q=getQuote(technicalQuote[1]);
+          if(req.method==='GET')return send(200,{id:q.id,version:q.version,status:q.status,document:Technical.project(JSON.parse(q.document))});
+          if(req.method==='PUT'){
+            if(!rights.edit)fail(403,'Chưa được cấp phần kỹ thuật để sửa');
+            if(q.status!=='draft')fail(409,'Bản đã trình/duyệt được khóa.');
+            const body=await readBody(req);if(q.version!==body.expectedVersion)fail(409,'Báo giá đã đổi. Tải lại trước khi lưu.');
+            let document;try{document=Technical.merge(JSON.parse(q.document),body.document);}catch(e){fail(403,e.message);}
+            const saved=saveQuote(q.id,document,user,body.expectedVersion,'draft','Cập nhật kỹ thuật');
+            return send(200,{id:saved.id,version:saved.version,status:saved.status,updated:saved.updated});
+          }
+        }
+        if(!['/api/me','/api/logout','/api/me/password'].includes(route))fail(403,'Tài khoản kỹ thuật chỉ được làm việc với dữ liệu kỹ thuật, không được xem giá');
+      }
       if(await intake.handle({req,route,user,rights,send}))return;
       if(await workflow.handle({req,route,user,rights,send}))return;
       if(route==='/api/me/password'&&req.method==='POST'){
