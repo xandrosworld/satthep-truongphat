@@ -6,6 +6,11 @@ const finite=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 function number(v,name,{positive=false}={}){if(!finite(v)||Number(v)<0||(positive&&Number(v)===0))throw Error(name+' phải là số '+(positive?'lớn hơn 0':'không âm'));return Number(v);}
 const EXPENSES=[['incoming','Vận chuyển nhập vật tư'],['outgoing','Vận chuyển thuê ngoài'],['delivery','Vận chuyển giao hàng'],['install','Lắp đặt']];
 const METHODS=[['kg_km','Theo kg × km'],['vehicle','Theo xe / tải trọng'],['product_unit','Theo đơn vị sản phẩm'],['kg_net','Theo kg vận chuyển'],['kg_purchase','Theo kg vật tư mua'],['ton_net','Theo tấn vận chuyển'],['ton_purchase','Theo tấn vật tư mua'],['ton_km','Theo tấn × km'],['m2','Theo m² bề mặt'],['m','Theo mét dài'],['unit','Theo số lượng đối tượng đã chọn'],['trip','Theo chuyến'],['km','Theo km'],['fixed','Trọn gói']];
+// Empty scope is the legacy shared catalogue; explicit scopes match declared product groups only.
+function validateGroups(value){if(value===undefined)return;if(!Array.isArray(value)||value.length>100||value.some(x=>typeof x!=='string'||!x.trim()||x!==x.trim()||x.length>80)||new Set(value).size!==value.length)throw Error('Nhóm sản phẩm phải là danh sách tên không trống, không trùng');}
+function groupsMatch(value,group){validateGroups(value);return !value?.length||value.includes(group);}
+function groupsOverlap(a,b){validateGroups(a);validateGroups(b);return !a?.length||!b?.length||a.some(x=>b.includes(x));}
+function nodeGroup(products,id){return (C.nodePath(products,id)||[]).slice().reverse().find(n=>String(n.productGroup||'').trim())?.productGroup||'';}
 function context(n,r,products,quote={}){
   const leaves=C.flatten([n]).filter(x=>x.kind==='material'&&x.spec.shape!=='piece');
   const unique=key=>{const raw=leaves.map(x=>x.spec[key]),values=[...new Set(raw)];return raw.length&&raw.every(x=>x!==undefined&&x!==null&&String(x).trim()!=='')&&values.length===1?values[0]:undefined;};
@@ -14,7 +19,7 @@ function context(n,r,products,quote={}){
   // A free-text customer change must not retain another customer's pricing identity.
   const customerName=String(quote.customer||'').trim(),contact=quote.customerInfo;
   const linkedCustomer=contact&&(!customerName||customerName===String(contact.name||'').trim())?contact:null;
-  return {customer:customerName||linkedCustomer?.name||undefined,customerId:linkedCustomer?.id||undefined,totalComponentCount,substance:unique('substance'),grade:unique('grade'),complexity:n.complexity,finish:n.finishType,localQty:n.qty,productQty:product?.qty,parentQty:parent?.qty,parentCount:parent?r.count/n.qty:undefined,componentCount:component?componentPath.reduce((s,x)=>s*x.qty,1):undefined,unitWeight:r.count?(r.workWeight??r.weight)/r.count:0,unitArea:r.count?(r.workArea??r.area)/r.count:0};
+  return {productGroup:nodeGroup(products,n.id),customer:customerName||linkedCustomer?.name||undefined,customerId:linkedCustomer?.id||undefined,totalComponentCount,substance:unique('substance'),grade:unique('grade'),complexity:n.complexity,finish:n.finishType,localQty:n.qty,productQty:product?.qty,parentQty:parent?.qty,parentCount:parent?r.count/n.qty:undefined,componentCount:component?componentPath.reduce((s,x)=>s*x.qty,1):undefined,unitWeight:r.count?(r.workWeight??r.weight)/r.count:0,unitArea:r.count?(r.workArea??r.area)/r.count:0};
 }
 function factor(f,input,tier){
   const convert=v=>{if(!finite(v))throw Error('Thiếu giá trị hệ số');const r=f.valueMode==='multiplier'?(Number(v)-1)*100:Number(v);if(r<=-100)throw Error('Hệ số nhân phải dương / tỷ lệ lớn hơn -100%');return r;};
@@ -36,6 +41,7 @@ function factor(f,input,tier){
   return {value:convert(found.percent),label:String(found.key),kind:'category'};
 }
 function price(rate,op,ctx,tier){
+  if(!groupsMatch(rate.productGroups,ctx.productGroup))throw Error(rate.name+': chỉ áp dụng nhóm '+rate.productGroups.join(', ')+'. Hãy kiểm tra nhóm sản phẩm / cấu kiện.');
   const selected=resolvePriceOption(rate,op);rate=selected.rate;op=selected.op;
   if(!['inside','outside'].includes(op.mode))throw Error('Nơi thực hiện không hợp lệ');
   const method=op.pricingMethod||'factors';
@@ -43,6 +49,8 @@ function price(rate,op,ctx,tier){
   const raw=['direct','fixed'].includes(method)?op.unitPrice:rate[op.mode];
   let value=number(raw,'Đơn giá '+rate.name);const base=value,factors=[];
   if(method==='factors'&&(op.mode==='inside'||rate.outsideFactors))for(const f of rate.factors||[]){if(f.enabled===false||op.complexity&&f.param==='complexity')continue;
+    if(f.productGroups?.length&&!ctx.productGroup)throw Error('Chưa chọn nhóm sản phẩm để tra hệ số '+f.name);
+    if(!groupsMatch(f.productGroups,ctx.productGroup))continue;
     const overridden=op.inputs?.[f.param]!=null&&op.inputs[f.param]!=='';const input=overridden?op.inputs[f.param]:ctx[f.param];let b;try{b=factor(f,input,tier);}catch(error){throw Error(f.name+' / '+f.param+': '+error.message);}value*=1+b.value/100;factors.push({id:f.sharedFactorId||f.id,name:f.name,param:f.param,input,source:overridden?'override':'linked',...b});
   }
   if(op.complexity){validateComplexity(op.complexity);const multiplier=Number(op.complexity.multiplier);value*=multiplier;factors.push({name:'Mức độ phức tạp',param:'complexity',input:op.complexity.label,value:(multiplier-1)*100,multiplier,source:'declared',kind:'category'});}
@@ -69,6 +77,7 @@ function methodFor(op,quote){const id=optionFor(op,quote),rate=quote.ratesSnapsh
 function setMethod(quote,id,method){if(!['factors','catalog','direct','fixed'].includes(method))throw Error('Cách tính chưa hợp lệ');quote.operationMethods??={};quote.operationMethods[id]=method;if(quote.operationPriceOptions)delete quote.operationPriceOptions[id];for(const n of C.flatten(quote.products))for(const op of n.ops||[])if(op.id===id){op.pricingMethod=method;delete op.priceOptionId;}}
 function validateComplexity(x){if(!x||typeof x.label!=='string'||!x.label.trim()||x.label.length>120)throw Error('Mức độ phức tạp cần tên đánh giá');number(x.multiplier,'Hệ số phức tạp',{positive:true});}
 function validatePriceOptions(rate){
+  validateGroups(rate.productGroups);for(const f of rate.factors||[]){validateGroups(f.productGroups);if(f.enabled!==false&&!groupsOverlap(rate.productGroups,f.productGroups))throw Error('Hệ số '+f.name+' không thuộc nhóm của nguyên công '+rate.name);}
   if(rate.priceOptions===undefined)return;
   if(!Array.isArray(rate.priceOptions)||rate.priceOptions.length>40)throw Error('Khai tối đa 40 cách tính đơn giá');const seen=new Set();
   for(const x of rate.priceOptions){if(!x||typeof x.id!=='string'||!/^opt-[A-Za-z0-9_-]{1,80}$/.test(x.id)||seen.has(x.id))throw Error('Mã cách tính bị trống, trùng hoặc không hợp lệ');seen.add(x.id);if(typeof x.name!=='string'||!x.name.trim()||x.name.length>160||!['catalog','factors','fixed'].includes(x.method))throw Error('Cách tính cần tên và phương pháp hợp lệ');for(const mode of ['inside','outside']){number(x[mode],'Đơn giá '+x.name+' / '+mode);if(typeof x[mode+'Unit']!=='string'||!x[mode+'Unit'].trim()||x[mode+'Unit'].length>40)throw Error('Cách tính '+x.name+' cần đơn vị');}if(x.method==='fixed'&&!['total','unit'].includes(x.fixedScope))throw Error('Chọn phạm vi giá gói');if(x.enabled!==undefined&&typeof x.enabled!=='boolean'||x.outsideFactors!==undefined&&typeof x.outsideFactors!=='boolean')throw Error('Trạng thái cách tính không hợp lệ');}
@@ -137,6 +146,7 @@ function expenses(entries,base,generated){
   return {totals,allocations,items,errors,rows:all};
 }
 function validateFactor(f,tier){
+  validateGroups(f.productGroups);
  if(!f||typeof f.id!=='string'||!f.id||f.id.length>100||typeof f.name!=='string'||!f.name.trim()||f.name.length>160||typeof f.param!=='string'||!f.param||f.param.length>60)throw Error('Hệ số cần mã, tên và đại lượng tra');
  if(f.kind&&!['number','category'].includes(f.kind))throw Error('Kiểu bảng hệ số không hợp lệ');
  const rows=f.kind==='category'?f.categories:f.tiers;if(!Array.isArray(rows)||!rows.length||rows.length>200)throw Error('Khai từ 1 đến 200 bậc hệ số');
@@ -144,6 +154,6 @@ function validateFactor(f,tier){
  return f;
 }
 function saveFactor(db,rateId,f,tier){validateFactor(f,tier);const rate=db.rates.find(r=>r.id===rateId);if(!rate)throw Error('Chọn nguyên công áp dụng');const rows=rate.factors||[],copy=C.copy(f);if(rows.some(x=>x.id!==f.id&&x.name.trim()===f.name.trim()))throw Error('Tên hệ số đã có trong nguyên công');rate.factors=rows.some(x=>x.id===f.id)?rows.map(x=>x.id===f.id?copy:x):[...rows,copy];return copy;}
-const api={validateFactor,saveFactor,EXPENSES,METHODS,optionFor,methodFor,setMethod,setPriceOption,resolvePriceOption,validatePriceOptions,validateComplexity,methodErrors,number,context,factor,price,operation,recipes,consume,expenses};
+const api={validateGroups,groupsMatch,groupsOverlap,nodeGroup,validateFactor,saveFactor,EXPENSES,METHODS,optionFor,methodFor,setMethod,setPriceOption,resolvePriceOption,validatePriceOptions,validateComplexity,methodErrors,number,context,factor,price,operation,recipes,consume,expenses};
 if(typeof module!=='undefined')module.exports=api;else root.TPWork=api;
 })(typeof window!=='undefined'?window:globalThis);

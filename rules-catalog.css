@@ -47,3 +47,11 @@
 .qoc-table .qoc-empty{color:var(--muted)}
 .qoc-table tfoot th,.qoc-table tfoot td{background:var(--level-component);font-weight:600}
 @media(max-width:600px){.qoc-table tr>:first-child{min-width:150px;width:150px;max-width:150px}.qoc-table th,.qoc-table td{padding:8px}}
+
+.pg-navigation { margin: 18px 0; padding: 16px; background: #f3f5f7; border: 1px solid #c8d0da; border-radius: 8px; }
+.pg-section { margin: 18px 0; }
+.pg-section > h3 { color: #20334d; padding: 10px 14px; border-left: 4px solid #536d89; background: #e5ebf1; }
+.pg-scope-fields { border: 1px solid #a6b3c2; padding: 14px; margin: 16px 0; border-radius: 6px; }
+.pg-scope-options { display: flex; flex-wrap: wrap; gap: 12px 24px; margin: 12px 0; }
+.pg-scope-options label { display: flex; align-items: center; gap: 8px; }
+.pg-scope-label { color: #425a76; font-weight: 600; }
