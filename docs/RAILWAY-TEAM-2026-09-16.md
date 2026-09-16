@@ -45,7 +45,9 @@ Hai người mở cùng một báo giá có thể xem và sửa bản làm việ
 
 ## Triển khai lại
 
-Build với `node tools/build.cjs`, chạy kiểm thử liên quan, rồi deploy Dockerfile vào đúng project/service. Chỉ đưa mã nguồn cần chạy vào thư mục đóng gói; không gửi bản sao lưu, hợp đồng, ảnh khách hoặc thông tin đăng nhập.
+Service đã nối GitHub `xandrosworld/satthep-truongphat`, nhánh `main`. Khi đẩy commit vào `main`, Railway tự build Dockerfile và triển khai vào service `quotation` / environment `production`; không cần chạy `railway up` cho cập nhật thông thường.
+
+Trước khi đẩy commit: build với `node tools/build.cjs` và chạy kiểm thử liên quan. Giữ nguyên volume và biến môi trường của service. Chỉ đưa mã nguồn cần chạy vào thư mục đóng gói; không gửi bản sao lưu, hợp đồng, ảnh khách hoặc thông tin đăng nhập.
 
 Các biến cần thiết: `TP_PUBLIC_ORIGIN`, `TP_DATABASE_PATH`, `TP_SETUP_KEY`. Railway cấp `PORT` và mount volume. `TP_SETUP_KEY` là mã riêng dùng cho lần tạo quản trị đầu tiên; không đưa vào giao diện hay log. Health check `/healthz`; HTTPS origin bắt buộc, cookie Secure/HttpOnly/SameSite và CSRF cho yêu cầu ghi.
 
