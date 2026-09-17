@@ -15,7 +15,7 @@ function technicalRecipes(id,index){const n=C.findNode(db.quote.products,id),rat
  openDialog('Vật tư định mức · '+esc(rate.name),`<p>Lượng vật tư = lượng thực hiện × định mức × số lớp × (1 + hao hụt / 100). Áp dụng cho mọi dòng dùng công đoạn này trong báo giá.</p>${recipes.map((r,i)=>`<section class="panel panel-body"><strong>${esc(r.spec?.id)} · ${esc(r.spec?.name)}</strong><div class="form-grid">${field('Định mức ('+r.spec?.unit+'/'+r.basis+')','norm-'+i,r.norm,'number','min="0" step="any" required')}${field('Số lớp','layers-'+i,r.layers??1,'number','min="0.001" step="any" required')}${field('Hao hụt (%)','loss-'+i,r.loss??0,'number','min="0" step="any" required')}</div></section>`).join('')}`,'Lưu định mức',f=>saveAndClose(()=>{const targets=rate.consumptions?.length?rate.consumptions:[rate.consumption];targets.forEach((r,i)=>{for(const key of ['norm','layers','loss'])r[key]=Number(f.get(key+'-'+i));});}));
 }
 function technicalSelectOperation(){
- const rates=(technicalOnly()?db.quote.ratesSnapshot:db.rates).filter(r=>r.enabled!==false);
+ const rates=(technicalOnly()?db.quote.ratesSnapshot:db.rates).filter(r=>r.enabled!==false&&r.operationType!=='package');
  openDialog('Chọn công đoạn',`${select('Công đoạn','operationId',rates.map(r=>[r.id,r.name]),rates[0]?.id)}<p>Chọn công đoạn rồi tích vào dòng thực hiện. Đơn giá được quản lý tại bước 6 — Giá & hệ số.</p>`,'Thêm công đoạn',f=>{const rate=rates.find(r=>r.id===f.get('operationId'));if(!rate)throw Error('Chọn công đoạn');saveAndClose(()=>{if(!db.quote.ratesSnapshot.some(r=>r.id===rate.id))db.quote.ratesSnapshot.push(C.copy(rate));});});
 }
 function technicalClean(root){

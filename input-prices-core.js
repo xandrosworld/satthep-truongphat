@@ -4,7 +4,7 @@ const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const P=typeof module!=='undefined'?require('./pricing-core.js'):root.TPPrice;
 const W=typeof module!=='undefined'?require('./work-core.js'):root.TPWork;
 const copy=C.copy;
-function defaults(db){const p={...P.defaults(),...copy(db.pricingDefaults||{})},x=p.tmcLaborOperation;for(const b of [x?.default,...Object.values(x?.tables||{})]){if(!b)continue;const rate=db.rates?.find(r=>r.id===b.rate.id);if(rate)b.rate=copy(rate);}return p;}
+function defaults(db){const p={...P.defaults(),...copy(db.pricingDefaults||{})},x=p.tmcLaborOperation;for(const b of [x?.default,...Object.values(x?.tables||{})]){if(!b)continue;const rate=db.rates?.find(r=>r.id===b.rate.id);if(rate)b.rate=copy(rate);}(typeof module!=='undefined'?require('./package-operation-core.js'):root.TPPackageOperation).synchronize(p,db.rates||[]);return p;}
 function amount(value,label){if(value===null||value===undefined||value===''||!Number.isFinite(Number(value))||Number(value)<0)throw Error(label+': nhập số không âm');return Number(value);}
 function validateExpense(r){
  if(r?.applicableGroupIds!==undefined&&(!Array.isArray(r.applicableGroupIds)||new Set(r.applicableGroupIds).size!==r.applicableGroupIds.length||r.applicableGroupIds.some(id=>typeof id!=='string'||!['detail','tmc'].includes(id)&&!/^grp-[A-Za-z0-9_-]{1,60}$/.test(id))))throw Error('Chọn nhóm áp dụng đơn giá hợp lệ');
