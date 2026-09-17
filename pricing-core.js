@@ -104,7 +104,7 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   }
   const roots=q.products.map(walk),weight=roots.reduce((s,r)=>s+r.weight,0),qty=roots.reduce((s,r)=>s+r.count,0);
   for(const r of roots){const share=weight>0?r.weight/weight:qty>0?r.count/qty:0;for(const key of Object.keys(globals))r.parts[key]+=globals[key]*share;}
-  const generated=Object.values(base.nodes).flatMap(r=>r.ownGenerated||[]),logistics=W.expenses(q.expenses||[],{...base,products:roots},generated);
+  const generated=Object.values(base.nodes).flatMap(r=>r.ownGenerated||[]),logistics=W.expenses(q.expenses||[],{...base,products:roots,quote:q},generated);
   errors.push(...logistics.errors);
   for(const r of roots)for(const key of ['incoming','outgoing','delivery','install'])r.parts[key]+=logistics.allocations[r.node.id]?.[key]||0;
   const devices=D.calculate(q,base,logistics);errors.push(...devices.errors);

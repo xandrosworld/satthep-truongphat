@@ -1,6 +1,6 @@
 'use strict';
 const C=TP, STORE='truongphat-quotation-v2';
-let db=TPPrice.demoSeed(),page='quote',tab='bom',selected='',catalogGroup='',search='',libraryFilter='all',rateTab='materials',restored=false;
+let db=TPPrice.demoSeed(),page='quote',tab='bom',selected='',catalogGroup='',search='',libraryFilter='all',rateTab='materials',rateSubTab='rates',restored=false;
 try{const saved=JSON.parse(localStorage.getItem(STORE));if(saved?.version===2&&saved.quote?.products&&saved.materials){db=saved;restored=true;}}catch{}
 selected=db.quote.products[0]?.id;
 let result=C.calculate(db),undoState=null,rotation={x:-20,y:-30},modalReturn=null;
