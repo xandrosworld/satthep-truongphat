@@ -5,6 +5,12 @@ async function run(t){const app=createApp();await new Promise(r=>app.server.list
 
 
 const I=require('../input-prices-core.js');
+test('quote-selected expense families survive server save and reload independently of shared tariff',async t=>{
+ const {call}=await run(t),d=P.demoSeed();d.quote.products[0].productGroup='Cơ khí';d.quote.products[1].productGroup='Thang máng cáp';
+ d.quote.expenses=[I.applyExpense({id:'family-quote',scope:'all',allocation:'quantity',quoteProductGroups:['Cơ khí']},{id:'shared',name:'Giá chung',category:'delivery',method:'unit',rate:1000,minimum:0,productGroups:[]})];
+ const saved=await call('quotes','POST',{document:d});A.equal(saved.status,201,JSON.stringify(saved.data));const stored=(await call('quotes/'+saved.data.id)).data.document;
+ A.deepEqual(stored.quote.expenses[0].quoteProductGroups,['Cơ khí']);A.deepEqual(stored.quote.expenses[0].priceSource.productGroups,[]);const r=P.calculate(stored).logistics;A.deepEqual(r.errors,[]);A.deepEqual(r.items[0].detail.map(x=>x.productId),[d.quote.products[0].id]);A.equal(r.items[0].cost,d.quote.products[0].qty*1000);
+});
 test('product-family scope and labor breakdown survive catalog API reload and restrict quoted expense',async t=>{
  const {call}=await run(t),G=require('../group-pricing-core.js'),d=P.demoSeed();d.quote.products[0].productGroup='Cơ khí';d.quote.products[1].productGroup='Thang máng cáp';
  const r={id:'family-api',name:'Phí cơ khí',category:'delivery',method:'unit',rate:1000,minimum:0,productGroups:['Cơ khí']};I.save(d,'expenseRates',r);

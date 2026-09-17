@@ -1,0 +1,39 @@
+'use strict';
+const fs=require('fs'),path=require('path'),crypto=require('crypto'),{pathToFileURL}=require('url'),{chromium,expect}=require('@playwright/test');
+(async()=>{
+ const live=process.argv.includes('--live'),dir=path.resolve('artifacts/customer-review/quote-cost-families/'+(live?'live':'local'));fs.mkdirSync(dir,{recursive:true});
+ const credentials=live?JSON.parse(fs.readFileSync('artifacts/railway-team/private/credentials.json','utf8').replace(/^\uFEFF/,'')):null,url=credentials?.url||pathToFileURL(path.resolve('dist/index.html')).href;
+ const hash=s=>crypto.createHash('sha256').update(s.replace(/\r\n/g,'\n').trim()).digest('hex');if(live)expect(hash(await fetch(url).then(r=>r.text()))).toBe(hash(fs.readFileSync('dist/index.html','utf8')));
+ const browser=await chromium.launch({channel:'msedge',headless:true}),p=await browser.newPage({viewport:{width:1680,height:1060}}),errors=[],writes=[],checks=[],shots=[];p.on('pageerror',e=>errors.push(e.message));p.setDefaultTimeout(12000);
+ if(live)await p.route('**/api/**',route=>{const r=route.request();if(['GET','HEAD'].includes(r.method())||new URL(r.url()).pathname==='/api/login')return route.continue();writes.push(r.method()+' '+new URL(r.url()).pathname);return route.abort();});
+ const shot=async(name,selector)=>{await p.locator(selector).scrollIntoViewIfNeeded();await p.screenshot({path:path.join(dir,name+'.png')});shots.push(name);};
+ try{
+  await p.goto(url);let before;if(live){await p.waitForFunction(()=>typeof Team!=='undefined'&&Team.available);await p.evaluate(async c=>{teamSession(await teamApi('login','POST',c));render();},credentials);before=await p.evaluate(async()=>({catalog:await teamApi('catalog'),quotes:await teamApi('quotes')}));}
+  // Isolated synthetic quotation in this browser only; production API writes are blocked.
+  await p.evaluate(()=>{Team.loaded=false;db=TPPrice.demoSeed();db.quote.id='QA-NHOM-CHI-PHI';db.quote.customer='Dữ liệu kiểm thử nhóm — không phát hành';db.quote.remnantMode='all';db.quote.expenses=[];db.quote.deviceInstallations=[];
+   const families=['Cơ khí','Thang máng cáp'];db.quote.products.forEach((p,i)=>{p.productGroup=families[i];p.name='QA '+families[i];});
+   const extra=C.cloneNode(db.quote.products[0]);extra.name='QA Nhóm mở rộng';extra.productGroup='Nhóm mở rộng';db.quote.products.push(extra);
+   page='quote';tab='prices';Intake.priceTab='logistics';render();});
+  const initial=await p.evaluate(()=>JSON.stringify(db.quote));await p.locator('[data-qc-family="Nhóm mở rộng"]').click();await expect(p.locator('[data-ql-product]')).toHaveCount(1);expect(await p.evaluate(()=>JSON.stringify(db.quote))).toBe(initial);
+  await p.locator('[data-qc-family="Cơ khí"]').click();await expect(p.locator('[data-ql-product]')).toHaveCount(1);
+  await p.locator('[data-work=expense]').first().click();await expect(p.locator('[name=quote-family-mode]')).toHaveValue('selected');await expect(p.locator('[name=quoteFamilies][value="Cơ khí"]')).toBeChecked();
+  await p.locator('[name=name]').fill('QA Giao hàng cơ khí');await p.locator('[name=category]').selectOption('delivery');await p.locator('[name=method]').selectOption('unit');await p.locator('[name=rate]').fill('1000');await p.locator('[name=allocation]').selectOption('quantity');
+  await shot('01-khoan-chi-chon-nhom','[data-qc-expense-scope]');await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();
+  const fee=await p.evaluate(()=>{const e=db.quote.expenses.at(-1),r=result.logistics.items.find(x=>x.id===e.id);return {id:e.id,families:e.quoteProductGroups,basis:r.basis,cost:r.cost,quantity:db.quote.products[0].qty,detail:r.detail};});expect(fee.families).toEqual(['Cơ khí']);expect(fee.cost).toBe(fee.quantity*1000);expect(fee.detail).toHaveLength(1);
+  await p.locator('[data-qc-family="Thang máng cáp"]').click();await expect(p.locator('[data-qc-expense="'+fee.id+'"]').first()).toHaveCount(0);
+  await p.locator('[data-qc-family="Cơ khí"]').click();await expect(p.locator('[data-qc-expense="'+fee.id+'"]').first()).toContainText('Cơ khí');await shot('02-van-chuyen-theo-nhom','[data-quote-cost-families]');
+  await p.locator('[data-qc-expense="'+fee.id+'"] [data-work=expense]').click();await expect(p.locator('[name=quoteFamilies][value="Cơ khí"]')).toBeChecked();await p.evaluate(()=>closeDialog());
+  checks.push('Khoản giao hàng lưu nhóm Cơ khí, tính đúng lượng riêng, không phân bổ sang TMC; mở lại giữ nguyên lựa chọn.');
+  await p.locator('[data-intake=price-tab][data-id=devices]').click();await expect(p.locator('[data-qc-family="Cơ khí"]')).toHaveAttribute('aria-pressed','true');const allIds=await p.evaluate(()=>TPDevice.objects(db.quote).map(n=>n.id));expect(allIds.length).toBeGreaterThan(0);
+  const shown=await p.locator('[data-device-row]').count();expect(shown).toBeGreaterThan(0);expect(shown).toBeLessThan(allIds.length);await shot('03-thiet-bi-theo-nhom','[data-quote-cost-families]');
+  await p.locator('[data-device=add]').first().click();await expect(p.locator('[data-device-family]')).toContainText('Cơ khí');await shot('04-cong-lap-ke-thua-nhom','[data-device-family]');await p.evaluate(()=>closeDialog());
+  await p.locator('[data-qc-family="Nhóm mở rộng"]').click();expect(await p.locator('[data-device-row]').count()).toBe(shown);expect(await p.evaluate(()=>[...document.querySelectorAll('[data-device-row]')].every(el=>C.nodePath(db.quote.products,el.dataset.deviceRow)[0].productGroup==='Nhóm mở rộng'))).toBe(true);
+  checks.push('Thiết bị và công lắp lọc theo nhóm của sản phẩm; nhóm mới tự xuất hiện; chuyển nhóm không sửa báo giá.');
+  // Validate browser reload without persisting any synthetic document to the production server.
+  const document=await p.evaluate(()=>JSON.stringify(db));await p.reload();await p.evaluate(s=>{Team.loaded=false;db=JSON.parse(s);page='quote';tab='prices';Intake.priceTab='logistics';render();},document);await p.locator('[data-qc-expense="'+fee.id+'"] [data-work=expense]').click();await expect(p.locator('[name=quoteFamilies][value="Cơ khí"]')).toBeChecked();await p.evaluate(()=>closeDialog());
+  checks.push('Sau tải lại dữ liệu báo giá, phạm vi nhóm và thành tiền được giữ nguyên. Kiểm thử API lưu/đọc được chạy riêng trên máy chủ cục bộ.');
+  if(live)expect(await p.evaluate(async()=>({catalog:await teamApi('catalog'),quotes:await teamApi('quotes')}))).toEqual(before);
+  expect(errors).toEqual([]);expect(writes).toEqual([]);fs.writeFileSync(path.join(dir,'results.json'),JSON.stringify({passed:true,url,at:new Date().toISOString(),checks,errors,businessWrites:0,fixture:'Synthetic isolated browser document'},null,2));
+  fs.writeFileSync(path.join(dir,'index.html'),'<!doctype html><meta charset="utf-8"><title>Nhóm áp dụng chi phí báo giá</title><style>body{font:17px system-ui;max-width:1500px;margin:32px auto}img{max-width:100%;border:1px solid #ddd}li{margin:12px}</style><h1>Nhóm áp dụng — thiết bị, công lắp và vận chuyển</h1><p>'+url+'</p><p>Ảnh từ bản đang chạy, dùng báo giá kiểm thử trong trình duyệt. Không ghi dữ liệu kiểm thử vào máy chủ thật.</p><ul>'+checks.map(c=>'<li>'+c+'</li>').join('')+'</ul>'+shots.map(n=>'<h2>'+n+'</h2><img src="'+n+'.png">').join(''));console.log('PASS '+(live?'Railway':'local')+' quote cost families');
+ }catch(e){await p.screenshot({path:path.join(dir,'failure.png'),fullPage:true}).catch(()=>{});console.error(errors);throw e;}finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});
