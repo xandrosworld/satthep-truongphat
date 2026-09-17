@@ -30,3 +30,5 @@
 .me-table {min-width:1050px}.me-table td {vertical-align:top}.me-formulas {min-width:160px;max-width:600px}.me-formulas table {min-width:550px}.me-formulas[open] {overflow:auto}.me-formulas code {white-space:normal;overflow-wrap:anywhere}
 
 [data-ql-selection] table {min-width:850px}[data-ql-selection] td {vertical-align:top}.ql-assigned {margin-bottom:8px}[data-quote-price-selector] {scroll-margin-top:20px}
+.tl-method-tabs{display:flex;gap:8px;overflow-x:auto;white-space:nowrap;padding:4px 0 8px;margin-top:12px}
+.tl-method-tabs .button{flex:0 0 auto}

@@ -14,4 +14,10 @@ Bổ sung ngay tại bước 6:
 
 Không thêm công thức bán hàng mới cho lan can/tủ điện. Các bảng dùng bản giá lưu trong báo giá; lấy bảng mới vẫn là thao tác chủ động.
 
+## Bố trí thanh ngang
+
+Các phương án chuyển thành tab ngang: **Tính toán cơ khí / TMC / Theo kg / Đối thủ**, thêm tab công thức nhóm khi có sản phẩm phù hợp. Chỉ nội dung tab đang xem được hiển thị; bỏ các khối phương án mở/đóng xếp dọc. Mặc định mở phương án đang dùng của báo giá, ghi nhớ tab xem trong phiên của báo giá đó. Chuyển tab không sửa dữ liệu hoặc chọn lại giá chào. Hỗ trợ phím trái/phải, Home/End và cuộn ngang khi màn hình hẹp.
+
+Đã kiểm tra trình duyệt: bốn tab, chỉ một phần nội dung, dữ liệu báo giá nguyên vẹn sau chuyển tab, thao tác bàn phím, TMC và công thức nhóm, cùng kiểm tra hồi quy quyền kỹ thuật và công trọn gói. Bằng chứng mới nằm tại `artifacts/customer-review/quote-labor-tabs/live/`.
+
 Kiểm tra: toàn bộ 463 unit/server tests, browser đối chiếu bước 6, browser quyền kỹ thuật và browser công trọn gói. `node tools/verify-quote-labor-methods.cjs --live` kiểm tra bản Railway đúng build, chụp 6 ảnh bằng bộ số liệu QA trong bộ nhớ trình duyệt; chặn ghi API và so sánh danh mục/danh sách báo giá trước sau. Không đưa bộ giá QA vào dữ liệu khách hàng.
