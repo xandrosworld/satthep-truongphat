@@ -8,14 +8,20 @@ function fingerprints(document){const q=Technical.project(document).quote;for(co
  for(const rate of q.ratesSnapshot||[]){if(rate.consumption)delete rate.consumption.id;for(const recipe of rate.consumptions||[])delete recipe.id;}
  return {technical:hash(q),materials:hash(Tax.costSignature(document.quote))};}
 const canTechnical=r=>r.edit&&r.sections.some(s=>['bom','operations'].includes(s)),canMaterials=r=>r.edit&&r.costs&&r.sections.includes('materials');
-const receives=(r,stage)=>stage==='technical'?(canMaterials(r)||r.approve):r.approve;
+const receives=(r,stage)=>stage==='created'?canTechnical(r):stage==='technical'?(canMaterials(r)||r.approve):r.approve;
 function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
  sql.exec(`CREATE TABLE IF NOT EXISTS quote_handoffs(quote_id TEXT PRIMARY KEY REFERENCES quotes(id),document TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS handoff_events(id TEXT PRIMARY KEY,quote_id TEXT NOT NULL REFERENCES quotes(id),stage TEXT NOT NULL,quote_version INTEGER NOT NULL,actor TEXT NOT NULL,at TEXT NOT NULL,note TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),event_id TEXT NOT NULL REFERENCES handoff_events(id),read_at TEXT,UNIQUE(user_id,event_id));`);
  const getState=id=>{const r=sql.prepare('SELECT document FROM quote_handoffs WHERE quote_id=?').get(id);return r?JSON.parse(r.document):{};};
  function state(quote){const saved=getState(quote.id),fp=fingerprints(JSON.parse(quote.document));return {quoteVersion:quote.version,technical:saved.technical?{...saved.technical,current:saved.technical.signature===fp.technical}:null,materials:saved.materials?{...saved.materials,current:saved.technical?.signature===fp.technical&&saved.materials.technicalSignature===fp.technical&&saved.materials.signature===fp.materials}:null};}
- return {async handle({req,route,user,rights,send}){
+ return {created(quoteId,user){
+  const q=getQuote(quoteId),id=randomUUID(),at=new Date().toISOString();
+  const targets=sql.prepare('SELECT * FROM users WHERE active=1').all().filter(u=>receives(permissions(u),'created'));
+  sql.prepare('INSERT INTO handoff_events VALUES(?,?,?,?,?,?,?)').run(id,q.id,'created',q.version,user.id,at,'');
+  for(const target of targets)sql.prepare('INSERT INTO notifications VALUES(?,?,?,NULL)').run(randomUUID(),target.id,id);
+  audit(user,'handoff:created',q.id,'v'+q.version);return targets.length;
+ },async handle({req,route,user,rights,send}){
   if(route==='/api/notifications'&&req.method==='GET'){const rows=sql.prepare('SELECT n.id,n.read_at AS readAt,e.quote_id AS quoteId,e.quote_version AS quoteVersion,e.stage,e.at,e.note,q.code,u.name AS actor FROM notifications n JOIN handoff_events e ON e.id=n.event_id JOIN quotes q ON q.id=e.quote_id JOIN users u ON u.id=e.actor WHERE n.user_id=? ORDER BY e.at DESC,n.rowid DESC').all(user.id).filter(n=>receives(rights,n.stage));send(200,{unread:rows.filter(n=>!n.readAt).length,items:rows.slice(0,200)});return true;}
   const read=route.match(/^\/api\/notifications\/([a-f0-9-]+)\/read$/);if(read&&req.method==='POST'){const n=sql.prepare('SELECT n.id,e.stage FROM notifications n JOIN handoff_events e ON e.id=n.event_id WHERE n.id=? AND n.user_id=?').get(read[1],user.id);if(!n||!receives(rights,n.stage))fail(404,'Không tìm thấy thông báo');sql.prepare('UPDATE notifications SET read_at=COALESCE(read_at,?) WHERE id=?').run(new Date().toISOString(),n.id);send(200,{ok:true});return true;}
   const match=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/handoff(?:\/(technical|materials))?$/);if(!match)return false;
