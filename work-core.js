@@ -48,7 +48,7 @@ function price(rate,op,ctx,tier){
   if(!['factors','catalog','direct','fixed'].includes(method))throw Error('Phương pháp tính công đoạn chưa hợp lệ');
   const raw=['direct','fixed'].includes(method)?op.unitPrice:rate[op.mode];
   let value=number(raw,'Đơn giá '+rate.name);const base=value,factors=[];
-  if(method==='factors'&&(op.mode==='inside'||rate.outsideFactors))for(const f of rate.factors||[]){if(f.enabled===false||op.complexity&&f.param==='complexity')continue;
+  if(rate.factorsEnabled!==false&&method==='factors'&&(op.mode==='inside'||rate.outsideFactors))for(const f of rate.factors||[]){if(f.enabled===false||op.complexity&&f.param==='complexity')continue;
     if(f.productGroups?.length&&!ctx.productGroup)throw Error('Chưa chọn nhóm sản phẩm để tra hệ số '+f.name);
     if(!groupsMatch(f.productGroups,ctx.productGroup))continue;
     const overridden=op.inputs?.[f.param]!=null&&op.inputs[f.param]!=='';const input=overridden?op.inputs[f.param]:ctx[f.param];let b;try{b=factor(f,input,tier);}catch(error){throw Error(f.name+' / '+f.param+': '+error.message);}value*=1+b.value/100;factors.push({id:f.sharedFactorId||f.id,name:f.name,param:f.param,input,source:overridden?'override':'linked',...b});
@@ -77,6 +77,7 @@ function methodFor(op,quote){const id=optionFor(op,quote),rate=quote.ratesSnapsh
 function setMethod(quote,id,method){if(!['factors','catalog','direct','fixed'].includes(method))throw Error('Cách tính chưa hợp lệ');quote.operationMethods??={};quote.operationMethods[id]=method;if(quote.operationPriceOptions)delete quote.operationPriceOptions[id];for(const n of C.flatten(quote.products))for(const op of n.ops||[])if(op.id===id){op.pricingMethod=method;delete op.priceOptionId;}}
 function validateComplexity(x){if(!x||typeof x.label!=='string'||!x.label.trim()||x.label.length>120)throw Error('Mức độ phức tạp cần tên đánh giá');number(x.multiplier,'Hệ số phức tạp',{positive:true});}
 function validatePriceOptions(rate){
+  for(const key of ['factorsEnabled','consumptionsEnabled'])if(rate[key]!==undefined&&typeof rate[key]!=='boolean')throw Error('Trạng thái áp dụng nguyên công không hợp lệ');
   validateGroups(rate.productGroups);for(const f of rate.factors||[]){validateGroups(f.productGroups);if(f.enabled!==false&&!groupsOverlap(rate.productGroups,f.productGroups))throw Error('Hệ số '+f.name+' không thuộc nhóm của nguyên công '+rate.name);}
   if(rate.priceOptions===undefined)return;
   if(!Array.isArray(rate.priceOptions)||rate.priceOptions.length>40)throw Error('Khai tối đa 40 cách tính đơn giá');const seen=new Set();
@@ -89,7 +90,8 @@ function resolvePriceOption(rate,op){
 }
 function setPriceOption(quote,id,optionId){const rate=quote.ratesSnapshot?.find(r=>r.id===id),option=rate?.priceOptions?.find(x=>x.id===optionId);if(!option||option.enabled===false)throw Error('Chọn cách tính đã khai báo cho nguyên công');validatePriceOptions(rate);setMethod(quote,id,option.method);quote.operationPriceOptions??={};quote.operationPriceOptions[id]=optionId;for(const n of C.flatten(quote.products))for(const op of n.ops||[])if(op.id===id)op.priceOptionId=optionId;}
 function methodErrors(quote){const seen=new Map(),errors=[];for(const n of C.flatten(quote.products))for(const op of n.ops||[]){const method=methodFor(op,quote)+'|'+optionFor(op,quote);if(seen.has(op.id)&&seen.get(op.id)!==method)errors.push('Nguyên công '+op.id+': đang có nhiều cách tính. Chọn một cách tính chung cho nguyên công này trong báo giá.');seen.set(op.id,method);}return [...new Set(errors)];}
-function recipes(rate){return rate.consumptions!==undefined?rate.consumptions:rate.consumption?[rate.consumption]:[];}
+function declaredRecipes(rate){return rate.consumptions!==undefined?rate.consumptions:rate.consumption?[rate.consumption]:[];}
+function recipes(rate){return rate.consumptionsEnabled===false?[]:declaredRecipes(rate);}
 function consume(recipe,n,r,index,opIndex,rateName,workUnit){
   r={...r,weight:r.workWeight??r.weight,area:r.workArea??r.area};
   const m=recipe.spec;if(!m)throw Error('Chưa chọn vật tư hoàn thiện');
@@ -157,6 +159,6 @@ function validateFactor(f,tier){
  return f;
 }
 function saveFactor(db,rateId,f,tier){validateFactor(f,tier);const rate=db.rates.find(r=>r.id===rateId);if(!rate)throw Error('Chọn nguyên công áp dụng');const rows=rate.factors||[],copy=C.copy(f);if(rows.some(x=>x.id!==f.id&&x.name.trim()===f.name.trim()))throw Error('Tên hệ số đã có trong nguyên công');rate.factors=rows.some(x=>x.id===f.id)?rows.map(x=>x.id===f.id?copy:x):[...rows,copy];return copy;}
-const api={validateGroups,groupsMatch,groupsOverlap,nodeGroup,validateFactor,saveFactor,EXPENSES,METHODS,optionFor,methodFor,setMethod,setPriceOption,resolvePriceOption,validatePriceOptions,validateComplexity,methodErrors,number,context,factor,price,operation,recipes,consume,expenses};
+const api={validateGroups,groupsMatch,groupsOverlap,nodeGroup,validateFactor,saveFactor,EXPENSES,METHODS,optionFor,methodFor,setMethod,setPriceOption,resolvePriceOption,validatePriceOptions,validateComplexity,methodErrors,number,context,factor,price,operation,declaredRecipes,recipes,consume,expenses};
 if(typeof module!=='undefined')module.exports=api;else root.TPWork=api;
 })(typeof window!=='undefined'?window:globalThis);

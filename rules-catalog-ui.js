@@ -3,7 +3,7 @@
 // One catalogue workspace; calculation and saved quotation snapshots stay in their existing engines.
 const RulesCatalog = {kind:'shapes',query:'',factorKind:'customers',shapeGroup:null,expandedShapes:new Set()};
 const RC_FACTOR_KINDS={customers:'Hệ số khách hàng',complexity:'Độ phức tạp',mass:'Hệ số khối lượng',other:'Hệ số khác'};
-const rcKinds = {symbols:'Bảng ký hiệu',operations:'Công đoạn',materialGroups:'Nhóm vật tư',factors:'Hệ số tính toán',productGroups:'Nhóm sản phẩm',substances:'Vật liệu',grades:'Mác vật liệu',characteristics:'Đặc tính',shapes:'Hình dạng & công thức',parameters:'Thông số cấu kiện',stocks:'Khổ chuẩn',units:'Đơn vị tính',customers:'Nhóm khách hàng',complexity:'Độ phức tạp'};
+const rcKinds = {productGroups:'Nhóm sản phẩm',materialGroups:'Nhóm vật tư',substances:'Vật liệu',shapes:'Hình dạng & công thức',operations:'Công đoạn',factors:'Hệ số tính toán',parameters:'Thông số cấu kiện',stocks:'Khổ chuẩn',units:'Đơn vị tính',symbols:'Bảng ký hiệu',grades:'Mác vật liệu',characteristics:'Đặc tính',customers:'Nhóm khách hàng',complexity:'Độ phức tạp'};
 const rcButton = (label,action,attrs='') => `<button type="button" class="button small" data-rc="${action}" ${attrs}>${label}</button>`;
 const rcMatch = value => B1.fold(value).includes(B1.fold(RulesCatalog.query));
 const rcEditButton = (label,kind,name='',parent='') => rcButton(label,'edit',`data-kind="${kind}" data-name="${esc(name)}" data-parent="${esc(parent)}"`);
