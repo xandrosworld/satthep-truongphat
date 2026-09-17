@@ -4,8 +4,8 @@ const ROLES=['admin','estimator','approver','sales','technical'];
 const SA=require('../section-access.js');
 function permissions(user){
  if(typeof user==='string')user={role:user};
- if(user?.role==='technical'){const sections=SA.sections(user).filter(k=>['customer','bom','operations'].includes(k));return {technical:true,edit:sections.length>0,approve:false,users:false,catalog:false,costs:false,sections,factors:false,belowCost:false,manage:false,commercial:false};}
- const role=user.role,sections=SA.sections(user),costs=role==='admin'||(user.can_view_costs==null?role!=='sales':!!user.can_view_costs),edit=costs&&['admin','estimator'].includes(role)&&sections.some(k=>!SA.catalogKeys.includes(k)),approve=costs&&(user.can_approve==null?['admin','approver'].includes(role):!!user.can_approve);
+ if(user?.role==='technical'&&!(user.technical_delegated&&user.can_view_costs)){const sections=SA.sections(user).filter(k=>['customer','bom','operations'].includes(k));return {technical:true,edit:sections.length>0,approve:false,users:false,catalog:false,costs:false,sections,factors:false,belowCost:false,manage:false,commercial:false};}
+ const role=user.role,sections=SA.sections(user),costs=role==='admin'||(user.can_view_costs==null?role!=='sales':!!user.can_view_costs),edit=costs&&['admin','estimator','technical'].includes(role)&&sections.some(k=>!SA.catalogKeys.includes(k)),approve=costs&&(user.can_approve==null?['admin','approver'].includes(role):!!user.can_approve);
  return {edit,approve,users:role==='admin',catalog:costs&&sections.some(k=>SA.catalogKeys.includes(k)),costs,sections,factors:costs&&sections.includes('factors')&&(user.can_factors==null?['admin','estimator'].includes(role):!!user.can_factors),belowCost:approve&&(user.can_below_cost==null?role==='admin':!!user.can_below_cost),manage:edit&&sections.includes('manage'),commercial:sections.includes('commercial')&&(costs||role==='sales')};
 }
 

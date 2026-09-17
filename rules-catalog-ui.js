@@ -3,7 +3,7 @@
 // One catalogue workspace; calculation and saved quotation snapshots stay in their existing engines.
 const RulesCatalog = {kind:'shapes',query:'',factorKind:'customers',shapeGroup:null,expandedShapes:new Set()};
 const RC_FACTOR_KINDS={customers:'Hệ số khách hàng',complexity:'Độ phức tạp',mass:'Hệ số khối lượng',other:'Hệ số khác'};
-const rcKinds = {operations:'Công đoạn',materialGroups:'Nhóm vật tư',factors:'Hệ số tính toán',productGroups:'Nhóm sản phẩm',substances:'Vật liệu',grades:'Mác vật liệu',characteristics:'Đặc tính',shapes:'Hình dạng & công thức',parameters:'Thông số cấu kiện',stocks:'Khổ chuẩn',units:'Đơn vị tính',customers:'Nhóm khách hàng',complexity:'Độ phức tạp'};
+const rcKinds = {symbols:'Bảng ký hiệu',operations:'Công đoạn',materialGroups:'Nhóm vật tư',factors:'Hệ số tính toán',productGroups:'Nhóm sản phẩm',substances:'Vật liệu',grades:'Mác vật liệu',characteristics:'Đặc tính',shapes:'Hình dạng & công thức',parameters:'Thông số cấu kiện',stocks:'Khổ chuẩn',units:'Đơn vị tính',customers:'Nhóm khách hàng',complexity:'Độ phức tạp'};
 const rcButton = (label,action,attrs='') => `<button type="button" class="button small" data-rc="${action}" ${attrs}>${label}</button>`;
 const rcMatch = value => B1.fold(value).includes(B1.fold(RulesCatalog.query));
 const rcEditButton = (label,kind,name='',parent='') => rcButton(label,'edit',`data-kind="${kind}" data-name="${esc(name)}" data-parent="${esc(parent)}"`);
@@ -62,7 +62,7 @@ function rcWorkspace(){
   const kind=RulesCatalog.kind;
   return `<div class="rc-workspace">${heading('Danh mục quy ước','Vật liệu, mác, đặc tính và công thức dùng khi lập báo giá.',clButton('Excel danh mục','catalog-export'))}<nav class="rc-tabs" aria-label="Các nhóm quy ước">${Object.entries(rcKinds).filter(([k])=>!['grades','characteristics','customers','complexity'].includes(k)).map(([k,label])=>`<button type="button" data-rc-tab="${k}" aria-current="${(kind===k||(k==='substances'&&['grades','characteristics'].includes(kind)))?'page':'false'}">${label}</button>`).join('')}</nav><label class="rc-search"><span>Tìm trong ${esc(rcKinds[kind].toLocaleLowerCase('vi'))}</span><input id="rc-search" type="search" value="${esc(RulesCatalog.query)}" placeholder="Nhập tên hoặc mã"></label><div id="rc-results">${rcContent(kind)}</div><div class="actions">${clButton('Quản lý / kiểm tra nơi dùng','catalog','data-kind="rules"')}</div></div>`;
 }
-function rcContent(kind){return kind==='operations'?qocOperationCatalog():kind==='factors'?rcFactors():kind==='shapes'?rcShapes():kind==='stocks'?rcStocks():rcCatalog(kind);}
+function rcContent(kind){return kind==='symbols'?rcSymbols():kind==='operations'?qocOperationCatalog():kind==='factors'?rcFactors():kind==='shapes'?rcShapes():kind==='stocks'?rcStocks():rcCatalog(kind);}
 function rcSelect(kind,query=''){if(['customers','complexity'].includes(kind)){RulesCatalog.factorKind=kind;kind='factors';}RulesCatalog.kind=kind;RulesCatalog.query=query;closeDialog();page='rules';render();}
 function installRulesCatalogUI(){
   renderRules=rcWorkspace;
@@ -133,3 +133,5 @@ function rcFactorCheck(rateId,id){const rate=rcFactorTargets().find(r=>r.id===ra
 function rcFactorRemove(rateId,id){const rate=rcFactorTargets().find(r=>r.id===rateId),f=rate?.factors?.find(x=>x.id===id);if(!f)return;openDialog('Xóa hệ số khỏi danh mục',`<p>${esc(f.name)} · ${esc(rate.name)}. Báo giá đã lưu giữ bảng hệ số đang sử dụng.</p>`,'Xóa hệ số',()=>{dfCatalogWrite(()=>{if(rate.expenseRate)TPInputPrices.save(db,'expenseRates',{...rate.expenseRate,factors:rate.factors.filter(x=>x.id!==id)});else rate.factors=rate.factors.filter(x=>x.id!==id);});rcSelect('factors');});}
 
 function rcReadFactor(data){for(const input of document.querySelectorAll('#pa-factor-list .pa-tier-value,#pa-factor-list .work-category-row input'))if(!input.value.trim())throw Error('Điền đủ tên nhóm và giá trị hệ số');return workReadExpenseFactors(data)[0];}
+
+function rcSymbols(){return `<section class="panel panel-body" data-rule-symbols><h3>Ký hiệu cấu thành trong báo giá</h3><table><thead><tr><th>Ký hiệu</th><th>Ý nghĩa</th></tr></thead><tbody>${Object.values(b1Types).filter(([code,label])=>rcMatch(code)||rcMatch(label)).map(([code,label])=>`<tr><td><strong>${esc(code)}</strong></td><td>${esc(label)}</td></tr>`).join('')||'<tr><td colspan="2">Không có ký hiệu phù hợp.</td></tr>'}</tbody></table><p>Định mức là số lượng trong một cấp cha. Tổng toàn đơn đã nhân số lượng sản phẩm và các cấp cấu kiện phía trên.</p><p>Ký hiệu kích thước và đơn vị được khai tại mục Thông số cấu kiện.</p></section>`;}

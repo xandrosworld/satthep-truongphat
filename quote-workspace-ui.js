@@ -12,24 +12,10 @@ function quoteAuxiliaryPercent(id){
   saveAndClose(()=>{for(const x of values)C.findNode(db.quote.products,x.id).auxiliaryPercent=x.percent;},'Đã lưu tỷ lệ vật tư phụ');
  });
 }
-function quoteAuxiliaryColumns(){
- if(page!=='quote'||tab!=='bom')return;
- for(const table of document.querySelectorAll('.quick-table')){
-  const head=table.querySelector('thead tr');if(!head)continue;
-  if(!head.querySelector('[data-auxiliary-heading]')){const cell=document.createElement('th');cell.dataset.auxiliaryHeading='';cell.textContent='Vật tư phụ (%)';cell.title='Dự tính thêm trên giá phôi của dòng';head.insertBefore(cell,head.lastElementChild);}
-  for(const row of table.querySelectorAll('tbody tr[data-row-id]')){
-   const n=C.findNode(db.quote.products,row.dataset.rowId);if(!n)continue;
-   let cell=row.querySelector('[data-auxiliary-cell]');if(!cell){cell=document.createElement('td');cell.dataset.auxiliaryCell=n.id;row.insertBefore(cell,row.lastElementChild);}
-   cell.innerHTML=n.kind==='material'&&n.spec?.shape!=='piece'&&!n.draftMaterial?btn(num(n.auxiliaryPercent??0)+' %','auxiliary-percent',`data-id="${esc(n.id)}"`,'small'):'—';
-  }
- }
-}
 function installQuoteWorkspaceUI(){
  const intro=paIntro;paIntro=()=>technicalStage()?quoteTechnicalOverview():intro();
- b1Legend=()=>`<div class="quote-symbols-action">${btn('Bảng ký hiệu','quote-symbols','','small')}</div>`;
- actions['quote-symbols']=()=>openDialog('Bảng ký hiệu cấu thành',`<table><thead><tr><th>Ký hiệu</th><th>Ý nghĩa</th></tr></thead><tbody>${Object.values(b1Types).map(([code,label])=>`<tr><td><strong>${esc(code)}</strong></td><td>${esc(label)}</td></tr>`).join('')}</tbody></table><p>Định mức là số lượng trong một cấp cha. Tổng toàn đơn đã nhân số lượng sản phẩm và các cấp cấu kiện phía trên.</p>`);
+ b1Legend=()=>'';
+ actions['quote-symbols']=()=>rcSelect('symbols');
  actions['auxiliary-percent']=el=>quoteAuxiliaryPercent(el.dataset.id);
- const bom=renderBOM;renderBOM=()=>`<div class="quote-auxiliary-action">${btn('Vật tư phụ (%)','auxiliary-percent','','small')}</div>`+bom();
- const oldRender=render;render=()=>{oldRender();quoteAuxiliaryColumns();};
- const quick=refreshQuickUI;refreshQuickUI=()=>{quick();const summary=document.querySelector('.quote-technical-overview');if(summary)summary.outerHTML=quoteTechnicalOverview();quoteAuxiliaryColumns();};
+ const quick=refreshQuickUI;refreshQuickUI=()=>{quick();const summary=document.querySelector('.quote-technical-overview');if(summary)summary.outerHTML=quoteTechnicalOverview();};
 }

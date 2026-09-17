@@ -1,0 +1,22 @@
+const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js');
+test('admin delegates technical catalogue/price sections explicitly, protects factors, and revokes active sessions',async t=>{
+ const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));const base='http://127.0.0.1:'+app.server.address().port;
+ const call=async(route,method='GET',body,session)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-CSRF-Token':session.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
+ const password='Delegation-test-only-42!',admin=await call('setup','POST',{username:'admin',name:'Admin',password});const made=await call('users','POST',{username:'tech',name:'Tech',password,role:'technical',canViewCosts:true,canApprove:true,sections:['bom','catalogMaterials']},admin);A.equal(made.status,201);
+ let tech=await call('login','POST',{username:'tech',password});A.equal(tech.data.permissions.costs,false,'legacy flags must not silently elevate existing technical accounts');
+ const doc=P.demoSeed(),saved=await call('quotes','POST',{document:doc},admin);A.equal(saved.status,201);
+ const grant={role:'technical',technicalDelegation:true,canViewCosts:true,canApprove:false,canEditFactors:false,canApproveBelowCost:false,sections:['bom','catalogMaterials','catalogRules','catalogOperations','catalogLibrary']};
+ A.equal((await call('users/'+made.data.id+'/access','POST',grant,admin)).status,200);A.equal((await call('me','GET',undefined,tech)).status,401);
+ tech=await call('login','POST',{username:'tech',password});A.equal(tech.data.permissions.costs,true);A.equal(tech.data.permissions.catalog,true);A.equal(tech.data.permissions.factors,false);A.equal(tech.data.permissions.approve,false);A.equal(tech.data.permissions.users,false);
+ let master=(await call('catalog','GET',undefined,tech)).data;const put=async catalog=>call('catalog','PUT',{expectedVersion:master.version,catalog},tech),copy=()=>JSON.parse(JSON.stringify(master.catalog));
+ let c=copy();c.materials[0].name+=' QA';A.equal((await put(c)).status,200);master=(await call('catalog','GET',undefined,tech)).data;
+ c=copy();c.rates.find(r=>r.factors?.length).factors[0].tiers[0].percent++;A.equal((await put(c)).status,403,'catalogue operation permission must not grant factor editing');
+ c=copy();c.rates[0].inside++;A.equal((await put(c)).status,200,'base operation prices can be changed independently of factors');
+ const view=(await call('quotes/'+saved.data.id,'GET',undefined,tech)).data;view.document.quote.pricing.profit++;A.equal((await call('quotes/'+saved.data.id,'PUT',{expectedVersion:view.version,document:view.document},tech)).status,403);
+ A.equal((await call('users','GET',undefined,tech)).status,403);
+ A.equal((await call('users/'+made.data.id+'/access','POST',{...grant,sections:['catalogRules']},admin)).status,200);A.equal((await call('catalog','GET',undefined,tech)).status,401);tech=await call('login','POST',{username:'tech',password});master=(await call('catalog','GET',undefined,tech)).data;c=copy();c.materials[0].name+=' unauthorized';A.equal((await put(c)).status,403,'removing one section locks it even when internal viewing remains allowed');
+ A.equal((await call('users/'+made.data.id+'/access','POST',{...grant,canViewCosts:false},admin)).status,400,'cannot silently save unusable commercial sections');
+ A.equal((await call('users/'+made.data.id+'/access','POST',{...grant,canViewCosts:false,sections:['bom','operations']},admin)).status,200);A.equal((await call('catalog','GET',undefined,tech)).status,401);
+ tech=await call('login','POST',{username:'tech',password});A.equal(tech.data.permissions.costs,false);A.equal((await call('catalog','GET',undefined,tech)).status,403);const limited=(await call('quotes/'+saved.data.id,'GET',undefined,tech)).data;A.equal(limited.document.materials[0].price,0);
+ const role=await call('roles','POST',{...grant,name:'Kỹ thuật bổ sung'},admin);A.equal(role.status,201);A.ok(role.data.sections.includes('catalogMaterials'));A.equal(role.data.canEditFactors,false);
+});
