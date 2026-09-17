@@ -19,3 +19,10 @@
 - API: lưu → trình → duyệt với hai mức thuế; đổi thuế phải xác nhận lại; phiên bản đã duyệt giữ nguyên.
 - Trình duyệt: bước 6, hộp thuế, phân tích một/nhiều phương án, bản in, CSV, Excel, tải lại và màn hình hẹp.
 - Kiểm tra Railway bằng `node tools/verify-pricing-review-live.cjs`: đối chiếu build, health, đăng nhập và đọc tám bước. Chặn các yêu cầu ghi dữ liệu báo giá trong phiên kiểm tra.
+
+## Kết quả ngày 17/09/2026
+
+- 433/433 tests tính toán và API đạt.
+- `pricing-review-browser.cjs`, `tax-browser.cjs`, `technical-pricing-browser.cjs` đạt.
+- Railway triển khai mã ứng dụng `66eba1d` thành công; build thực tế khớp build cục bộ, health và đăng nhập đạt. Kiểm tra tám bước không phát sinh yêu cầu ghi báo giá.
+- Log và ảnh kiểm tra nằm trong `artifacts/customer-review/pricing-review-2026-09-17/` (không đưa dữ liệu riêng vào Git).
