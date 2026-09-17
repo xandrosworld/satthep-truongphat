@@ -97,3 +97,4 @@ th{color:var(--muted)}
 .pa-tax-detail summary{cursor:pointer;font-weight:600;color:#294964}
 .b1-tree-panel[data-b1-tree=prices]>.help-text{padding:0 20px}
 @media(max-width:600px){.pa-comparison.pa-single th:first-child{width:45%}.pa-comparison.pa-single td,.pa-comparison.pa-single th{padding:9px 8px;font-size:12px}}
+.crm-profile{margin-top:20px}.crm-profile .b1-record{margin:16px 0}.crm-profile h3{margin-top:24px}.crm-text{white-space:pre-wrap;overflow-wrap:anywhere}.crm-timeline{max-height:380px;overflow:auto;border-left:2px solid #cad7e2;padding-left:18px}.crm-timeline article{padding:12px 0;border-bottom:1px solid #e0e7ef}.crm-timeline p{margin:6px 0}.crm-filters{margin:14px 0}.crm-profile .actions{flex-wrap:wrap}.crm-profile table{min-width:640px}

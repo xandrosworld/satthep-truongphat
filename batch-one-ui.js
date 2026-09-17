@@ -17,12 +17,12 @@ function b1QuoteDialog(copyCurrent=false,source=null,master=null){
     const files=[...$('#dialog [name=sourceFiles]').files];B1.validateFiles(files,request.files.length);
     const q=copyCurrent?C.copy(base):{...C.copy(base),products:[],ratesSnapshot:C.copy(master?.catalog.rates||db.rates),pricing:master?C.copy(master.catalog.pricingDefaults):TPInputPrices.defaults(db),expenses:[],remnantSelections:{},remnantMode:'all',notes:''};
     if(!copyCurrent)for(const key of ['deviceInstallations','deviceHistory','deviceWorkHistory','legacySource','approvedOffer','approvedBaseline','remnantRules','freightOut','validUntil','offerTerms','offerTermsHistory','costPriceSources','costPriceHistory','inputPriceAudit'])delete q[key];
-    Object.assign(q,{id,date:f.get('date'),customer:info.name,customerInfo:C.copy(info),project:String(f.get('project')).trim(),request,status:'draft',commercial:{status:'draft',version:0,events:[]},workspaceKey:C.uid()});for(const key of ['approvedOffer','approvedBaseline','revisionNotes'])delete q[key];if(q.pricing)q.pricing.overrides={};TPIntake.validateRequest(q);
+    Object.assign(q,{id,date:f.get('date'),customer:info.name,customerInfo:TPIntake.customerSnapshot(info),opportunityId:String(f.get('opportunityId')||''),project:String(f.get('project')).trim(),request,status:'draft',commercial:{status:'draft',version:0,events:[]},workspaceKey:C.uid()});for(const key of ['approvedOffer','approvedBaseline','revisionNotes'])delete q[key];if(q.pricing)q.pricing.overrides={};TPIntake.validateRequest(q);
     // Validate before uploading. Closing a pending dialog must not switch the active quote.
     const form=$('#dialog-form'),active=db.quote,guard=()=>{if(!form.isConnected||!$('#dialog').open||db.quote!==active||Quotes.conflict)throw Error('Đã rời phiếu tạo; chưa tạo báo giá.');};
     request.files.push(...await b1StoreFiles(files,remote));guard();
     if(remote){if(!chosen){await teamApi('intake/customers','POST',{customer:info,expectedVersion:0});guard();}const document=TPPrice.demoSeed();Object.assign(document,master.catalog);document.quote=q;const created=await teamApi('quotes','POST',{document,autoCode:id===suggestedCode});await teamLoad(created.id);tab='intake';render();}
-    else {if(!chosen){db.customers??=[];db.customers.push(C.copy(info));}quoteSwitch(q);tab='intake';render();}
+    else {if(!chosen){db.customers??=[];db.customers.push(TPCrm.saveProfile(null,info,{name:'Local'}));}quoteSwitch(q);tab='intake';render();}
   });
   $('#dialog').classList.add('wide-dialog','b1-intake-dialog');
   $('#dialog [name=date]').closest('.form-grid').insertAdjacentHTML('afterend',`<p class="help-text">Mã tự tạo theo BG-YYYYMMDD-số thứ tự trong ngày. ${remote?'Máy chủ cấp số chính thức khi lưu để tránh trùng giữa nhiều người.':'Số tiếp theo dựa trên các báo giá đã lưu trên máy.'} Đổi ngày sẽ cập nhật mã tự tạo; có thể nhập mã riêng nếu cần.</p>`);
