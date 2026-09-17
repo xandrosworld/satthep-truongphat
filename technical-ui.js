@@ -59,13 +59,14 @@ function installTechnicalUI(){
  const oldSession=teamSession;teamSession=value=>{if(value.permissions?.technical){db=TPTechnical.project(TPPrice.demoSeed());result=C.calculate(db);Team.local=null;Team.loaded=false;Team.link=null;Team.dirty=false;UX.undo=[];UX.redo=[];}oldSession(value);};
  const oldRender=render;render=()=>{
   if(technicalOnly()){
+   $('#save-status').textContent='Máy chủ · dữ liệu kỹ thuật';
    if(!Team.loaded){$('#content').innerHTML=heading('Không gian kỹ thuật','Mở báo giá hoặc danh mục được cấp quyền. Giá và hệ số được quản lý riêng.',teamButton('Danh sách báo giá','list','','primary')+(Team.permissions.catalog?teamButton('Làm việc với danh mục','catalog-workspace'):'')+teamButton('Đổi mật khẩu','own-password')+teamButton('Đăng xuất','logout'));return;}
    if(!technicalCatalogPage())page='quote';if(!technicalTabs.includes(tab))tab='operations';
    if(page==='rules'&&['factors','operations','customers','complexity'].includes(RulesCatalog.kind))RulesCatalog.kind='productGroups';
   }
   oldRender();if(technicalStage())technicalClean($('#content'));
   document.querySelectorAll('#sidebar [data-page]').forEach(el=>el.hidden=technicalOnly()&&el.dataset.page!=='quote'&&!Team.permissions.sections.includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[el.dataset.page]));
-  if(technicalCatalogPage()){technicalCatalogClean($('#content'));$('#content').insertAdjacentHTML('afterbegin',`<div class="notice" data-technical-catalog>Danh mục kỹ thuật · không xem hoặc sửa giá, hệ số. ${teamButton('Lấy danh mục máy chủ','catalog-workspace')}${accessButton('Lưu / phát hành danh mục','catalog')}</div>`);}
+  if(technicalCatalogPage()){technicalCatalogClean($('#content'));$('#save-status').textContent='Danh mục kỹ thuật trên máy chủ';if(!Team.link)$('#content').querySelectorAll('[data-team=reopen]').forEach(x=>x.remove());$('#content').insertAdjacentHTML('afterbegin',`<div class="notice" data-technical-catalog>Danh mục kỹ thuật · không xem hoặc sửa giá, hệ số. ${teamButton('Lấy danh mục máy chủ','catalog-workspace')}${accessButton('Lưu / phát hành danh mục','catalog')}</div>`);}
   if(technicalOnly()){$('#content').querySelectorAll('[data-tab="prices"],[data-tab="pricing"],[data-tab="preview"],[data-action="history"],[data-pa="sample"],[data-team="submit"],[data-team="leave"],[data-batch-one="new-shared"]').forEach(x=>x.remove());const ribbon=$('.quote-ribbon > span');if(ribbon)ribbon.textContent='Ngày '+db.quote.date;}
  };
  const oldQuick=refreshQuickUI;refreshQuickUI=()=>{oldQuick();if(technicalStage())technicalClean($('#content'));};
