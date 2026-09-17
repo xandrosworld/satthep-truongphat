@@ -29,3 +29,5 @@ Khách xác nhận: gom về một màn Nguyên công & hệ số, bỏ hai tab 
 - `tools/verify-package-operations-live.cjs`: xác minh mã đang chạy giống bản build; chụp giao diện Railway và chạy gói mẫu trong bộ nhớ trình duyệt riêng. Chặn mọi API ghi nghiệp vụ, đối chiếu danh mục/danh sách báo giá trước và sau. Phần lưu lâu dài qua API được kiểm tra ở máy chủ thử nghiệm, không đưa mẫu QA vào danh mục khách.
 
 Ảnh và kết quả kiểm tra thật nằm tại `artifacts/customer-review/package-operations/live/`; kết quả kiểm tra máy chủ thử nghiệm tại `artifacts/customer-review/package-operations/local/`.
+
+Kết quả ngày 17/09/2026: 456/456 kiểm tra tự động đạt; ba luồng trình duyệt nêu trên đạt. Bản ứng dụng `ef6d0df` đã triển khai thành công trên Railway và khớp mã băm bản build. Sáu ảnh đã chụp; kiểm tra trên bản triển khai xác nhận gói được áp dụng, dữ liệu kỹ thuật và giá phương án chi tiết giữ nguyên, không có lỗi tính toán/trình duyệt. Danh mục và danh sách báo giá máy chủ trước/sau giống nhau.
