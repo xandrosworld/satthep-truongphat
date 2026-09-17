@@ -107,7 +107,7 @@ function addComponentGuided(parentId){
     if(f.get('componentTemplate')&&!template)throw Error('Mẫu không còn tồn tại');if(!Number.isInteger(qty)||qty<1||qty>5000)throw Error('Số cấu kiện phải từ 1 đến 5.000');
     const n=template?C.cloneNode(template):{id:C.uid(),kind:'component',children:[],ops:[]};delete n.templateKind;
     n.name=String(f.get('name')||'').trim()||template?.name||'Cấu kiện mới';n.qty=qty;const next=f.has('addMaterials');
-    saveAndClose(()=>{parent.children??=[];parent.children.push(n);selected=n.id;UX.query='';UX.onlyErrors=false;UX.folded.delete(parent.id);},'Đã tạo cấu kiện '+n.name);
+    saveAndClose(()=>{ensureTemplateRates(n);parent.children??=[];parent.children.push(n);selected=n.id;UX.query='';UX.onlyErrors=false;UX.folded.delete(parent.id);},'Đã tạo cấu kiện '+n.name);
     if(next)batchMaterialPicker(n.id);else focusQuickNode(n.id);
   });
   const form=$('#dialog-form');form.elements.componentTemplate.onchange=()=>{const t=templates.find(t=>t.id===form.elements.componentTemplate.value);form.elements.name.value=t?.name||'';$('#component-template-preview').textContent=t?(t.children?.length||0)+' thành phần · Sao chép cấu thành và công đoạn từ mẫu. Có thể sửa riêng trong báo giá.':'Tạo dòng cấu kiện trước, bổ sung tên và vật tư sau.';};
