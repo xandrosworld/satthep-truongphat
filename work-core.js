@@ -122,7 +122,9 @@ function expenses(entries,base,generated){
       else if(e.scope==='materials'){rows=eligible.filter(r=>(e.materialIds||[]).includes(r.materialId));if((e.materialIds||[]).some(id=>!rows.some(r=>r.materialId===id)))throw Error('Mã vật tư đã không còn trong báo giá');targets=products.filter(p=>rows.some(r=>r.productId===p.node.id));}
       else if(e.scope==='supplier'){if(!String(e.supplier||'').trim())throw Error('Chọn nguồn mua');rows=eligible.filter(r=>r.supplier===e.supplier);targets=products.filter(p=>rows.some(r=>r.productId===p.node.id));}
       else if(e.scope!=='all'&&e.scope!==undefined)throw Error('Phạm vi chi phí chưa hợp lệ');
-      if(!targets.length)throw Error('Phạm vi chi phí không có sản phẩm');
+      const allowed=e.priceSource?.applicableGroupIds??e.allowedGroupIds;
+      if(allowed!==undefined){const G=typeof module!=='undefined'?require('./group-pricing-core.js'):root.TPGroupPrice,q=base.quote||{pricing:{}};if(!Array.isArray(allowed)||new Set(allowed).size!==allowed.length||allowed.some(id=>!G.groups(q).some(g=>g.id===id)))throw Error('Nhóm áp dụng đơn giá không còn hợp lệ; chọn lại đơn giá');if(allowed.length){if(targets.some(p=>!G.resolve(q,p.node).known))throw Error('Phân nhóm sản phẩm trước khi áp đơn giá theo nhóm');targets=targets.filter(p=>allowed.includes(G.resolve(q,p.node).id));rows=rows.filter(r=>targets.some(p=>p.node.id===r.productId));}}
+      if(!targets.length)throw Error('Phạm vi chi phí không có sản phẩm phù hợp nhóm áp dụng đơn giá');
       const sum=key=>rows.reduce((s,r)=>s+r[key],0),net=sum('netKg'),purchase=sum('purchaseKg'),distance=['kg_km','ton_km','km'].includes(e.method)?number(e.distance,'Quãng đường',{positive:true}):0;
       let tripCount=Number(e.trips??1);if(e.minimumScope==='trip'||e.method==='vehicle'||e.method==='trip'){number(tripCount,'Số chuyến',{positive:true});if(!Number.isInteger(tripCount))throw Error('Số chuyến cần số nguyên');}
       if(e.minimumScope!==undefined&&!['total','trip'].includes(e.minimumScope))throw Error('Chọn phạm vi phí tối thiểu');
