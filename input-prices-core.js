@@ -28,6 +28,7 @@ function validateTmc(t){
  if(t.loss!==undefined)amount(t.loss,'Hao hụt TMC');if(t.thresholdMode!==undefined&&!['upper','exact'].includes(t.thresholdMode))throw Error('Chọn cách tra bậc TMC');for(const key of ['ancillary','common']){const x=t[key];if(x===undefined)continue;if(!x||!['fixed','percent'].includes(x.kind))throw Error('Chọn cách tính khoản phụ/chung');amount(x.value,'Khoản phụ/chung');if(x.kind==='percent'&&!["material","labor","direct",...(key==='common'?["scope"]:[])].includes(x.basis))throw Error('Chọn cơ sở tính khoản phụ/chung');}return t;
 }
 function validateMaster(p){
+ (typeof module!=='undefined'?require('./operation-table-core.js'):root.TPOperationTable).validateAll(p||{});
  if(!p||typeof p!=='object'||Array.isArray(p))throw Error('Bảng đơn giá chung không hợp lệ');
  (typeof module!=='undefined'?require('./manufacturing-core.js'):root.TPMfg).validateLabor(p);
  for(const [key,validate] of [['expenseRates',validateExpense],['tmcTables',validateTmc]]){

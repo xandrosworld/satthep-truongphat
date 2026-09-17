@@ -13,7 +13,7 @@ const path=require('node:path');
   await page.locator('[data-rate-tab=operations]').click();
   await expect(page.locator('[data-rate-subtab]')).toHaveCount(0);await page.locator('[data-ip-tmc-details] summary').click();
   await expect(page.locator('[data-input-price=tray]')).toContainText('đ/m');
-  await page.locator('[data-input-price=tray] [data-ip=tmc-edit]').click();
+  await page.locator('[data-input-price=tray] [data-ot=edit]').click();
   await expect(page.locator('[name=unit] option:not([disabled])')).toHaveCount(2);
   await page.locator('#dialog [data-action=close]').first().click();
 
