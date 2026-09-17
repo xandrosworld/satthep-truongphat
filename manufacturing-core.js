@@ -30,6 +30,19 @@ function packageCost(n,r){const x=n.outsource;
   if(!Object.hasOwn(bases,x.unit))throw Error('Đơn vị gói thuê chưa hợp lệ');const basis=nonnegative(x.quantity??bases[x.unit],'Lượng gói thuê');if(!(basis>0))throw Error('Chưa có lượng gói thuê');
   const cost=basis*rate;if(!Number.isFinite(cost))throw Error('Giá gói thuê vượt giới hạn');return {...x,ownerId:n.id,productId:r.productId,basis,rate,cost};
 }
+// Physical objects sent outside, counted once at the highest selected scope.
+// These quantities are references, not sums of billable operation quantities.
+function outsideMeasures(products,result){
+ const values={},invalid=new Map();
+ function geometryIssues(n){const r=result.nodes[n.id],issues=[...(r?.declarationErrors||[])];if(!r||!Number.isFinite(r.count)||r.count<=0||n.draftMaterial)issues.push(n.name+': thiếu dữ liệu đối tượng');if(n.kind!=='material'&&!n.children?.length)issues.push(n.name+': chưa có thành phần');for(const child of n.children||[])issues.push(...geometryIssues(child));invalid.set(n.id,[...new Set(issues)]);return issues;}
+ products.forEach(geometryIssues);
+ function visit(n,inherited){
+  const r=result.nodes[n.id],own=!!n.outsource?.enabled||(n.ops||[]).some((op,i)=>op.mode==='outside'&&!r?.ownOps?.[i]?.skipped),owner=inherited||(own?n.id:null),children=(n.children||[]).map(child=>visit(child,owner));
+  if(owner){const weight=r?.workWeight??r?.weight,area=r?.workArea??r?.area,errors=[...invalid.get(n.id)];if(!Number.isFinite(weight)||weight<0||!Number.isFinite(area)||area<0)errors.push(n.name+': chưa tính được lượng xử lý ngoài');return values[n.id]={weight:errors.length?null:weight,area:errors.length?null:area,mode:inherited?'inherited':'own',sources:[owner],errors};}
+  const errors=[...new Set(children.flatMap(x=>x.errors))],sources=[...new Set(children.flatMap(x=>x.sources))];return values[n.id]={weight:errors.length?null:children.reduce((s,x)=>s+x.weight,0),area:errors.length?null:children.reduce((s,x)=>s+x.area,0),mode:sources.length?'children':'none',sources,errors};
+ }
+ products.forEach(n=>visit(n,null));return values;
+}
 function extraCost(entry,basis,stock,labor){const amount=nonnegative(entry?.value??0,'Chi phí bổ sung TMC');if(!entry||entry.kind==='fixed')return amount*basis;if(entry.kind!=='percent')throw Error('Chọn cách tính khoản TMC');const bases={material:stock,labor,direct:stock+labor};if(!Object.hasOwn(bases,entry.basis))throw Error('Chọn cơ sở phần trăm TMC');return bases[entry.basis]*amount/100;}
 function tmc(r,base,p,tier,stockNet){
   const node=r.node,parts={...r.parts};if(r.packageOwner)return {parts,items:[],packageOnly:true};
@@ -72,6 +85,6 @@ function presets(){return [
   {id:'z-clamp',name:'Kẹp Z',unit:'cái',tiers:[{max:400,price:1000},{max:700,price:1000},{max:1000,price:1000},{max:1500,price:1000},{max:2000,price:1000},{max:null,price:1000}]},
   {id:'u-v-bar',name:'Thanh U / V',unit:'cái',tiers:[{max:400,price:7000},{max:700,price:10000},{max:1000,price:15000},{max:1500,price:20000},{max:2000,price:25000},{max:null,price:30000}]}
 ].map(t=>({...t,loss:1.5,thresholdMode:'upper'}));}
-const api={measure,packageCost,tmc,presets,scope,policyKeys,policyErrors,setPolicy};C.manufacturing=api;
+const api={measure,packageCost,outsideMeasures,tmc,presets,scope,policyKeys,policyErrors,setPolicy};C.manufacturing=api;
 if(typeof module!=='undefined')module.exports=api;else root.TPMfg=api;
 })(typeof window!=='undefined'?window:globalThis);
