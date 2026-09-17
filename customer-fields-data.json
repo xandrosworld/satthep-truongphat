@@ -1,0 +1,368 @@
+[
+  {
+    "key": "account.code",
+    "label": "Mã khách hàng",
+    "group": "Thông tin chung",
+    "type": "text"
+  },
+  {
+    "key": "name",
+    "label": "Tên khách hàng",
+    "group": "Thông tin chung",
+    "type": "text"
+  },
+  {
+    "key": "account.shortName",
+    "label": "Tên viết tắt",
+    "group": "Thông tin chung",
+    "type": "text"
+  },
+  {
+    "key": "taxId",
+    "label": "Mã số thuế",
+    "group": "Thông tin chung",
+    "type": "text"
+  },
+  {
+    "key": "phone",
+    "label": "Điện thoại",
+    "group": "Thông tin chung",
+    "type": "text"
+  },
+  {
+    "key": "email",
+    "label": "Email",
+    "group": "Thông tin chung",
+    "type": "email"
+  },
+  {
+    "key": "source",
+    "label": "Nguồn gốc",
+    "group": "Thông tin chung",
+    "type": "text",
+    "suggestions": [
+      "Nhân viên kinh doanh tự tìm kiếm",
+      "Khách hàng hoặc đối tác giới thiệu",
+      "Thông qua sự kiện, hội thảo, tập huấn",
+      "Khách hàng tự tìm đến",
+      "Khách hàng được tặng miễn phí",
+      "Nguồn từ Marketing",
+      "Nguồn từ Mr Hợp",
+      "Khác"
+    ]
+  },
+  {
+    "key": "account.legalForm",
+    "label": "Loại hình",
+    "group": "Thông tin chung",
+    "type": "text",
+    "suggestions": [
+      "Doanh nghiệp",
+      "Hộ cá thể",
+      "Hành chính sự nghiệp",
+      "Khác"
+    ]
+  },
+  {
+    "key": "account.businessSector",
+    "label": "Lĩnh vực",
+    "group": "Thông tin chung",
+    "type": "text"
+  },
+  {
+    "key": "industry",
+    "label": "Ngành nghề",
+    "group": "Thông tin chung",
+    "type": "text"
+  },
+  {
+    "key": "account.customerCategory",
+    "label": "Loại khách hàng",
+    "group": "Thông tin chung",
+    "type": "text"
+  },
+  {
+    "key": "account.billingCountry",
+    "label": "Quốc gia (Hóa đơn)",
+    "group": "Địa chỉ hóa đơn",
+    "type": "text"
+  },
+  {
+    "key": "account.billingProvince",
+    "label": "Tỉnh/Thành phố (Hóa đơn)",
+    "group": "Địa chỉ hóa đơn",
+    "type": "text"
+  },
+  {
+    "key": "account.billingDistrict",
+    "label": "Quận/Huyện (Hóa đơn)",
+    "group": "Địa chỉ hóa đơn",
+    "type": "text"
+  },
+  {
+    "key": "account.billingWard",
+    "label": "Phường/Xã (Hóa đơn)",
+    "group": "Địa chỉ hóa đơn",
+    "type": "text"
+  },
+  {
+    "key": "account.billingStreet",
+    "label": "Số nhà, Đường phố (Hóa đơn)",
+    "group": "Địa chỉ hóa đơn",
+    "type": "text"
+  },
+  {
+    "key": "account.billingPostal",
+    "label": "Mã vùng (Hóa đơn)",
+    "group": "Địa chỉ hóa đơn",
+    "type": "text"
+  },
+  {
+    "key": "address",
+    "label": "Địa chỉ (Hóa đơn)",
+    "group": "Địa chỉ hóa đơn",
+    "type": "textarea"
+  },
+  {
+    "key": "account.shippingCountry",
+    "label": "Quốc gia (Giao hàng)",
+    "group": "Địa chỉ giao hàng",
+    "type": "text"
+  },
+  {
+    "key": "account.shippingProvince",
+    "label": "Tỉnh/Thành phố (Giao hàng)",
+    "group": "Địa chỉ giao hàng",
+    "type": "text"
+  },
+  {
+    "key": "account.shippingDistrict",
+    "label": "Quận/Huyện (Giao hàng)",
+    "group": "Địa chỉ giao hàng",
+    "type": "text"
+  },
+  {
+    "key": "account.shippingWard",
+    "label": "Phường/Xã (Giao hàng)",
+    "group": "Địa chỉ giao hàng",
+    "type": "text"
+  },
+  {
+    "key": "account.shippingStreet",
+    "label": "Số nhà, Đường phố (Giao hàng)",
+    "group": "Địa chỉ giao hàng",
+    "type": "text"
+  },
+  {
+    "key": "account.shippingPostal",
+    "label": "Mã vùng (Giao hàng)",
+    "group": "Địa chỉ giao hàng",
+    "type": "text"
+  },
+  {
+    "key": "account.shippingAddress",
+    "label": "Địa chỉ (Giao hàng)",
+    "group": "Địa chỉ giao hàng",
+    "type": "textarea"
+  },
+  {
+    "key": "account.bankAccount",
+    "label": "Tài khoản ngân hàng",
+    "group": "Ngân hàng & thanh toán",
+    "type": "text"
+  },
+  {
+    "key": "account.bankName",
+    "label": "Mở tại ngân hàng",
+    "group": "Ngân hàng & thanh toán",
+    "type": "text"
+  },
+  {
+    "key": "account.birthDate",
+    "label": "Ngày thành lập/Ngày sinh",
+    "group": "Thông tin cá nhân",
+    "type": "date"
+  },
+  {
+    "key": "account.customerSince",
+    "label": "Là khách hàng từ",
+    "group": "Thông tin bổ sung",
+    "type": "date"
+  },
+  {
+    "key": "account.revenue",
+    "label": "Doanh thu",
+    "group": "Thông tin bổ sung",
+    "type": "text",
+    "suggestions": [
+      "Dưới 3 tỷ đồng",
+      "Từ 3 tỷ đồng đến 10 tỷ đồng",
+      "Từ 10 tỷ đồng đến 100 tỷ đồng",
+      "Trên 100 tỷ đồng"
+    ]
+  },
+  {
+    "key": "account.website",
+    "label": "Website",
+    "group": "Thông tin bổ sung",
+    "type": "text"
+  },
+  {
+    "key": "account.creditType",
+    "label": "Loại hạn mức nợ",
+    "group": "Ngân hàng & thanh toán",
+    "type": "text",
+    "suggestions": [
+      "Không giới hạn",
+      "Có giới hạn",
+      "Không được nợ"
+    ]
+  },
+  {
+    "key": "account.creditLimit",
+    "label": "Số nợ tối đa",
+    "group": "Ngân hàng & thanh toán",
+    "type": "number"
+  },
+  {
+    "key": "account.rank",
+    "label": "Xếp hạng khách hàng",
+    "group": "Thông tin bổ sung",
+    "type": "text",
+    "suggestions": [
+      "Cao",
+      "Vừa phải",
+      "Thấp",
+      "Chưa rõ"
+    ]
+  },
+  {
+    "key": "account.gender",
+    "label": "Giới tính",
+    "group": "Thông tin cá nhân",
+    "type": "text",
+    "suggestions": [
+      "Nam",
+      "Nữ",
+      "Khác"
+    ]
+  },
+  {
+    "key": "account.paymentTerm",
+    "label": "Loại điều khoản TT",
+    "group": "Ngân hàng & thanh toán",
+    "type": "text",
+    "suggestions": [
+      "Không xác định",
+      "Thanh toán ngay",
+      "Số ngày cố định",
+      "Ngày X tháng hiện tại",
+      "Ngày X tháng tiếp theo",
+      "Ngày X tháng đầu quý tiếp theo",
+      "Ngày X tháng cuối quý hiện tại"
+    ]
+  },
+  {
+    "key": "account.paymentDays",
+    "label": "Số ngày/Ngày trong tháng",
+    "group": "Ngân hàng & thanh toán",
+    "type": "number"
+  },
+  {
+    "key": "account.identityNumber",
+    "label": "Số CMND/CCCD",
+    "group": "Thông tin cá nhân",
+    "type": "text"
+  },
+  {
+    "key": "account.identityPlace",
+    "label": "Nơi cấp",
+    "group": "Thông tin cá nhân",
+    "type": "text"
+  },
+  {
+    "key": "account.identityDate",
+    "label": "Ngày cấp",
+    "group": "Thông tin cá nhân",
+    "type": "date"
+  },
+  {
+    "key": "notes",
+    "label": "Mô tả",
+    "group": "Thông tin bổ sung",
+    "type": "textarea"
+  },
+  {
+    "key": "account.shared",
+    "label": "Dùng chung",
+    "group": "Thông tin bổ sung",
+    "type": "yesno"
+  },
+  {
+    "key": "status",
+    "label": "Ngừng theo dõi",
+    "group": "Thông tin bổ sung",
+    "type": "text"
+  },
+  {
+    "key": "type",
+    "label": "Là KH cá nhân",
+    "group": "Thông tin bổ sung",
+    "type": "text"
+  },
+  {
+    "key": "account.referralPartner",
+    "label": "Đối tác/CTV giới thiệu",
+    "group": "Thông tin bổ sung",
+    "type": "text"
+  },
+  {
+    "key": "account.isPartner",
+    "label": "Là đối tác/cộng tác viên",
+    "group": "Thông tin bổ sung",
+    "type": "yesno"
+  },
+  {
+    "key": "account.staffSize",
+    "label": "Quy mô nhân sự",
+    "group": "Thông tin bổ sung",
+    "type": "text",
+    "suggestions": [
+      "Dưới 10",
+      "Từ 10 đến 100",
+      "Từ 100 đến 200",
+      "Từ 200 đến 1.000",
+      "Trên 1000"
+    ]
+  },
+  {
+    "key": "account.budgetCode",
+    "label": "Mã số ĐVQHNS",
+    "group": "Thông tin bổ sung",
+    "type": "text"
+  },
+  {
+    "key": "account.fax",
+    "label": "Fax",
+    "group": "Thông tin bổ sung",
+    "type": "text"
+  },
+  {
+    "key": "account.parentCompany",
+    "label": "Đơn vị chủ quản",
+    "group": "Thông tin bổ sung",
+    "type": "text"
+  },
+  {
+    "key": "account.isDistributor",
+    "label": "Là nhà phân phối",
+    "group": "Thông tin bổ sung",
+    "type": "yesno"
+  },
+  {
+    "key": "account.passport",
+    "label": "Số hộ chiếu",
+    "group": "Thông tin cá nhân",
+    "type": "text"
+  }
+]
