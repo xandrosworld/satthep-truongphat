@@ -77,7 +77,7 @@ function tmc(r,base,p,tier,stockNet,laborContext=()=>({})){
     let laborPricing=null;
     if(binding){const op=laborOperation(binding),selected=W.resolvePriceOption(binding.rate,op),ctx={...laborContext(target,rr),W:Number(width),L:Number(length),workQuantity:basis};const price=W.price(binding.choice==='table-factors'?{...binding.rate,inside:bound.value,insideUnit:table.unit}:binding.rate,op,ctx,tier),workBasis=selected.op.pricingMethod==='fixed'?(selected.op.fixedScope==='unit'?rr.count:1)*factor:basis;laborPricing={...price,basis:workBasis,unit:selected.op.pricingMethod==='fixed'?'gói':table.unit,cost:workBasis*price.value,name:binding.rate.name,sourceKey:binding.choice==='table-factors'?'tmc:'+table.id+':'+bound.index:laborSourceKey(p,table.id),replacedOperations:binding.replaces||p.tmcLaborOperation.replaces};}
     const labor=laborPricing?laborPricing.cost:basis*bound.value,aux=extraCost(table.ancillary,basis,material,labor),overhead=table.common?.kind==='percent'&&table.common.basis==='scope'?0:extraCost(table.common,basis,material,labor);if(table.common?.kind==='percent'&&table.common.basis==='scope'&&entry.laborOnly)throw Error('Chi phí chung toàn sản phẩm không gắn vào phần chỉ bổ sung nhân công');stock+=material;laborTotal+=labor;ancillary+=aux;common+=overhead;
-    items.push({nodeId:target.id,name:target.name,tableId:table.id,table:table.name,basis,unit:table.unit,rate:laborPricing?.value??bound.value,bound,loss,material,labor,laborPricing,ancillary:aux,common:overhead,laborOnly:!!entry.laborOnly});
+    items.push({nodeId:target.id,name:target.name,tableId:table.id,table:table.name,width:Number(width),length:finite(length)?Number(length):null,count:rr.count,quantityFactor:factor,basis,unit:table.unit,rate:laborPricing?.value??bound.value,bound,loss,material,labor,laborPricing,ancillary:aux,common:overhead,laborOnly:!!entry.laborOnly});
   }
   for(const row of eligible)if(!stockCovered.has(row.id)&&!base.nodes[row.id].coveredBy)throw Error('Chưa gán bảng TMC cho '+row.node.name);
   // Retain company-supplied materials within outsourced scopes at their detailed purchasing cost.
@@ -92,7 +92,7 @@ function tmc(r,base,p,tier,stockNet,laborContext=()=>({})){
     const commonBase=['stock','ancillary','allowance','factory','outside','finishing','incoming','outgoing','install'].reduce((sum,k)=>sum+(parts[k]||0),0),percent=rates[0];
     common=commonBase*percent/100;parts.tmcCommon=common;commonSummary={productId:node.id,basis:commonBase,percent,amount:common,source:'XL CB: toàn sản phẩm trước CP chung, không giao hàng'};if(items.length===1)Object.assign(items[0],{common,commonBase,commonPercent:percent,commonBasis:'scope'});
   }
-  return {parts,items,commonSummary,basis:items[0]?.basis,rate:items[0]?.rate,bound:items[0]?.bound};
+  return {parts,items,commonSummary,laborReconciliation:{originalFactory:r.parts.factory,replacedFactory:replace,packageLabor:laborTotal,retainedFactory:r.parts.factory-replace,finalFactory:parts.factory},basis:items[0]?.basis,rate:items[0]?.rate,bound:items[0]?.bound};
 }
 function presets(){return [
   {id:'ladder-accessory',name:'Phụ kiện thang cáp',unit:'cái',tiers:[{max:100,price:28000},{max:500,price:28000},{max:1000,price:28000},{max:null,price:70000}]},
