@@ -2,6 +2,7 @@
  * business formulas or automatic changes to the selected selling method. */
 (function(root){'use strict';
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
+const Flow=typeof module!=='undefined'?require('./cost-flow-core.js'):root.TPCostFlow;
 const BUILTINS=[{id:'tmc',name:'Thang máng cáp',engine:'tmc'},{id:'detail',name:'Cơ khí khác',engine:'detail'}];
 const BASE_METHODS=[['detail','Theo tính toán'],['tmc','Theo thang máng cáp'],['kg','Theo kg phôi'],['competitor','Theo đối thủ']];
 const KEYS=['L','W','H','T','Q','KG','AREA','COST','DETAIL'];
@@ -12,8 +13,20 @@ function groups(q){return [...BUILTINS,...profiles(q)];}
 function profileErrors(q){
  if(q.pricing?.productGroups!=null&&!Array.isArray(q.pricing.productGroups))return ['Cấu hình nhóm phải là danh sách'];
  const errors=[],ids=new Set(BUILTINS.map(g=>g.id)),names=new Set(BUILTINS.map(g=>g.name));
+ try{validateFlows(q.pricing);}catch(e){errors.push(e.message);}
  for(const g of q.pricing?.productGroups||[])try{const v=validateGroup(g);if(ids.has(v.id)||names.has(v.name))throw Error('Trùng mã hoặc tên nhóm');ids.add(v.id);names.add(v.name);}catch(e){errors.push('Cấu hình nhóm: '+e.message);}
  return errors;
+}
+function validateFlows(p){if(p?.costFlows===undefined)return;if(!p.costFlows||Array.isArray(p.costFlows)||typeof p.costFlows!=='object')throw Error('Luồng phương án không hợp lệ');for(const [id,flow]of Object.entries(p.costFlows)){if(!['detail','tmc'].includes(id))throw Error('Luồng giá phải thuộc phương án đã khai');Flow.validate(flow);}}
+function loadMaster(db,g){
+ const trial=C.copy(db.quote);saveGroup(trial,C.copy(g));const rule=g.flow?.rules?.factory;
+ if(rule?.mode==='package'){
+  const rate=db.rates.find(r=>r.id===rule.rateId),OT=typeof module!=='undefined'?require('./operation-table-core.js'):root.TPOperationTable,table=OT.tables(db.pricingDefaults||{}).find(t=>t.id===rule.tableId);
+  if(!rate||!table)throw Error('Thiếu nguyên công hoặc bảng giá của luồng');
+  trial.ratesSnapshot=trial.ratesSnapshot.filter(r=>r.id!==rate.id).concat([C.copy(rate)]);
+  const key=table.source==='tmc'?'tmcTables':'operationPriceTables',next=C.copy(table);delete next.source;trial.pricing[key]=(trial.pricing[key]||[]).filter(t=>t.id!==table.id).concat([next]);
+ }
+ db.quote=trial;
 }
 function resolve(q,n){
  const id=n.productGroup==='Thang máng cáp'&&(!n.priceGroupId||n.priceGroupId==='unknown')?'tmc':n.priceGroupId??(n.tmcScope==='tmc'?'tmc':n.tmcScope==='detail'?'detail':n.tmcScope?'unknown':n.tmcKind||n.tmcBreakdown?.length?'tmc':'unknown');
@@ -34,7 +47,13 @@ function setComparisons(q,ids){writable(q);if(!Array.isArray(ids)||ids.some(id=>
 function assign(q,nodeId,groupId){writable(q);const n=q.products.find(n=>n.id===nodeId);if(!n)throw Error('Không tìm thấy sản phẩm');if(groupId!=='unknown'&&!groups(q).some(g=>g.id===groupId))throw Error('Nhóm không tồn tại');n.priceGroupId=groupId;n.tmcScope=groupId==='unknown'?'unknown':groupId==='tmc'?'tmc':'detail';}
 function validateGroup(g){
  const W=typeof module!=='undefined'?require('./work-core.js'):root.TPWork;W.validateGroups(g?.productGroups);
- if(!g||!/^grp-[A-Za-z0-9_-]{1,60}$/.test(g.id)||!String(g.name||'').trim()||g.engine!=='formula')throw Error('Nhóm cần mã grp-…, tên và cách tính công thức');
+ if(g?.engine==='components'){
+  const checked=validateGroup({...g,engine:'formula',formula:'DETAIL',laborFormula:''});
+  if(g.parameters.some(p=>Flow.KEYS.includes(p.key)))throw Error('Tham số trùng biến luồng giá');
+  Flow.validate(g.flow,g.parameters);if(!g.flow)throw Error('Khai luồng đầu mục cho phương án');
+  return {...checked,engine:'components',formula:'',flow:C.copy(g.flow)};
+ }
+ if(!g||!/^grp-[A-Za-z0-9_-]{1,60}$/.test(g.id)||!String(g.name||'').trim()||g.engine!=='formula')throw Error('Nhóm cần mã grp-…, tên và cách tính hợp lệ');
  if(!String(g.source||'').trim()||!String(g.formula||'').trim())throw Error('Cần công thức giá và căn cứ của nhóm');
  if(!Array.isArray(g.parameters)||g.parameters.length>30)throw Error('Tham số nhóm chưa hợp lệ');
  const names=new Set(KEYS),vars=Object.fromEntries(KEYS.map(k=>[k,1]));
@@ -48,7 +67,7 @@ function validateGroup(g){
  try{C.formula(g.formula,vars);}catch(e){if(!e.message.includes('chia cho 0'))throw e;}
  return {...g,name:g.name.trim(),source:g.source.trim(),formula:g.formula.trim(),parameters:g.parameters.map(p=>({...p,value:Number(p.value)}))};
 }
-function saveGroup(q,input){writable(q);const g=validateGroup({...input,engine:'formula'}),list=q.pricing.productGroups||[],i=list.findIndex(x=>x.id===g.id);if(groups(q).some(x=>x.id!==g.id&&x.name===g.name))throw Error('Tên nhóm đã tồn tại');q.pricing.productGroups=i<0?[...list,g]:list.map(x=>x.id===g.id?g:x);return g;}
+function saveGroup(q,input){writable(q);const g=validateGroup({...input,engine:input.engine||'formula'}),list=q.pricing.productGroups||[],i=list.findIndex(x=>x.id===g.id);if(groups(q).some(x=>x.id!==g.id&&x.name===g.name))throw Error('Tên nhóm đã tồn tại');q.pricing.productGroups=i<0?[...list,g]:list.map(x=>x.id===g.id?g:x);return g;}
 function removeGroup(q,id){writable(q);if(BUILTINS.some(g=>g.id===id))throw Error('Không xóa nhóm nền');if(q.products.some(n=>resolve(q,n).id===id)||q.pricing.selected==='group:'+id)throw Error('Nhóm đang dùng; đổi phân loại/phương án trước khi xóa');q.pricing.productGroups=(q.pricing.productGroups||[]).filter(g=>g.id!==id);q.pricing.comparisonMethods=(q.pricing.comparisonMethods||[]).filter(m=>m!=='group:'+id);}
 function evaluate(group,r){
  const g=validateGroup(group);if(g.productGroups?.length&&!g.productGroups.includes(r.node.productGroup))throw Error('Cách tính '+g.name+' chỉ áp dụng nhóm '+g.productGroups.join(', '));
@@ -60,6 +79,6 @@ function evaluate(group,r){
  return {formula:g.formula,source:g.source,vars,total,unit:Math.round(total/r.node.qty)};
 }
 function labor(group,r){if(!group.laborFormula?.trim())return null;return evaluate({...group,formula:group.laborFormula,laborFormula:''},r);}
-const api={labor,groups,profileErrors,resolve,methods,applicability,comparisonIds,setComparisons,assign,validateGroup,saveGroup,removeGroup,evaluate};
+const api={validateFlows,loadMaster,labor,groups,profileErrors,resolve,methods,applicability,comparisonIds,setComparisons,assign,validateGroup,saveGroup,removeGroup,evaluate};
 if(typeof module!=='undefined')module.exports=api;else root.TPGroupPrice=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -9,6 +9,7 @@ const D=typeof module!=='undefined'?require('./device-core.js'):root.TPDevice;
 const Tax=typeof module!=='undefined'?require('./tax-core.js'):root.TPTax;
 const Offer=typeof module!=='undefined'?require('./offer-terms-core.js'):root.TPOfferTerms;
 const G=typeof module!=='undefined'?require('./group-pricing-core.js'):root.TPGroupPrice;
+const Flow=typeof module!=='undefined'?require('./cost-flow-core.js'):root.TPCostFlow;
 const legacyCalculate=C.calculate, legacySeed=C.seed;
 const METHODS=[['detail','Theo tính toán'],['tmc','Theo thang máng cáp'],['kg','Theo kg phôi'],['competitor','Theo đối thủ']];
 const PARTS=['stock','ancillary','allowance','finishing','factory','outside','tmcCommon','incoming','outgoing','install','delivery'];
@@ -145,7 +146,9 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
       material:parts.stock+parts.ancillary+parts.allowance+parts.finishing,ops:parts.factory+parts.outside,
       suggestedUnit:r.node.qty>0?Math.round(running/r.node.qty):0};
   };
-  const detail=roots.map(r=>makeCost(r,r.parts));
+  const detailErrors=[];
+  const flowCost=(r,reference,flow,parameters,methodErrors,extras=true,policy=p)=>{try{const x=Flow.apply(q,r,reference,flow,parameters,base);return {...makeCost(r,x.parts,extras,policy),costFlow:x.rows,flowDeviceParts:x.deviceParts};}catch(e){methodErrors.push(r.node.name+' / luồng giá: '+e.message);return {...makeCost(r,r.parts,extras,policy),flowError:e.message};}};
+  const detail=roots.map(r=>flowCost(r,r,p.costFlows?.detail,[],detailErrors));
   const tmcErrors=[];
   const tmc=roots.map((r,index)=>{
 const scope=G.resolve(q,r.node).scope;
@@ -153,7 +156,7 @@ const scope=G.resolve(q,r.node).scope;
     if(scope!=='tmc')tmcErrors.push(r.node.name+': chưa xác định nhóm sản phẩm TMC hay cơ khí khác');
     const tmcRoot={...r,parts:{...r.parts,factory:r.parts.factory-r.deviceParts.factory,install:r.parts.install-r.deviceParts.install}};
     let computed={parts:{...tmcRoot.parts},items:[]};try{computed=M.tmc(tmcRoot,base,p,tier,stockNet,(n,rr)=>({...context(n,rr),...W.context(n,rr,q.products,q)}));}catch(e){tmcErrors.push(r.node.name+': '+e.message);}
-    return {...makeCost(r,computed.parts,false,M.policyErrors(p).length?p:p.tmcPolicy),tmc:{...computed,scope:'tmc'}};
+    return {...flowCost({...r,parts:computed.parts,flowDeviceParts:{factory:0,install:0}},r,p.costFlows?.tmc,[],tmcErrors,false,M.policyErrors(p).length?p:p.tmcPolicy),tmc:{...computed,scope:'tmc'}};
   });
   const alternatives={};
   function totalOf(products){const totals={parts:zeros(),material:0,ops:0,transport:0,install:0,cost:0,sell:0,weight:0,area:0,direct:0,production:0,overhead:0,management:0,special:0,productionExtras:0,profitMarkup:0,processing:0,order:0,customer:0,reserve:0,saleExtras:0};
@@ -166,17 +169,19 @@ const scope=G.resolve(q,r.node).scope;
   }
 for(const [id,name] of G.methods(q)){
     const applicability=G.applicability(q,id);
-    const methodErrors=[...(id==='tmc'?tmcErrors:[]),...applicability.reasons];
-    const products=(id==='tmc'?tmc:detail).map(r=>{
+    const methodErrors=[...detailErrors,...(id==='tmc'?tmcErrors:[]),...applicability.reasons];
+    const products=(id==='tmc'?tmc:detail).map((row,index)=>{
+let r=row;const profile=id.startsWith('group:')&&G.resolve(q,r.node).id===id.slice(6)?G.resolve(q,r.node).group:null;
+if(profile?.engine==='components'){if(!W.groupsMatch(profile.productGroups,r.node.productGroup))methodErrors.push(r.node.name+': ngoài nhóm áp dụng '+profile.name);r=flowCost(roots[index],roots[index],profile.flow,profile.parameters,methodErrors);}
 let suggested=r.suggestedUnit,groupCalculation=null;
-      if(id.startsWith('group:')&&G.resolve(q,r.node).id===id.slice(6))try{groupCalculation=G.evaluate(G.resolve(q,r.node).group,r);suggested=groupCalculation.unit;}catch(e){methodErrors.push(r.node.name+': '+e.message);}
+      if(profile?.engine==='formula')try{groupCalculation=G.evaluate(profile,r);suggested=groupCalculation.unit;}catch(e){methodErrors.push(r.node.name+': '+e.message);}
       if(id==='kg'){
         if(!(r.weight>0))methodErrors.push(r.node.name+': không có kg phôi để áp giá/kg');
         const entered=amount(r.node.pricePerKg,r.node.name+' / đơn giá/kg',methodErrors),tax=Tax.declaration(db.quote,r.node,'kg');
         suggested=Math.round((tax.known?tax.net:entered)*r.weight/r.node.qty);
       }
       if(id==='competitor'){const entered=amount(r.node.competitorPrice,r.node.name+' / giá đối thủ',methodErrors),tax=Tax.declaration(db.quote,r.node,'competitor');suggested=Math.round(tax.known?tax.net:entered);}
-return {...r,...(id.startsWith('group:')?{groupCalculation,groupBranch:groupCalculation?'formula':'detail'}:{}),suggestedUnit:suggested,unitSell:suggested,sell:Math.round(suggested*r.node.qty)};
+return {...r,...(id.startsWith('group:')?{groupCalculation,groupBranch:profile?.engine==='components'?'components':groupCalculation?'formula':'detail'}:{}),suggestedUnit:suggested,unitSell:suggested,sell:Math.round(suggested*r.node.qty)};
     });
 alternatives[id]={id,name,products,total:totalOf(products),applicable:applicability.applicable,errors:[...new Set(methodErrors)],ready:applicability.applicable&&!methodErrors.length&&!errors.length};
   }
