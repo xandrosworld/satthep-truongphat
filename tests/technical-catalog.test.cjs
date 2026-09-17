@@ -1,0 +1,24 @@
+const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require('../server/app.cjs'),T=require('../technical-core.js');
+test('price-free technical catalogue: grant, publish, preserve prices, reject injection and revoke',async t=>{
+ const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));const base='http://127.0.0.1:'+app.server.address().port;
+ const call=async(route,method='GET',body,session)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-CSRF-Token':session.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
+ const password='Technical-catalog-test-42!',admin=await call('setup','POST',{username:'admin',name:'Admin',password});
+ const grant={role:'technical',technicalDelegation:true,canViewCosts:false,canEditFactors:false,canApprove:false,sections:['customer','bom','operations','catalogMaterials','catalogRules','catalogLibrary']};
+ const made=await call('users','POST',{...grant,username:'tech',name:'Tech',password},admin);A.equal(made.status,201,JSON.stringify(made.data));
+ A.equal((await call('users/'+made.data.id+'/access','POST',grant,admin)).status,200);
+ let tech=await call('login','POST',{username:'tech',password});A.equal(tech.data.permissions.costs,false);A.equal(tech.data.permissions.catalog,true);A.equal(tech.data.permissions.factors,false);
+ const original=(await call('catalog','GET',undefined,admin)).data.catalog;
+ let record=await call('catalog','GET',undefined,tech);A.equal(record.status,200,JSON.stringify(record.data));let c=record.data.catalog;A.deepEqual(c,T.projectCatalog(original));A.ok(c.materials.every(x=>x.price===0));A.ok(c.rates.every(x=>x.inside===0&&x.outside===0&&x.factors.length===0));
+ c.materials[0].name+=' technical';c.library[0].name+=' technical';c.conventions.parameters=[...(c.conventions.parameters||[]),{name:'QA',label:'Test dimension',unit:'mm'}];
+ let saved=await call('catalog','PUT',{expectedVersion:record.data.version,catalog:c},tech);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const actual=(await call('catalog','GET',undefined,admin)).data.catalog;
+ A.equal(actual.materials[0].price,original.materials[0].price);A.equal(actual.materials[0].name,c.materials[0].name);A.equal(actual.library[0].name,c.library[0].name);A.deepEqual(actual.rates,original.rates);A.deepEqual(actual.pricingDefaults,original.pricingDefaults);A.deepEqual(actual.materialPrices,original.materialPrices);
+ const expectedLibrary=structuredClone(original.library);expectedLibrary[0].name+=' technical';A.deepEqual(actual.library,expectedLibrary,'template prices, factors and selected methods survive');
+ record=(await call('catalog','GET',undefined,tech)).data;
+ for(const mutate of [x=>x.materials[0].price=777,x=>x.rates[0].inside=777,x=>x.pricingDefaults.profit=777,x=>x.library[0].competitorPrice=777,x=>x.conventions.customers=[{name:'VIP',percent:777}]]){const forged=structuredClone(record.catalog);mutate(forged);A.equal((await call('catalog','PUT',{expectedVersion:record.version,catalog:forged},tech)).status,403);}
+ A.equal((await call('catalog/candidates','GET',undefined,tech)).status,403);
+ A.equal((await call('users/'+made.data.id+'/access','POST',{...grant,sections:['catalogLibrary']},admin)).status,200);A.equal((await call('catalog','GET',undefined,tech)).status,401);
+ tech=await call('login','POST',{username:'tech',password});record=(await call('catalog','GET',undefined,tech)).data;record.catalog.materials[0].name+=' forbidden';A.equal((await call('catalog','PUT',{expectedVersion:record.version,catalog:record.catalog},tech)).status,403);
+ A.equal((await call('users/'+made.data.id+'/access','POST',{...grant,sections:['bom']},admin)).status,200);tech=await call('login','POST',{username:'tech',password});A.equal((await call('catalog','GET',undefined,tech)).status,403);
+ const role=await call('roles','POST',{...grant,name:'Technical without prices'},admin);A.equal(role.status,201);
+});

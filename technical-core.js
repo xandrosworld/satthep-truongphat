@@ -3,9 +3,9 @@
 (function(root){'use strict';
 const copy=x=>JSON.parse(JSON.stringify(x));
 const nodeKeys=['id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent'];
-const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','shapeDefinition','massOverride','areaOverride'];
+const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','stockOptions','shapeDefinition','massOverride','areaOverride'];
 const opKeys=['id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
-const ruleKeys=['id','name','shape','length','width','measurementRules'];
+const ruleKeys=['id','name','shape','length','width','measurementRules','fields','shapes'];
 const quoteKeys=['id','customer','project','date','kerf','remnantMode','remnantSelections','request','customerInfo'];
 const pick=(x,keys)=>Object.fromEntries(keys.filter(k=>x?.[k]!==undefined).map(k=>[k,copy(x[k])]));
 const spec=x=>({...pick(x,specKeys),price:0});
@@ -57,5 +57,31 @@ function merge(original,input){
 }
 function canonical(x){return Array.isArray(x)?x.map(canonical):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,canonical(x[k])])):x;}
 function equal(a,b){return JSON.stringify(canonical(a))===JSON.stringify(canonical(b));}
-const api={project,merge,nodeKeys,opKeys};if(typeof module!=='undefined')module.exports=api;else root.TPTechnical=api;
+// Catalogue editing is independent from permission to see commercial values.
+const catalogSections=['catalogMaterials','catalogRules','catalogLibrary'];
+const conventionKinds=['productGroups','materialGroups','parameters','substances','grades','characteristics','units'];
+const conventionKeys=['name','label','parent','unit','density','stock','hidden'];
+function projectCatalog(d){
+ const empty={quote:{status:'draft',products:[],ratesSnapshot:[]}},p=project({...d,...empty});
+ return {materials:p.materials,rates:p.rates,rules:p.rules,library:p.library,shapeDefinitions:p.shapeDefinitions,stockSizes:p.stockSizes,materialPrices:[],pricingDefaults:{},conventions:Object.fromEntries(conventionKinds.filter(k=>d.conventions?.[k]).map(k=>[k,d.conventions[k].map(x=>pick(x,conventionKeys))]))};
+}
+function mergeCatalog(original,input){
+ if(!input||!equal(input,projectCatalog(input)))throw Error('Danh mục kỹ thuật chứa giá, hệ số hoặc trường không được phép');
+ const before=projectCatalog(original),result=copy(original);
+ for(const k of ['rates','pricingDefaults','materialPrices'])if(!equal(before[k],input[k]))throw Error('Không được thay đổi đơn giá hoặc hệ số');
+ const assign=(old,item,keys)=>{const out=copy(old||{});for(const k of keys){if(item[k]===undefined)delete out[k];else out[k]=copy(item[k]);}return out;};
+ result.materials=input.materials.map(m=>{const old=original.materials.find(x=>x.id===m.id);return {...assign(old,m,specKeys),price:old?.price??0};});
+ result.rules=input.rules.map(r=>assign(original.rules.find(x=>x.id===r.id),r,ruleKeys));
+ for(const k of ['shapeDefinitions','stockSizes'])result[k]=copy(input[k]);
+ result.conventions??={};for(const k of conventionKinds){if(!Object.hasOwn(input.conventions,k)){delete result.conventions[k];continue;}result.conventions[k]=input.conventions[k].map(x=>assign(original.conventions?.[k]?.find(o=>o.name===x.name),x,conventionKeys));}
+ // Reuse the quote merge to retain hidden prices and operation choices in templates.
+ const fake={...result,quote:{status:'draft',products:original.library||[],ratesSnapshot:original.rates,pricing:{}}};
+ const technical=project(fake);technical.quote.products=copy(input.library);
+ const merged=merge(fake,technical).quote.products,oldNodes=new Map();
+ const index=ns=>{for(const n of ns){oldNodes.set(n.id,n);index(n.children||[]);}};index(original.library||[]);
+ const retain=n=>{const old=oldNodes.get(n.id);if(old&&equal(node(n,{ratesSnapshot:original.rates}),node(old,{ratesSnapshot:original.rates})))return copy(old);n.children=(n.children||[]).map(retain);if(old&&!old.children&&!n.children.length)delete n.children;return n;};
+ result.library=merged.map(retain);
+ return result;
+}
+const api={project,merge,nodeKeys,opKeys,projectCatalog,mergeCatalog,catalogSections};if(typeof module!=='undefined')module.exports=api;else root.TPTechnical=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

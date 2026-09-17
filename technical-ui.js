@@ -2,6 +2,13 @@
 const technicalTabs=['intake','bom','operations','waste','mass'];
 function technicalStage(){return page==='quote'&&technicalTabs.includes(tab);}
 function technicalOnly(){return !!Team.user&&!!Team.permissions?.technical;}
+function technicalCatalogPage(){return technicalOnly()&&['materials','library','rules'].includes(page)&&Team.permissions.sections.includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[page]);}
+function technicalCatalogClean(root){
+ if(!technicalOnly()||!root)return;
+ for(const table of root.querySelectorAll('table')){const headers=[...table.querySelectorAll('thead tr:first-child th')];headers.forEach((h,i)=>{if(/đơn giá|giá tham chiếu|thành tiền|chi phí/i.test(h.textContent))for(const row of table.rows)if(row.cells[i])row.cells[i].hidden=true;});}
+ for(const input of root.querySelectorAll('[name=price]')){input.value='0';input.closest('label').hidden=true;}
+ root.querySelectorAll('[data-rc-tab=factors],[data-rc-tab=operations],[data-rc-tab=customers],[data-rc-tab=complexity],[data-close-gap=catalog-candidates],[data-team=backup]').forEach(x=>x.hidden=true);
+}
 function technicalPermissionFields(){const role=$('#dialog [data-access-role]');if(!role)return;for(const input of document.querySelectorAll('#dialog [name=sections],#dialog [name=canViewCosts],#dialog [name=canApprove],#dialog [name=canEditFactors],#dialog [name=canApproveBelowCost]'))input.disabled=false;}
 function technicalOperation(id,index){
  const n=C.findNode(db.quote.products,id),op=n?.ops?.[index],rate=db.quote.ratesSnapshot.find(r=>r.id===op?.id);if(!rate)return;
@@ -47,20 +54,22 @@ function installTechnicalUI(){
  const oldOperationPrices=inOperationPrices;inOperationPrices=()=>oldOperationPrices()+mfgSummary()+`<section class="panel panel-body"><h3>Khoản chi riêng theo cấu thành</h3><p>Khai giá gói thuê ở bảng trên; vận chuyển và lắp đặt riêng của từng dòng ở đây.</p>${C.flatten(db.quote.products).map(n=>paButton(esc(n.name),'node-costs',`data-id="${esc(n.id)}"`,'small')).join(' ')}</section>`;
  const oldPricing=renderCostAnalysis;renderCostAnalysis=()=>tmcFreightNotice()+oldPricing();
  actions['tmc-freight']=()=>{tab='prices';Intake.priceTab='logistics';render();};
- const oldDocument=teamDocument;teamDocument=()=>technicalOnly()?TPTechnical.project(oldDocument()):oldDocument();
+ const oldDocument=teamDocument;teamDocument=()=>technicalOnly()?(technicalCatalogPage()?{...TPTechnical.projectCatalog(oldDocument()),quote:TPTechnical.project(oldDocument()).quote}:TPTechnical.project(oldDocument())):oldDocument();
  const oldList=teamList;teamList=async()=>{if(!technicalOnly())return oldList();const list=await teamApi('quotes');openDialog('Báo giá · dữ liệu kỹ thuật',`<div class="actions">${teamButton('Đổi mật khẩu','own-password')}${teamButton('Đăng xuất','logout')}</div><table><thead><tr><th>Báo giá / khách hàng</th><th>Trạng thái</th><th>Phiên bản</th><th></th></tr></thead><tbody>${list.map(q=>`<tr><td>${esc(q.code)} · ${esc(q.customer)}</td><td>${esc(q.status)}</td><td>${q.version}</td><td>${teamButton('Mở','open',`data-id="${q.id}"`)}</td></tr>`).join('')}</tbody></table>`);};
  const oldSession=teamSession;teamSession=value=>{if(value.permissions?.technical){db=TPTechnical.project(TPPrice.demoSeed());result=C.calculate(db);Team.local=null;Team.loaded=false;Team.link=null;Team.dirty=false;UX.undo=[];UX.redo=[];}oldSession(value);};
  const oldRender=render;render=()=>{
   if(technicalOnly()){
-   if(!Team.loaded){$('#content').innerHTML=heading('Không gian kỹ thuật','Mở báo giá để làm việc với cấu thành, công đoạn và định mức.',teamButton('Danh sách báo giá','list','','primary')+teamButton('Đổi mật khẩu','own-password')+teamButton('Đăng xuất','logout'));return;}
-   page='quote';if(!technicalTabs.includes(tab))tab='operations';
+   if(!Team.loaded){$('#content').innerHTML=heading('Không gian kỹ thuật','Mở báo giá hoặc danh mục được cấp quyền. Giá và hệ số được quản lý riêng.',teamButton('Danh sách báo giá','list','','primary')+(Team.permissions.catalog?teamButton('Làm việc với danh mục','catalog-workspace'):'')+teamButton('Đổi mật khẩu','own-password')+teamButton('Đăng xuất','logout'));return;}
+   if(!technicalCatalogPage())page='quote';if(!technicalTabs.includes(tab))tab='operations';
+   if(page==='rules'&&['factors','operations','customers','complexity'].includes(RulesCatalog.kind))RulesCatalog.kind='productGroups';
   }
   oldRender();if(technicalStage())technicalClean($('#content'));
-  document.querySelectorAll('#sidebar [data-page]').forEach(el=>el.hidden=technicalOnly()&&el.dataset.page!=='quote');
+  document.querySelectorAll('#sidebar [data-page]').forEach(el=>el.hidden=technicalOnly()&&el.dataset.page!=='quote'&&!Team.permissions.sections.includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[el.dataset.page]));
+  if(technicalCatalogPage()){technicalCatalogClean($('#content'));$('#content').insertAdjacentHTML('afterbegin',`<div class="notice" data-technical-catalog>Danh mục kỹ thuật · không xem hoặc sửa giá, hệ số. ${teamButton('Lấy danh mục máy chủ','catalog-workspace')}${accessButton('Lưu / phát hành danh mục','catalog')}</div>`);}
   if(technicalOnly()){$('#content').querySelectorAll('[data-tab="prices"],[data-tab="pricing"],[data-tab="preview"],[data-action="history"],[data-pa="sample"],[data-team="submit"],[data-team="leave"],[data-batch-one="new-shared"]').forEach(x=>x.remove());const ribbon=$('.quote-ribbon > span');if(ribbon)ribbon.textContent='Ngày '+db.quote.date;}
  };
  const oldQuick=refreshQuickUI;refreshQuickUI=()=>{oldQuick();if(technicalStage())technicalClean($('#content'));};
- const oldDialog=openDialog;openDialog=(...args)=>{const value=oldDialog(...args);if(technicalStage())technicalClean($('#dialog'));technicalPermissionFields();return value;};
+ const oldDialog=openDialog;openDialog=(...args)=>{const value=oldDialog(...args);if(technicalStage())technicalClean($('#dialog'));if(technicalCatalogPage())technicalCatalogClean($('#dialog'));technicalPermissionFields();return value;};
  document.addEventListener('change',e=>{if(e.target.hasAttribute('data-access-role')){technicalPermissionFields();if(e.target.value==='technical')document.querySelectorAll('#dialog [name=sections]').forEach(x=>x.checked=['customer','bom','operations'].includes(x.value));}});
  // Capture before legacy handlers: cost editors are reached only from step 6.
  document.addEventListener('click',e=>{const el=e.target.closest('[data-pa],[data-mfg],[data-close-gap],[data-ux],[data-action]');if(!el||!technicalStage())return;
