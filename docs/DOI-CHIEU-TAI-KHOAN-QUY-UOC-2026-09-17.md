@@ -14,9 +14,17 @@
 | TMC theo khổ rộng, m/cái | Bảng TMC đã nằm trong Nguyên công & hệ số → Bảng hệ số giá. Kiểm tra các bậc rộng và đơn vị m/cái. |
 | Nhóm áp dụng phí vận chuyển/lắp đặt | Phạm vi nhóm tại báo giá đã có. Bổ sung nhóm áp dụng ngay tại đơn giá đầu vào; khi chọn đơn giá, chỉ tính phí trong giao của nhóm cho phép và phạm vi khoản chi. Chọn Cơ khí khác nếu khoản phí đã nằm trong TMC. Không tự gán quy tắc miễn phí cho mọi bảng TMC. |
 
-## Chờ khách xác nhận
+## Nguyên công trọn gói TMC — khách đã xác nhận
 
-**Nguyên công tổng làm mặc định cho cách tính TMC/nhóm khác**: người dùng trả lời “hỏi khách sau” ngày 17/09/2026. Chưa thay luồng tính giá theo suy đoán. Bảng TMC theo khổ rộng hiện tại tiếp tục hoạt động; không kết luận mục mặc định nguyên công tổng đã hoàn tất.
+Khách xác nhận nguyên công trọn gói chỉ áp dụng cho phương án Thang máng cáp, không ảnh hưởng khai báo nguyên công kỹ thuật trong báo giá.
+
+- Chọn nguyên công và cách giá mặc định tại Danh mục quy ước → Công đoạn hoặc Đơn giá đầu vào → Nguyên công & hệ số. Chọn riêng theo chủng loại khi đơn vị khác nhau (mét dài/cái). Giá cơ sở, giá có hệ số theo khổ rộng W và cách giá trọn gói đã khai đều được hỗ trợ.
+- Đánh dấu các công tại xưởng đã gồm trong gói: chỉ thay tiền công đó trong phương án TMC. Nguyên công tổng đã chọn không bị cộng lại nếu cũng được khai kỹ thuật. Thuê ngoài, vật tư định mức và công ngoài phạm vi gói vẫn giữ riêng.
+- Lưu danh mục không tự sửa báo giá cũ. Trong báo giá, bấm Lấy bảng TMC từ đơn giá đầu vào để nhận cấu hình; bản đã duyệt cần tạo bản sửa. Có thể chỉnh riêng hoặc tắt cấu hình cho bản nháp.
+- Đơn vị không khớp bị chặn, không quy đổi ngầm m sang cái. Cách giá gói cố định áp dụng theo phạm vi đã khai: toàn phần phân rã hoặc theo số lượng tại phần đó.
+- Bảng phân tích có đối chiếu nguyên công, cách giá, lượng, đơn giá và thành tiền. Nguồn/thuế của giá công được khai riêng, không yêu cầu xác nhận giá nhân công cũ không còn dùng.
+
+Danh mục thật chưa được tự gán nguyên công hay đơn giá kinh doanh: khách chọn cấu hình phù hợp với số liệu của mình. Các ví dụ tính toán dùng dữ liệu QA riêng.
 
 ## Quy tắc vai trò và tài khoản
 

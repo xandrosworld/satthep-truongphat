@@ -1,6 +1,19 @@
 /* Manufacturing scopes, safe work measurements and configurable TMC partitioning. */
 (function(root){'use strict';
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
+const W=typeof module!=='undefined'?require('./work-core.js'):root.TPWork;
+function laborBinding(p,tableId){const x=p.tmcLaborOperation;return x?.tables?.[tableId]||x?.default||null;}
+function laborOperation(binding){const choice=binding.choice||'catalog';return {id:binding.rate.id,mode:'inside',pricingMethod:choice==='factors'?'factors':'catalog',...(choice.startsWith('option:')?{priceOptionId:choice.slice(7)}:{})};}
+function validateLabor(p){const x=p.tmcLaborOperation;if(x==null)return;
+ if(typeof x!=='object'||!Array.isArray(x.replaces)||x.replaces.some(id=>typeof id!=='string'||!id)||new Set(x.replaces).size!==x.replaces.length)throw Error('Chọn các công đoạn đã gồm trong công trọn gói TMC');
+ if(x.tables!=null&&(typeof x.tables!=='object'||Array.isArray(x.tables)))throw Error('Khai cách tính công TMC theo chủng loại');
+ const bindings=[x.default,...Object.values(x.tables||{})].filter(Boolean);if(!bindings.length)throw Error('Chọn nguyên công trọn gói TMC');
+ for(const b of bindings){if(!b.rate?.id||!b.rate.name||!['catalog','factors'].includes(b.choice)&&!/^option:.+/.test(b.choice||''))throw Error('Chọn nguyên công và cách tính giá TMC');W.validatePriceOptions(b.rate);const s=W.resolvePriceOption(b.rate,laborOperation(b));W.number(s.rate.inside,'Giá công TMC');for(const f of s.rate.factors||[])W.validateFactor(f,C.pricingTier);}
+ for(const id of Object.keys(x.tables||{}))if(!(p.tmcTables||[]).some(t=>t.id===id))throw Error('Chủng loại công TMC đã bị xóa');
+ for(const t of p.tmcTables||[]){const b=laborBinding(p,t.id);if(!b)continue;const s=W.resolvePriceOption(b.rate,laborOperation(b));if(s.op.pricingMethod!=='fixed'&&(s.rate.insideUnit||s.rate.unit)!==t.unit)throw Error(t.name+': đơn vị công trọn gói phải là '+t.unit+'; chọn cách giá riêng cho chủng loại này');}
+}
+function laborSourceKey(p,tableId){const b=laborBinding(p,tableId);return b?'tmc:operation:'+(p.tmcLaborOperation.tables?.[tableId]?tableId:'default')+':'+(b.choice||'catalog'):null;}
+function laborReplaces(p,id){const x=p.tmcLaborOperation;return x?x.replaces.includes(id)||[x.default,...Object.values(x.tables||{})].some(b=>b?.rate?.id===id):null;}
 // Existing explicit assignments are retained. Missing classification is NOT a
 // non-TMC declaration and must never silently produce a detailed fallback.
 function scope(node){return node.tmcScope||((node.tmcKind||node.tmcBreakdown?.length)?'tmc':'unknown');}
@@ -44,7 +57,8 @@ function outsideMeasures(products,result){
  products.forEach(n=>visit(n,null));return values;
 }
 function extraCost(entry,basis,stock,labor){const amount=nonnegative(entry?.value??0,'Chi phí bổ sung TMC');if(!entry||entry.kind==='fixed')return amount*basis;if(entry.kind!=='percent')throw Error('Chọn cách tính khoản TMC');const bases={material:stock,labor,direct:stock+labor};if(!Object.hasOwn(bases,entry.basis))throw Error('Chọn cơ sở phần trăm TMC');return bases[entry.basis]*amount/100;}
-function tmc(r,base,p,tier,stockNet){
+function tmc(r,base,p,tier,stockNet,laborContext=()=>({})){
+  validateLabor(p);
   const node=r.node,parts={...r.parts};if(r.packageOwner)return {parts,items:[],packageOnly:true};
   const assignments=node.tmcBreakdown?.length?node.tmcBreakdown:[{id:'whole',nodeId:node.id,tableId:node.tmcKind,width:node.tmcWidth,length:node.tmcLength,factor:1}];
   const eligible=base.rows.filter(row=>row.productId===node.id&&!row.externallySupplied&&row.spec.shape!=='piece');
@@ -60,8 +74,10 @@ function tmc(r,base,p,tier,stockNet){
     let material=0;if(!entry.laborOnly){for(const row of rows){if(stockCovered.has(row.id))throw Error('Phạm vi TMC chồng nhau; một mã vật tư chỉ nhận hao hụt một lần');stockCovered.add(row.id);material+=stockNet(row)*(1+loss/100);}
       for(const id of ids){const work=base.nodes[id];if(work.coveredBy)continue;const own=work.ownReplaceableFactory||0;if(own&&opsCovered.has(id))throw Error('Công TMC bị tính lặp theo cấp');opsCovered.add(id);replace+=own;}
     }
-    const labor=basis*bound.value,aux=extraCost(table.ancillary,basis,material,labor),overhead=table.common?.kind==='percent'&&table.common.basis==='scope'?0:extraCost(table.common,basis,material,labor);if(table.common?.kind==='percent'&&table.common.basis==='scope'&&entry.laborOnly)throw Error('Chi phí chung toàn sản phẩm không gắn vào phần chỉ bổ sung nhân công');stock+=material;laborTotal+=labor;ancillary+=aux;common+=overhead;
-    items.push({nodeId:target.id,name:target.name,tableId:table.id,table:table.name,basis,unit:table.unit,rate:bound.value,bound,loss,material,labor,ancillary:aux,common:overhead,laborOnly:!!entry.laborOnly});
+    const binding=laborBinding(p,table.id);let laborPricing=null;
+    if(binding){const op=laborOperation(binding),selected=W.resolvePriceOption(binding.rate,op),ctx={...laborContext(target,rr),W:Number(width),L:Number(length),workQuantity:basis};const price=W.price(binding.rate,op,ctx,tier),workBasis=selected.op.pricingMethod==='fixed'?(selected.op.fixedScope==='unit'?rr.count:1)*factor:basis;laborPricing={...price,basis:workBasis,unit:selected.op.pricingMethod==='fixed'?'gói':table.unit,cost:workBasis*price.value,name:binding.rate.name,sourceKey:laborSourceKey(p,table.id)};}
+    const labor=laborPricing?laborPricing.cost:basis*bound.value,aux=extraCost(table.ancillary,basis,material,labor),overhead=table.common?.kind==='percent'&&table.common.basis==='scope'?0:extraCost(table.common,basis,material,labor);if(table.common?.kind==='percent'&&table.common.basis==='scope'&&entry.laborOnly)throw Error('Chi phí chung toàn sản phẩm không gắn vào phần chỉ bổ sung nhân công');stock+=material;laborTotal+=labor;ancillary+=aux;common+=overhead;
+    items.push({nodeId:target.id,name:target.name,tableId:table.id,table:table.name,basis,unit:table.unit,rate:laborPricing?.value??bound.value,bound,loss,material,labor,laborPricing,ancillary:aux,common:overhead,laborOnly:!!entry.laborOnly});
   }
   for(const row of eligible)if(!stockCovered.has(row.id)&&!base.nodes[row.id].coveredBy)throw Error('Chưa gán bảng TMC cho '+row.node.name);
   // Retain company-supplied materials within outsourced scopes at their detailed purchasing cost.
@@ -85,6 +101,6 @@ function presets(){return [
   {id:'z-clamp',name:'Kẹp Z',unit:'cái',tiers:[{max:400,price:1000},{max:700,price:1000},{max:1000,price:1000},{max:1500,price:1000},{max:2000,price:1000},{max:null,price:1000}]},
   {id:'u-v-bar',name:'Thanh U / V',unit:'cái',tiers:[{max:400,price:7000},{max:700,price:10000},{max:1000,price:15000},{max:1500,price:20000},{max:2000,price:25000},{max:null,price:30000}]}
 ].map(t=>({...t,loss:1.5,thresholdMode:'upper'}));}
-const api={measure,packageCost,outsideMeasures,tmc,presets,scope,policyKeys,policyErrors,setPolicy};C.manufacturing=api;
+const api={measure,packageCost,outsideMeasures,tmc,presets,scope,policyKeys,policyErrors,setPolicy,laborBinding,laborOperation,laborSourceKey,laborReplaces,validateLabor};C.manufacturing=api;
 if(typeof module!=='undefined')module.exports=api;else root.TPMfg=api;
 })(typeof window!=='undefined'?window:globalThis);

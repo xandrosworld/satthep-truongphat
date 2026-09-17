@@ -108,7 +108,7 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
         const applied=W.operation(rate,{...op,pricingMethod:W.methodFor(op,q),priceOptionId:W.optionFor(op,q)},ctx,r,tier),cost=applied.cost;
         item={...item,...applied,name:rate.name};
         parts[op.mode==='outside'?'outside':'factory']+=cost;
-        if(op.mode==='inside'&&rate.tmcReplace){r.replaceableFactory+=cost;if(!op.afterPackage)r.ownReplaceableFactory+=cost;}
+        if(op.mode==='inside'&&(M.laborReplaces(q.pricing,rate.id)??rate.tmcReplace)){r.replaceableFactory+=cost;if(!op.afterPackage)r.ownReplaceableFactory+=cost;}
         for(const [recipeIndex,recipe] of W.recipes(rate).entries()){
           const generated=W.consume(recipe,n,r,recipeIndex,i,rate.name,applied.unit);if(op.mode==='outside'&&op.suppliesIncluded!==false)includedGenerated.push({...generated,referenceCost:generated.cost,cost:0,included:true,reason:'Vật tư đã gồm trong giá thuê nguyên công'});else{r.ownGenerated.push(generated);parts.finishing+=generated.cost;}
         }
@@ -152,7 +152,7 @@ const scope=G.resolve(q,r.node).scope;
     if(scope==='detail')return {...detail[index],tmc:{items:[],scope:'detail',note:'Ngoài thang máng cáp — tính chi tiết'}};
     if(scope!=='tmc')tmcErrors.push(r.node.name+': chưa xác định nhóm sản phẩm TMC hay cơ khí khác');
     const tmcRoot={...r,parts:{...r.parts,factory:r.parts.factory-r.deviceParts.factory,install:r.parts.install-r.deviceParts.install}};
-    let computed={parts:{...tmcRoot.parts},items:[]};try{computed=M.tmc(tmcRoot,base,p,tier,stockNet);}catch(e){tmcErrors.push(r.node.name+': '+e.message);}
+    let computed={parts:{...tmcRoot.parts},items:[]};try{computed=M.tmc(tmcRoot,base,p,tier,stockNet,(n,rr)=>({...context(n,rr),...W.context(n,rr,q.products,q)}));}catch(e){tmcErrors.push(r.node.name+': '+e.message);}
     return {...makeCost(r,computed.parts,false,M.policyErrors(p).length?p:p.tmcPolicy),tmc:{...computed,scope:'tmc'}};
   });
   const alternatives={};

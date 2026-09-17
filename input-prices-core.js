@@ -4,7 +4,7 @@ const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const P=typeof module!=='undefined'?require('./pricing-core.js'):root.TPPrice;
 const W=typeof module!=='undefined'?require('./work-core.js'):root.TPWork;
 const copy=C.copy;
-function defaults(db){return {...P.defaults(),...copy(db.pricingDefaults||{})};}
+function defaults(db){const p={...P.defaults(),...copy(db.pricingDefaults||{})},x=p.tmcLaborOperation;for(const b of [x?.default,...Object.values(x?.tables||{})]){if(!b)continue;const rate=db.rates?.find(r=>r.id===b.rate.id);if(rate)b.rate=copy(rate);}return p;}
 function amount(value,label){if(value===null||value===undefined||value===''||!Number.isFinite(Number(value))||Number(value)<0)throw Error(label+': nhập số không âm');return Number(value);}
 function validateExpense(r){
  if(r?.applicableGroupIds!==undefined&&(!Array.isArray(r.applicableGroupIds)||new Set(r.applicableGroupIds).size!==r.applicableGroupIds.length||r.applicableGroupIds.some(id=>typeof id!=='string'||!['detail','tmc'].includes(id)&&!/^grp-[A-Za-z0-9_-]{1,60}$/.test(id))))throw Error('Chọn nhóm áp dụng đơn giá hợp lệ');
@@ -29,6 +29,7 @@ function validateTmc(t){
 }
 function validateMaster(p){
  if(!p||typeof p!=='object'||Array.isArray(p))throw Error('Bảng đơn giá chung không hợp lệ');
+ (typeof module!=='undefined'?require('./manufacturing-core.js'):root.TPMfg).validateLabor(p);
  for(const [key,validate] of [['expenseRates',validateExpense],['tmcTables',validateTmc]]){
   if(p[key]===undefined)continue;if(!Array.isArray(p[key])||p[key].length>2000)throw Error('Bảng đơn giá quá lớn hoặc sai định dạng');
   const ids=new Set();for(const row of p[key]){validate(row);if(ids.has(row.id))throw Error('Trùng mã đơn giá: '+row.id);ids.add(row.id);}
@@ -42,6 +43,6 @@ function recordChanges(before,after,at=new Date().toISOString()){
  }
 }
 function applyExpense(entry,rate){validateExpense(rate);return {...copy(entry),allowedGroupIds:copy(rate.applicableGroupIds||[]),category:rate.category,method:rate.method,rate:Number(rate.rate),minimum:Number(rate.minimum||0),massBasis:rate.massBasis||'net',minimumScope:rate.minimumScope||'total',capacityKg:rate.capacityKg,vehicleType:rate.vehicleType||'',productUnit:rate.productUnit||'',distance:entry.distance??rate.distance,factors:rate.priceMode==='catalog'?[]:copy(rate.factors||[]),priceSource:copy(rate)};}
-function refresh(db){const p=defaults(db);db.quote.expenses=(db.quote.expenses||[]).map(e=>{const r=p.expenseRates?.find(r=>r.id===e.priceSource?.id&&r.enabled!==false);return r?applyExpense(e,r):e;});if(db.quote.pricing){db.quote.pricing.tmcTables=copy(p.tmcTables);db.quote.pricing.tmcLoss=p.tmcLoss;}}
+function refresh(db){const p=defaults(db);db.quote.expenses=(db.quote.expenses||[]).map(e=>{const r=p.expenseRates?.find(r=>r.id===e.priceSource?.id&&r.enabled!==false);return r?applyExpense(e,r):e;});if(db.quote.pricing){db.quote.pricing.tmcTables=copy(p.tmcTables);db.quote.pricing.tmcLoss=p.tmcLoss;db.quote.pricing.tmcLaborOperation=copy(p.tmcLaborOperation||null);}}
 const api={defaults,validateExpense,validateTmc,validateMaster,save,recordChanges,applyExpense,refresh};if(typeof module!=='undefined')module.exports=api;else root.TPInputPrices=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
