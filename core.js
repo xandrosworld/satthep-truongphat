@@ -40,7 +40,7 @@ function seed(){
   configureProduct(tray);configureProduct(frame);
   return {version:2,materials,rules,rates,library:[{...copy(body),templateKind:'component'},{...copy(lid),templateKind:'component'},{...copy(tray),qty:1,templateKind:'product'},{...copy(frame),qty:1,templateKind:'product'},{...copy(support),templateKind:'product'}],quote:{id:'BG-2026-0909',customer:'CÔNG TY TNHH KỸ THUẬT MINH PHÁT',project:'Hệ thống máng cáp & khung máy',date:'2026-09-09',valid:15,status:'draft',margin:12,vat:10,overhead:5,kerf:3,notes:'Thời gian giao hàng: 15 ngày từ khi xác nhận. Thanh toán: 50% tạm ứng, 50% khi bàn giao.',products:[tray,frame],ratesSnapshot:copy(rates)},history:[]};
 }
-function cloneNode(node){const n=copy(node);if(node.templateKind){n.templateId=node.id;delete n.uses;}function walk(x){x.id=uid();for(const op of x.ops||[])op.instanceId=uid();if(x.children)x.children.forEach(walk);}walk(n);return n;}
+function cloneNode(node){const n=copy(node),ids=new Map();if(node.templateKind){n.templateId=node.id;delete n.uses;}function walk(x){const oldId=x.id;x.id=uid();ids.set(oldId,x.id);for(const op of x.ops||[])op.instanceId=uid();if(x.children)x.children.forEach(walk);}walk(n);for(const x of flatten([n]))for(const entry of x.tmcBreakdown||[]){if(ids.has(entry.nodeId))entry.nodeId=ids.get(entry.nodeId);if(entry.id)entry.id=uid();}return n;}
 function findNode(products,id){for(const n of products){if(n.id===id)return n;const hit=n.children&&findNode(n.children,id);if(hit)return hit;}return null;}
 function removeNode(nodes,id){const i=nodes.findIndex(n=>n.id===id);if(i>=0){nodes.splice(i,1);return true;}return nodes.some(n=>n.children&&removeNode(n.children,id));}
 function section(m){const p=m.props,{W=0,H=0,T=0,D=0,TF=T}=p;switch(m.shape){case 'profile':return {cross:0,perimeter:0};case 'box':if(2*T>=Math.min(W,H))throw Error('Chiều dày hộp phải nhỏ hơn nửa tiết diện');return {cross:W*H-(W-2*T)*(H-2*T),perimeter:2*(W+H)};case 'pipe':if(2*T>=D)throw Error('Chiều dày ống phải nhỏ hơn nửa đường kính');return {cross:Math.PI*(D*D-(D-2*T)**2)/4,perimeter:Math.PI*D};case 'round':return {cross:Math.PI*D*D/4,perimeter:Math.PI*D};case 'solid':return {cross:W*H,perimeter:2*(W+H)};case 'angle':return {cross:T*(W+H-T),perimeter:2*(W+H)};case 'u':case 'c':if(T>=W||2*T>=H)throw Error('Chiều dày vượt tiết diện');return {cross:T*(2*W+H-2*T),perimeter:4*W+2*H-2*T};case 'h':case 'i':if(T>=W||2*TF>=H)throw Error('Chiều dày bụng/cánh vượt tiết diện');return {cross:2*W*TF+(H-2*TF)*T,perimeter:4*W+2*H-2*T};default:throw Error('Hình dạng chưa được hỗ trợ');}}
@@ -172,6 +172,35 @@ function configureProduct(p){
 function applyParam(p,key,value){if(p.dimensionLinks?.[key]&&p.dimensionLinks[key].mode!=='manual')return;const blankThickness=key==='T'&&value===null;if(!blankThickness&&(!Number.isFinite(value)||value<0||(['L','W','T'].includes(key)&&value===0)||key==='T'&&value>100000))throw Error('Kích thước không hợp lệ');p.params??={};p.params[key]=value;for(const n of scopedLeaves(p))for(const [dim,param]of Object.entries(n.paramLinks||{}))if(param===key&&!n.dimensionLinks?.[dim]&&!shapeInfo(n.spec).fixed.includes(dim))n.dims[dim]=value;formatName(p);}
 function setDimension(db,id,key,value){const n=findNode(db.quote.products,id),p=productOwner(db,id);if(n.dimensionLinks?.[key]&&n.dimensionLinks[key].mode!=='manual')throw Error('Thông số theo công thức/cố định; chuyển sang nhập tay trước khi sửa');if(p&&n.paramLinks?.[key])applyParam(p,n.paramLinks[key],value);else n.dims[key]=value;}
 function quoteSpecification(p){const leaves=flatten(p.children||[]).filter(n=>n.kind==='material'&&n.spec.shape!=='piece'),detail=n=>n.spec.shapeDefinition?n.spec.id+': '+n.spec.shapeDefinition.fields.filter(f=>f.mode==='input').map(f=>f.key+' '+n.dims[f.key]+' '+f.unit).join(' × '):n.spec.id+': '+Object.entries(n.dims||{}).filter(([k])=>shapeInfo(n.spec).input.includes(k)||['H','F'].includes(k)&&(n.ruleSpec.width.match(/[A-Z]+/g)||[]).includes(k)).map(([k,v])=>k+' '+v).join(' × ')+' mm';if(p.params){const base=Object.entries(p.params).filter(([k])=>k!=='T').map(([k,v])=>k+' '+v).join(' × ')+' mm'+(p.params.T==null?'':'; Dày chung (tham số): '+p.params.T+' mm; không tự đổi quy cách vật tư'),custom=leaves.filter(n=>n.detached);return custom.length?'Kích thước chung: '+base+'; chi tiết riêng: '+custom.map(detail).join('; '):base;}return [...new Set(leaves.map(detail))].join('; ');}
-const api={copy,uid,groups,shapes,shapeInfo,formula,seed,cloneNode,findNode,removeNode,materialMass,materialSurface,remnantRuleKey,remnantEligibility,geometry,materialEstimate,nest,calculate,flatten,nodePath,productOwner,scopedLeaves,formatName,productParamEntries,configureProduct,applyParam,setDimension,quoteSpecification};
+function catalogWithTemplate(master,source,template){
+  if(!template||!['product','component'].includes(template.templateKind)||!String(template.name||'').trim())throw Error('Mẫu cần tên và loại sản phẩm/cấu kiện');
+  const catalog=copy(master),added={materials:[],rates:[],rules:[],shapeDefinitions:[],productGroups:[]};
+  for(const key of ['library','materials','rates','rules','shapeDefinitions'])catalog[key]??=[];
+  if(catalog.library.some(x=>x.id===template.id))throw Error('Mã mẫu đã có trong thư viện dùng chung');
+  const add=(key,id,item,label)=>{if(catalog[key].some(x=>x.id===id))return;if(!item||item.id!==id)throw Error('Mẫu thiếu '+label+' '+id+' trong danh mục nguồn');catalog[key].push(copy(item));added[key].push(id);};
+  for(const n of flatten([template])){
+    if(n.productGroup){catalog.conventions??={};catalog.conventions.productGroups??=[];if(!catalog.conventions.productGroups.some(x=>x.name===n.productGroup)){const item=source.conventions?.productGroups?.find(x=>x.name===n.productGroup)||{name:n.productGroup};catalog.conventions.productGroups.push(copy(item));added.productGroups.push(n.productGroup);}}
+    if(n.kind==='material'){
+      if(!n.materialId||!n.spec||n.spec.id!==n.materialId||n.draftMaterial)throw Error('Vật tư trong mẫu chưa được khai báo đầy đủ: '+(n.name||n.materialId||''));
+      add('materials',n.materialId,source.materials?.find(x=>x.id===n.materialId)||n.spec,'vật tư');
+      if(n.rule)add('rules',n.rule,source.rules?.find(x=>x.id===n.rule)||n.ruleSpec,'quy tắc');
+      const shape=n.spec.shapeDefinition;if(shape?.id)add('shapeDefinitions',shape.id,source.shapeDefinitions?.find(x=>x.id===shape.id)||shape,'quy ước hình dạng');
+    }
+    for(const op of n.ops||[])add('rates',op.id,source.quote?.ratesSnapshot?.find(x=>x.id===op.id)||source.rates?.find(x=>x.id===op.id),'nguyên công');
+  }
+  attachTemplateRates({ratesSnapshot:catalog.rates},catalog.rates,template);
+  catalog.library.push(copy(template));
+  return {catalog,added};
+}
+function attachTemplateRates(quote,rates,node){
+  const snapshot=[...(quote.ratesSnapshot||[])];
+  for(const op of flatten([node]).flatMap(n=>n.ops||[])){
+    let rate=snapshot.find(r=>r.id===op.id);
+    if(!rate){const master=rates.find(r=>r.id===op.id);if(!master)throw Error('Mẫu cần nguyên công '+op.id+' chưa có trong danh mục; yêu cầu quản trị phát hành nguyên công trước');rate=copy(master);snapshot.push(rate);}
+    if(op.priceOptionId&&!rate.priceOptions?.some(x=>x.id===op.priceOptionId&&x.enabled!==false))throw Error('Mẫu dùng phương án giá '+op.priceOptionId+' không có trong bảng nguyên công '+rate.name+' của báo giá này');
+  }
+  quote.ratesSnapshot=snapshot;
+}
+const api={copy,uid,groups,shapes,shapeInfo,formula,seed,cloneNode,findNode,removeNode,materialMass,materialSurface,remnantRuleKey,remnantEligibility,geometry,materialEstimate,nest,calculate,flatten,nodePath,productOwner,scopedLeaves,formatName,productParamEntries,configureProduct,applyParam,setDimension,quoteSpecification,catalogWithTemplate,attachTemplateRates};
 if(typeof module!=='undefined')module.exports=api;else root.TP=api;
 })(typeof window!=='undefined'?window:globalThis);
