@@ -82,3 +82,18 @@ th{color:var(--muted)}
 .pa-operation-tools>span,.group-list>button span,.catalog-filters label>span{color:var(--muted)}
 .filter-tabs[aria-label="Các bảng đơn giá"]{max-width:100%;overflow-x:auto}
 .filter-tabs[aria-label="Các bảng đơn giá"]>button{flex-shrink:0;white-space:nowrap}
+/* Cost analysis: dark labels, quiet data; one alternative fits its content. */
+.pa-comparison.pa-single{max-width:1120px}
+.pa-comparison.pa-single table{min-width:0}
+.pa-comparison.pa-single th:first-child{width:42%}
+.pa-comparison tbody th{background:#e3e9f0;color:#20354b;font-weight:600}
+.pa-comparison td,.pa-comparison td.pa-chosen{background:#fafbfd!important;color:#33475d;border-left:0;border-right:0;white-space:normal;overflow-wrap:anywhere;font-family:inherit;font-variant-numeric:tabular-nums}
+.pa-comparison thead th.pa-chosen{background:#f3f6fa!important}
+.pa-comparison .pa-section-row th{background:#cbd6e2;color:#172f48;font-weight:700}
+.pa-comparison .pa-grand td{background:#edf4fa!important}
+.pa-comparison.pa-single td,.pa-comparison.pa-single th{padding:10px 14px;font-size:13px}
+.pa-comparison.pa-single .pa-method-name{min-height:0}
+.pa-tax-detail{margin:0 0 24px;padding:14px;background:#fff;border:1px solid #dce3eb;border-radius:8px}
+.pa-tax-detail summary{cursor:pointer;font-weight:600;color:#294964}
+.b1-tree-panel[data-b1-tree=prices]>.help-text{padding:0 20px}
+@media(max-width:600px){.pa-comparison.pa-single th:first-child{width:45%}.pa-comparison.pa-single td,.pa-comparison.pa-single th{padding:9px 8px;font-size:12px}}

@@ -56,6 +56,25 @@ function stockNet(row){const {spec:m,geometry:g}=row;
   const unitMeasure=m.shape==='sheet'?m.stockL*m.stockW/1e6:m.stockL/1000;
   return unitMeasure>0?g.measure/unitMeasure*m.price:0;
 }
+// Quantities used to value materials, independent of prices (including zero prices).
+// Auxiliary equivalent quantities are monetary allowances, never physical demand.
+function materialValuation(row,result,q){
+  const m=row.spec,physical=m.shape!=='piece',percent=physical?Number(row.node.auxiliaryPercent||0):0;
+  if(row.externallySupplied)return {weight:0,area:0,basis:0,unit:m.unit,method:'Bên gia công cấp — đã gồm trong gói',percent,cost:0,auxiliaryWeight:0,auxiliaryBasis:0,auxiliaryCost:0};
+  if(row.node.materialEstimate&&physical&&!row.estimate)return {error:'Chưa tính được phôi và hao hụt'};
+  let weight=0,basis=0,area=0,method='Theo số lượng';
+  if(!physical)basis=row.count;
+  else if(row.estimate){({weight,area,basis}=row.estimate);method='Phôi + hao hụt '+row.estimate.percent+'%';}
+  else {const group=result.groups.find(g=>g.rows.some(r=>r.id===row.id));
+    if(!group||group.error)return {error:group?.error||'Chưa có lượng vật tư tính tiền'};
+    const share=row.geometry.measure/group.rows.reduce((s,r)=>s+r.geometry.measure,0),kept=q.remnantMode==='exclude'?1-group.reusableMeasure/group.layout.purchased:1;
+    weight=row.purchasedWeight*kept;area=row.purchasedArea*kept;
+    basis=m.unit==='kg'?weight:['m','m²'].includes(m.unit)?group.purchasedMeasure*share*kept:group.layout.stocks.length*share*kept;
+    method=q.remnantMode==='exclude'?'Khổ mua trừ phần dư tận dụng':'Theo khổ mua';
+  }
+  if(row.externallySupplied){weight=area=basis=0;method='Bên gia công cấp — đã gồm trong gói';}
+  return {weight,area,basis,unit:m.unit,method,percent,cost:row.cost,auxiliaryWeight:weight*percent/100,auxiliaryBasis:basis*percent/100,auxiliaryCost:row.cost*percent/100};
+}
 function calculate(db){
   const base=legacyCalculate(db),q={...db.quote,products:base.products.map(r=>r.node)},config=q.pricing;
   if(!config)return base;
@@ -70,6 +89,7 @@ function calculate(db){
   const salesFactors=[...(p.reserve?[{id:'reserve',name:'Dự phòng bổ sung',percent:p.reserve}]:[]),...(p.salesFactors||[])].filter(f=>f.enabled!==false);
   for(const f of salesFactors)if(!finite(f.percent)||Number(f.percent)<=-100)errors.push('Yếu tố bán '+f.name+': hệ số phải lớn hơn -100%');
   if(!finite(q.vat)||q.vat<0||q.vat>100)errors.push('Thuế suất chưa hợp lệ');
+  errors.push(...Tax.outputErrors(q));
   const globals=Object.fromEntries(['incoming','outgoing','install','delivery'].map(k=>[k,amount(p[k],{incoming:'Vận chuyển nhập',outgoing:'Vận chuyển thuê ngoài',install:'Lắp đặt',delivery:'Giao hàng'}[k],errors)]));
   const zeros=()=>Object.fromEntries(PARTS.map(k=>[k,0]));
   const rowMap=new Map(base.rows.map(r=>[r.id,r]));
@@ -141,7 +161,7 @@ const scope=G.resolve(q,r.node).scope;
     // Delivery/install already form base cost and therefore the quoted unit price.
     totals.delivery=totals.parts.delivery;totals.beforeTax=totals.sell;
     totals.transport=totals.parts.incoming+totals.parts.outgoing+totals.parts.delivery;totals.install=totals.parts.install;
-    totals.vat=Math.round(totals.beforeTax*Number(q.vat||0)/100);totals.grand=totals.beforeTax+totals.vat;totals.profit=totals.beforeTax-totals.cost;
+    Object.assign(totals,Tax.outputTotals(q,products));totals.grand=totals.beforeTax+totals.vat;totals.profit=totals.beforeTax-totals.cost;
     return totals;
   }
 for(const [id,name] of G.methods(q)){
@@ -218,7 +238,7 @@ function demoSeed(){
   return db;
 }
 C.pricingTier=tier;
-const api={METHODS,PARTS,defaults,enable,refreshPrices,tier,context,appliedRate,calculate,demoSeed,legacyCalculate};
+const api={METHODS,PARTS,defaults,enable,refreshPrices,tier,context,appliedRate,materialValuation,calculate,demoSeed,legacyCalculate};
 // One shared calculation path for BOM, operations, comparison, print and exports.
 C.calculate=calculate;
 if(typeof module!=='undefined')module.exports=api;else root.TPPrice=api;

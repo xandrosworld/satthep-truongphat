@@ -6,6 +6,18 @@ const valid=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 const rate=v=>valid(v)&&Number(v)>=0&&Number(v)<=100;
 function stable(value){if(Array.isArray(value))return value.map(stable);if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().filter(k=>value[k]!==undefined).map(k=>[k,stable(value[k])]));return value;}
 function identity(q){return JSON.stringify(stable({id:q.id,date:q.date,customer:q.customer,project:q.project}));}
+function outputRate(q,n){return q.outputTax?.scope==='product'?q.outputTax.rates?.[n.id]:q.vat;}
+function outputErrors(q){
+  if(q.outputTax&&!['quote','product'].includes(q.outputTax.scope))return ['Phạm vi thuế đầu ra chưa hợp lệ'];
+  return (q.products||[]).filter(n=>!rate(outputRate(q,n))).map(n=>n.name+': thuế suất đầu ra phải từ 0 đến 100%');
+}
+function outputSignature(q){return JSON.stringify(stable({scope:q.outputTax?.scope||'quote',rates:(q.products||[]).map(n=>[n.id,outputRate(q,n)])}));}
+function outputTotals(q,products){
+  const groups=new Map();
+  for(const p of products){const value=outputRate(q,p.node),r=rate(value)?Number(value):0;const group=groups.get(r)||{rate:r,beforeTax:0,vat:0};group.beforeTax+=p.sell;groups.set(r,group);}
+  const breakdown=[...groups.values()].sort((a,b)=>a.rate-b.rate).map(g=>({...g,vat:Math.round(g.beforeTax*g.rate/100)}));
+  return {vat:breakdown.reduce((s,g)=>s+g.vat,0),taxBreakdown:breakdown};
+}
 function costSignature(q){
   const pricing={...q.pricing};delete pricing.taxReview;delete pricing.selected;delete pricing.overrides;delete pricing.comparisonMethods;
   const products=JSON.parse(JSON.stringify(q.products||[]));for(const n of products){delete n.pricePerKg;delete n.competitorPrice;delete n.marketPrice;delete n.marketSource;}
@@ -22,7 +34,7 @@ function review(q,data,at=new Date().toISOString()){
   if(['approved','submitted'].includes(q.status))throw Error('Bản đã khóa; tạo bản sửa trước');
   if(!q.pricing)throw Error('Cần bật luồng báo giá');
   if(!String(data.reason||'').trim())throw Error('Ghi căn cứ đối chiếu giá và thuế');
-  if(data.outputConfirmed&&!rate(q.vat))throw Error('Thuế suất đầu ra chưa hợp lệ');
+  if(data.outputConfirmed&&(!rate(q.vat)||outputErrors(q).length))throw Error('Thuế suất đầu ra chưa hợp lệ');
   const inputs={};for(const n of q.products){inputs[n.id]={};for(const m of ['kg','competitor','market']){
     const d=data.inputs?.[n.id]?.[m]||{status:'unknown'},value=n[m==='kg'?'pricePerKg':m==='market'?'marketPrice':'competitorPrice'];
     if(!['unknown','excluded','included'].includes(d.status))throw Error('Trạng thái thuế không hợp lệ');
@@ -32,11 +44,11 @@ function review(q,data,at=new Date().toISOString()){
     inputs[n.id][m]={status:d.status,value:value??null,rate:d.status==='included'?Number(d.rate):null,...(m==='market'?{source:n.marketSource||''}: {})};
   }}
   if(data.costConfirmed)Cost.confirmNet(q,String(data.reason).trim(),at);
-  q.pricing.taxReview={inputs,quoteIdentity:identity(q),outputRate:data.outputConfirmed?Number(q.vat):null,costSignature:data.costConfirmed?costSignature(q):null,reason:String(data.reason).trim(),at};
+  q.pricing.taxReview={inputs,quoteIdentity:identity(q),outputRate:data.outputConfirmed?Number(q.vat):null,outputSignature:data.outputConfirmed?outputSignature(q):null,costSignature:data.costConfirmed?costSignature(q):null,reason:String(data.reason).trim(),at};
   return q.pricing.taxReview;
 }
 function assess(q,result){
-  const d=q.pricing?.taxReview||{},costKnown=d.costSignature===costSignature(q)&&!!String(d.reason||'').trim()&&Cost.view(q).every(r=>r.tmcOnly||r.known),outputKnown=d.quoteIdentity===identity(q)&&rate(d.outputRate)&&Number(d.outputRate)===Number(q.vat),methods={};
+  const d=q.pricing?.taxReview||{},costKnown=d.costSignature===costSignature(q)&&!!String(d.reason||'').trim()&&Cost.view(q).every(r=>r.tmcOnly||r.known),outputKnown=d.quoteIdentity===identity(q)&&!outputErrors(q).length&&(d.outputSignature?d.outputSignature===outputSignature(q):q.outputTax?.scope!=='product'&&rate(d.outputRate)&&Number(d.outputRate)===Number(q.vat)),methods={};
   const detail=result.alternatives.detail;
   // A disjoint reference set: direct work excludes material/freight; management
   // is separate, never subtracted a second time through the production subtotal.
@@ -69,5 +81,5 @@ function assess(q,result){
   if(!outputKnown)releaseErrors.push('Chưa xác nhận thuế suất đầu ra của báo giá');
   return {costKnown,outputKnown,methods,market,marketInputs,referenceParts,reference:costKnown?reference:null,releaseErrors:[...new Set(releaseErrors)]};
 }
-const api={input,declaration,review,assess,costSignature};if(typeof module!=='undefined')module.exports=api;else root.TPTax=api;
+const api={input,declaration,review,assess,costSignature,outputRate,outputErrors,outputSignature,outputTotals};if(typeof module!=='undefined')module.exports=api;else root.TPTax=api;
 })(typeof window!=='undefined'?window:globalThis);
