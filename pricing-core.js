@@ -17,7 +17,7 @@ function amount(v,label,errors,allowNegative=false){if(!finite(v)||(!allowNegati
 function defaults(){return {version:2,selected:'detail',comparisonMethods:['detail'],overhead:2,management:3,special:0,profit:10,processing:3,order:5,reserve:0,customer:0,salesFactors:[],productionFactors:[],incoming:0,outgoing:0,delivery:0,install:0,overrides:{},tmcLoss:1.5,tmcTables:[
   {id:'tray',name:'Máng cáp',unit:'m',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]},
   {id:'ladder',name:'Thang cáp',unit:'m',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]},
-  {id:'cover',name:'Nắp thang / máng',unit:'m',tiers:[{max:100,price:1000},{max:500,price:1000},{max:1000,price:2000},{max:null,price:2000}]},
+  {id:'cover',name:'Nắp thang / máng',unit:'cái',tiers:[{max:100,price:1000},{max:500,price:1000},{max:1000,price:2000},{max:null,price:2000}]},
   {id:'accessory',name:'Phụ kiện máng',unit:'cái',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]}
 ]};}
 function enable(db){if(db.quote.pricing)return;db.quote.pricing=defaults();db.quote.status='draft';}
