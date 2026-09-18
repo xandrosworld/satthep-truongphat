@@ -45,7 +45,7 @@ test('server: CSRF, origin, host and static file boundary are enforced',async t=
 });
 test('server: maker submits, approver approves, approved data immutable, revisions survive changes',async t=>{
   const {base}=await harness(t),admin=await setup(base);
-  assert.equal((await call(base,'users',{method:'POST',session:admin,body:account('maker')})).status,201);
+  assert.equal((await call(base,'users',{method:'POST',session:admin,body:{...account('maker'),canReopen:true}})).status,201);
   assert.equal((await call(base,'users',{method:'POST',session:admin,body:account('checker','approver')})).status,201);
   const maker=await login(base,'maker'),checker=await login(base,'checker'),document=P.demoSeed();
   let r=await call(base,'quotes',{method:'POST',session:maker,body:{document}});assert.equal(r.status,201);const id=r.data.id;assert.equal(r.data.total,7126053);

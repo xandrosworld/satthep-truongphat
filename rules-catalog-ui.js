@@ -35,7 +35,7 @@ function rcLegacyDefinition(rule){
   const sheet=rule.shape==='sheet',sample={L:1000,W:200,H:50,F:15,T:2,D:60,KM:10,AM:.5};
   let id=('QD-NGUON-'+rule.id.replace(/[^A-Za-z0-9_-]/g,'-')).slice(0,76);
   while((db.shapeDefinitions||[]).some(d=>d.id===id&&!d.sourceRuleId))id+='x';
-  const inputs=[...new Set((rule.length+' '+rule.width).match(/[A-Z][A-Z0-9_]*/g)||[])].filter(k=>k!=='T'&&k!=='RHO'&&k!=='PI');
+  const inputs=[...new Set([rule.length,rule.width].flatMap(C.formulaNames))].filter(k=>k!=='T'&&k!=='RHO'&&k!=='PI');
   return {id,name:rule.name,sourceRuleId:rule.id,base:sheet?'sheet':'bar',blankShape:sheet?'sheet':'profile',fields:[...(sheet?[{key:'T',mode:'fixed',unit:'mm',sample:2}]:[{key:'KM',mode:'fixed',unit:'kg/m',sample:10},{key:'AM',mode:'fixed',unit:'m²/m',sample:.5}]),...inputs.map(key=>({key,mode:'input',unit:'mm',sample:sample[key]||1}))],length:rule.length,width:rule.width,mass:sheet?'T / 1000 * RHO':'KM',surface:sheet?'1':'AM',notes:sheet?'Diện tích phôi theo một mặt hình học. Diện tích xử lý bề mặt khai theo công việc.':'KM và AM cần nhập theo tiết diện hoặc bảng tra của mã vật tư.',condition:''};
 }
 function rcRowModel(key){return key.startsWith('source:')?rcLegacyDefinition(db.rules.find(r=>r.id===key.slice(7))):(db.shapeDefinitions||[]).find(d=>d.id===key);}

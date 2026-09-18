@@ -20,7 +20,7 @@ function resolve(products){
     state.set(token,1);let value;const link=n.dimensionLinks?.[key];
     try{if(f.fixed){if(link)throw Error('Không được liên kết quy cách cố định '+key);value=n.spec.props[key];}
       else if(link){if(!['formula','fixed','manual'].includes(link.mode))throw Error('Chế độ kích thước không hợp lệ');
-        if(link.mode==='formula'){const defs=variables(paths.get(n.id)),names=String(link.expression).match(/[A-Za-z_][A-Za-z_0-9]*/g)||[],vs={},ds={};for(const name of new Set(names)){const ref=defs.find(v=>v.name===name);if(!ref)throw Error('Không có biến '+name+' tại dòng này');vs[name]=get(ref.node,ref.key);ds[name]=vectors[ref.unit];}const dim=D().dimension(link.expression,ds),unit=vectors[f.unit];if(!dim.literal&&dim.d.some((v,i)=>v!==unit[i]))throw Error('Công thức '+key+' sai đơn vị '+f.unit);value=C.formula(link.expression,vs);}
+        if(link.mode==='formula'){const defs=variables(paths.get(n.id)),names=C.formulaNames(link.expression),vs={},ds={};for(const name of new Set(names)){const ref=defs.find(v=>v.name===name);if(!ref)throw Error('Không có biến '+name+' tại dòng này');vs[name]=get(ref.node,ref.key);ds[name]=vectors[ref.unit];}const dim=D().dimension(link.expression,ds),unit=vectors[f.unit];if(!dim.literal&&dim.d.some((v,i)=>v!==unit[i]))throw Error('Công thức '+key+' sai đơn vị '+f.unit);value=C.formula(link.expression,vs);}
         else value=link.mode==='fixed'?link.value:data(n)[key];
       }else if(n.paramLinks?.[key]){const p=paths.get(n.id).slice(0,-1).reverse().find(p=>p.kind==='product'&&p.params);if(!p)throw Error('Không còn sản phẩm nguồn của liên kết');value=get(p,n.paramLinks[key]);}
       else value=data(n)[key];

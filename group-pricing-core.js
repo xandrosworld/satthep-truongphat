@@ -63,7 +63,7 @@ function validateGroup(g){
  if(g.laborFormula?.trim())validateGroup({...g,formula:g.laborFormula,laborFormula:''});
  if(g.formula.length>500)throw Error('Công thức tối đa 500 ký tự');
  // Token validation is separate from evaluating real data (which may legitimately be zero).
- for(const token of g.formula.match(/[A-Za-z_][A-Za-z_0-9]*/g)||[])if(!names.has(token))throw Error('Biến chưa khai báo: '+token);
+ for(const token of C.formulaNames(g.formula))if(!names.has(token))throw Error('Biến chưa khai báo: '+token);
  try{C.formula(g.formula,vars);}catch(e){if(!e.message.includes('chia cho 0'))throw e;}
  return {...g,name:g.name.trim(),source:g.source.trim(),formula:g.formula.trim(),parameters:g.parameters.map(p=>({...p,value:Number(p.value)}))};
 }

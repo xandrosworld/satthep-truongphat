@@ -5,7 +5,7 @@ const FIELDS=[['stock','Phôi / vật tư chính'],['allowance','Vật tư phụ
 const MODES=[['base','Theo cách tính của phương án'],['detail','Lấy từ tính toán chi tiết'],['formula','Công thức riêng của đầu mục'],['package','Nguyên công trọn gói theo bảng'],['included','Đã gồm trong đầu mục khác'],['none','Không áp dụng']];
 const KEYS=['Q','KG','AREA','L','W','H','T','BASE',...FIELDS.map(([k])=>k.toUpperCase())];
 const api=name=>typeof module!=='undefined'?require('./'+({W:'work-core',OT:'operation-table-core'}[name])+'.js'):root[{W:'TPWork',OT:'TPOperationTable'}[name]];
-function expression(value,parameters=[]){if(typeof value!=='string'||!value.trim()||value.length>500)throw Error('Khai công thức không quá 500 ký tự');const keys=new Set([...KEYS,...parameters.map(p=>p.key)]);for(const token of value.match(/[A-Za-z_][A-Za-z_0-9]*/g)||[])if(!keys.has(token))throw Error('Biến chưa khai báo: '+token);try{C.formula(value,Object.fromEntries([...keys].map(k=>[k,1])));}catch(e){if(!e.message.includes('chia cho 0'))throw e;}}
+function expression(value,parameters=[]){if(typeof value!=='string'||!value.trim()||value.length>500)throw Error('Khai công thức không quá 500 ký tự');const keys=new Set([...KEYS,...parameters.map(p=>p.key)]);for(const token of C.formulaNames(value))if(!keys.has(token))throw Error('Biến chưa khai báo: '+token);try{C.formula(value,Object.fromEntries([...keys].map(k=>[k,1])));}catch(e){if(!e.message.includes('chia cho 0'))throw e;}}
 function validate(flow,parameters=[]){
  if(flow===undefined)return;if(!flow||typeof flow!=='object'||Array.isArray(flow)||!flow.rules||typeof flow.rules!=='object'||Array.isArray(flow.rules))throw Error('Luồng giá cần bảng đầu mục');
  for(const [key,r]of Object.entries(flow.rules)){

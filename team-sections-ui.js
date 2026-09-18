@@ -14,7 +14,8 @@ function installSectionAccessUI(){
    $('#content').insertAdjacentHTML('afterbegin',`<div class="notice">Bạn đang xem phần <strong>${esc(TPSectionAccess.labels[scope])}</strong>. Tài khoản chưa được cấp quyền sửa phần này.</div>`);
    $('#content').querySelectorAll('input,select,textarea').forEach(el=>el.disabled=true);
   }
-  if(!rights.manage)document.querySelectorAll('[data-team="submit"],[data-team="reopen"],[data-team="restore-version"],[data-team="order"],[data-access="new-document"]').forEach(el=>el.hidden=true);
+  if(!rights.reopen)document.querySelectorAll('[data-team="reopen"],[data-team="restore-version"]').forEach(el=>el.hidden=true);
+  if(!rights.manage)document.querySelectorAll('[data-team="submit"],[data-team="order"],[data-access="new-document"]').forEach(el=>el.hidden=true);
   if(Team.loaded&&!Team.link&&Team.permissions.catalog)$('#content').insertAdjacentHTML('afterbegin',`<div class="notice">Danh mục đang làm việc · phiên bản ${Team.catalogVersion??'chưa lấy'}. ${accessButton('Lấy / phát hành danh mục','catalog')}</div>`);
   if(Team.requireLogin)document.querySelectorAll('[data-team="leave"]').forEach(el=>el.hidden=true);
  };

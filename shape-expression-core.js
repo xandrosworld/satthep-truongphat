@@ -2,6 +2,7 @@
 (function(root){'use strict';
 const functions={MIN:[1,24],MAX:[1,24],SUM:[1,24],AVG:[1,24],ROUND:[1,2],ROUNDUP:[1,2],ROUNDDOWN:[1,2],CEIL:[1,1],FLOOR:[1,1],SQRT:[1,1],ABS:[1,1],POW:[2,2],MOD:[2,2],CLAMP:[3,3],IF:[3,3],SIGN:[1,1],SIN:[1,1],COS:[1,1],TAN:[1,1],DIV:[2,2],PI:[0,0]};
 function parse(source){
+  if(root.TPFormulaAccess?.isRef(source))return {type:'remote',source};
   const text=String(source);if(text.length>500)throw Error('Công thức tối đa 500 ký tự');
   const tokens=text.match(/(?:\d+(?:\.\d*)?|\.\d+)|[A-Za-z_][A-Za-z_0-9]*|>=|<=|==|!=|[()+\-*/^,<>]/g)||[];
   if(tokens.join('')!==text.replace(/\s/g,''))throw Error('Công thức chứa ký tự không hỗ trợ');
@@ -25,6 +26,7 @@ function parse(source){
 }
 const finite=v=>{if(!Number.isFinite(v))throw Error('Kết quả công thức không hợp lệ');return v;};
 function evaluate(ast,vars){
+  if(ast.type==='remote')return root.TPFormulaAccess.evaluate(ast.source,vars);
   function walk(n){
     if(n.type==='number')return n.value;
     if(n.type==='var'){if(!Object.hasOwn(vars,n.name))throw Error('Tham số không hợp lệ: '+n.name);return finite(Number(vars[n.name]));}
@@ -54,6 +56,7 @@ function evaluate(ast,vars){
   return finite(walk(ast));
 }
 function dimension(ast,vars){
+  if(ast.type==='remote')return root.TPFormulaAccess.evaluate(ast.source,vars,'dimension');
   const zero=()=>({d:[0,0],literal:true}),same=(a,b)=>a.d.every((x,i)=>Math.abs(x-b.d[i])<1e-10);
   function compatible(a,b){if(!a.literal&&!b.literal&&!same(a,b))throw Error('Cộng/trừ hoặc hàm dùng các đại lượng khác đơn vị');return {d:a.literal?b.d:a.d,literal:a.literal&&b.literal};}
   const scalar=a=>{if(a.d.some(x=>x!==0))throw Error('Đối số cần không có đơn vị');};

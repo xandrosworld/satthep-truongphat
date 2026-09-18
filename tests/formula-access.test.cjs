@@ -1,0 +1,70 @@
+'use strict';
+const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js'),C=require('../core.js'),E=require('../shape-expression-core.js');
+const password='Formula-permissions-test-42!';
+async function harness(t){const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));const base='http://127.0.0.1:'+app.server.address().port;
+ const call=async(route,method='GET',body,session)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-CSRF-Token':session.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)}),raw=await r.json(),data=raw.__formulaProtected?raw.value:raw;return {status:r.status,data,raw,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
+ const admin=await call('setup','POST',{username:'admin',name:'Admin',password});
+ const create=async(name,rights={})=>{const body={username:name,name,password,role:'estimator',...rights};const u=await call('users','POST',body,admin);A.equal(u.status,201,JSON.stringify(u.data));return {id:u.data.id,body,session:await call('login','POST',{username:name,password})};};
+ const grant=async(u,flags)=>{Object.assign(u.body,flags);const r=await call('users/'+u.id+'/access','POST',u.body,admin);A.equal(r.status,200,JSON.stringify(r.data));u.session=await call('login','POST',{username:u.body.username,password});};
+ return {...app,call,admin,create,grant};
+}
+test('formula use without view: opaque transport, numeric evaluation, server save and grant/revoke',async t=>{
+ const {call,admin,create,grant}=await harness(t),u=await create('useonly',{canFormulaUse:true,canFormulaView:false,canFormulaEdit:false});
+ const document=P.demoSeed();const made=await call('quotes','POST',{document},admin);A.equal(made.status,201);
+ const record=await call('quotes/'+made.data.id,'GET',undefined,u.session);A.equal(record.raw.__formulaProtected,true);const tray=record.data.document.rules.find(x=>x.id==='tray');A.match(tray.width,/^__TPF_/);A.ok(!JSON.stringify(record.raw).includes('W + 2 * H + 2 * F'));
+ const vars={W:400,H:80,F:20};A.deepEqual((await call('formulas/evaluate','POST',{token:tray.width,variables:vars},u.session)).data,{value:600});
+ A.deepEqual((await call('formulas/evaluate','POST',{token:tray.width,variables:{W:[0,1],H:[0,1],F:[0,1]},mode:'dimension'},u.session)).data.value,{d:[0,1],literal:false});
+ const other=await create('other',{canFormulaView:false});A.equal((await call('formulas/evaluate','POST',{token:tray.width,variables:vars},other.session)).status,403);
+ for(const variables of [42,[],{W:[]},{W:'1; process.exit()'},null])A.equal((await call('formulas/evaluate','POST',{token:tray.width,variables},u.session)).status,400);
+ const d=record.data.document,leaf=C.flatten(d.quote.products).find(n=>n.rule==='tray');leaf.dims.W=400;
+ const saved=await call('quotes/'+made.data.id,'PUT',{document:d,expectedVersion:1},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const actual=(await call('quotes/'+made.data.id,'GET',undefined,admin)).data.document;A.equal(C.flatten(actual.quote.products).find(n=>n.id===leaf.id).ruleSpec.width,document.rules.find(r=>r.id==='tray').width);
+ leaf.ruleSpec.width='W + 100';A.equal((await call('quotes/'+made.data.id,'PUT',{document:d,expectedVersion:2},u.session)).status,403);
+ const old=u.session;await grant(u,{canFormulaUse:false});A.equal((await call('me','GET',undefined,old)).status,401);A.equal((await call('formulas/evaluate','POST',{token:tray.width,variables:vars},u.session)).status,403);
+ await grant(u,{canFormulaView:true});A.equal((await call('quotes/'+made.data.id,'GET',undefined,u.session)).data.document.rules.find(r=>r.id==='tray').width,'W + 2 * H + 2 * F');
+ await grant(u,{canFormulaUse:true,canFormulaEdit:true});A.equal((await call('quotes/'+made.data.id,'PUT',{document:d,expectedVersion:2},u.session)).status,200);
+});
+test('locked formula cannot change via catalog, quotation or library; lock CAS and delegation',async t=>{
+ const {call,admin,create,grant}=await harness(t),u=await create('editor',{canFormulaEdit:true,canFormulaUnlock:false,sections:require('../section-access.js').keys});
+ let r=await call('formulas/locks','POST',{key:'rules:tray',locked:true,expectedVersion:0,reason:'Chốt công thức'},admin);A.equal(r.status,200);
+ A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:0,reason:'Stale'},admin)).status,409);
+ const record=(await call('catalog','GET',undefined,admin)).data,changed=structuredClone(record.catalog);changed.rules.find(r=>r.id==='tray').width='W + H';
+ A.equal((await call('catalog','PUT',{catalog:changed,expectedVersion:record.version},u.session)).status,403);
+ const library=structuredClone(record.catalog);C.flatten(library.library).find(n=>n.rule==='tray').ruleSpec.width='W + H';A.equal((await call('catalog','PUT',{catalog:library,expectedVersion:record.version},u.session)).status,403);
+ const doc=P.demoSeed(),q=await call('quotes','POST',{document:doc},admin);const leaf=C.flatten(doc.quote.products).find(n=>n.rule==='tray');leaf.ruleSpec.width='W + H';
+ A.equal((await call('quotes/'+q.data.id,'PUT',{document:doc,expectedVersion:1},u.session)).status,403);
+ A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:1,reason:'Không được cấp'},u.session)).status,403);
+ await grant(u,{canFormulaUnlock:true});A.equal((await call('quotes/'+q.data.id,'PUT',{document:doc,expectedVersion:1},u.session)).status,200);
+ A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:1,reason:'Được ủy quyền'},u.session)).status,200);
+ await grant(u,{canFormulaUnlock:false});A.equal((await call('catalog','PUT',{catalog:changed,expectedVersion:record.version},u.session)).status,200);
+});
+test('approved quote requires explicit reopen right; scopes, versions and revocation remain enforced',async t=>{
+ const {call,admin,create,grant}=await harness(t),u=await create('maker'),tech=await create('tech',{role:'technical',technicalDelegation:true,canViewCosts:false,canEditFactors:false,sections:['bom'],canReopen:true});
+ const document=P.demoSeed(),made=await call('quotes','POST',{document},admin),id=made.data.id;
+ A.equal((await call('quotes/'+id+'/submit','POST',{expectedVersion:1},admin)).status,200);A.equal((await call('quotes/'+id+'/approve','POST',{expectedVersion:2},admin)).status,200);
+ A.equal((await call('quotes/'+id,'PUT',{document,expectedVersion:3},u.session)).status,409);
+ for(const a of ['reopen','restore'])A.equal((await call('quotes/'+id+'/'+a,'POST',{expectedVersion:3,sourceVersion:1,reason:'Test'},u.session)).status,403);
+ A.equal((await call('quotes/'+id+'/reopen','POST',{expectedVersion:3},tech.session)).status,400);
+ const r=await call('quotes/'+id+'/reopen','POST',{expectedVersion:3,reason:'Kỹ thuật sửa theo yêu cầu'},tech.session);A.equal(r.status,200,JSON.stringify(r.data));A.equal(r.data.total,undefined);A.equal(r.data.version,4);
+ const original=(await call('quotes/'+id+'/revision/3','GET',undefined,admin)).data;A.equal(original.status,'approved');A.equal(original.readOnly,true);
+ const d=(await call('quotes/'+id,'GET',undefined,tech.session)).data.document;d.quote.customer='Not allowed';A.equal((await call('quotes/'+id,'PUT',{document:d,expectedVersion:4},tech.session)).status,403);
+ await grant(u,{canReopen:true});A.equal((await call('quotes/'+id+'/restore','POST',{expectedVersion:4,sourceVersion:3,reason:'Tạo bản sửa'},u.session)).status,200);
+ await grant(u,{canReopen:false});A.equal((await call('quotes/'+id+'/restore','POST',{expectedVersion:5,sourceVersion:3,reason:'Đã thu hồi'},u.session)).status,403);
+});
+test('invalid permission update is atomic; role templates carry separate grants',async t=>{
+ const {call,admin,create}=await harness(t),u=await create('roles');
+ A.equal((await call('users/'+u.id+'/access','POST',{...u.body,role:'invalid',canReopen:true},admin)).status,400);
+ A.equal((await call('me','GET',undefined,u.session)).data.permissions.reopen,false);
+ const role=await call('roles','POST',{name:'Dùng công thức kín',role:'technical',sections:['bom'],canFormulaUse:true,canFormulaView:false,canFormulaEdit:false,canFormulaUnlock:false,canReopen:true},admin);A.equal(role.status,201);
+ const added=await call('users','POST',{username:'templated',name:'Template',password,roleTemplateId:role.data.id},admin);A.equal(added.status,201);
+ const login=await call('login','POST',{username:'templated',password});A.equal(login.data.permissions.formulaView,false);A.equal(login.data.permissions.reopen,true);
+});
+test('technical without prices or formula visibility can save dimensions; formula removal and revoked use are rejected',async t=>{
+ const {call,admin,create,grant}=await harness(t),u=await create('technicaluse',{role:'technical',technicalDelegation:true,sections:['bom','catalogRules'],canViewCosts:false,canFormulaUse:true,canFormulaView:false,canFormulaEdit:false});
+ const document=P.demoSeed(),node=C.flatten(document.quote.products).find(n=>n.rule==='tray');node.dimensionLinks={L:{mode:'formula',expression:'PRODUCT_L'}};
+ const made=await call('quotes','POST',{document},admin);A.equal(made.status,201,JSON.stringify(made.data));
+ let record=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data,leaf=C.flatten(record.document.quote.products).find(n=>n.id===node.id);A.equal(leaf.spec.price,0);A.match(leaf.ruleSpec.width,/^__TPF_/);leaf.dims.W=410;
+ let saved=await call('quotes/'+made.data.id,'PUT',{document:record.document,expectedVersion:1},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));A.equal(saved.data.total,undefined);
+ record=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data;leaf=C.flatten(record.document.quote.products).find(n=>n.id===node.id);delete leaf.dimensionLinks;A.equal((await call('quotes/'+made.data.id,'PUT',{document:record.document,expectedVersion:2},u.session)).status,403);
+ await grant(u,{canFormulaUse:false});record=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data;C.flatten(record.document.quote.products).find(n=>n.id===node.id).dims.W=420;A.equal((await call('quotes/'+made.data.id,'PUT',{document:record.document,expectedVersion:2},u.session)).status,403);
+});
