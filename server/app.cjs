@@ -48,6 +48,8 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   `);
   const columns=new Set(sql.prepare('PRAGMA table_info(users)').all().map(c=>c.name));for(const column of ['can_factors','can_below_cost','can_view_costs','can_approve','technical_delegated'])if(!columns.has(column))sql.exec('ALTER TABLE users ADD COLUMN '+column+' INTEGER');
   if(!columns.has('section_access'))sql.exec('ALTER TABLE users ADD COLUMN section_access TEXT');
+  // Migration: strip customer access from technical accounts (one-time safe)
+  for(const u of sql.prepare("SELECT id,section_access FROM users WHERE role='technical' AND section_access IS NOT NULL").all()){try{const s=JSON.parse(u.section_access);if(s.includes('customer'))sql.prepare('UPDATE users SET section_access=? WHERE id=?').run(JSON.stringify(s.filter(k=>k!=='customer')),u.id);}catch(e){}}
   if(!sql.prepare('SELECT id FROM catalog WHERE id=1').get())sql.prepare('INSERT INTO catalog(id,version,document,updated,actor) VALUES(1,0,?,?,?)').run(JSON.stringify(catalogSeed()),new Date().toISOString(),'system');
   const attempts=new Map();
   function accessValue(body){try{return body.sections===undefined?null:JSON.stringify(SA.parse(body.sections));}catch(e){fail(400,e.message);}}
