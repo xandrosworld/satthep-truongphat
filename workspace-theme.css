@@ -111,6 +111,11 @@ th{color:var(--muted)}
 .workspace-tabs .step-status{display:block;font-size:11px;margin-left:6px}
 [data-catalog-draft-panel]{margin-bottom:16px}
 /* Shared workspace: summaries and work queue are visible on arrival. */
+.sidebar .brand{justify-content:center;padding:0 0 22px}
+.brand-logo{display:block;width:144px;height:auto;object-fit:contain;background:#fff}
+.paper-brand .company-logo{display:block;width:84px;height:auto;max-width:none;flex:0 0 84px;object-fit:contain;background:#fff}
+@media(max-width:700px){.paper-brand .company-logo{width:60px;flex-basis:60px}}
+@media print{.paper-brand .company-logo{width:22mm;flex-basis:22mm;print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 .workspace-home{max-width:1600px;margin:0 auto}
 .home-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:4px 0 24px;color:var(--muted)}
 .home-toolbar strong{color:var(--ink)}

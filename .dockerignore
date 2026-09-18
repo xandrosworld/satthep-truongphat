@@ -4,6 +4,8 @@
 !*.js
 !*.css
 !index.html
+!assets/
+!assets/truong-phat-logo.jpg
 !tools/
 !tools/build.cjs
 !server/
