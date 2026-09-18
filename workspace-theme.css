@@ -153,6 +153,11 @@ th{color:var(--muted)}
 .home-pagination{display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:16px 22px;font-size:13px}
 .home-quotes .notice{margin:20px}
 .home-mobile-label{display:none}
+.legacy-review-tools{align-items:end;flex-wrap:wrap;margin:18px 0;gap:16px}
+.legacy-review-tools .field{flex:1;min-width:220px;margin:0}
+.legacy-review-table{min-width:850px;width:100%}
+.legacy-review-table td{vertical-align:top;max-width:300px;overflow-wrap:anywhere}
+.legacy-review-pager{justify-content:flex-end;margin:12px 0}
 @media(max-width:700px){.home-toolbar{align-items:flex-start;flex-direction:column}.home-filters{flex-wrap:wrap;padding:16px}.home-filters label:first-child{flex-basis:100%;max-width:none}.home-filters label:nth-child(2){flex:1}.home-status{padding:16px 16px 0;gap:6px}.home-status button{padding:9px 10px}.home-list-caption{flex-direction:column;padding:16px}.home-table th,.home-table td{padding:12px}.home-account>div{left:0;right:auto}.home-toolbar .actions{gap:8px}.home-empty{padding:36px 16px}}
 @media(max-width:700px){
  body:has(.workspace-home) .top-actions{flex-wrap:wrap;justify-content:flex-end;min-width:0;gap:6px}
