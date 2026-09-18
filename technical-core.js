@@ -6,7 +6,7 @@ const nodeKeys=['id','kind','name','manualName','namePattern','qty','unit','mate
 const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','stockOptions','shapeDefinition','massOverride','areaOverride'];
 const opKeys=['id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
 const ruleKeys=['id','name','shape','length','width','measurementRules','fields','shapes'];
-const quoteKeys=['id','customer','project','date','kerf','remnantMode','remnantSelections','request','customerInfo'];
+const quoteKeys=['id','date','kerf','remnantMode','remnantSelections','request'];
 const pick=(x,keys)=>Object.fromEntries(keys.filter(k=>x?.[k]!==undefined).map(k=>[k,copy(x[k])]));
 const spec=x=>({...pick(x,specKeys),price:0});
 function recipe(x){return {...pick(x,['id','norm','basis','layers','loss']),spec:spec(x.spec)};}
@@ -15,7 +15,7 @@ function node(x,q={}){return {...pick(x,nodeKeys),...(x.spec?{spec:spec(x.spec)}
  const unit=method==='fixed'?'gói':method==='direct'&&!option?o.priceUnit:(option||r)?.[o.mode+'Unit']||r?.unit;
  return {...pick(o,opKeys),pricingMethod:'direct',unitPrice:0,priceUnit:unit||'kg'};
  }),children:(x.children||[]).map(n=>node(n,q))};}
-function project(d){return {version:2,materials:(d.materials||[]).map(spec),rates:(d.rates||[]).map(rate),rules:(d.rules||[]).map(x=>pick(x,ruleKeys)),library:(d.library||[]).map(n=>node(n,{ratesSnapshot:d.rates})),shapeDefinitions:copy(d.shapeDefinitions||[]),stockSizes:copy(d.stockSizes||[]),conventions:{},materialPrices:[],history:[],quote:{...pick(d.quote,quoteKeys),...(d.quote.customerInfo?{customerInfo:pick(d.quote.customerInfo,['id','name','contact','phone','email','address','taxId'])}:{}),status:d.quote.status,products:d.quote.products.map(n=>node(n,d.quote)),ratesSnapshot:(d.quote.ratesSnapshot||[]).map(rate),pricing:{version:2,selected:'detail',comparisonMethods:['detail'],overhead:0,management:0,special:0,profit:0,processing:0,order:0,customer:0,incoming:0,outgoing:0,delivery:0,install:0},vat:0,expenses:[]}};}
+function project(d){return {version:2,materials:(d.materials||[]).map(spec),rates:(d.rates||[]).map(rate),rules:(d.rules||[]).map(x=>pick(x,ruleKeys)),library:(d.library||[]).map(n=>node(n,{ratesSnapshot:d.rates})),shapeDefinitions:copy(d.shapeDefinitions||[]),stockSizes:copy(d.stockSizes||[]),conventions:{},materialPrices:[],history:[],quote:{...pick(d.quote,quoteKeys),status:d.quote.status,products:d.quote.products.map(n=>node(n,d.quote)),ratesSnapshot:(d.quote.ratesSnapshot||[]).map(rate),pricing:{version:2,selected:'detail',comparisonMethods:['detail'],overhead:0,management:0,special:0,profit:0,processing:0,order:0,customer:0,incoming:0,outgoing:0,delivery:0,install:0},vat:0,expenses:[]}};}
 function merge(original,input){
  // Only a technical projection is accepted; hidden values must never round-trip.
  const submitted=copy(input),before=project(original);
