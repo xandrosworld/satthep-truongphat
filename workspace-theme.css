@@ -102,3 +102,11 @@ th{color:var(--muted)}
 
 .crm-field-group{padding:16px 0;border-bottom:1px solid var(--line,#e2e8f0)}
 .crm-field-group summary{cursor:pointer;padding:4px 0}
+/* Handoff status remains distinct from the selected quotation step. */
+[data-notice=inbox]{display:inline-flex;align-items:center;gap:7px}
+[data-notice=inbox].has-unread{background:#fff0df;border:2px solid #c96800;color:#8a4000;font-weight:750}
+[data-notice=confirm]{background:#175d96;color:white;border:1px solid #124b79;font-weight:750;padding:11px 16px;font-size:14px}
+.workspace-tabs .step-done{color:#166534;background:#edf8f0}
+.workspace-tabs .step-changed{color:#934800;background:#fff4df}
+.workspace-tabs .step-status{display:block;font-size:11px;margin-left:6px}
+[data-catalog-draft-panel]{margin-bottom:16px}

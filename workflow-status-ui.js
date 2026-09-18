@@ -1,0 +1,7 @@
+'use strict';
+function workflowStatusPaint(){
+ const bell=document.querySelector('[data-notice=inbox]');if(bell){bell.classList.toggle('has-unread',Notices.unread>0);if(!bell.querySelector('svg'))bell.insertAdjacentHTML('afterbegin','<svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>');}
+ const link=teamCurrent(),state=Notices.quoteId===link?.id?Notices.state:null,current=!Team.dirty&&state?.quoteVersion===link?.version;
+ for(const b of document.querySelectorAll('.workspace-tabs [data-tab]')){const key=b.dataset.tab,stage=['bom','operations','waste','mass'].includes(key)?state?.technical:key==='prices'?state?.materials:null,approved=['approved','sent','accepted','ordered'].includes(link?.status);let status='';if(stage)status=current&&stage.current?'done':'changed';if(['pricing','preview'].includes(key)&&approved&&!Team.dirty)status='done';b.classList.toggle('step-done',status==='done');b.classList.toggle('step-changed',status==='changed');b.querySelector('.step-status')?.remove();if(status)b.insertAdjacentHTML('beforeend','<small class="step-status">'+(status==='done'?'✓ Đã xác nhận':'! Cần xác nhận lại')+'</small>');}
+}
+function installWorkflowStatusUI(){const paint=noticePaint;noticePaint=()=>{paint();workflowStatusPaint();};const draw=render;render=()=>{draw();workflowStatusPaint();};}
