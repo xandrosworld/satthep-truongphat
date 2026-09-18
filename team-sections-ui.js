@@ -7,7 +7,7 @@ function installSectionAccessUI(){
  const oldRender=render;render=()=>{
   if(Team.requireLogin&&!Team.user){$('#content').innerHTML=heading('Đăng nhập làm việc','Báo giá, danh mục và lịch sử được lưu chung trên máy chủ.',teamButton('Đăng nhập','login','','primary'));$('#save-status').textContent='Chưa đăng nhập';return;}
   if(page==='customers'&&Team.user&&Team.permissions.costs){oldRender();$('#content').innerHTML=renderCustomers();$('#save-status').textContent='Danh bạ dùng chung trên máy chủ';return;}
-  if(Team.requireLogin&&Team.user&&Team.permissions.costs&&!Team.loaded){$('#content').innerHTML=workspaceHome();workspaceHomeMount();$('#save-status').textContent='Dữ liệu dùng chung trên máy chủ';return;}
+  if(Team.requireLogin&&Team.user&&Team.permissions.costs&&(!Team.loaded||(!Team.link&&page==='quote'))){if(Team.loaded&&!Team.link&&page==='quote'){Team.loaded=false;Team.catalogVersion=null;}$('#content').innerHTML=workspaceHome();workspaceHomeMount();$('#save-status').textContent='Dữ liệu dùng chung trên máy chủ';return;}
   oldRender();if(!Team.user||!Team.permissions.costs)return;
   const rights=Team.permissions,scope=currentSection();
   if(Team.loaded&&scope&&!rights.sections.includes(scope)){
