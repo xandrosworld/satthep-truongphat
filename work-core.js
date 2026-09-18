@@ -63,6 +63,7 @@ function operation(rate,op,ctx,r,tier){
   const method=op.pricingMethod||'factors';
   const unit=method==='fixed'?'gói':method==='direct'?op.priceUnit:(rate[op.mode+'Unit']||rate.unit);
   if(!['kg','tấn','m²','m³','m','lần','bộ','cái','gói'].includes(unit)&&(!String(unit||'').trim()||!['manual_total','manual_unit'].includes(op.basisMode)))throw Error('Đơn vị riêng cần nhập lượng công việc rõ ràng, không quy đổi ngầm');
+  if(r.node?.spec?.shape==='piece'&&r.node.pieceMass?.mode==='skip'&&['kg','tấn'].includes(unit)&&(!op.basisMode||op.basisMode==='auto'))return {unit,basis:0,cost:0,rate:0,value:0,factors:[],skipped:true,reason:'Bỏ qua khối lượng: '+r.node.pieceMass.reason};
   let basis;
   if(method==='fixed')basis=op.fixedScope==='unit'?r.count:1;
   else if(op.basisMode==='manual_total')basis=number(op.workQuantity,'Lượng công việc');
@@ -106,7 +107,7 @@ function consume(recipe,n,r,index,opIndex,rateName,workUnit){
   return {id:n.id+':'+(n.ops?.[opIndex]?.instanceId||(n.ops?.[opIndex]?.id||'operation')+':'+opIndex)+':'+(recipe.id||index),ownerId:n.id,productId:r.productId,opIndex,recipeIndex:index,rateName,materialId:m.id,name:m.name,brand:m.brand||'',unit:m.unit,supplier:m.supplier||'',norm,basis:recipe.basis,layers,loss,quantity,price,cost};
 }
 function expenseRows(base,generated){
-  const rows=base.rows.map(row=>({id:row.id,productId:row.productId,materialId:row.spec.id,supplier:row.node.supplier||row.spec.supplier||'',externallySupplied:!!row.externallySupplied,netKg:row.spec.shape==='piece'?(row.spec.unit==='kg'?row.count:0):row.geometry.weight,purchaseKg:row.externallySupplied?0:row.spec.shape==='piece'?(row.spec.unit==='kg'?row.count:0):(row.estimate?.weight??row.purchasedWeight)||0,area:row.geometry.area||0,length:row.geometry.length?row.geometry.length*row.count/1000:(row.spec.unit==='m'?row.count:0),count:row.count}));
+  const rows=base.rows.map(row=>({id:row.id,productId:row.productId,materialId:row.spec.id,supplier:row.node.supplier||row.spec.supplier||'',externallySupplied:!!row.externallySupplied,netKg:row.spec.shape==='piece'?(row.node.pieceMass?row.geometry.weight:(row.spec.unit==='kg'?row.count:0)):row.geometry.weight,purchaseKg:row.externallySupplied?0:row.spec.shape==='piece'?(row.node.pieceMass?row.geometry.weight:(row.spec.unit==='kg'?row.count:0)):(row.estimate?.weight??row.purchasedWeight)||0,area:row.geometry.area||0,length:row.geometry.length?row.geometry.length*row.count/1000:(row.spec.unit==='m'?row.count:0),count:row.count}));
   for(const g of generated)rows.push({id:g.ownerId+':'+g.opIndex+':'+g.recipeIndex,productId:g.productId,materialId:g.materialId,supplier:g.supplier,netKg:g.unit==='kg'?g.quantity:0,purchaseKg:g.unit==='kg'?g.quantity:0,area:g.unit==='m²'?g.quantity:0,length:g.unit==='m'?g.quantity:0,count:g.quantity});
   return rows;
 }

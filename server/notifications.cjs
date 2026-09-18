@@ -15,7 +15,7 @@ function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
  CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),event_id TEXT NOT NULL REFERENCES handoff_events(id),read_at TEXT,UNIQUE(user_id,event_id));`);
  const getState=id=>{const r=sql.prepare('SELECT document FROM quote_handoffs WHERE quote_id=?').get(id);return r?JSON.parse(r.document):{};};
  function state(quote){const saved=getState(quote.id),fp=fingerprints(JSON.parse(quote.document));return {quoteVersion:quote.version,technical:saved.technical?{...saved.technical,current:saved.technical.signature===fp.technical}:null,materials:saved.materials?{...saved.materials,current:saved.technical?.signature===fp.technical&&saved.materials.technicalSignature===fp.technical&&saved.materials.signature===fp.materials}:null};}
- return {created(quoteId,user){
+ return {summary(quote){const s=state(quote);return Object.fromEntries(['technical','materials'].map(k=>[k,s[k]?{current:s[k].current,at:s[k].at,quoteVersion:s[k].quoteVersion}:null]));},created(quoteId,user){
   const q=getQuote(quoteId),id=randomUUID(),at=new Date().toISOString();
   const targets=sql.prepare('SELECT * FROM users WHERE active=1').all().filter(u=>receives(permissions(u),'created'));
   sql.prepare('INSERT INTO handoff_events VALUES(?,?,?,?,?,?,?)').run(id,q.id,'created',q.version,user.id,at,'');

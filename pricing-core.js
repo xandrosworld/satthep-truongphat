@@ -107,7 +107,7 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
         const rate=q.ratesSnapshot.find(x=>x.id===op.id);if(!rate)throw Error('Không tìm thấy mã nguyên công');
         const ctx={...context(n,r),...W.context(n,r,q.products,q)};
         const applied=W.operation(rate,{...op,pricingMethod:W.methodFor(op,q),priceOptionId:W.optionFor(op,q)},ctx,r,tier),cost=applied.cost;
-        item={...item,...applied,name:rate.name};
+        item={...item,...applied,name:rate.name};if(applied.skipped){r.ownOps.push(item);continue;}
         parts[op.mode==='outside'?'outside':'factory']+=cost;
         if(op.mode==='inside'&&(M.laborReplaces(q.pricing,rate.id)??rate.tmcReplace)){r.replaceableFactory+=cost;if(!op.afterPackage)r.ownReplaceableFactory+=cost;}
         for(const [recipeIndex,recipe] of W.recipes(rate).entries()){

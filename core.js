@@ -70,7 +70,7 @@ function geometry(n,count){
   if(n.spec?.shapeDefinition)return definitions().geometry(n,count);
   const m=n.spec,vars={...n.dims,...m.props},rule=n.ruleSpec;
   if(!(count>0)&&count!==0)throw Error('Số lượng không hợp lệ');
-  if(m.shape==='piece')return {length:0,width:0,weight:0,area:0,volume:0,blankArea:0,quantity:count,measure:count};
+  if(m.shape==='piece'){const mass=n.pieceMass;if(mass&&(!['manual','skip'].includes(mass.mode)||typeof mass.reason!=='string'||!mass.reason.trim()||mass.reason.length>500))throw Error('Khối lượng vật tư cần cách khai và căn cứ hợp lệ');if(mass?.mode==='manual'&&(!Number.isFinite(mass.value)||mass.value<=0))throw Error('Khối lượng mỗi đơn vị phải là số dương');return {length:0,width:0,weight:mass?.mode==='manual'?mass.value*count:0,area:0,volume:0,blankArea:0,quantity:count,measure:count};}
   for(const k of shapes[m.shape].fixed)if(!(m.props[k]>0))throw Error('Thiếu kích thước vật tư '+k);
   const length=formula(rule.length,vars),width=m.shape==='sheet'?formula(rule.width,vars):0;
   if(!(length>0)||(m.shape==='sheet'&&!(width>0)))throw Error('Kích thước khai triển phải lớn hơn 0');
