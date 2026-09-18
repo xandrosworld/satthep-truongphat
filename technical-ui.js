@@ -60,7 +60,7 @@ function installTechnicalUI(){
  const oldRender=render;render=()=>{
   if(technicalOnly()){
    $('#save-status').textContent='Máy chủ · dữ liệu kỹ thuật';
-   if(!Team.loaded){$('#content').innerHTML=heading('Không gian kỹ thuật','Mở báo giá hoặc danh mục được cấp quyền. Giá và hệ số được quản lý riêng.',teamButton('Danh sách báo giá','list','','primary')+(Team.permissions.catalog?teamButton('Làm việc với danh mục','catalog-workspace'):'')+teamButton('Đổi mật khẩu','own-password')+teamButton('Đăng xuất','logout'));return;}
+   if(!Team.loaded){$('#content').innerHTML=workspaceHome();workspaceHomeMount();return;}
    if(!technicalCatalogPage())page='quote';if(!technicalTabs.includes(tab))tab='operations';
    if(page==='rules'&&['factors','operations','customers','complexity'].includes(RulesCatalog.kind))RulesCatalog.kind='productGroups';
   }
