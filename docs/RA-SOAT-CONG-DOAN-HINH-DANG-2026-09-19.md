@@ -23,3 +23,5 @@ Quyền `catalogRules` cho sửa thông tin kỹ thuật của công đoạn; kh
 - `tools/verify-catalog-technical.cjs`: đối chiếu hash bản dựng Railway, mở các form; chỉ đăng nhập/đọc, không lưu dữ liệu nghiệp vụ.
 
 Các sửa dở về giá vận chuyển mẫu và tab vận chuyển trong Danh mục quy ước từ phiên trước được giữ tại workspace, không đưa vào bản sửa này. Phạm vi rà soát này là hai ảnh mới; không xác nhận thay cho nghiệm thu toàn bộ checklist. Excel cũ vẫn cần bảng Quy uoc/công thức nguồn và ánh xạ dữ liệu trước khi nhập thật.
+
+Kết quả xác minh: 507/507 kiểm thử dữ liệu/máy chủ đạt; luồng trình duyệt mới đạt. Railway đã phục vụ bản sửa 39d7304, hash HTML khớp cây mã đã kiểm; các form đạt, không lỗi JavaScript, không ghi dữ liệu nghiệp vụ. Hồ sơ tại artifacts/customer-review/catalog-finish-20260919/live/results.json. Kiểm thử trình duyệt cũ shape-row-browser dừng ở selector tạo báo giá đã thay đổi; không tính là đã đạt.

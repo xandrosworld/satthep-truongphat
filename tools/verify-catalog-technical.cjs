@@ -20,7 +20,7 @@ const fs=require('node:fs'),crypto=require('node:crypto'),{chromium,expect}=requ
   await expect(p.locator('[name=machine]')).toBeVisible();await expect(p.locator('[name=inside],#review-price-options,[data-operation-package]')).toHaveCount(0);
   await p.screenshot({path:dir+'/01-cong-doan.png'});await p.evaluate(()=>closeDialog());
   await p.locator('[data-rc-tab=shapes]').click();await p.locator('[data-definition=shape-new]').click();
-  await expect(p.locator('[name=blankShapeName]')).toBeVisible();await p.locator('[name=blankShapeName]').fill('Phôi kiểm tra — không lưu');await expect(p.locator('#definition-preview')).toHaveAttribute('data-valid','true');
+  await expect(p.locator('[name=blankShapeName]')).toBeVisible();await p.locator('[name=name]').fill('Quy ước kiểm tra — không lưu');await p.locator('[name=blankShapeName]').fill('Phôi kiểm tra — không lưu');await expect(p.locator('#definition-preview')).toHaveAttribute('data-valid','true');
   await p.screenshot({path:dir+'/02-them-hinh-dang.png'});await p.evaluate(()=>closeDialog());
   await p.locator('[data-page=rates]').click();await p.waitForFunction(()=>page==='rates');await p.evaluate(id=>workRateEdit(id,true),id);
   await expect(p.locator('[name=inside]')).toBeVisible();await expect(p.locator('[name=outside]')).toBeVisible();await p.evaluate(()=>closeDialog());
