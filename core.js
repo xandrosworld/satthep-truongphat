@@ -106,7 +106,7 @@ function materialEstimate(n,g){
   if(!n.materialEstimate||n.spec.shape==='piece')return null;
   const {method,percent}=n.materialEstimate;
   if(!['net','percent'].includes(method)||!Number.isFinite(percent)||percent<0||percent>100||method==='net'&&percent!==0)throw Error('Hao hụt dự tính phải từ 0 đến 100%; theo phôi dùng 0%');
-  const multiplier=1+percent/100,weight=g.weight*multiplier,area=g.blankArea*multiplier,measure=g.measure*multiplier,m=n.spec;
+  const multiplier=1+percent/100,weight=g.weight*multiplier,area=g.blankArea*multiplier,m=n.spec,measure=(m.shape==='sheet'?g.blankArea:g.measure)*multiplier;
   const basis=m.unit==='kg'?weight:m.unit==='m²'&&m.shape==='sheet'||m.unit==='m'&&m.shape!=='sheet'?measure:null;
   if(basis===null)throw Error('Dự tính theo phôi cần đơn giá kg, m² tấm hoặc m dài; khai đơn vị giá phù hợp trước');
   return {method,percent,weight,area,measure,basis,unit:m.unit,cost:basis*m.price};
