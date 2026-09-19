@@ -15,10 +15,15 @@ function denied(before,after,rights,{catalog=false}={}){
  const check=(s,a,b)=>{if(!equal(a,b)&&(!allowed.has(s)||s==='factors'&&!rights.factors))bad.add(s);};
  function fields(a,b,fn,ignore=[]){a=a||{};b=b||{};for(const k of new Set([...Object.keys(a),...Object.keys(b)]))if(!ignore.includes(k))check(fn(k),a[k],b[k]);}
  function defaults(a,b){fields(a,b,k=>['expenseRates','incoming','outgoing','delivery','install'].includes(k)?'catalogLogistics':['factorDefinitions','salesFactors','productionFactors','overhead','management','special','profit','processing','order','reserve','customer'].includes(k)?'factors':'catalogOperations');}
- if(catalog){fields(before,after,catalogSection,['pricingDefaults']);defaults(before?.pricingDefaults,after?.pricingDefaults);
+ function catalogRates(a,b){
+  for(const r of b||[]){const old=(a||[]).find(x=>x.id===r.id)||{id:r.id,unit:'kg',insideUnit:'kg',outsideUnit:'kg',inside:0,outside:0,factors:[],operationType:'detail'};fields(old,r,k=>['name','machine','technicalNotes'].includes(k)&&allowed.has('catalogRules')?'catalogRules':'catalogOperations');}
+  for(const r of a||[])if(!(b||[]).some(x=>x.id===r.id))check('catalogOperations',r,undefined);
+ }
+ catalogRates(before?.rates,after?.rates);
+ if(catalog){fields(before,after,catalogSection,['pricingDefaults','rates']);defaults(before?.pricingDefaults,after?.pricingDefaults);
   const factorData=d=>({rates:(d?.rates||[]).map(r=>({id:r.id,factorsEnabled:r.factorsEnabled!==false,factors:r.factors||[],outsideFactors:!!r.outsideFactors,options:(r.priceOptions||[]).filter(o=>o.outsideFactors).map(o=>o.id)})).filter(r=>!r.factorsEnabled||r.factors.length||r.outsideFactors||r.options.length).sort((a,b)=>a.id.localeCompare(b.id)),packageFactors:Object.entries(d?.pricingDefaults?.tmcLaborOperation?.tables||{}).concat(d?.pricingDefaults?.tmcLaborOperation?.default?[['default',d.pricingDefaults.tmcLaborOperation.default]]:[]).map(([id,b])=>({id,choice:b.choice,factorsEnabled:b.rate?.factorsEnabled!==false,factors:b.rate?.factors||[]})).sort((a,b)=>a.id.localeCompare(b.id)),policy:d?.pricingDefaults?.tmcPolicy||null,groups:d?.pricingDefaults?.productGroups||[],costFlows:d?.pricingDefaults?.costFlows,loss:d?.pricingDefaults?.tmcLoss,tables:(d?.pricingDefaults?.tmcTables||[]).map(t=>({id:t.id,loss:t.loss,ancillary:t.ancillary?.kind==='percent'?t.ancillary:null,common:t.common?.kind==='percent'?t.common:null})).filter(t=>t.loss!==undefined||t.ancillary||t.common),customers:d?.conventions?.customers||[],complexity:d?.conventions?.complexity||[]});
   check('factors',factorData(before),factorData(after));return [...bad];}
- fields(before,after,catalogSection,['quote','version','history','pricingDefaults']);defaults(before?.pricingDefaults,after?.pricingDefaults);
+ fields(before,after,catalogSection,['quote','version','history','pricingDefaults','rates']);defaults(before?.pricingDefaults,after?.pricingDefaults);
  const a=before?.quote||{},b=after?.quote||{};
  fields(a,b,quoteSection,['products','ratesSnapshot','pricing','status','workspaceKey','changeHistory','inputPriceAudit','approvedOffer','approvedBaseline']);
  fields(a.pricing,b.pricing,priceSection);

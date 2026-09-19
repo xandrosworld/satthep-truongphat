@@ -15,10 +15,17 @@ test('price-free technical catalogue: grant, publish, preserve prices, reject in
  A.equal(actual.materials[0].price,original.materials[0].price);A.equal(actual.materials[0].name,c.materials[0].name);A.equal(actual.library[0].name,c.library[0].name);A.deepEqual(actual.rates,original.rates);A.deepEqual(actual.pricingDefaults,original.pricingDefaults);A.deepEqual(actual.materialPrices,original.materialPrices);
  const expectedLibrary=structuredClone(original.library);expectedLibrary[0].name+=' technical';A.deepEqual(actual.library,expectedLibrary,'template prices, factors and selected methods survive');
  record=(await call('catalog','GET',undefined,tech)).data;
- for(const mutate of [x=>x.materials[0].price=777,x=>x.rates[0].inside=777,x=>x.pricingDefaults.profit=777,x=>x.library[0].competitorPrice=777,x=>x.conventions.customers=[{name:'VIP',percent:777}]]){const forged=structuredClone(record.catalog);mutate(forged);A.equal((await call('catalog','PUT',{expectedVersion:record.version,catalog:forged},tech)).status,403);}
+ record.catalog.rates[0].machine='Máy laser';record.catalog.rates[0].technicalNotes='Cắt theo bản vẽ';record.catalog.rates[0].name='Cắt phôi kỹ thuật';
+ record.catalog.rates.push({id:'TECH-NEW',name:'Khoan kỹ thuật',machine:'Máy khoan bàn',unit:'kg',insideUnit:'kg',outsideUnit:'kg',inside:0,outside:0,factors:[],operationType:'detail'});
+ saved=await call('catalog','PUT',{expectedVersion:record.version,catalog:record.catalog},tech);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const changed=(await call('catalog','GET',undefined,admin)).data.catalog;
+ A.deepEqual(changed.rates[0],{...original.rates[0],name:'Cắt phôi kỹ thuật',machine:'Máy laser',technicalNotes:'Cắt theo bản vẽ'});
+ A.equal(changed.rates.find(x=>x.id==='TECH-NEW').machine,'Máy khoan bàn');
+ record=(await call('catalog','GET',undefined,tech)).data;
+ for(const mutate of [x=>x.materials[0].price=777,x=>x.rates[0].inside=777,x=>x.rates[0].insideUnit='m',x=>x.rates[0].machine='x'.repeat(201),x=>x.rates.pop(),x=>x.pricingDefaults.profit=777,x=>x.library[0].competitorPrice=777,x=>x.conventions.customers=[{name:'VIP',percent:777}]]){const forged=structuredClone(record.catalog);mutate(forged);A.equal((await call('catalog','PUT',{expectedVersion:record.version,catalog:forged},tech)).status,403);}
  A.equal((await call('catalog/candidates','GET',undefined,tech)).status,403);
  A.equal((await call('users/'+made.data.id+'/access','POST',{...grant,sections:['catalogLibrary']},admin)).status,200);A.equal((await call('catalog','GET',undefined,tech)).status,401);
- tech=await call('login','POST',{username:'tech',password});record=(await call('catalog','GET',undefined,tech)).data;record.catalog.materials[0].name+=' forbidden';A.equal((await call('catalog','PUT',{expectedVersion:record.version,catalog:record.catalog},tech)).status,403);
+ tech=await call('login','POST',{username:'tech',password});record=(await call('catalog','GET',undefined,tech)).data;const deniedOp=structuredClone(record.catalog);deniedOp.rates[0].machine='Forbidden';A.equal((await call('catalog','PUT',{expectedVersion:record.version,catalog:deniedOp},tech)).status,403);record.catalog.materials[0].name+=' forbidden';A.equal((await call('catalog','PUT',{expectedVersion:record.version,catalog:record.catalog},tech)).status,403);
  A.equal((await call('users/'+made.data.id+'/access','POST',{...grant,sections:['bom']},admin)).status,200);tech=await call('login','POST',{username:'tech',password});A.equal((await call('catalog','GET',undefined,tech)).status,403);
  const role=await call('roles','POST',{...grant,name:'Technical without prices'},admin);A.equal(role.status,201);
 });

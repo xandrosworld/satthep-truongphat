@@ -10,7 +10,7 @@ const quoteKeys=['id','date','kerf','remnantMode','remnantSelections','request']
 const pick=(x,keys)=>Object.fromEntries(keys.filter(k=>x?.[k]!==undefined).map(k=>[k,copy(x[k])]));
 const spec=x=>({...pick(x,specKeys),price:0});
 function recipe(x){return {...pick(x,['id','norm','basis','layers','loss']),spec:spec(x.spec)};}
-function rate(x){return {...pick(x,['id','name','unit','insideUnit','outsideUnit','finishing','productGroups','operationType','consumptionsEnabled']),inside:0,outside:0,factors:[],...(x.consumption?{consumption:recipe(x.consumption)}:{}),...(x.consumptions?{consumptions:x.consumptions.map(recipe)}:{})};}
+function rate(x){return {...pick(x,['id','name','machine','technicalNotes','unit','insideUnit','outsideUnit','finishing','productGroups','operationType','consumptionsEnabled']),inside:0,outside:0,factors:[],...(x.consumption?{consumption:recipe(x.consumption)}:{}),...(x.consumptions?{consumptions:x.consumptions.map(recipe)}:{})};}
 function node(x,q={}){return {...pick(x,nodeKeys),...(x.spec?{spec:spec(x.spec)}:{}),...(x.ruleSpec?{ruleSpec:pick(x.ruleSpec,ruleKeys)}:{}),...(x.outsource?{outsource:{...pick(x.outsource,['enabled','supplier','output','materialSupply','unit','quantity']),price:0}}:{}),ops:(x.ops||[]).map(o=>{const r=q.ratesSnapshot?.find(r=>r.id===o.id),option=r?.priceOptions?.find(p=>p.id===(q.operationPriceOptions?.[o.id]||o.priceOptionId)),method=option?.method||q.operationMethods?.[o.id]||o.pricingMethod;
  const unit=method==='fixed'?'gói':method==='direct'&&!option?o.priceUnit:(option||r)?.[o.mode+'Unit']||r?.unit;
  return {...pick(o,opKeys),pricingMethod:'direct',unitPrice:0,priceUnit:unit||'kg'};
@@ -68,7 +68,17 @@ function projectCatalog(d){
 function mergeCatalog(original,input){
  if(!input||!equal(input,projectCatalog(input)))throw Error('Danh mục kỹ thuật chứa giá, hệ số hoặc trường không được phép');
  const before=projectCatalog(original),result=copy(original);
- for(const k of ['rates','pricingDefaults','materialPrices'])if(!equal(before[k],input[k]))throw Error('Không được thay đổi đơn giá hoặc hệ số');
+ for(const k of ['pricingDefaults','materialPrices'])if(!equal(before[k],input[k]))throw Error('Không được thay đổi đơn giá hoặc hệ số');
+ // Technical edits never replace commercial fields. New operations start with zero placeholders.
+ const technicalKeys=['name','machine','technicalNotes'];
+ if(original.rates.some(r=>!input.rates.some(x=>x.id===r.id)))throw Error('Không xóa công đoạn qua danh mục kỹ thuật');
+ result.rates=input.rates.map(r=>{
+  const old=original.rates.find(x=>x.id===r.id),base=old||{id:r.id,unit:'kg',insideUnit:'kg',outsideUnit:'kg',inside:0,outside:0,factors:[],operationType:'detail'};
+  const expected=rate(base),submitted=copy(r);for(const k of technicalKeys)delete expected[k],delete submitted[k];
+  if(!equal(expected,submitted))throw Error('Chỉ sửa thông tin kỹ thuật của công đoạn');
+  if(typeof r.name!=='string'||!r.name.trim()||r.name.length>200||typeof(r.machine??'')!=='string'||(r.machine||'').length>200||typeof(r.technicalNotes??'')!=='string'||(r.technicalNotes||'').length>2000)throw Error('Thông tin công đoạn không hợp lệ');
+  const out=copy(base);for(const k of technicalKeys){if(r[k]===undefined)delete out[k];else out[k]=copy(r[k]);}return out;
+ });
  const assign=(old,item,keys)=>{const out=copy(old||{});for(const k of keys){if(item[k]===undefined)delete out[k];else out[k]=copy(item[k]);}return out;};
  result.materials=input.materials.map(m=>{const old=original.materials.find(x=>x.id===m.id);return {...assign(old,m,specKeys),price:old?.price??0};});
  result.rules=input.rules.map(r=>assign(original.rules.find(x=>x.id===r.id),r,ruleKeys));
