@@ -100,7 +100,7 @@ function consume(recipe,n,r,index,opIndex,rateName,workUnit){
   const layers=number(recipe.layers??1,'Số lớp',{positive:true}),loss=number(recipe.loss??0,'Hao hụt vật tư hoàn thiện');
   const op=n.ops?.[opIndex]||{},manual=['manual_total','manual_unit'].includes(op.basisMode)&&workUnit===recipe.basis;
   const rules=n.measurementRules||n.ruleSpec?.measurementRules||{},explicit=recipe.basis==='m²'?rules.area:recipe.basis==='kg'?rules.weight:true;
-  if(n.kind!=='material'&&!manual&&!explicit&&!op.measurementConfirmed)throw Error('Chưa xác nhận lượng hoàn thiện tại '+n.name+'. Khai công thức KL/DT, nhập lượng công việc đúng đơn vị hoặc xác nhận dùng lượng từ cấu thành.');
+  if(n.kind!=='material'&&!manual&&!explicit&&!op.measurementConfirmed)throw Error('Chưa xác nhận lượng hoàn thiện: '+rateName+' cần lượng '+recipe.basis+' tại '+n.name+'. Mở Lượng công việc để nhập lượng thực tế hoặc xác nhận dùng lượng từ cấu thành; cũng có thể khai Công thức KL/DT.');
   const base=manual?number(op.workQuantity,'Lượng hoàn thiện')*(op.basisMode==='manual_unit'?r.count:1):recipe.basis==='kg'?r.weight:recipe.basis==='m²'?r.area:recipe.basis==='cái'?r.count:recipe.basis==='m³'?r.volume:NaN;
   if(!Number.isFinite(base)||base<=0)throw Error('Chưa có lượng '+recipe.basis+' cho vật tư hoàn thiện');
   const quantity=base*norm*layers*(1+loss/100),cost=quantity*price;

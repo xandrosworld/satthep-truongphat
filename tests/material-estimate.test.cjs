@@ -13,3 +13,21 @@ test('pricing uses estimate cost and vendor-supplied stock is not charged',()=>{
 test('fully estimated quote is not blocked by stale purchasing remnants',()=>{const {d,n}=fixture();d.quote.remnantMode='exclude';d.quote.remnantSelections={old:['0:0']};const r=C.calculate(d);assert.ok(r.reuse.staleCount);assert.ok(!r.errors.some(e=>e.includes('Phương án cắt')));assert.equal(r.rows[0].recoverableCredit,0);});
 
 test('incoming freight uses estimated mass when chosen, independent of a missing purchasing stock',()=>{const W=require('../work-core.js'),{d,n}=fixture();n.spec.stockL=0;n.spec.stockW=0;const base=C.calculate(d),r=W.expenses([{id:'e',name:'Nhập',category:'incoming',scope:'all',method:'kg_purchase',rate:10,allocation:'weight'}],base,[]);assert.deepEqual(r.errors,[]);assert.ok(Math.abs(r.totals.incoming-base.rows[0].estimate.weight*10)<1e-8);});
+
+const ME=require('../material-estimate-core.js');
+test('nesting comparison is whole-order, same for net/percent, and never changes estimates',()=>{
+ const {d,n}=fixture();n.spec.stockL=1000;n.spec.stockW=1000;d.quote.kerf=0;
+ const other=C.cloneNode(d.quote.products[0]);d.quote.products.push(other);
+ const before=JSON.stringify(d),r=C.calculate(d),[x]=ME.comparisons(r,[n.id]);
+ assert.equal(x.pieceCount,12);assert.equal(x.stockCount,2);assert.ok(Math.abs(x.percent-(2/1.2-1)*100)<1e-8);assert.equal(x.rows.length,1);assert.equal(JSON.stringify(d),before);
+ n.materialEstimate={method:'net',percent:0};assert.equal(ME.comparisons(C.calculate(d),[n.id])[0].percent,x.percent);
+});
+test('nesting comparison surfaces missing stock, oversized blanks and excessive allowance',()=>{
+ const {d,n}=fixture();n.spec.stockL=0;assert.match(ME.comparisons(C.calculate(d),[n.id])[0].error,/Khổ/);
+ n.spec.stockL=100;n.spec.stockW=100;assert.match(ME.comparisons(C.calculate(d),[n.id])[0].error,/vượt khổ/);
+ n.spec.stockL=6000;n.spec.stockW=2000;const x=ME.comparisons(C.calculate(d),[n.id])[0];assert.ok(x.percent>100);assert.equal(x.applicable,false);
+});
+test('bar nesting allowance uses length including kerf and partial stock',()=>{
+ const {d,n}=fixture();n.spec=C.copy(d.materials.find(m=>m.shape==='box'));n.dims={L:1000};n.spec.stockL=6000;d.quote.kerf=3;
+ const x=ME.comparisons(C.calculate(d),[n.id])[0];assert.equal(x.stockCount,2);assert.equal(x.percent,100);
+});

@@ -13,3 +13,11 @@ test('intake: finishing recipe prices participate in explicit quote price select
 test('intake: legacy preview does not change source, migration archives exact prior quote and total',()=>{const d=C.seed(),before=C.copy(d),total=C.calculate(d).total.grand,v=I.legacyPreview(d);A.equal(v.before,total);A.deepEqual(d,before);I.convertLegacy(d);A.deepEqual(d.legacyArchives[0].quote,before.quote);A.equal(d.legacyArchives[0].total,total);A.deepEqual(d.quote.products,before.quote.products);A.ok(d.quote.pricing);A.equal(I.convertLegacy(d),false);A.equal(d.legacyArchives.length,1);});
 test('intake: approved legacy quote becomes a new document without modifying saved approved quote',()=>{const d=C.seed();d.quote.status='approved';d.savedQuotes=[{quote:C.copy(d.quote)}];const old=C.copy(d.savedQuotes);I.convertLegacy(d);A.match(d.quote.id,/-MOI$/);A.equal(d.quote.status,'draft');A.deepEqual(d.savedQuotes,old);});
 test('intake: request limits and file references validated before server storage',()=>{const q={request:{items:[],files:[]}};I.validateRequest(q);q.request.items=[{id:'a',name:'A',qty:0}];A.throws(()=>I.validateRequest(q));q.request.items=[];q.request.files=[{id:'../file',size:12,storage:'local'}];A.throws(()=>I.validateRequest(q));});
+
+test('material name follows current readable sheet, tube and stainless conventions',()=>{
+ A.equal(I.materialName({substance:'Thép',grade:'CT3',characteristic:'Cán nóng',shape:'sheet',props:{T:1.5}}),'Thép CT3 tấm dày 1,5 mm');
+ A.equal(I.materialName({substance:'Thép',shape:'box',props:{W:40,H:40,T:2}}),'Thép hộp 40 × 40 × 2 mm');
+ A.equal(I.materialName({substance:'Inox',grade:'SUS304',shape:'sheet',props:{T:1.5}}),'Inox 304 tấm dày 1,5 mm');
+ A.match(I.materialName({substance:'Thép',shape:'pipe',props:{D:60,T:2},characteristic:'Mạ kẽm'}),/Ø60 × 2 mm, mạ kẽm/);
+ A.match(I.materialName({shape:'profile',shapeDefinition:{name:'Dạng riêng',fields:[{key:'K',unit:'kg/m'}]},props:{K:4.5}}),/Dạng riêng, K 4,5 kg\/m/);
+});
