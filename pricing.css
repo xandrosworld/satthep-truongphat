@@ -32,3 +32,7 @@
 [data-ql-selection] table {min-width:850px}[data-ql-selection] td {vertical-align:top}.ql-assigned {margin-bottom:8px}[data-quote-price-selector] {scroll-margin-top:20px}
 .tl-method-tabs{display:flex;gap:8px;overflow-x:auto;white-space:nowrap;padding:4px 0 8px;margin-top:12px}
 .tl-method-tabs .button{flex:0 0 auto}
+
+/* Show each trial calculation step on its own line. */
+#expense-preview-result { display: block; }
+#expense-preview-result p { margin: .4rem 0; }
