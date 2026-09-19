@@ -175,3 +175,6 @@ th{color:var(--muted)}
  .home-table .home-stage{white-space:normal}
  .home-mobile-label{display:block;color:var(--muted);font:11px var(--font);margin-bottom:4px}
 }
+
+/* Keep all account actions accessible on narrow screens. */
+@media(max-width:700px){.topbar{height:auto;min-height:56px;flex-wrap:wrap;gap:8px;padding-block:10px}.top-actions{flex-wrap:wrap;min-width:0;max-width:100%;gap:6px}.top-actions .button{max-width:100%;white-space:normal}}
