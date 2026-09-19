@@ -15,8 +15,16 @@ function write(db,state){const list=targets(db);for(const d of state.definitions
  for(const [target,factors]of rows){const ids=new Set();for(const f of factors){if(ids.has(f.id))throw Error('Trùng mã yếu tố trong '+target);ids.add(f.id);}}
  db.pricingDefaults??=P.defaults();db.pricingDefaults.factorDefinitions=copy(state.definitions);for(const t of list)t.rate.factors=rows.get(t.id);
 }
-function save(db,value,initialTarget=''){const state=catalog(db),d=definition(value);validate(d);const i=state.definitions.findIndex(x=>x.id===d.id);if(i<0)state.definitions.push(d);else state.definitions[i]=d;if(initialTarget&&!state.bindings.some(b=>b.target===initialTarget&&b.key===d.id))state.bindings.push({target:initialTarget,key:d.id,localId:d.id,enabled:true});write(db,state);return d;}
+function save(db,value,initialTarget='',selectedTargets){const state=catalog(db),d=definition(value);validate(d);const i=state.definitions.findIndex(x=>x.id===d.id);if(i<0)state.definitions.push(d);else state.definitions[i]=d;if(initialTarget&&!state.bindings.some(b=>b.target===initialTarget&&b.key===d.id))state.bindings.push({target:initialTarget,key:d.id,localId:d.id,enabled:true});if(selectedTargets){state.bindings=state.bindings.filter(b=>b.key!==d.id);for(const target of new Set(selectedTargets))state.bindings.push({target,key:d.id,localId:catalog(db).bindings.find(b=>b.key===d.id&&b.target===target)?.localId||d.id,enabled:true});}write(db,state);return d;}
 function applyMatrix(db,links,editable){const state=catalog(db),seen=new Set();const bindings=links.map(b=>{const key=b.target+'\0'+b.key;if(seen.has(key))throw Error('Liên kết bị trùng');seen.add(key);const old=state.bindings.find(x=>x.target===b.target&&x.key===b.key);return {target:b.target,key:b.key,localId:old?.localId||b.key,enabled:true};});if(editable){const cells=new Set(editable.map(b=>b.target+'\0'+b.key));if(bindings.some(b=>!cells.has(b.target+'\0'+b.key)))throw Error('Liên kết ngoài phạm vi đang sửa');bindings.push(...state.bindings.filter(b=>!cells.has(b.target+'\0'+b.key)));}write(db,{definitions:state.definitions,bindings});}
 function remove(db,key){const state=catalog(db);write(db,{definitions:state.definitions.filter(d=>d.id!==key),bindings:state.bindings.filter(b=>b.key!==key)});}
-const api={targets,catalog,compatible,validate,save,applyMatrix,remove};if(typeof module!=='undefined')module.exports=api;else root.TPFactorMatrix=api;
+function complexityChoices(db,rateId,group){
+ const rows=[],seen=new Set(),master=db.rates.find(r=>r.id===rateId),snapshot=db.quote?.ratesSnapshot?.find(r=>r.id===rateId);
+ for(const [rate,source]of [[snapshot,'Trong báo giá'],[master,'Danh mục hiện tại']])for(const f of rate?.factors||[]){
+  if(rate.factorsEnabled===false||f.enabled===false||f.param!=='complexity'||f.kind!=='category'||!W.groupsMatch(rate.productGroups,group)||!W.groupsMatch(f.productGroups,group))continue;
+  for(const c of f.categories||[]){const multiplier=1+W.factor(f,c.key,P.tier).value/100,key=JSON.stringify([f.name,c.key,multiplier]);if(seen.has(key))continue;seen.add(key);rows.push({label:c.key,multiplier,name:f.name,source});}
+ }
+ return rows;
+}
+const api={complexityChoices,targets,catalog,compatible,validate,save,applyMatrix,remove};if(typeof module!=='undefined')module.exports=api;else root.TPFactorMatrix=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
