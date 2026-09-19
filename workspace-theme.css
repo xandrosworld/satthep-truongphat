@@ -178,3 +178,19 @@ th{color:var(--muted)}
 
 /* Keep all account actions accessible on narrow screens. */
 @media(max-width:700px){.topbar{height:auto;min-height:56px;flex-wrap:wrap;gap:8px;padding-block:10px}.top-actions{flex-wrap:wrap;min-width:0;max-width:100%;gap:6px}.top-actions .button{max-width:100%;white-space:normal}}
+
+/* Aligned permission controls retain their existing submitted field names. */
+.permission-matrix{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse}
+.permission-matrix th,.permission-matrix td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:normal}
+.permission-matrix th:first-child{width:62%;text-align:left}
+.permission-matrix th:not(:first-child),.permission-matrix td{text-align:center;width:19%}
+.permission-matrix tbody th{font-weight:400}
+.permission-matrix th small{display:block;font-weight:400;color:var(--muted);margin-top:4px}
+.permission-matrix input[type=checkbox]{width:18px;height:18px;margin:0;vertical-align:middle;accent-color:var(--primary,#245887);cursor:pointer}
+.permission-view-active{color:#246353;font-size:20px;font-weight:700}
+.permission-actions{display:grid;gap:8px;margin-top:14px}
+.permission-actions .pa-checkbox{margin:0;align-items:center}
+#dialog:has(.permission-matrix){width:min(900px,calc(100vw - 32px))}
+#dialog .section-permissions,#dialog .formula-rights{margin-block:12px;padding:12px;min-width:0;border:1px solid var(--line);border-radius:8px}
+#dialog .permission-matrix th,#dialog .permission-matrix td{padding-block:7px}
+@media(max-width:600px){.permission-matrix th,.permission-matrix td{padding:9px 5px;font-size:12px}.permission-matrix th:first-child{width:58%}.permission-matrix th:not(:first-child),.permission-matrix td{width:21%}.section-permissions,.formula-rights{min-width:0;margin-inline:0;padding:10px}}

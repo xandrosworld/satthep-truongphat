@@ -1,7 +1,18 @@
 'use strict';
-function sectionFields(user){const values=TPSectionAccess.sections(user);return `<fieldset class="section-permissions"><legend>Phần được phép sửa</legend><p class="help-text">Có quyền xem nội bộ thì xem được các phần của báo giá; chỉ sửa các phần được tích. Quản trị có toàn quyền. Tạo/trình báo giá là quyền riêng.</p>${Object.entries(TPSectionAccess.labels).map(([key,label])=>`<label class="pa-checkbox"><input type="checkbox" name="sections" value="${key}" ${values.includes(key)?'checked':''}> ${esc(label)}</label>`).join('')}</fieldset>`;}
+function sectionFields(user){const values=TPSectionAccess.sections(user);return `<fieldset class="section-permissions"><legend>Nội dung được phân quyền</legend><p class="help-text">Tích Cho phép sửa để cấp quyền sửa. Cột Chỉ xem hiển thị quyền xem hiện có; dấu — là chưa có quyền xem hoặc không áp dụng. Quyền xem giá được cấp riêng ở trên.</p><table class="permission-matrix"><thead><tr><th scope="col">Nội dung</th><th scope="col">Cho phép sửa</th><th scope="col">Chỉ xem</th></tr></thead><tbody>${Object.entries(TPSectionAccess.labels).map(([key,label])=>`<tr data-permission-section="${key}"><th scope="row">${esc(label)}</th><td><input aria-label="Cho phép sửa: ${esc(label)}" type="checkbox" name="sections" value="${key}" ${values.includes(key)?'checked':''}></td><td><span data-permission-view="${key}"></span></td></tr>`).join('')}</tbody></table></fieldset>`;}
+function sectionMatrixRefresh(){
+ const form=$('#dialog-form');if(!form?.querySelector('.permission-matrix'))return;
+ const role=form.elements.role?.value,admin=role==='admin',costs=admin||!!form.elements.canViewCosts?.checked,technical=role==='technical'&&!costs;
+ for(const cell of form.querySelectorAll('[data-permission-view]')){const key=cell.dataset.permissionView,input=form.querySelector('[name=sections][value="'+key+'"]');
+  const visible=key!=='manage'&&(costs||technical&&['customer','bom','operations'].includes(key)||technical&&input.checked&&TPTechnical.catalogSections.includes(key));
+  const only=visible&&!input.checked&&!admin;cell.textContent=only?'✓':'—';cell.setAttribute('aria-label',only?'Chỉ xem':input.checked?'Đã chọn quyền sửa':visible?'Không áp dụng':'Chưa được cấp xem');cell.classList.toggle('permission-view-active',only);
+ }
+}
+
 function currentSection(){if(page==='rules'&&RulesCatalog.kind==='operations'&&Team.permissions?.sections?.includes('catalogTechnicalOperations'))return 'catalogTechnicalOperations';if(page==='rates')return ['transport','install'].includes(rateTab)?'catalogLogistics':rateTab==='materials'?'catalogMaterials':'catalogOperations';if(page!=='quote')return {customers:'customer',materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules',rates:'catalogOperations'}[page];if(tab==='prices')return {materials:'materials',operations:'operations',devices:'logistics',logistics:'logistics',factors:'factors',alternatives:'commercial',competitor:'commercial',kg:'commercial'}[Intake.priceTab];return {intake:'customer',bom:'bom',operations:'operations',waste:'bom',mass:'bom',pricing:'commercial',preview:'commercial'}[tab];}
 function installSectionAccessUI(){
+ const dialogBefore=openDialog;openDialog=(...args)=>{const value=dialogBefore(...args);sectionMatrixRefresh();return value;};
+ document.addEventListener('change',e=>{if(e.target.closest('#dialog-form'))queueMicrotask(sectionMatrixRefresh);});
  const fields=accessFields;accessFields=(user={role:'estimator'})=>fields(user)+sectionFields(user);
  const oldApi=teamApi;teamApi=async(route,method='GET',data)=>{if(method==='POST'&&(route==='users'||/^users\/[^/]+\/access$/.test(route))){const inputs=$('#dialog')?.querySelectorAll('input[name=sections]');if(inputs?.length&&data?.sections==null)data={...data,sections:[...inputs].filter(e=>e.checked).map(e=>e.value)};}return oldApi(route,method,data);};
  const oldRender=render;render=()=>{
