@@ -58,7 +58,7 @@ function merge(original,input){
 function canonical(x){return Array.isArray(x)?x.map(canonical):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,canonical(x[k])])):x;}
 function equal(a,b){return JSON.stringify(canonical(a))===JSON.stringify(canonical(b));}
 // Catalogue editing is independent from permission to see commercial values.
-const catalogSections=['catalogMaterials','catalogRules','catalogLibrary'];
+const catalogSections=['catalogMaterials','catalogRules','catalogLibrary','catalogTechnicalOperations'];
 const conventionKinds=['productGroups','materialGroups','parameters','substances','grades','characteristics','units'];
 const conventionKeys=['name','label','parent','unit','density','stock','hidden'];
 function projectCatalog(d){

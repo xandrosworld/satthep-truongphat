@@ -2,9 +2,10 @@
 const technicalTabs=['bom','operations','waste','mass'];
 function technicalStage(){return page==='quote'&&technicalTabs.includes(tab);}
 function technicalOnly(){return !!Team.user&&!!Team.permissions?.technical;}
-function technicalCatalogPage(){return technicalOnly()&&['materials','library','rules'].includes(page)&&Team.permissions.sections.includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[page]);}
+function technicalCatalogPage(){return technicalOnly()&&['materials','library','rules'].includes(page)&&(Team.permissions.sections.includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[page])||page==='rules'&&Team.permissions.sections.includes('catalogTechnicalOperations'));}
 function technicalCatalogClean(root){
  if(!technicalOnly()||!root)return;
+ if(!Team.permissions.sections.includes('catalogRules'))root.querySelectorAll('[data-rc-tab]:not([data-rc-tab=operations]),[data-pg-add],[data-close-gap]').forEach(x=>x.hidden=true);
  for(const table of root.querySelectorAll('table')){const headers=[...table.querySelectorAll('thead tr:first-child th')];headers.forEach((h,i)=>{if(/đơn giá|giá tham chiếu|thành tiền|chi phí/i.test(h.textContent))for(const row of table.rows)if(row.cells[i])row.cells[i].hidden=true;});}
  for(const input of root.querySelectorAll('[name=price]')){input.value='0';input.closest('label').hidden=true;}
  root.querySelectorAll('[data-rc-tab=factors],[data-rc-tab=transport],[data-rc-tab=customers],[data-rc-tab=complexity],[data-close-gap=catalog-candidates],[data-team=backup]').forEach(x=>x.hidden=true);
@@ -74,10 +75,11 @@ function installTechnicalUI(){
    $('#save-status').textContent='Máy chủ · dữ liệu kỹ thuật';
    if(!Team.loaded){$('#content').innerHTML=workspaceHome();workspaceHomeMount();return;}
    if(!technicalCatalogPage())page='quote';if(!technicalTabs.includes(tab))tab='operations';
+   if(page==='rules'&&!Team.permissions.sections.includes('catalogRules'))RulesCatalog.kind='operations';
    if(page==='rules'&&['factors','transport','customers','complexity'].includes(RulesCatalog.kind))RulesCatalog.kind='productGroups';
   }
   oldRender();if(technicalStage())technicalClean($('#content'));
-  document.querySelectorAll('#sidebar [data-page]').forEach(el=>el.hidden=technicalOnly()&&el.dataset.page!=='quote'&&!Team.permissions.sections.includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[el.dataset.page]));
+  document.querySelectorAll('#sidebar [data-page]').forEach(el=>el.hidden=technicalOnly()&&el.dataset.page!=='quote'&&!(Team.permissions.sections.includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[el.dataset.page])||el.dataset.page==='rules'&&Team.permissions.sections.includes('catalogTechnicalOperations')));
   if(technicalCatalogPage()){technicalCatalogClean($('#content'));$('#save-status').textContent='Danh mục kỹ thuật trên máy chủ';if(!Team.link)$('#content').querySelectorAll('[data-team=reopen]').forEach(x=>x.remove());$('#content').insertAdjacentHTML('afterbegin',`<div class="notice" data-technical-catalog>Danh mục kỹ thuật · không xem hoặc sửa giá, hệ số. ${teamButton('Lấy danh mục máy chủ','catalog-workspace')}${accessButton('Lưu / phát hành danh mục','catalog')}</div>`);}
   if(technicalOnly()){$('#content').querySelectorAll('[data-tab="prices"],[data-tab="pricing"],[data-tab="preview"],[data-action="history"],[data-pa="sample"],[data-team="submit"],[data-team="leave"],[data-batch-one="new-shared"]').forEach(x=>x.remove());const ribbon=$('.quote-ribbon > span');if(ribbon)ribbon.textContent='Ngày '+db.quote.date;}
  };

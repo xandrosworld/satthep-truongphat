@@ -1,6 +1,6 @@
 (function(root){
 'use strict';
-const labels={customer:'Khách hàng và yêu cầu',bom:'Cấu thành, kích thước và hao hụt',operations:'Nguyên công và định mức',materials:'Giá vật tư',logistics:'Vận chuyển và lắp đặt',factors:'Hệ số tác động',commercial:'Giá chào, thuế và lịch sử gửi',manage:'Tạo và trình báo giá',catalogMaterials:'Danh mục vật tư',catalogOperations:'Đơn giá nguyên công và nhóm sản phẩm',catalogLogistics:'Bảng giá vận chuyển, lắp đặt',catalogRules:'Danh mục quy ước và công thức',catalogLibrary:'Thư viện mẫu'};
+const labels={customer:'Khách hàng và yêu cầu',bom:'Cấu thành, kích thước và hao hụt',operations:'Nguyên công và định mức',materials:'Giá vật tư',logistics:'Vận chuyển và lắp đặt',factors:'Hệ số tác động',commercial:'Giá chào, thuế và lịch sử gửi',manage:'Tạo và trình báo giá',catalogMaterials:'Danh mục vật tư',catalogTechnicalOperations:'Danh mục công đoạn kỹ thuật (không gồm giá)',catalogOperations:'Đơn giá nguyên công và nhóm sản phẩm',catalogLogistics:'Bảng giá vận chuyển, lắp đặt',catalogRules:'Danh mục quy ước và công thức',catalogLibrary:'Thư viện mẫu'};
 const keys=Object.keys(labels),catalogKeys=keys.filter(k=>k.startsWith('catalog'));
 function parse(value){if(value==null)return null;const x=typeof value==='string'?JSON.parse(value):value;if(!Array.isArray(x)||x.some(k=>!keys.includes(k)))throw Error('Danh sách quyền không hợp lệ');return [...new Set(x)];}
 function sections(user){if(user.role==='admin')return keys;const custom=parse(user.section_access);if(custom!==null)return custom;return user.role==='technical'?['bom','operations']:user.role==='estimator'?keys.filter(k=>!catalogKeys.includes(k)):user.role==='sales'?['commercial']:[];}
@@ -16,7 +16,7 @@ function denied(before,after,rights,{catalog=false}={}){
  function fields(a,b,fn,ignore=[]){a=a||{};b=b||{};for(const k of new Set([...Object.keys(a),...Object.keys(b)]))if(!ignore.includes(k))check(fn(k),a[k],b[k]);}
  function defaults(a,b){fields(a,b,k=>['expenseRates','incoming','outgoing','delivery','install'].includes(k)?'catalogLogistics':['factorDefinitions','salesFactors','productionFactors','overhead','management','special','profit','processing','order','reserve','customer'].includes(k)?'factors':'catalogOperations');}
  function catalogRates(a,b){
-  for(const r of b||[]){const old=(a||[]).find(x=>x.id===r.id)||{id:r.id,unit:'kg',insideUnit:'kg',outsideUnit:'kg',inside:0,outside:0,factors:[],operationType:'detail'};fields(old,r,k=>['name','machine','technicalNotes'].includes(k)&&allowed.has('catalogRules')?'catalogRules':'catalogOperations');}
+  for(const r of b||[]){const old=(a||[]).find(x=>x.id===r.id)||{id:r.id,unit:'kg',insideUnit:'kg',outsideUnit:'kg',inside:0,outside:0,factors:[],operationType:'detail'};fields(old,r,k=>['name','machine','technicalNotes'].includes(k)&&(allowed.has('catalogRules')||allowed.has('catalogTechnicalOperations'))?(allowed.has('catalogTechnicalOperations')?'catalogTechnicalOperations':'catalogRules'):'catalogOperations');}
   for(const r of a||[])if(!(b||[]).some(x=>x.id===r.id))check('catalogOperations',r,undefined);
  }
  catalogRates(before?.rates,after?.rates);
