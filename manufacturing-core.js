@@ -46,13 +46,15 @@ function packageCost(n,r){const x=n.outsource;
 // Physical objects sent outside, counted once at the highest selected scope.
 // These quantities are references, not sums of billable operation quantities.
 function outsideMeasures(products,result){
- const values={},invalid=new Map();
+ const values={},invalid=new Map(),areas=new Map(),rowById=new Map(result.rows.map(r=>[r.id,r]));
+ function physicalArea(n){const children=(n.children||[]).map(physicalArea),rules=n.measurementRules||n.ruleSpec?.measurementRules||{},declared=!!rules.area,area=declared?result.nodes[n.id]?.workArea:n.kind==='material'?rowById.get(n.id)?.geometry.blankArea:children.reduce((s,x)=>s+x,0);areas.set(n.id,{area,areaSource:declared?'Theo công thức lượng thực hiện':n.kind==='material'?'Theo diện tích phôi':'Tổng diện tích các thành phần'});return area;}
+ products.forEach(physicalArea);
  function geometryIssues(n){const r=result.nodes[n.id],issues=[...(r?.declarationErrors||[])];if(!r||!Number.isFinite(r.count)||r.count<=0||n.draftMaterial)issues.push(n.name+': thiếu dữ liệu đối tượng');if(n.kind!=='material'&&!n.children?.length)issues.push(n.name+': chưa có thành phần');for(const child of n.children||[])issues.push(...geometryIssues(child));invalid.set(n.id,[...new Set(issues)]);return issues;}
  products.forEach(geometryIssues);
  function visit(n,inherited){
   const r=result.nodes[n.id],own=!!n.outsource?.enabled||(n.ops||[]).some((op,i)=>op.mode==='outside'&&!r?.ownOps?.[i]?.skipped),owner=inherited||(own?n.id:null),children=(n.children||[]).map(child=>visit(child,owner));
-  if(owner){const weight=r?.workWeight??r?.weight,area=r?.workArea??r?.area,errors=[...invalid.get(n.id)];if(!Number.isFinite(weight)||weight<0||!Number.isFinite(area)||area<0)errors.push(n.name+': chưa tính được lượng xử lý ngoài');return values[n.id]={weight:errors.length?null:weight,area:errors.length?null:area,mode:inherited?'inherited':'own',sources:[owner],errors};}
-  const errors=[...new Set(children.flatMap(x=>x.errors))],sources=[...new Set(children.flatMap(x=>x.sources))];return values[n.id]={weight:errors.length?null:children.reduce((s,x)=>s+x.weight,0),area:errors.length?null:children.reduce((s,x)=>s+x.area,0),mode:sources.length?'children':'none',sources,errors};
+  if(owner){const weight=r?.workWeight??r?.weight,area=areas.get(n.id)?.area,errors=[...invalid.get(n.id)];if(!Number.isFinite(weight)||weight<0||!Number.isFinite(area)||area<0)errors.push(n.name+': chưa tính được lượng xử lý ngoài');return values[n.id]={weight:errors.length?null:weight,area:errors.length?null:area,mode:inherited?'inherited':'own',sources:[owner],areaSource:areas.get(n.id)?.areaSource,errors};}
+  const errors=[...new Set(children.flatMap(x=>x.errors))],sources=[...new Set(children.flatMap(x=>x.sources))];return values[n.id]={weight:errors.length?null:children.reduce((s,x)=>s+x.weight,0),area:errors.length?null:children.reduce((s,x)=>s+x.area,0),mode:sources.length?'children':'none',sources,areaSource:sources.length?'Tổng phạm vi thuê ngoài':'',errors};
  }
  products.forEach(n=>visit(n,null));return values;
 }
