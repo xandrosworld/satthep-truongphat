@@ -21,7 +21,28 @@ function defaults(){return {version:2,selected:'detail',comparisonMethods:['deta
   {id:'cover',name:'Nắp thang / máng',unit:'cái',tiers:[{max:100,price:1000},{max:500,price:1000},{max:1000,price:2000},{max:null,price:2000}]},
   {id:'accessory',name:'Phụ kiện máng',unit:'cái',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]}
 ]};}
-function enable(db){if(db.quote.pricing)return;db.quote.pricing=defaults();db.quote.status='draft';}
+const FLOW_SEQUENCE='delivery-before-overhead-v1';
+function currentFlow(q){return q.pricing?.costSequence===FLOW_SEQUENCE;}
+function adoptFlow(q){
+ if(['submitted','approved'].includes(q.status))throw Error('Bản đã khóa; mở bản sửa trước khi đổi luồng giá');
+ if(!q.pricing)throw Error('Cần bật luồng báo giá');
+ q.pricing.costSequence=FLOW_SEQUENCE;q.pricing.overrides={};delete q.pricing.taxReview;
+}
+function enable(db){if(db.quote.pricing)return;db.quote.pricing=defaults();db.quote.status='draft';adoptFlow(db.quote);}
+function supplement(q,n,id,detail,errors){
+ const x=n.benchmarkScope?.[id];
+ if(x===undefined&&!currentFlow(q))return {amount:0,legacy:true,rows:[]};
+ const rows=[];
+ for(const key of ['incoming','outgoing','delivery','install']){
+  const status=x?.[key];
+  if(!['included','detail','none'].includes(status)){errors.push(n.name+': xác nhận phạm vi '+id+' / '+key);continue;}
+  const amount=status==='detail'?detail.parts[key]:0;
+  if(!Number.isFinite(amount)||amount<0)errors.push(n.name+': chưa tính được phí '+key);
+  rows.push({key,status,amount});
+ }
+ return {rows,amount:rows.reduce((sum,r)=>sum+r.amount,0),legacy:false};
+}
+
 function refreshPrices(db){
   for(const n of C.flatten(db.quote.products))if(n.kind==='material'){
     const m=db.materials.find(m=>m.id===n.materialId);if(m&&m.unit===n.spec.unit&&(m.brand||'')===(n.spec.brand||'')&&(m.specification||'')===(n.spec.specification||''))n.spec.price=m.price;
@@ -82,6 +103,7 @@ function calculate(db){
   const errors=[...base.errors.filter(e=>!e.startsWith('Biên lợi nhuận')),...W.methodErrors(q),...G.profileErrors(q)],warnings=[],includedGenerated=[];
   if(!q.products.length)errors.push('Chưa có sản phẩm trong báo giá');
   const p={...defaults(),...config};
+  if(config.costSequence!==undefined&&!['legacy',FLOW_SEQUENCE].includes(config.costSequence))errors.push('Phiên bản luồng giá không hợp lệ');
   for(const key of ['overhead','management','special','profit','processing','order','reserve','customer']){
     if(!finite(p[key])||Number(p[key])<=-100)errors.push('Hệ số '+key+' phải lớn hơn -100%');
     p[key]=finite(p[key])?Number(p[key]):0;
@@ -132,17 +154,22 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   for(const r of Object.values(base.nodes))r.deviceParts={factory:0,install:0};
   for(const e of devices.items)if(!e.error&&e.cost)for(const n of C.nodePath(q.products,e.nodeId)||[]){const r=base.nodes[n.id],key=e.stage==='production'?'factory':'install';r.deviceParts[key]+=e.cost;r.parts[key]+=e.cost;if(key==='factory')r.ops+=e.cost;else r.install+=e.cost;}
   const makeCost=(r,parts,includeProductionExtras=true,policy=p)=>{
-    // Customer clarification: production excludes delivery and installation.
-    // Incoming/outsource freight belong to production; delivery/install join base cost afterwards.
-    const direct=PARTS.filter(k=>!['delivery','install'].includes(k)).reduce((s,k)=>s+parts[k],0),overhead=direct*policy.overhead/100;
-    const management=(direct+overhead)*policy.management/100,special=(direct+overhead+management)*policy.special/100;
-    let production=direct+overhead+management+special;const productionSteps=[];for(const f of includeProductionExtras?productionFactors:[]){const percent=Number(f.percent)||0,base=production,value=base*percent/100;production+=value;productionSteps.push({...f,percent,base,value,total:production});}const productionExtras=productionSteps.reduce((s,f)=>s+f.value,0),cost=production+parts.delivery+parts.install;
+    // Preserve historical quotes; new flow moves common/management after delivery/install.
+    const direct=PARTS.filter(k=>!['delivery','install'].includes(k)).reduce((s,k)=>s+parts[k],0),modern=currentFlow(q);
+    let overhead=0,management=0,special=0,production=direct;
+    if(modern){special=direct*policy.special/100;production+=special;}
+    else {overhead=direct*policy.overhead/100;management=(direct+overhead)*policy.management/100;special=(direct+overhead+management)*policy.special/100;production+=overhead+management+special;}
+    const productionSteps=[];for(const f of includeProductionExtras?productionFactors:[]){const percent=Number(f.percent)||0,base=production,value=base*percent/100;production+=value;productionSteps.push({...f,percent,base,value,total:production});}
+    const productionExtras=productionSteps.reduce((sum,f)=>sum+f.value,0),baseBeforeCommon=production+parts.delivery+parts.install;
+    const overheadBase=modern?baseBeforeCommon:direct;
+    if(modern){overhead=overheadBase*policy.overhead/100;management=(overheadBase+overhead)*policy.management/100;}
+    const managementBase=overheadBase+overhead,cost=baseBeforeCommon+(modern?overhead+management:0);
     let running=cost;const saleSteps=[];
     for(const f of [{id:'profitMarkup',name:'Lợi nhuận',percent:policy.profit},{id:'processing',name:'Xử lý',percent:policy.processing},{id:'order',name:'Đơn hàng',percent:policy.order},{id:'customer',name:'Khách hàng',percent:policy.customer},...(policy===p?salesFactors:[])]){
       const percent=Number(f.percent)||0,base=running,value=base*percent/100;running+=value;saleSteps.push({...f,percent,base,value,total:running});
     }
     const stepValue=id=>saleSteps.find(f=>f.id===id)?.value||0;
-    return {...r,parts:{...parts},direct,overhead,management,special,production,cost,productionSteps,productionExtras,saleSteps,profitMarkup:stepValue('profitMarkup'),processing:stepValue('processing'),order:stepValue('order'),customer:stepValue('customer'),reserve:stepValue('reserve'),saleExtras:saleSteps.slice(4).reduce((s,f)=>s+f.value,0),
+    return {...r,parts:{...parts},direct,overhead,management,special,production,cost,baseBeforeCommon,overheadBase,managementBase,policyRates:{overhead:policy.overhead,management:policy.management,special:policy.special},productionSteps,productionExtras,saleSteps,profitMarkup:stepValue('profitMarkup'),processing:stepValue('processing'),order:stepValue('order'),customer:stepValue('customer'),reserve:stepValue('reserve'),saleExtras:saleSteps.slice(4).reduce((s,f)=>s+f.value,0),
       material:parts.stock+parts.ancillary+parts.allowance+parts.finishing,ops:parts.factory+parts.outside,
       suggestedUnit:r.node.qty>0?Math.round(running/r.node.qty):0};
   };
@@ -175,13 +202,15 @@ let r=row;const profile=id.startsWith('group:')&&G.resolve(q,r.node).id===id.sli
 if(profile?.engine==='components'){if(!W.groupsMatch(profile.productGroups,r.node.productGroup))methodErrors.push(r.node.name+': ngoài nhóm áp dụng '+profile.name);r=flowCost(roots[index],roots[index],profile.flow,profile.parameters,methodErrors);}
 let suggested=r.suggestedUnit,groupCalculation=null;
       if(profile?.engine==='formula')try{groupCalculation=G.evaluate(profile,r);suggested=groupCalculation.unit;}catch(e){methodErrors.push(r.node.name+': '+e.message);}
+      let benchmarkSupplement=null;
+      if(['kg','competitor'].includes(id))benchmarkSupplement=supplement(q,r.node,id,detail[index],methodErrors);
       if(id==='kg'){
         if(!(r.weight>0))methodErrors.push(r.node.name+': không có kg phôi để áp giá/kg');
         const entered=amount(r.node.pricePerKg,r.node.name+' / đơn giá/kg',methodErrors),tax=Tax.declaration(db.quote,r.node,'kg');
-        suggested=Math.round((tax.known?tax.net:entered)*r.weight/r.node.qty);
+        suggested=Math.round(((tax.known?tax.net:entered)*r.weight+benchmarkSupplement.amount)/r.node.qty);
       }
-      if(id==='competitor'){const entered=amount(r.node.competitorPrice,r.node.name+' / giá đối thủ',methodErrors),tax=Tax.declaration(db.quote,r.node,'competitor');suggested=Math.round(tax.known?tax.net:entered);}
-return {...r,...(id.startsWith('group:')?{groupCalculation,groupBranch:profile?.engine==='components'?'components':groupCalculation?'formula':'detail'}:{}),suggestedUnit:suggested,unitSell:suggested,sell:Math.round(suggested*r.node.qty)};
+      if(id==='competitor'){const entered=amount(r.node.competitorPrice,r.node.name+' / giá đối thủ',methodErrors),tax=Tax.declaration(db.quote,r.node,'competitor');suggested=Math.round((tax.known?tax.net:entered)+benchmarkSupplement.amount/r.node.qty);}
+return {...r,benchmarkSupplement,...(id.startsWith('group:')?{groupCalculation,groupBranch:profile?.engine==='components'?'components':groupCalculation?'formula':'detail'}:{}),suggestedUnit:suggested,unitSell:suggested,sell:Math.round(suggested*r.node.qty)};
     });
 alternatives[id]={id,name,products,total:totalOf(products),applicable:applicability.applicable,errors:[...new Set(methodErrors)],ready:applicability.applicable&&!methodErrors.length&&!errors.length};
   }
@@ -240,10 +269,12 @@ function demoSeed(){
   Object.assign(db.quote.pricing,{incoming:120000,delivery:200000,comparisonMethods:METHODS.map(m=>m[0])});db.quote.products[1].freightOut=6000;
   const base=legacyCalculate(db);db.quote.remnantSelections={};
   for(const g of base.groups)if(!g.error)db.quote.remnantSelections[g.signature]=g.remnants.filter(r=>r.l>=250&&r.w>=250).map(r=>r.id);
+  // Historical demonstration fixture retains its published numerical answers.
+  db.quote.pricing.costSequence='legacy';
   return db;
 }
 C.pricingTier=tier;
-const api={METHODS,PARTS,defaults,enable,refreshPrices,tier,context,appliedRate,materialValuation,calculate,demoSeed,legacyCalculate};
+const api={METHODS,PARTS,defaults,FLOW_SEQUENCE,currentFlow,adoptFlow,supplement,enable,refreshPrices,tier,context,appliedRate,materialValuation,calculate,demoSeed,legacyCalculate};
 // One shared calculation path for BOM, operations, comparison, print and exports.
 C.calculate=calculate;
 if(typeof module!=='undefined')module.exports=api;else root.TPPrice=api;

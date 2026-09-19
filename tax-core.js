@@ -67,6 +67,7 @@ function assess(q,result){
       if(!costKnown)reasons.push('TMC: đầu vào chi phí chưa xác nhận mặt bằng thuế hoặc đã đổi');
     }
     if((id==='detail'||id.startsWith('group:'))&&!costKnown)reasons.push('Chưa xác nhận các đầu vào tính toán cùng mặt bằng chưa thuế, hoặc đầu vào đã đổi');
+    if(inputs.length&&a.products.some(p=>p.benchmarkSupplement?.rows.some(r=>r.status==='detail'))&&!costKnown)reasons.push('Khoản bổ sung lấy từ tính toán cần xác nhận giá đầu vào chưa thuế');
     if(inputs.some(i=>!i.known))reasons.push('Chưa khai đủ điều kiện thuế từng giá, hoặc giá đã đổi');
     if(!a.ready)reasons.push('Còn dữ liệu tính giá chưa hợp lệ');
     const comparable=!reasons.length,net=comparable?a.total.beforeTax:null;
