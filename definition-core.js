@@ -18,6 +18,7 @@ const positive=(v,label,zero=false)=>{if(v===''||v==null||!Number.isFinite(Numbe
 function dimension(source,vars){return E.dimension(E.parse(source),vars);}
 function validateShape(d){
   if(!d||!/^[A-Za-z0-9_-]{1,80}$/.test(d.id)||!String(d.name||'').trim()||d.name.length>200||!['sheet','bar'].includes(d.base))throw Error('Quy ước cần mã, tên và dạng tấm/thanh');
+  if(d.nesting!==undefined&&(!['bounding','bounding-fixed','right-triangle'].includes(d.nesting)||d.nesting!=='bounding'&&d.base!=='sheet'))throw Error('Cách xếp phôi không khớp dạng tấm/thanh');
   if(d.blankShapeName!==undefined&&(typeof d.blankShapeName!=='string'||d.blankShapeName.length>200))throw Error('Tên hình dạng phôi tối đa 200 ký tự');
   if(d.productGroup!==undefined&&(typeof d.productGroup!=='string'||d.productGroup.length>80))throw Error('Nhóm lớn tối đa 80 ký tự');
   if(!Array.isArray(d.fields)||!d.fields.length||d.fields.length>24)throw Error('Khai từ 1 đến 24 thông số');
@@ -49,6 +50,7 @@ function geometry(n,count){const m=n.spec,d=m.shapeDefinition;validateShape(d);i
   const blankVars={...vars,...unfoldAliases(d,length,width),KL_DV:mass,DT_DV:surface};
   const weight=(d.blankMass?positive(E.formula(d.blankMass,blankVars),'Khối lượng phôi sản phẩm'):factor*mass)*count;
   const area=(d.blankSurface?positive(E.formula(d.blankSurface,blankVars),'Diện tích phôi sản phẩm'):factor*surface)*count;
+  if(d.nesting==='right-triangle'&&count>0){const expected=factor*count/2;if(Math.abs(area-expected)>Math.max(1e-9,expected*1e-8)||Math.abs(weight-expected*mass)>Math.max(1e-8,expected*mass*1e-8))throw Error('Ghép tam giác vuông cần diện tích dài × rộng / 2 và khối lượng theo diện tích đó; kiểm tra công thức hoặc chọn xếp khổ bao');}
   return {length,width,weight,blankArea:area,area,volume:weight/m.density,quantity:count,measure:factor*count};
 }
 function applyShape(m,d,fixed={}){validateShape(d);const updated=C.copy(m);updated.shapeDefinition=C.copy(d);updated.shape=d.base==='sheet'?'sheet':'profile';updated.props={};for(const f of d.fields.filter(f=>f.mode==='fixed'))updated.props[f.key]=positive(fixed[f.key],'Thông số cố định '+f.key,true);delete updated.massOverride;delete updated.areaOverride;return updated;}
@@ -76,19 +78,19 @@ function sheetPreset(kind){
  const field=(key,name,sample,mode='input')=>({key,name,mode,unit:'mm',sample});
  const choices={rectangle:{blankShapeName:'Tấm chữ nhật',fields:[field('L','Chiều dài',1000),field('W','Chiều rộng',200)],length:'L',width:'W',area:'L * W / 1000000'},circle:{blankShapeName:'Tấm tròn',fields:[field('D','Đường kính',1000)],length:'D',width:'D',area:'PI * D * D / 4 / 1000000'},triangle:{blankShapeName:'Tấm tam giác vuông',fields:[field('L','Cạnh đáy',1000),field('H','Chiều cao vuông góc',200)],length:'L',width:'H',area:'L * H / 2 / 1000000'}};
  const x=choices[kind];if(!x)throw Error('Chọn dạng khai triển được hỗ trợ');
- return {base:'sheet',blankShape:'sheet',blankShapeName:x.blankShapeName,fields:[field('T','Chiều dày',2,'fixed'),...x.fields],length:x.length,width:x.width,mass:'RHO * T / 1000',surface:'1',blankMass:'('+x.area+') * KL_DV',blankSurface:x.area};
+ return {base:'sheet',nesting:kind==='triangle'?'right-triangle':'bounding',blankShape:'sheet',blankShapeName:x.blankShapeName,fields:[field('T','Chiều dày',2,'fixed'),...x.fields],length:x.length,width:x.width,mass:'RHO * T / 1000',surface:'1',blankMass:'('+x.area+') * KL_DV',blankSurface:x.area};
 }
 function barPreset(kind){
  const f=(key,name,sample,unit='mm',mode='fixed')=>({key,name,sample,unit,mode});
  const choices={round:{blankShape:'round',blankShapeName:'Thanh tròn đặc',fields:[f('D','Đường kính',10)],mass:'PI * D * D / 4000000 * RHO',surface:'PI * D / 1000'},box:{blankShape:'box',blankShapeName:'Thanh hộp chữ nhật',fields:[f('W','Rộng ngoài',40),f('H','Cao ngoài',60),f('T','Chiều dày',2)],mass:'(W * H - (W - 2 * T) * (H - 2 * T)) / 1000000 * RHO',surface:'2 * (W + H) / 1000'},pipe:{blankShape:'pipe',blankShapeName:'Ống tròn',fields:[f('D','Đường kính ngoài',40),f('T','Chiều dày',2)],mass:'PI * (D * D - (D - 2 * T) * (D - 2 * T)) / 4000000 * RHO',surface:'PI * D / 1000'},angle:{blankShape:'angle',blankShapeName:'Thanh góc L',fields:[f('W','Cánh ngang',50),f('H','Cánh đứng',50),f('T','Chiều dày',5)],mass:'T * (W + H - T) / 1000000 * RHO',surface:'2 * (W + H) / 1000'},table:{blankShape:'profile',blankShapeName:'Thanh định hình theo bảng kê',fields:[f('KM','Khối lượng theo bảng kê',10,'kg/m'),f('AM','Diện tích theo bảng kê',.5,'m²/m')],mass:'KM',surface:'AM'}};
- const x=choices[kind];if(!x)throw Error('Chọn mẫu thanh hợp lệ');return {...x,base:'bar',fields:[f('L','Chiều dài cắt',2000,'mm','input'),...x.fields],length:'L',width:'0',blankMass:'L / 1000 * KL_DV',blankSurface:'L / 1000 * DT_DV'};
+ const x=choices[kind];if(!x)throw Error('Chọn mẫu thanh hợp lệ');return {...x,base:'bar',nesting:'bounding',fields:[f('L','Chiều dài cắt',2000,'mm','input'),...x.fields],length:'L',width:'0',blankMass:'L / 1000 * KL_DV',blankSurface:'L / 1000 * DT_DV'};
 }
 function example(kind){
  const sheet=['rectangle','circle','triangle'].includes(kind),d=sheet?sheetPreset(kind):barPreset(kind),name=d.blankShapeName;
  if(kind==='circle')d.fields.find(f=>f.key==='D').sample=500;
  if(kind==='triangle'){d.fields.find(f=>f.key==='L').sample=1000;d.fields.find(f=>f.key==='H').sample=500;}
  if(kind==='rectangle'){d.fields.find(f=>f.key==='L').sample=900;d.fields.find(f=>f.key==='W').sample=400;}
- return {...d,name:'Mẫu · '+name,notes:kind==='table'?'Số minh họa KM = 10 kg/m, AM = 0,5 m²/m, không phải bảng tra tiêu chuẩn. Thay bằng số liệu nhà cung cấp theo từng mã; KM và AM nhập cố định khi tạo mã vật tư.':sheet?'Mẫu kiểm thử; thay kích thước, khổ mua và mạch cắt theo thực tế.':'Tiết diện hình học lý tưởng, bỏ qua bo góc và dung sai. Diện tích dọc thanh, không tính hai mặt đầu; hộp/ống chỉ tính mặt ngoài. Đối chiếu bảng nhà cung cấp trước khi dùng.',_testDensity:7850,_testStockL:sheet?2000:6000,_testStockW:sheet?1000:0,_testCount:kind==='circle'?8:kind==='triangle'?4:3,_testKerf:sheet?(kind==='rectangle'?3:0):3};
+ return {...d,name:'Mẫu · '+name,notes:kind==='table'?'Số minh họa KM = 10 kg/m, AM = 0,5 m²/m, không phải bảng tra tiêu chuẩn. Thay bằng số liệu nhà cung cấp theo từng mã; KM và AM nhập cố định khi tạo mã vật tư.':sheet?'Mẫu kiểm thử; thay kích thước, khổ mua và mạch cắt theo thực tế.':'Tiết diện hình học lý tưởng, bỏ qua bo góc và dung sai. Diện tích dọc thanh, không tính hai mặt đầu; hộp/ống chỉ tính mặt ngoài. Đối chiếu bảng nhà cung cấp trước khi dùng.',_testDensity:7850,_testStockL:sheet?2000:6000,_testStockW:sheet?1000:0,_testCount:['circle','triangle'].includes(kind)?8:3,_testKerf:sheet?(kind==='rectangle'?3:0):3};
 }
 const blankShapeName=d=>d.blankShapeName?.trim()||C.shapes[d.blankShape||(d.base==='sheet'?'sheet':'profile')]?.name||'';
 const api={barPreset,example,sheetPreset,blankShapeName,unfoldSymbols,editorFormulas,trial,expression:E,blankFormulas,expandedFormulas,dimension,validateShape,info,values,effective,stockProperties,coefficients,geometry,applyShape,testShape,saveShape,validateStock,saveStock,stocks,draft,assign,validateCatalog};if(typeof module!=='undefined')module.exports=api;else root.TPDefinitions=api;

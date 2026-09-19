@@ -81,18 +81,19 @@ function geometry(n,count){
 }
 // Deterministic first-fit decreasing, guillotine split for rectangles. Kerf reserved per cut.
 function nest(items,spec,kerf,strategy='best'){
+  if(spec.shape==='sheet'&&spec.shapeDefinition?.nesting==='right-triangle')return nestTriangles(items,spec,kerf,strategy);
   if(strategy==='best'&&spec.shape==='sheet'&&items.length>1){const descending=nest(items,spec,kerf,'descending');if(items.reduce((s,r)=>s+r.count,0)>1000)return descending;const mixed=nest(items,spec,kerf,'mixed');return mixed.stocks.length<descending.stocks.length?mixed:descending;}
-  const isSheet=spec.shape==='sheet',stockL=Number(spec.stockL),stockW=isSheet?Number(spec.stockW):0;
+  const isSheet=spec.shape==='sheet',rotateAllowed=spec.shapeDefinition?.nesting!=='bounding-fixed',stockL=Number(spec.stockL),stockW=isSheet?Number(spec.stockW):0;
   if(!(stockL>0)||isSheet&&!(stockW>0))throw Error('Khổ vật tư mua chưa hợp lệ');
   if(!(kerf>=0))throw Error('Mạch cắt không hợp lệ');
   const pieces=[];
   for(const row of items){if(!Number.isInteger(row.count)||row.count<1)throw Error('Số phôi phải là số nguyên dương');if(pieces.length+row.count>5000)throw Error('Demo hỗ trợ tối đa 5.000 phôi cho mỗi mã vật tư');for(let i=0;i<row.count;i++)pieces.push({rowId:row.id,label:row.label,l:row.geometry.length,w:row.geometry.width,color:row.color});}
   if(strategy==='mixed'){const queues=items.map(r=>pieces.filter(p=>p.rowId===r.id)),mixed=[];for(let i=0;queues.some(q=>q.length>i);i++)for(const q of queues)if(q[i])mixed.push(q[i]);pieces.splice(0,pieces.length,...mixed);}else pieces.sort((a,b)=>(isSheet?b.l*b.w-a.l*a.w:b.l-a.l));
   const stocks=[];
-  for(const p of pieces){if(isSheet?!((p.l<=stockL&&p.w<=stockW)||(p.w<=stockL&&p.l<=stockW)):p.l>stockL)throw Error('Chi tiết '+p.label+' vượt khổ vật tư mua');
+  for(const p of pieces){if(isSheet?!((p.l<=stockL&&p.w<=stockW)||(rotateAllowed&&p.w<=stockL&&p.l<=stockW)):p.l>stockL)throw Error('Chi tiết '+p.label+' vượt khổ vật tư mua');
     if(!isSheet){let stock=stocks.find(s=>s.remaining>=p.l);if(!stock){stock={placements:[],remaining:stockL};stocks.push(stock);}const x=stockL-stock.remaining;stock.placements.push({...p,x,y:0});stock.remaining=Math.max(0,stock.remaining-p.l-kerf);continue;}
     let chosen=null;
-    for(let si=0;si<stocks.length;si++){const s=stocks[si];for(let fi=0;fi<s.free.length;fi++){const f=s.free[fi];for(const rotate of [false,true]){const l=rotate?p.w:p.l,w=rotate?p.l:p.w;if(l<=f.l&&w<=f.w){const score=f.l*f.w-l*w;if(!chosen||score<chosen.score)chosen={si,fi,l,w,score};}}}if(chosen)break;}
+    for(let si=0;si<stocks.length;si++){const s=stocks[si];for(let fi=0;fi<s.free.length;fi++){const f=s.free[fi];for(const rotate of (rotateAllowed?[false,true]:[false])){const l=rotate?p.w:p.l,w=rotate?p.l:p.w;if(l<=f.l&&w<=f.w){const score=f.l*f.w-l*w;if(!chosen||score<chosen.score)chosen={si,fi,l,w,score};}}}if(chosen)break;}
     if(!chosen){stocks.push({placements:[],free:[{x:0,y:0,l:stockL,w:stockW}]});const rotate=p.l>stockL||p.w>stockW;chosen={si:stocks.length-1,fi:0,l:rotate?p.w:p.l,w:rotate?p.l:p.w};}
     const s=stocks[chosen.si],f=s.free.splice(chosen.fi,1)[0],{l,w}=chosen;
     s.placements.push({...p,l,w,x:f.x,y:f.y});
@@ -101,6 +102,46 @@ function nest(items,spec,kerf,strategy='best'){
   }
   const used=pieces.reduce((s,p)=>s+(isSheet?p.l*p.w:p.l),0),purchased=stocks.length*(isSheet?stockL*stockW:stockL);
   return {stocks,stockL,stockW,used,purchased,util:purchased?used/purchased:0};
+}
+// Explicitly declared right triangles only. Pair by 180-degree rotation, never mirror.
+// The separating hypotenuses are kerf mm apart; rectangular packing handles outer cuts.
+function nestTriangles(items,spec,kerf,strategy){
+  if(!Number.isFinite(kerf)||kerf<0)throw Error('Mạch cắt không hợp lệ');
+  const buckets=new Map();let count=0;
+  for(const row of items){
+    const {length:l,width:w}=row.geometry;
+    if(!Number.isFinite(l)||!Number.isFinite(w)||l<=0||w<=0||!Number.isInteger(row.count)||row.count<1)throw Error('Kích thước và số tam giác chưa hợp lệ');
+    if((count+=row.count)>5000)throw Error('Tối đa 5.000 phôi cho mỗi mã vật tư');
+    const key=JSON.stringify([l,w]);if(!buckets.has(key))buckets.set(key,[]);
+    for(let i=0;i<row.count;i++)buckets.get(key).push({rowId:row.id,label:row.label,color:row.color,l,w});
+  }
+  const plain={...spec,shapeDefinition:{...spec.shapeDefinition,nesting:'bounding'}};
+  function arrange(pair){
+    const blocks=[];
+    for(const pieces of buckets.values())for(let i=0;i<pieces.length;){
+      const first=pieces[i++],{l,w}=first,h=Math.hypot(l,w),dx=kerf*w/h,dy=kerf*l/h;
+      const fits=(l+dx<=spec.stockL&&w+dy<=spec.stockW)||(w+dy<=spec.stockL&&l+dx<=spec.stockW);
+      const second=pair&&i<pieces.length&&fits?pieces[i++]:null;
+      const points=[[[0,0],[l,0],[0,w]]];
+      if(second)points.push([[l+dx,w+dy],[dx,w+dy],[l+dx,dy]]);
+      const members=second?[first,second]:[first];
+      blocks.push({id:'triangle-block-'+blocks.length,label:first.label,count:1,color:first.color,geometry:{length:l+(second?dx:0),width:w+(second?dy:0)},members,points});
+    }
+    const layout=nest(blocks,plain,kerf,strategy),lookup=new Map(blocks.map(b=>[b.id,b]));
+    for(const stock of layout.stocks)stock.placements=stock.placements.flatMap(p=>{
+      const block=lookup.get(p.rowId),rotated=Math.abs(p.l-block.geometry.length)>1e-8||Math.abs(p.w-block.geometry.width)>1e-8;
+      return block.members.map((piece,i)=>{
+        const polygon=block.points[i].map(([x,y])=>rotated?[p.x+block.geometry.width-y,p.y+x]:[p.x+x,p.y+y]);
+        const xs=polygon.map(v=>v[0]),ys=polygon.map(v=>v[1]);
+        return {...piece,x:Math.min(...xs),y:Math.min(...ys),l:Math.max(...xs)-Math.min(...xs),w:Math.max(...ys)-Math.min(...ys),polygon,pairId:block.members.length===2?block.id:null};
+      });
+    });
+    const netUsed=items.reduce((sum,r)=>sum+r.geometry.length*r.geometry.width/2*r.count,0),pairCount=blocks.filter(b=>b.members.length===2).length;
+    const internalAllowance=blocks.filter(b=>b.members.length===2).reduce((sum,b)=>sum+b.geometry.length*b.geometry.width-b.members[0].l*b.members[0].w,0);
+    return {...layout,netUsed,pairCount,singleCount:count-2*pairCount,internalAllowance,triangleOffcut:Math.max(0,layout.used-netUsed-internalAllowance),mode:'right-triangle'};
+  }
+  const baseline=arrange(false),paired=arrange(true),chosen=paired.stocks.length<baseline.stocks.length||paired.stocks.length===baseline.stocks.length&&paired.used<baseline.used?paired:baseline;
+  return {...chosen,boundingStockCount:baseline.stocks.length,boundingPurchased:baseline.purchased};
 }
 function materialEstimate(n,g){
   if(!n.materialEstimate||n.spec.shape==='piece')return null;
@@ -134,7 +175,7 @@ function calculate(db){
         return free.map((f,i)=>{const measure=m.shape==='sheet'?f.l*f.w:f.l,id=stockIndex+':'+i,ratio=measure/layout.purchased;const eligible=remnantEligibility(m,f,q.remnantRules?.[remnantRuleKey(m)]);return {...f,id,stockIndex,measure,eligible,weight:purchasedWeight*ratio,value:purchaseCost*ratio,selected:eligible!==false&&chosen.has(id)};});
       });
       const reusableMeasure=remnants.filter(r=>r.selected).reduce((s,r)=>s+r.measure,0),recoverableCredit=purchaseCost*reusableMeasure/layout.purchased;
-      const cost=purchaseCost-(remnantMode==='exclude'?recoverableCredit:0),kerfMeasure=Math.max(0,layout.purchased-layout.used-remnants.reduce((s,r)=>s+r.measure,0));
+      const cost=purchaseCost-(remnantMode==='exclude'?recoverableCredit:0),kerfMeasure=Math.max(0,layout.purchased-layout.used-remnants.reduce((s,r)=>s+r.measure,0)+(layout.internalAllowance||0));
       const totalMeasure=group.rows.reduce((s,r)=>s+r.geometry.measure,0);for(const r of group.rows){const share=r.geometry.measure/totalMeasure;r.cost=cost*share;r.purchaseCost=purchaseCost*share;r.recoverableCredit=recoverableCredit*share;r.purchasedWeight=purchasedWeight*share;r.purchasedArea=(m.shape==='sheet'&&!m.shapeDefinition?purchasedMeasure:purchasedMeasure*materialSurface(m))*share;}
       groupsResult.push({...group,signature,remnants,layout,cost,purchaseCost,recoverableCredit,reusableMeasure,kerfMeasure,totalWeight,purchasedWeight,purchasedMeasure});
     }catch(e){if(group.rows.some(r=>!r.node.materialEstimate))errors.push(group.spec.id+': '+e.message);groupsResult.push({...group,error:e.message});}}

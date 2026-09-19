@@ -23,10 +23,21 @@ Bảng đối chiếu hiển thị phôi thực, lượng mua nguyên khổ, ph�
 
 Ví dụ 8 tấm tròn D500, dày 2 mm, khổ 2.000 × 1.000 mm, mạch cắt thử 0: một tấm chuẩn 2 m², phôi thực khoảng 1,570796 m²; chênh mua/phôi 27,323954%, phần chưa sử dụng trên lượng mua 21,460184%. Thay mạch cắt thực tế để kiểm lại.
 
-Ví dụ 4 tam giác vuông 1.000 × 500 mm, cùng khổ và mạch cắt 0: phôi thực 1 m², một khổ 2 m²; chênh trên phôi 100%, phần chưa dùng trên lượng mua 50%.
+Ví dụ **8 tam giác vuông 1.000 × 500 mm**, khổ 2.000 × 1.000 mm, mạch cắt thử 0:
+
+| Cách sắp | Tấm mua | Phôi thực | Lượng mua | Hao hụt trên phôi |
+| --- | ---: | ---: | ---: | ---: |
+| Xếp riêng từng chữ nhật bao | 2 | 2 m² | 4 m² | 100% |
+| Quay 180°, ghép thành 4 cặp | 1 | 2 m² | 2 m² | 0% |
+
+Đây là ví dụ lý tưởng để thấy khác biệt, không dùng 0 làm mạch cắt mặc định của xưởng. Nhập mạch cắt thực để tính lại. Ví dụ 7 tam giác cùng kích thước, mạch cắt 0: 3 cặp và 1 chiếc lẻ; phôi 1,75 m², một tấm mua 2 m², hao hụt trên phôi khoảng 14,2857%.
+
+Trong **Cách sắp phôi trên tấm chuẩn**, chọn **Tam giác vuông — cho phép quay, ghép cặp**. Chỉ chọn khi biên dạng đúng là tam giác vuông theo dài/rộng khai triển và công nghệ cho phép quay. Hai tam giác cùng kích thước được ghép bằng quay 180°, không lật mặt; cả khổ ghép có thể xoay 90°. Khe giữa hai cạnh chéo bằng mạch cắt đã khai; phần đệm của khổ ghép cũng tính vào phần chênh. Chiếc lẻ hoặc cặp không vừa tấm được xếp riêng. Có so sánh số tấm với xếp riêng khổ bao và chọn phương án trong hai cách không tăng số tấm.
+
+Tam giác bất kỳ cần thêm thông tin biên dạng. Nếu không được quay do hướng vân/hướng gia công, chọn **Xếp từng khổ bao — giữ nguyên hướng**; khai dài/rộng phôi theo đúng hướng dài/rộng tấm. Phần dư tam giác lẻ chưa được đưa vào danh sách dư chữ nhật có thể chọn tận dụng. Quy ước cũ chưa khai cách ghép giữ nguyên; thay danh mục không tự đổi báo giá đã lập.
 
 Ví dụ thanh dài 6.000 mm, cắt 3 đoạn 2.000 mm với mạch cắt 3 mm: không đủ trên một thanh; mẫu dùng hai thanh để thấy tác động của mạch cắt.
 
-**Giới hạn:** sơ đồ dùng khổ bao chữ nhật và thuật toán xếp hiện có, chưa tối ưu ghép sát biên dạng tròn/tam giác. Phần dư có thể tận dụng, không đồng nghĩa toàn bộ là phế liệu. Không cộng thêm tỷ lệ hao hụt khi đã tính tiền nguyên khổ mua. Gợi ý vượt 100% phải xem lại khổ/phương án mua; hệ thống chưa cho áp dụng mức đó vào ô dự toán phần trăm.
+**Giới hạn:** tam giác vuông có cách ghép cặp nêu trên; hình tròn và biên dạng khác vẫn dùng khổ bao chữ nhật. Chưa tối ưu nesting đa giác tự do hoặc bảo đảm tối ưu toàn cục. Phần dư có thể tận dụng, không đồng nghĩa toàn bộ là phế liệu. Không cộng thêm tỷ lệ hao hụt khi đã tính tiền nguyên khổ mua. Gợi ý vượt 100% phải xem lại khổ/phương án mua; hệ thống chưa cho áp dụng mức đó vào ô dự toán phần trăm.
 
 Trong báo giá, đối chiếu hao hụt và dự toán theo m² dùng diện tích phôi thực, thống nhất với công thức hình dạng.
