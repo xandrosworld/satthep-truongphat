@@ -81,6 +81,7 @@ function geometry(n,count){
 }
 // Deterministic first-fit decreasing, guillotine split for rectangles. Kerf reserved per cut.
 function nest(items,spec,kerf,strategy='best'){
+  if(spec.shape==='sheet'&&spec.shapeDefinition?.nesting==='circle')return nestCircles(items,spec,kerf);
   if(spec.shape==='sheet'&&spec.shapeDefinition?.nesting==='right-triangle')return nestTriangles(items,spec,kerf,strategy);
   if(strategy==='best'&&spec.shape==='sheet'&&items.length>1){const descending=nest(items,spec,kerf,'descending');if(items.reduce((s,r)=>s+r.count,0)>1000)return descending;const mixed=nest(items,spec,kerf,'mixed');return mixed.stocks.length<descending.stocks.length?mixed:descending;}
   const isSheet=spec.shape==='sheet',rotateAllowed=spec.shapeDefinition?.nesting!=='bounding-fixed',stockL=Number(spec.stockL),stockW=isSheet?Number(spec.stockW):0;
@@ -102,6 +103,41 @@ function nest(items,spec,kerf,strategy='best'){
   }
   const used=pieces.reduce((s,p)=>s+(isSheet?p.l*p.w:p.l),0),purchased=stocks.length*(isSheet?stockL*stockW:stockL);
   return {stocks,stockL,stockW,used,purchased,util:purchased?used/purchased:0};
+}
+// Compare a rectangular baseline with regular/staggered circle rows in both orientations.
+// Different diameters can share the baseline; staggered alternatives keep diameter batches separate.
+// No global optimum is claimed. Only the exterior rectangular strips are reusable remnants.
+function nestCircles(items,spec,kerf){
+ const stockL=Number(spec.stockL),stockW=Number(spec.stockW),buckets=new Map();let count=0;
+ if(!Number.isFinite(stockL)||!Number.isFinite(stockW)||stockL<=0||stockW<=0||!Number.isFinite(kerf)||kerf<0)throw Error('Khổ tấm hoặc mạch cắt chưa hợp lệ');
+ for(const row of items){const d=row.geometry.length;if(!Number.isFinite(d)||d<=0||Math.abs(d-row.geometry.width)>1e-8||!Number.isInteger(row.count)||row.count<1)throw Error('Đường kính hoặc số tấm tròn chưa hợp lệ');if(d>Math.min(stockL,stockW))throw Error('Tấm tròn vượt khổ vật tư mua');if((count+=row.count)>5000)throw Error('Tối đa 5.000 phôi cho mỗi mã vật tư');if(!buckets.has(d))buckets.set(d,[]);for(let i=0;i<row.count;i++)buckets.get(d).push({rowId:row.id,label:row.label,color:row.color,l:d,w:d,circle:true});}
+ const plain={...spec,shapeDefinition:{...spec.shapeDefinition,nesting:'bounding'}},baseline=nest(items,plain,kerf);
+ for(const stock of baseline.stocks)for(const p of stock.placements)p.circle=true;
+ const stocks=[];let used=0;
+ for(const [d,pieces] of buckets){
+  const patterns=[];
+  for(const rotated of [false,true])for(const staggered of [false,true])for(const phase of (staggered?[0,1]:[0])){
+   const l=rotated?stockW:stockL,w=rotated?stockL:stockW,pitch=d+kerf,dy=staggered?pitch*Math.sqrt(3)/2:pitch,points=[];
+   for(let row=0;row<5000&&row*dy+d<=w+1e-8&&points.length<pieces.length;row++){
+    const offset=staggered?(row+phase)%2*pitch/2:0;
+    for(let col=0;col<5000&&offset+col*pitch+d<=l+1e-8&&points.length<pieces.length;col++)points.push(rotated?{x:row*dy,y:offset+col*pitch}:{x:offset+col*pitch,y:row*dy});
+   }
+   if(points.length)patterns.push(points);
+  }
+  let best=null;
+  for(const points of patterns){const option=[];let area=0;
+   for(let start=0;start<pieces.length;start+=points.length){const placements=pieces.slice(start,start+points.length).map((piece,i)=>({...piece,...points[i]})),l=Math.max(...placements.map(p=>p.x+d)),w=Math.max(...placements.map(p=>p.y+d)),free=[];
+    if(stockL-l-kerf>1e-8)free.push({x:l+kerf,y:0,l:stockL-l-kerf,w});
+    if(stockW-w-kerf>1e-8)free.push({x:0,y:w+kerf,l:stockL,w:stockW-w-kerf});
+    option.push({placements,free});area+=l*w;
+   }
+   if(!best||option.length<best.stocks.length||option.length===best.stocks.length&&area<best.used)best={stocks:option,used:area};
+  }
+  stocks.push(...best.stocks);used+=best.used;
+ }
+ const chosen=stocks.length<baseline.stocks.length||stocks.length===baseline.stocks.length&&used<baseline.used?{stocks,used,stockL,stockW,purchased:stocks.length*stockL*stockW}:baseline;
+ const netUsed=items.reduce((sum,r)=>sum+Math.PI*r.geometry.length**2/4*r.count,0);
+ return {...chosen,util:chosen.purchased?netUsed/chosen.purchased:0,netUsed,circleOffcut:Math.max(0,chosen.used-netUsed),mode:'circle',boundingStockCount:baseline.stocks.length,boundingPurchased:baseline.purchased};
 }
 // Explicitly declared right triangles only. Pair by 180-degree rotation, never mirror.
 // The separating hypotenuses are kerf mm apart; rectangular packing handles outer cuts.
