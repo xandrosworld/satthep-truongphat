@@ -194,7 +194,7 @@ const scope=G.resolve(q,r.node).scope;
     Object.assign(totals,Tax.outputTotals(q,products));totals.grand=totals.beforeTax+totals.vat;totals.profit=totals.beforeTax-totals.cost;
     return totals;
   }
-for(const [id,name] of G.methods(q)){
+for(const [id,name] of G.methods(q).filter(([id])=>id!=='special')){
     const applicability=G.applicability(q,id);
     const methodErrors=[...detailErrors,...(id==='tmc'?tmcErrors:[]),...applicability.reasons];
     const products=(id==='tmc'?tmc:detail).map((row,index)=>{
@@ -213,6 +213,15 @@ let suggested=r.suggestedUnit,groupCalculation=null;
 return {...r,benchmarkSupplement,...(id.startsWith('group:')?{groupCalculation,groupBranch:profile?.engine==='components'?'components':groupCalculation?'formula':'detail'}:{}),suggestedUnit:suggested,unitSell:suggested,sell:Math.round(suggested*r.node.qty)};
     });
 alternatives[id]={id,name,products,total:totalOf(products),applicable:applicability.applicable,errors:[...new Set(methodErrors)],ready:applicability.applicable&&!methodErrors.length&&!errors.length};
+  }
+  if(currentFlow(q)){
+    const applicability=G.applicability(q,'special'),combinedErrors=[...applicability.reasons],used=new Set();
+    const products=roots.map((r,index)=>{const resolved=G.resolve(q,r.node),id=resolved.id==='tmc'?'tmc':resolved.id==='detail'?'detail':'group:'+resolved.id,source=alternatives[id];
+      if(!source){combinedErrors.push(resolved.reason||r.node.name+': thiếu phương án đặc thù');return {...detail[index],sourceMethod:'detail',sourceMethodName:'Thiếu phân nhóm'};}
+      used.add(id);return {...source.products[index],sourceMethod:id,sourceMethodName:source.name};
+    });
+    for(const id of used)combinedErrors.push(...alternatives[id].errors);
+    alternatives.special={id:'special',name:'Theo đặc thù (kết hợp các nhóm)',products,total:totalOf(products),applicable:applicability.applicable,errors:[...new Set(combinedErrors)],ready:applicability.applicable&&!combinedErrors.length&&!errors.length};
   }
   const selected=Object.hasOwn(alternatives,p.selected)?alternatives[p.selected]:alternatives.detail;
   if(!Object.hasOwn(alternatives,p.selected))errors.push('Phương án được chọn không hợp lệ');

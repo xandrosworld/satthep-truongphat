@@ -23,6 +23,31 @@ test('confirmed TMC mixed quote uses shared physical quantities and retains deta
 test('confirmed TMC 2510 production + 140 delivery/install then 5%, 3%; kg geometry unchanged',()=>{
  const d=modern(),p=P.calculate(d).products[0];near(p.weight,20);near(p.production,2510);near(p.cost,2865.975);
 });
+test('one special quotation combines TMC, a configured cabinet method and detailed mechanical products',()=>{
+ const d=modern(CF.seed()),q=d.quote;
+ const tmc=C.copy(F.seed().quote.products[0]);tmc.id='mix-tmc';tmc.children[0].id='mix-tmc-material';tmc.priceGroupId='tmc';q.products.push(tmc);
+ const mechanical=C.copy(tmc);mechanical.id='mix-mechanical';mechanical.children[0].id='mix-mechanical-material';mechanical.priceGroupId='detail';mechanical.tmcScope='detail';q.products.push(mechanical);
+ q.pricing.selected='special';const before=JSON.stringify(d),r=P.calculate(d);A.deepEqual(r.errors,[]);
+ A.deepEqual(r.products.map(p=>p.sourceMethod),['group:grp-cabinet-flow','tmc','detail']);
+ for(const [i,id]of ['group:grp-cabinet-flow','tmc','detail'].entries()){A.equal(r.products[i].sell,r.alternatives[id].products[i].sell);A.equal(r.products[i].weight,r.alternatives.detail.products[i].weight);}
+ A.equal(r.total.beforeTax,r.products.reduce((sum,p)=>sum+p.sell,0));A.equal(JSON.stringify(d),before);
+ F.confirm(q);A.deepEqual(P.calculate(d).tax.releaseErrors,[]);delete q.pricing.tmcPolicy;A.ok(P.calculate(d).tax.releaseErrors.some(e=>e.includes('TMC')));
+ q.products[0].priceGroupId='unknown';A.equal(P.calculate(d).alternatives.special.ready,false);
+});
+test('special method without any special group has an explicit blocking reason',()=>{
+ const d=modern(),q=d.quote;q.products[0].priceGroupId='detail';q.pricing.selected='special';
+ const r=P.calculate(d);A.equal(r.alternatives.special.ready,false);A.ok(r.errors.some(e=>e.includes('Không có sản phẩm thuộc nhóm đặc thù')));
+});
+test('additional named expense rows and sequential factors roll up without a fixed number of charges',()=>{
+ const d=modern(),q=d.quote,n=q.products[0];q.pricing.selected='detail';q.pricing.special=0;
+ q.expenses=[['loading','Bốc xếp nhập phôi','incoming',50],['dispatch','Giao chặng bổ sung','delivery',30],['crane','Cẩu hạ tại công trình','install',20]].map(([id,name,category,rate])=>({id,name,category,rate,method:'fixed',scope:'all',allocation:'equal'}));
+ q.pricing.productionFactors=[{id:'p1',name:'Yếu tố sản xuất A',percent:10},{id:'p2',name:'Yếu tố sản xuất B',percent:5}];
+ const r=P.calculate(d);A.deepEqual(r.errors,[]);near(r.products[0].production,2250*1.1*1.05);near(r.total.cost,(2250*1.1*1.05+190)*1.2*1.3);
+ for(const item of r.logistics.items)near(item.cost,item.detail.reduce((sum,x)=>sum+x.cost,0));
+ scope(n,'competitor',{incoming:'detail',delivery:'detail',install:'detail'});n.competitorPrice=1000;q.pricing.selected='competitor';
+ const benchmark=P.calculate(d);near(benchmark.products[0].benchmarkSupplement.amount,300);near(benchmark.total.beforeTax,2300);
+ A.deepEqual(P.calculate(JSON.parse(JSON.stringify(d))).total,benchmark.total);
+});
 test('included delivery in component flow removed exactly once before common and management',()=>{
  const d=modern(CF.seed()),q=d.quote,before=P.calculate(d),bom=JSON.stringify(q.products);
  near(before.products[0].cost,2622.4);q.pricing.productGroups[0].flow.rules.delivery={mode:'included',includedIn:'factory',reason:'Gói công gồm giao hàng'};

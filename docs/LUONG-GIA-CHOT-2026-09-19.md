@@ -9,6 +9,7 @@ Căn cứ: khách xác nhận lúc 17:34 và 17:45: dùng chung khối lượng/
 - Giá gốc = cơ sở trên × (1 + chi phí chung/100) × (1 + quản lý/100). Sau đó mới áp chuỗi hệ số giá bán.
 - `special` và các yếu tố bổ sung được khai là sản xuất vẫn nằm trong giá sản xuất. Không chuyển chúng sang phí chung/quản lý hoặc tự tạo hệ số mới.
 - TMC và các phương án theo đầu mục dùng lượng vật lý từ tính toán. Giữ bảng tiền công/hao hụt riêng đã khai; không suy ra lượng vật lý khác từ tên sản phẩm. Ngoài phạm vi đặc thù giữ nguyên nhánh chi tiết. Không thay cơ chế lựa chọn một PA cho toàn báo giá.
+- Có lựa chọn **Theo đặc thù (kết hợp các nhóm)** cho toàn báo giá: nhóm TMC dùng TMC, nhóm tự khai dùng phương án nhóm đã gán, phần cơ khí còn lại dùng chi tiết. Không suy ra nhóm từ tên. Thiếu phân nhóm hoặc thiếu dữ liệu nhánh thì chặn lựa chọn.
 - Khoản đã nằm trong gói chỉ tính một lần qua khai luồng / khoản đã gồm hiện có.
 - Giá kg/đối thủ khai riêng bốn khoản: nhập phôi, vận chuyển gia công thuê ngoài, giao hàng, lắp đặt. Mỗi khoản chọn đã gồm / chưa gồm cộng từ tính toán / không áp dụng. Báo giá theo luồng mới thiếu xác nhận thì PA đó chưa đủ điều kiện chọn.
 - Khoản bổ sung lấy đúng chi phí chưa thuế của PA tính toán đã phân bổ cho sản phẩm, không nhân lại hệ số giá bán. Chuẩn hóa thuế trong giá nguồn trước, cộng phí còn thiếu, làm tròn đơn giá một lần, rồi tính thuế đầu ra.
@@ -35,7 +36,7 @@ Các số dưới đây chỉ kiểm phép tính, không phải đơn giá/đị
 
 ## Kiểm chứng
 
-- 557/557 kiểm thử đơn vị/API đạt trên cây phát hành tách riêng các sửa dở có sẵn.
+- 560/560 kiểm thử đơn vị/API đạt trên cây phát hành tách riêng các sửa dở có sẵn.
 - Có kiểm API lưu/mở lại, chống ghi đè phiên bản, chặn đổi luồng ngoài quyền, mở sửa nhưng giữ nguyên bản duyệt cũ.
 - `tests/confirmed-flow-browser.cjs`: thao tác chuyển luồng, khai khoản chưa gồm, chọn PA, Excel, bản chào, lưu/mở lại và mobile.
 - `tests/pricing-review-browser.cjs` và `tools/verify-cost-flows.cjs` đạt trên cây phát hành.
@@ -43,3 +44,12 @@ Các số dưới đây chỉ kiểm phép tính, không phải đơn giá/đị
 - Kiểm web thật dùng dữ liệu thử trong bộ nhớ trình duyệt, chặn ghi nghiệp vụ; không tự chuyển báo giá/danh mục khách.
 
 Phần thực hiện này thuộc hoàn thiện GĐ1. Không triển khai ghi nhận sản xuất/kho/chi phí thực tế của GĐ2 và không coi kết quả kiểm thử nội bộ là khách nghiệm thu.
+
+## Bổ sung của khách lúc 17:55 — các đầu chi phí có thể mở rộng
+
+- Không giới hạn nghiệp vụ ở bốn ô tổng tiền. Bảng khoản chi cho thêm nhiều dòng tên riêng, đơn giá/cách tính, hệ số, phạm vi và cách phân bổ riêng. Ví dụ bốc xếp nhập phôi, nhiều chặng giao hàng, cẩu hạ khi lắp đặt.
+- Công việc sản xuất bổ sung khai ở nguyên công/đơn giá; yếu tố theo tỷ lệ bổ sung khai ở chuỗi hệ số sản xuất hoặc giá bán đúng vị trí. Các danh sách này không cố định số khoản.
+- Các khoản vẫn được phân vào nhóm tính giá để giữ quy tắc: nhập phôi/thuê ngoài vào sản xuất, giao hàng/lắp đặt vào sau sản xuất và trước chi phí chung/quản lý.
+- Phương án theo đầu mục xác định nhóm khoản đã gồm/không áp dụng/lấy theo tính toán hoặc công thức riêng. Giá kg/đối thủ xác nhận phạm vi bốn nhóm phí và cộng tổng các khoản chưa gồm của nhóm đó một lần.
+- Giới hạn hiện tại: quy tắc đã gồm/chưa gồm đang khai theo **nhóm chi phí**, chưa khai khác nhau cho từng dòng trong cùng nhóm. Nếu có gói bao gồm một chặng giao hàng nhưng không gồm chặng khác, cần tách rõ quy tắc/phạm vi trước khi mở rộng cấp dòng; không tự coi cả hai chặng là đã gồm.
+- Kiểm thử thêm nhiều khoản và hệ số có tên riêng: chi phí sản xuất, chi phí sau giao/lắp, phân bổ, giá kg/đối thủ và mở lại dữ liệu phải cùng tổng. Không cài đơn giá mẫu vào danh mục thật.

@@ -60,13 +60,13 @@ function assess(q,result){
   for(const [id,a]of Object.entries(result.alternatives)){
     const inputs=id==='kg'||id==='competitor'?q.products.map(n=>({nodeId:n.id,name:n.name,...declaration(q,n,id)})):[];
     const reasons=[];
-    if(id==='tmc'){
+    if(id==='tmc'||id==='special'&&a.products.some(p=>p.sourceMethod==='tmc')){
       reasons.push(...(result.tmcPolicyErrors||[]));
       const used=new Set(a.products.flatMap(p=>(p.tmc?.items||[]).flatMap(i=>[i.laborPricing?.sourceKey||'tmc:'+i.tableId+':'+i.bound.index,'tmc:'+i.tableId+':ancillary','tmc:'+i.tableId+':common'])));
       if(Cost.view(q).some(r=>used.has(r.key)&&!r.known))reasons.push('TMC: chưa khai nguồn giá/thuế của bậc nhân công hoặc khoản tiền đang dùng');
       if(!costKnown)reasons.push('TMC: đầu vào chi phí chưa xác nhận mặt bằng thuế hoặc đã đổi');
     }
-    if((id==='detail'||id.startsWith('group:'))&&!costKnown)reasons.push('Chưa xác nhận các đầu vào tính toán cùng mặt bằng chưa thuế, hoặc đầu vào đã đổi');
+    if((id==='detail'||id==='special'||id.startsWith('group:'))&&!costKnown)reasons.push('Chưa xác nhận các đầu vào tính toán cùng mặt bằng chưa thuế, hoặc đầu vào đã đổi');
     if(inputs.length&&a.products.some(p=>p.benchmarkSupplement?.rows.some(r=>r.status==='detail'))&&!costKnown)reasons.push('Khoản bổ sung lấy từ tính toán cần xác nhận giá đầu vào chưa thuế');
     if(inputs.some(i=>!i.known))reasons.push('Chưa khai đủ điều kiện thuế từng giá, hoặc giá đã đổi');
     if(!a.ready)reasons.push('Còn dữ liệu tính giá chưa hợp lệ');

@@ -20,7 +20,7 @@ function renderCostAnalysis(){
   const values=result.rows.map(r=>TPPrice.materialValuation(r,result,db.quote)),quantity=k=>values.some(v=>v.error)?'Cần kiểm tra':num(values.reduce((s,v)=>s+(v[k]||0),0),3);
   let rows=section('1. Hệ số và cách tính');
   rows+=row('Thứ tự hình thành giá',()=>esc(paSequenceText()));
-  rows+=row('Nhánh tính của từng sản phẩm',a=>a.products.map(p=>esc(p.node.name)+': '+(a.id==='tmc'?(p.tmc?.scope==='detail'?'Chi tiết (ngoài TMC)':'Thang máng cáp'):a.id.startsWith('group:')?(['formula','components'].includes(p.groupBranch)?esc(a.name):'Chi tiết (ngoài nhóm)'):esc(a.name))).join('<br>'));
+  rows+=row('Nhánh tính của từng sản phẩm',a=>a.products.map(p=>esc(p.node.name)+': '+(a.id==='special'?esc(p.sourceMethodName):a.id==='tmc'?(p.tmc?.scope==='detail'?'Chi tiết (ngoài TMC)':'Thang máng cáp'):a.id.startsWith('group:')?(['formula','components'].includes(p.groupBranch)?esc(a.name):'Chi tiết (ngoài nhóm)'):esc(a.name))).join('<br>'));
   rows+=row('Chi phí chung / quản lý / đặc thù SX',a=>a.products.map(p=>esc(p.node.name)+': '+[p.policyRates.overhead,p.policyRates.management,p.policyRates.special].map(v=>num(v,2)+'%').join(' / ')).join('<br>'),{explain:'Hệ số nhân lần lượt. Kg/đối thủ/công thức nhóm: chi phí này chỉ là tham khảo.'});
   rows+=row('Hệ số lợi nhuận / xử lý / đơn hàng / khách hàng',a=>['kg','competitor'].includes(a.id)?'Đã nằm trong giá trọn gói':a.products.map(p=>esc(p.node.name)+': '+(p.saleSteps||[]).map(x=>esc(x.name||x.key)+': '+num(x.percent)+'%').join(' → ')).join('<br>'));
   rows+=row('Yếu tố SX bổ sung',()=> (result.pricing.productionFactors||[]).filter(f=>f.enabled!==false).map(f=>esc(f.name)+': '+num(f.percent)+'%').join(' → ')||'—');
@@ -38,7 +38,7 @@ function renderCostAnalysis(){
    const operations=Object.values(result.nodes).flatMap(r=>(r.ownOps||[]).filter(o=>!o.skipped).map(o=>({r,o})));
    for(const {r,o} of operations)rows+=row(esc(r.node.name)+' / '+esc(o.name),a=>o.error?esc(o.error):num(o.basis,3)+' '+esc(o.unit)+' × '+money(o.rate)+' đ → '+money(o.cost)+' đ'+(a.id==='tmc'||a.id.startsWith('group:')?' (tham khảo chi tiết)':''),{explain:o.mode==='outside'?'Thuê ngoài':'Tại xưởng'});
    for(const pkg of result.packages||[])rows+=row('Gói thuê: '+esc(pkg.output),()=>num(pkg.basis,3)+' '+esc(pkg.unit)+' × '+money(pkg.rate)+' đ → '+money(pkg.cost)+' đ');
-   rows+=row('Nhân công TMC theo khổ rộng',a=>a.id!=='tmc'?'—':a.products.flatMap(p=>(p.tmc?.items||[]).map(i=>esc(p.node.name)+' / '+esc(i.name)+': '+num(i.basis,3)+' '+esc(i.unit)+' → '+money(i.labor)+' đ')).join('<br>')||'—');
+   rows+=row('Nhân công TMC theo khổ rộng',a=>!['tmc','special'].includes(a.id)?'—':a.products.flatMap(p=>(p.tmc?.items||[]).map(i=>esc(p.node.name)+' / '+esc(i.name)+': '+num(i.basis,3)+' '+esc(i.unit)+' → '+money(i.labor)+' đ')).join('<br>')||'—');
    for(const k of ['factory','outside'])rows+=row(paNames[k],a=>cash(a,k),{className:'pa-subtotal'});
    rows+=section('4. Chi phí khác và giá gốc');
    for(const k of ['tmcCommon','incoming','outgoing'])rows+=row(paNames[k],a=>cash(a,k));

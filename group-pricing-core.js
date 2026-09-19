@@ -33,8 +33,9 @@ function resolve(q,n){
  const matches=groups(q).filter(g=>g.id===id),group=matches.length===1?matches[0]:null;
  return {id,group,known:!!group,scope:group?(group.engine==='tmc'?'tmc':'detail'):'unknown',reason:group?'':n.name+': chưa xác định nhóm sản phẩm hợp lệ'};
 }
-function methods(q){const list=[...BASE_METHODS,...profiles(q).map(g=>['group:'+g.id,'Theo '+g.name])],selected=q.pricing?.selected;if(typeof selected==='string'&&/^group:grp-[A-Za-z0-9_-]{1,60}$/.test(selected)&&!list.some(m=>m[0]===selected))list.push([selected,'Phương án đã chọn không còn hợp lệ']);return [...new Map(list.map(m=>[m[0],m])).values()];}
+function methods(q){const list=[...BASE_METHODS,...(q.pricing?.costSequence==='delivery-before-overhead-v1'?[['special','Theo đặc thù (kết hợp các nhóm)']]:[]),...profiles(q).map(g=>['group:'+g.id,'Theo '+g.name])],selected=q.pricing?.selected;if(typeof selected==='string'&&/^group:grp-[A-Za-z0-9_-]{1,60}$/.test(selected)&&!list.some(m=>m[0]===selected))list.push([selected,'Phương án đã chọn không còn hợp lệ']);return [...new Map(list.map(m=>[m[0],m])).values()];}
 function applicability(q,id){
+ if(id==='special'){const items=(q.products||[]).map(n=>resolve(q,n)),has=items.some(x=>x.known&&x.id!=='detail');return {applicable:has,reasons:[...(!has?['Không có sản phẩm thuộc nhóm đặc thù']:[]),...items.filter(x=>!x.known).map(x=>x.reason)]};}
  if(['detail','kg','competitor'].includes(id))return {applicable:true,reasons:[]};
  const target=id==='tmc'?'tmc':id.startsWith('group:')?id.slice(6):null,known=groups(q).some(g=>g.id===target),items=(q.products||[]).map(n=>resolve(q,n)),has=known&&items.some(x=>x.id===target&&x.known),missing=items.filter(x=>!x.known).map(x=>x.reason);
  return {applicable:has,reasons:[...(!has?[known?'Không có sản phẩm thuộc nhóm áp dụng phương án này':'Nhóm tính giá không còn tồn tại']:[]),...missing]};
