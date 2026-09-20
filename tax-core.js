@@ -19,7 +19,7 @@ function outputTotals(q,products){
   return {vat:breakdown.reduce((s,g)=>s+g.vat,0),taxBreakdown:breakdown};
 }
 function costSignature(q){
-  const pricing={...q.pricing};delete pricing.taxReview;delete pricing.selected;delete pricing.overrides;delete pricing.comparisonMethods;
+  const pricing={...q.pricing};delete pricing.taxReview;delete pricing.selected;delete pricing.overrides;delete pricing.comparisonMethods;delete pricing.factorSuggestions;delete pricing.suggestionCustomerType;
   const products=JSON.parse(JSON.stringify(q.products||[]));for(const n of products){delete n.pricePerKg;delete n.competitorPrice;delete n.marketPrice;delete n.marketSource;}
   return JSON.stringify(stable({products,rates:q.ratesSnapshot,expenses:q.expenses,devices:q.deviceInstallations,pricing,costSources:q.costPriceSources,kerf:q.kerf,remnantMode:q.remnantMode,remnantSelections:q.remnantSelections,remnantRules:q.remnantRules,operationMethods:q.operationMethods}));
 }
@@ -38,7 +38,8 @@ function review(q,data,at=new Date().toISOString()){
   const inputs={};for(const n of q.products){inputs[n.id]={};for(const m of ['kg','competitor','market']){
     const d=data.inputs?.[n.id]?.[m]||{status:'unknown'},value=n[m==='kg'?'pricePerKg':m==='market'?'marketPrice':'competitorPrice'];
     if(!['unknown','excluded','included'].includes(d.status))throw Error('Trạng thái thuế không hợp lệ');
-    if(d.status!=='unknown'&&(!valid(value)||Number(value)<0))throw Error(n.name+': cần giá không âm');
+    if(value===null||value===undefined||value===''){inputs[n.id][m]={status:'unknown',value:null,rate:null};continue;}
+    if(!valid(value)||Number(value)<0)throw Error(n.name+' / '+({kg:'giá theo kg',competitor:'giá đối thủ',market:'giá thị trường'}[m])+': cần giá không âm');
     if(d.status==='included'&&!rate(d.rate))throw Error(n.name+': nhập thuế suất đã nằm trong giá');
     if(m==='market'&&d.status!=='unknown'&&!String(n.marketSource||'').trim())throw Error(n.name+': cần nguồn giá thị trường');
     inputs[n.id][m]={status:d.status,value:value??null,rate:d.status==='included'?Number(d.rate):null,...(m==='market'?{source:n.marketSource||''}: {})};

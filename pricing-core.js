@@ -156,9 +156,12 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
   const makeCost=(r,parts,includeProductionExtras=true,policy=p)=>{
     // Preserve historical quotes; new flow moves common/management after delivery/install.
     const direct=PARTS.filter(k=>!['delivery','install'].includes(k)).reduce((s,k)=>s+parts[k],0),modern=currentFlow(q);
+    const declaredSpecial=r.node.productionSpecialPercent;
+    const specialRate=declaredSpecial===null||declaredSpecial===undefined||declaredSpecial===''?policy.special:Number(declaredSpecial);
+    if(!Number.isFinite(specialRate)||specialRate<=-100)errors.push(r.node.name+': hệ số đặc thù sản xuất phải lớn hơn -100%');
     let overhead=0,management=0,special=0,production=direct;
-    if(modern){special=direct*policy.special/100;production+=special;}
-    else {overhead=direct*policy.overhead/100;management=(direct+overhead)*policy.management/100;special=(direct+overhead+management)*policy.special/100;production+=overhead+management+special;}
+    if(modern){special=direct*specialRate/100;production+=special;}
+    else {overhead=direct*policy.overhead/100;management=(direct+overhead)*policy.management/100;special=(direct+overhead+management)*specialRate/100;production+=overhead+management+special;}
     const productionSteps=[];for(const f of includeProductionExtras?productionFactors:[]){const percent=Number(f.percent)||0,base=production,value=base*percent/100;production+=value;productionSteps.push({...f,percent,base,value,total:production});}
     const productionExtras=productionSteps.reduce((sum,f)=>sum+f.value,0),baseBeforeCommon=production+parts.delivery+parts.install;
     const overheadBase=modern?baseBeforeCommon:direct;
@@ -169,7 +172,7 @@ if(r.coveredBy&&!op.afterPackage){const rate=q.ratesSnapshot.find(x=>x.id===op.i
       const percent=Number(f.percent)||0,base=running,value=base*percent/100;running+=value;saleSteps.push({...f,percent,base,value,total:running});
     }
     const stepValue=id=>saleSteps.find(f=>f.id===id)?.value||0;
-    return {...r,parts:{...parts},direct,overhead,management,special,production,cost,baseBeforeCommon,overheadBase,managementBase,policyRates:{overhead:policy.overhead,management:policy.management,special:policy.special},productionSteps,productionExtras,saleSteps,profitMarkup:stepValue('profitMarkup'),processing:stepValue('processing'),order:stepValue('order'),customer:stepValue('customer'),reserve:stepValue('reserve'),saleExtras:saleSteps.slice(4).reduce((s,f)=>s+f.value,0),
+    return {...r,parts:{...parts},direct,overhead,management,special,production,cost,baseBeforeCommon,overheadBase,managementBase,policyRates:{overhead:policy.overhead,management:policy.management,special:specialRate},productionSteps,productionExtras,saleSteps,profitMarkup:stepValue('profitMarkup'),processing:stepValue('processing'),order:stepValue('order'),customer:stepValue('customer'),reserve:stepValue('reserve'),saleExtras:saleSteps.slice(4).reduce((s,f)=>s+f.value,0),
       material:parts.stock+parts.ancillary+parts.allowance+parts.finishing,ops:parts.factory+parts.outside,
       suggestedUnit:r.node.qty>0?Math.round(running/r.node.qty):0};
   };
