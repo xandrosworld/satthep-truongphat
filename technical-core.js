@@ -4,21 +4,52 @@
 const copy=x=>JSON.parse(JSON.stringify(x));
 const nodeKeys=['lineNote','id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent','pieceMass'];
 const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','stockOptions','shapeDefinition','massOverride','areaOverride'];
-const opKeys=['complexity','id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
+const opKeys=['complexityChoice','id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
 const ruleKeys=['id','name','shape','length','width','measurementRules','fields','shapes'];
 const quoteKeys=['customer','project','id','date','kerf','nestingPlans','remnantMode','remnantSelections','request'];
 const pick=(x,keys)=>Object.fromEntries(keys.filter(k=>x?.[k]!==undefined).map(k=>[k,copy(x[k])]));
 const spec=x=>({...pick(x,specKeys),price:0});
 function recipe(x){return {...pick(x,['id','norm','basis','layers','loss']),spec:spec(x.spec)};}
-function rate(x){return {...pick(x,['id','name','machine','technicalNotes','unit','insideUnit','outsideUnit','finishing','productGroups','operationType','consumptionsEnabled']),inside:0,outside:0,factors:[],...(x.consumption?{consumption:recipe(x.consumption)}:{}),...(x.consumptions?{consumptions:x.consumptions.map(recipe)}:{})};}
+// Only labels and references cross the technical API; factors remain authoritative server data.
+function complexityRate(r,catalog){
+ const master=catalog?.rates?.find(x=>x.id===r?.id)||r;if(!master)return {};
+ if((master.factors||[]).some(f=>f.param==='complexity'))return master;
+ const shared=(catalog?.pricingDefaults?.factorDefinitions||[]).filter(f=>f.param==='complexity'&&f.kind==='category'&&f.enabled!==false);
+ return shared.length?{...master,factors:[...(master.factors||[]),...shared]}:master;
+}
+function complexityLevels(r){
+ if(r?.complexityLevels)return r.complexityLevels.map(x=>pick(x,['factorId','label','groups','rateGroups']));
+ const rows=[];for(const f of r?.factors||[]){if(f.enabled===false||f.param!=='complexity'||f.kind!=='category')continue;for(const c of f.categories||[])rows.push({factorId:f.sharedFactorId||f.id,label:String(c.key),groups:copy(f.productGroups||[]),rateGroups:copy(r.productGroups||[])});}return rows;
+}
+function choiceFor(op){return op?.complexityChoice?pick(op.complexityChoice,['factorId','label']):(op?.complexity?{factorId:'',label:op.complexity.label}:undefined);}
+function resolveComplexity(rate,choice,group){
+ const allowed=complexityLevels(rate).some(x=>x.factorId===choice?.factorId&&x.label===choice?.label&&(!x.groups.length||x.groups.includes(group))&&(!x.rateGroups.length||x.rateGroups.includes(group)));
+ if(!allowed)throw Error('Mức độ phức tạp không thuộc bảng khai báo của nguyên công / nhóm sản phẩm. Tải lại danh mục để chọn.');
+ const f=rate.factors.find(x=>(x.sharedFactorId||x.id)===choice.factorId&&x.param==='complexity'),c=f.categories.find(x=>String(x.key)===choice.label),value=Number(c.percent),multiplier=f.valueMode==='multiplier'?value:1+value/100;
+ if(c.percent===null||c.percent===''||!Number.isFinite(multiplier)||multiplier<=0)throw Error('Hệ số trong danh mục chưa hợp lệ; người phụ trách giá cần kiểm tra.');
+ return {label:choice.label,multiplier};
+}
+function resolveDocumentChoices(d,before,catalog,canFactors){
+ const old=new Map();const index=ns=>{for(const n of ns||[]){old.set(n.id,n);index(n.children);}};index(before?.quote?.products);
+ function visit(ns,group=''){for(const n of ns||[]){const g=n.productGroup||group,prev=old.get(n.id);for(const [i,op]of (n.ops||[]).entries()){
+  const previous=(prev?.ops||[]).find((o,j)=>o.id===op.id&&(o.instanceId&&op.instanceId?o.instanceId===op.instanceId:j===i));
+  if(!equal(choiceFor(previous),choiceFor(op))){
+   if(op.complexityChoice?.factorId){const rate=complexityRate(d.quote.ratesSnapshot.find(r=>r.id===op.id),catalog||d);op.complexity=resolveComplexity(rate,op.complexityChoice,g);}
+   else if(!op.complexityChoice&&!op.complexity)delete op.complexity;
+   else if(!canFactors)throw Error('Chỉ chọn mức độ đã khai; không được nhập hệ số phức tạp.');
+  }else if(!canFactors&&!equal(previous?.complexity,op.complexity))throw Error('Không được thay hệ số phức tạp; chỉ chọn mức độ từ danh mục.');
+ }visit(n.children,g);}}
+ visit(d.quote.products);return d;
+}
+function rate(x,source){return {...pick(x,['id','name','machine','technicalNotes','unit','insideUnit','outsideUnit','finishing','productGroups','operationType','consumptionsEnabled']),...(complexityLevels(source||x).length?{complexityLevels:complexityLevels(source||x)}:{}),inside:0,outside:0,factors:[],...(x.consumption?{consumption:recipe(x.consumption)}:{}),...(x.consumptions?{consumptions:x.consumptions.map(recipe)}:{})};}
 function node(x,q={}){return {...pick(x,nodeKeys),...(x.spec?{spec:spec(x.spec)}:{}),...(x.ruleSpec?{ruleSpec:pick(x.ruleSpec,ruleKeys)}:{}),...(x.outsource?{outsource:{...pick(x.outsource,['enabled','supplier','output','materialSupply','unit','quantity']),price:0}}:{}),ops:(x.ops||[]).map(o=>{const r=q.ratesSnapshot?.find(r=>r.id===o.id),option=r?.priceOptions?.find(p=>p.id===(q.operationPriceOptions?.[o.id]||o.priceOptionId)),method=option?.method||q.operationMethods?.[o.id]||o.pricingMethod;
  const unit=method==='fixed'?'gói':method==='direct'&&!option?o.priceUnit:(option||r)?.[o.mode+'Unit']||r?.unit;
- return {...pick(o,opKeys),pricingMethod:'direct',unitPrice:0,priceUnit:unit||'kg'};
+ return {...pick(o,opKeys),...(choiceFor(o)?{complexityChoice:copy(choiceFor(o))}:{}),pricingMethod:'direct',unitPrice:0,priceUnit:unit||'kg'};
  }),children:(x.children||[]).map(n=>node(n,q))};}
-function project(d){return {version:2,materials:(d.materials||[]).map(spec),rates:(d.rates||[]).map(rate),rules:(d.rules||[]).map(x=>pick(x,ruleKeys)),library:(d.library||[]).map(n=>node(n,{ratesSnapshot:d.rates})),shapeDefinitions:copy(d.shapeDefinitions||[]),stockSizes:copy(d.stockSizes||[]),conventions:{},materialPrices:[],history:[],quote:{...pick(d.quote,quoteKeys),...(d.quote.customerInfo?{customerInfo:pick(d.quote.customerInfo,['id','name','contact','phone','email','address','taxId'])}:{}),status:d.quote.status,products:d.quote.products.map(n=>node(n,d.quote)),ratesSnapshot:(d.quote.ratesSnapshot||[]).map(rate),pricing:{version:2,selected:'detail',comparisonMethods:['detail'],overhead:0,management:0,special:0,profit:0,processing:0,order:0,customer:0,incoming:0,outgoing:0,delivery:0,install:0},vat:0,expenses:[]}};}
-function merge(original,input){
+function project(d,catalog){const source=r=>complexityRate(r,catalog||d);return {version:2,materials:(d.materials||[]).map(spec),rates:(d.rates||[]).map(r=>rate(r,source(r))),rules:(d.rules||[]).map(x=>pick(x,ruleKeys)),library:(d.library||[]).map(n=>node(n,{ratesSnapshot:d.rates})),shapeDefinitions:copy(d.shapeDefinitions||[]),stockSizes:copy(d.stockSizes||[]),conventions:{},materialPrices:[],history:[],quote:{...pick(d.quote,quoteKeys),...(d.quote.customerInfo?{customerInfo:pick(d.quote.customerInfo,['id','name','contact','phone','email','address','taxId'])}:{}),status:d.quote.status,products:d.quote.products.map(n=>node(n,d.quote)),ratesSnapshot:(d.quote.ratesSnapshot||[]).map(r=>rate(r,source(r))),pricing:{version:2,selected:'detail',comparisonMethods:['detail'],overhead:0,management:0,special:0,profit:0,processing:0,order:0,customer:0,incoming:0,outgoing:0,delivery:0,install:0},vat:0,expenses:[]}};}
+function merge(original,input,catalog){
  // Only a technical projection is accepted; hidden values must never round-trip.
- const submitted=copy(input),before=project(original);
+ const submitted=copy(input),before=project(original,catalog);
  delete submitted.quote?.workspaceKey;
  // Browser identities may be assigned to legacy recipes without changing them.
  for(const r of submitted.quote?.ratesSnapshot||[]){const old=before.quote.ratesSnapshot.find(x=>x.id===r.id);if(!old)continue;for(const [i,recipe] of (r.consumptions||[]).entries())if(old.consumptions?.[i]?.id===undefined)delete recipe.id;if(r.consumption&&old.consumption?.id===undefined)delete r.consumption.id;}
@@ -50,7 +81,12 @@ function merge(original,input){
   if(n.kind==='product'&&n.productGroup!==prev?.productGroup&&n.productGroup){next.priceGroupId=n.productGroup==='Thang máng cáp'?'tmc':'detail';next.tmcScope=next.priceGroupId;if(next.priceGroupId==='tmc'&&!result.quote.pricing.comparisonMethods?.includes('tmc'))(result.quote.pricing.comparisonMethods??=['detail']).push('tmc');}
   if(n.spec){const material=prev?.materialId===n.materialId?prev.spec:original.materials.find(m=>m.id===n.materialId);if(!material)throw Error('Chọn mã vật tư có trong danh mục');next.spec=assign(copy(material),n.spec,specKeys);}
   if(n.ruleSpec)next.ruleSpec=copy(n.ruleSpec);
-  const used=new Set();next.ops=n.ops.map((op,index)=>{if(!original.quote.ratesSnapshot.some(r=>r.id===op.id))throw Error('Chọn công đoạn có trong báo giá');const existing=(prev?.ops||[]).find((o,i)=>!used.has(i)&&o.id===op.id&&(op.instanceId&&o.instanceId?o.instanceId===op.instanceId:i===index));if(existing)used.add(prev.ops.indexOf(existing));return assign(existing?copy(existing):{},op,opKeys);});
+  const used=new Set();next.ops=n.ops.map((op,index)=>{if(!original.quote.ratesSnapshot.some(r=>r.id===op.id))throw Error('Chọn công đoạn có trong báo giá');const existing=(prev?.ops||[]).find((o,i)=>!used.has(i)&&o.id===op.id&&(op.instanceId&&o.instanceId?o.instanceId===op.instanceId:i===index));if(existing)used.add(prev.ops.indexOf(existing));const merged=assign(existing?copy(existing):{},op,opKeys);
+   if(!equal(choiceFor(existing),op.complexityChoice)){
+    if(!op.complexityChoice)delete merged.complexity;
+    else {const r=complexityRate(original.quote.ratesSnapshot.find(r=>r.id===op.id),catalog||original);let group='';const path=(nodes,parents=[])=>{for(const x of nodes){const chain=parents.concat(x);if(x.id===n.id)return chain;const found=path(x.children||[],chain);if(found)return found;}};group=(path(submitted.quote.products)||[]).reverse().find(x=>x.productGroup)?.productGroup||'';merged.complexity=resolveComplexity(r,op.complexityChoice,group);}
+   }
+   return merged;});
   next.children=n.children.map(combine);return next;
  }
  assign(result.quote,submitted.quote,quoteKeys.filter(k=>!['customer','project'].includes(k)||Object.hasOwn(submitted.quote,k)));result.quote.products=submitted.quote.products.map(combine);return result;
@@ -74,7 +110,7 @@ function mergeCatalog(original,input){
  if(original.rates.some(r=>!input.rates.some(x=>x.id===r.id)))throw Error('Không xóa công đoạn qua danh mục kỹ thuật');
  result.rates=input.rates.map(r=>{
   const old=original.rates.find(x=>x.id===r.id),base=old||{id:r.id,unit:'kg',insideUnit:'kg',outsideUnit:'kg',inside:0,outside:0,factors:[],operationType:'detail'};
-  const expected=rate(base),submitted=copy(r);for(const k of technicalKeys)delete expected[k],delete submitted[k];
+  const expected=rate(base,old?complexityRate(base,original):base),submitted=copy(r);for(const k of technicalKeys)delete expected[k],delete submitted[k];
   if(!equal(expected,submitted))throw Error('Chỉ sửa thông tin kỹ thuật của công đoạn');
   if(typeof r.name!=='string'||!r.name.trim()||r.name.length>200||typeof(r.machine??'')!=='string'||(r.machine||'').length>200||typeof(r.technicalNotes??'')!=='string'||(r.technicalNotes||'').length>2000)throw Error('Thông tin công đoạn không hợp lệ');
   const out=copy(base);for(const k of technicalKeys){if(r[k]===undefined)delete out[k];else out[k]=copy(r[k]);}return out;
@@ -93,5 +129,5 @@ function mergeCatalog(original,input){
  result.library=merged.map(retain);
  return result;
 }
-const api={project,merge,nodeKeys,opKeys,projectCatalog,mergeCatalog,catalogSections};if(typeof module!=='undefined')module.exports=api;else root.TPTechnical=api;
+const api={complexityRate,resolveDocumentChoices,complexityLevels,choiceFor,resolveComplexity,project,merge,nodeKeys,opKeys,projectCatalog,mergeCatalog,catalogSections};if(typeof module!=='undefined')module.exports=api;else root.TPTechnical=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

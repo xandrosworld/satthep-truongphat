@@ -47,9 +47,6 @@
 /* The compact matrix keeps declarations together; prices remain in detailed view. */
 .pa-operations.pa-compact .pa-op-total:not(.pa-op-error){display:none}
 .pa-operations .pa-op-error{color:#a33721}
-.complexity-job{padding:16px 0;border-bottom:1px solid #dce3ec}
-.complexity-job:first-of-type{padding-top:4px}
-.complexity-job h3{margin:0 0 10px;font-size:15px}
-.complexity-fields{display:grid;grid-template-columns:1.1fr 1.4fr .7fr;gap:12px;align-items:end}
-.complexity-fields .field{min-width:0;margin:0}
-@media(max-width:700px){.complexity-fields{grid-template-columns:1fr}.complexity-job{padding:12px 0}}
+.complexity-level-row{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #dce3ec}
+.complexity-level-row .field{margin:0;min-width:0}.complexity-level-row .help-text{grid-column:1/-1;margin:0}
+@media(max-width:700px){.complexity-level-row{grid-template-columns:1fr;gap:8px}}
