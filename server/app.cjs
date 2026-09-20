@@ -133,7 +133,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
           const source=reopenMatch[2]==='restore'?one('SELECT document FROM revisions WHERE id=? AND version=?',q.id,body.sourceVersion):q;if(!source)fail(404,'Không có phiên bản nguồn');
           const saved=saveQuote(q.id,JSON.parse(source.document),user,body.expectedVersion,'draft',String(body.reason).slice(0,1000));return send(200,{id:saved.id,version:saved.version,status:saved.status});
         }
-        if(!(route==='/api/catalog'&&rights.catalog)&&!['/api/me','/api/logout','/api/me/password'].includes(route))fail(403,'Tài khoản kỹ thuật chỉ được làm việc với dữ liệu kỹ thuật, không được xem giá');
+        if(!(route==='/api/catalog'&&rights.catalog)&&!/^\/api\/intake\/files(?:\/[a-zA-Z0-9_-]{1,100})?$/.test(route)&&!['/api/me','/api/logout','/api/me/password'].includes(route))fail(403,'Tài khoản kỹ thuật chỉ được làm việc với dữ liệu kỹ thuật, không được xem giá');
       }
       if(await intake.handle({req,route,user,rights,send}))return;
       if(await workflow.handle({req,route,user,rights,send}))return;

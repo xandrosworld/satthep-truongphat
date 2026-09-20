@@ -1,5 +1,5 @@
 'use strict';
-const technicalTabs=['bom','operations','waste','mass'];
+const technicalTabs=['intake','bom','operations','waste','mass'];
 function technicalStage(){return page==='quote'&&technicalTabs.includes(tab);}
 function technicalOnly(){return !!Team.user&&!!Team.permissions?.technical;}
 function technicalCatalogPage(){return technicalOnly()&&['materials','library','rules'].includes(page)&&(Team.permissions.sections.includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[page])||page==='rules'&&Team.permissions.sections.includes('catalogTechnicalOperations'));}
@@ -10,6 +10,13 @@ function technicalCatalogClean(root){
  for(const table of root.querySelectorAll('table')){const headers=[...table.querySelectorAll('thead tr:first-child th')];headers.forEach((h,i)=>{if(/đơn giá|giá tham chiếu|thành tiền|chi phí/i.test(h.textContent))for(const row of table.rows)if(row.cells[i])row.cells[i].hidden=true;});}
  for(const input of root.querySelectorAll('[name=price]')){input.value='0';input.closest('label').hidden=true;}
  root.querySelectorAll('[data-rc-tab=factors],[data-rc-tab=transport],[data-rc-tab=customers],[data-rc-tab=complexity],[data-close-gap=catalog-candidates],[data-team=backup]').forEach(x=>x.hidden=true);
+}
+function technicalIntakeAccess(root){
+ if(!technicalOnly()||tab!=='intake')return;
+ const writable=Team.permissions.edit&&teamCurrent()?.status==='draft'&&!teamCurrent()?.readOnly,customer=writable&&Team.permissions.sections.includes('customer'),bom=writable&&Team.permissions.sections.includes('bom');
+ root.querySelectorAll('[data-intake="choose-customer"],[data-intake="customer-choose"]').forEach(el=>el.remove());
+ if(!customer){root.querySelectorAll('[data-intake="request"],[data-intake="request-item"],[data-intake="paste-request"],[data-intake="attach"],[data-intake="document-link"],[data-intake="document-link-remove"],[data-batch-one="request-details"]').forEach(el=>el.remove());root.insertAdjacentHTML('afterbegin','<div class="notice">Xem yêu cầu và tải tài liệu để bóc tách. Quyền sửa dữ liệu đầu vào được cấp riêng.</div>');}
+ if(!bom)root.querySelectorAll('[data-intake="request-products"]').forEach(el=>el.remove());
 }
 function technicalPermissionFields(){const role=$('#dialog [data-access-role]');if(!role)return;for(const input of document.querySelectorAll('#dialog [name=sections],#dialog [name=canViewCosts],#dialog [name=canApprove],#dialog [name=canEditFactors],#dialog [name=canApproveBelowCost]'))input.disabled=false;}
 function technicalOperation(id,index){
@@ -79,7 +86,7 @@ function installTechnicalUI(){
    if(page==='rules'&&!Team.permissions.sections.includes('catalogRules'))RulesCatalog.kind='operations';
    if(page==='rules'&&['factors','transport','customers','complexity'].includes(RulesCatalog.kind))RulesCatalog.kind='productGroups';
   }
-  oldRender();if(technicalStage())technicalClean($('#content'));
+  oldRender();if(technicalStage())technicalClean($('#content'));technicalIntakeAccess($('#content'));
   document.querySelectorAll('#sidebar [data-page]').forEach(el=>el.hidden=technicalOnly()&&el.dataset.page!=='quote'&&!(Team.permissions.sections.includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[el.dataset.page])||el.dataset.page==='rules'&&Team.permissions.sections.includes('catalogTechnicalOperations')));
   if(technicalCatalogPage()){technicalCatalogClean($('#content'));$('#save-status').textContent='Danh mục kỹ thuật trên máy chủ';if(!Team.link)$('#content').querySelectorAll('[data-team=reopen]').forEach(x=>x.remove());$('#content').insertAdjacentHTML('afterbegin',`<div class="notice" data-technical-catalog>Danh mục kỹ thuật · không xem hoặc sửa giá, hệ số. ${teamButton('Lấy danh mục máy chủ','catalog-workspace')}${accessButton('Lưu / phát hành danh mục','catalog')}</div>`);}
   if(technicalOnly()){$('#content').querySelectorAll('[data-tab="prices"],[data-tab="pricing"],[data-tab="preview"],[data-action="history"],[data-pa="sample"],[data-team="submit"],[data-team="leave"],[data-batch-one="new-shared"]').forEach(x=>x.remove());const ribbon=$('.quote-ribbon > span');if(ribbon)ribbon.textContent='Ngày '+db.quote.date;}
