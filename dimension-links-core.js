@@ -11,7 +11,7 @@ function fields(n){
   return [...new Set(keys)].map(key=>({key,unit:'mm',fixed:info.fixed.includes(key)}));
 }
 function data(n){return n.kind==='material'?(n.dims??={}):(n.params??={});}
-function refs(path){const out={SELF:path.at(-1)};if(path.length>1)out.PARENT=path.at(-2);const product=path.slice(0,-1).reverse().find(n=>n.kind==='product');if(product)out.PRODUCT=product;for(let i=1;i<path.length;i++)out['A'+i]=path.at(-1-i);return out;}
+function refs(path){const out={SELF:path.at(-1)};if(path.length>1)out.PARENT=path.at(-2);const product=path.slice(0,-1).reverse().find(n=>n.kind==='product');if(product){out.PRODUCT=product;out.P=product;}for(let i=1;i<path.length;i++)out['A'+i]=path.at(-1-i);return out;}
 function variables(path){return Object.entries(refs(path)).flatMap(([scope,n])=>fields(n).map(f=>({name:scope+'_'+f.key,node:n,key:f.key,unit:f.unit,label:scope+' · '+n.name+' / '+f.key})));}
 function resolve(products){
   const all=C.flatten(products),paths=new Map(all.map(n=>[n.id,C.nodePath(products,n.id)])),state=new Map(),values=new Map(),errors=[],byNode={};
