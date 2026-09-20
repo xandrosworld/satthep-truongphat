@@ -6,6 +6,7 @@ function technicalCatalogPage(){return technicalOnly()&&['materials','library','
 function technicalCatalogClean(root){
  if(!technicalOnly()||!root)return;
  if(!Team.permissions.sections.includes('catalogRules'))root.querySelectorAll('[data-rc-tab]:not([data-rc-tab=operations]),[data-pg-add],[data-close-gap]').forEach(x=>x.hidden=true);
+ if(technicalOnly())root.querySelectorAll('.review-complexity').forEach(x=>x.remove());
  for(const table of root.querySelectorAll('table')){const headers=[...table.querySelectorAll('thead tr:first-child th')];headers.forEach((h,i)=>{if(/đơn giá|giá tham chiếu|thành tiền|chi phí/i.test(h.textContent))for(const row of table.rows)if(row.cells[i])row.cells[i].hidden=true;});}
  for(const input of root.querySelectorAll('[name=price]')){input.value='0';input.closest('label').hidden=true;}
  root.querySelectorAll('[data-rc-tab=factors],[data-rc-tab=transport],[data-rc-tab=customers],[data-rc-tab=complexity],[data-close-gap=catalog-candidates],[data-team=backup]').forEach(x=>x.hidden=true);
@@ -42,14 +43,14 @@ function technicalClean(root){
  root.querySelectorAll('.quote-metrics,.quick-summary,.quick-total,.product-price,.remnant-price-note,[data-pa="node-costs"],[data-pa="quote-rates"],[data-close-gap="source-table"],[data-mfg="breakdown"],[data-mfg="package"],[data-action="preview"],[data-action="quote-info"],[data-pa="edit-rate"]').forEach(x=>x.remove());
  root.querySelectorAll('[data-unit-sell],[data-quick-grand]').forEach(x=>x.parentElement.remove());
  root.querySelectorAll('.node-summary > div').forEach(x=>{if(/Giá|Chi phí/.test(x.textContent))x.remove();});
- root.querySelectorAll('.spec-strip > .mono,.review-op-method,.review-complexity,[data-review="operation"]').forEach(x=>x.remove());
+ root.querySelectorAll('.spec-strip > .mono,.review-op-method,[data-review="operation"]').forEach(x=>x.remove());
  for(const table of root.querySelectorAll('table')){
   const heads=[...table.querySelectorAll('thead tr:first-child > th')],remove=[];
   heads.forEach((h,i)=>{if(/^(Giá đã chọn|Tiền tính thêm|Thành tiền|Đơn giá|Tiền vật tư|Chi phí|Giá trị|Giá vật tư)/.test(h.textContent.trim()))remove.push(i);});
   for(const row of table.rows)for(const index of [...remove].reverse())row.children[index]?.remove();
  }
  for(const p of root.querySelectorAll('[data-b2-purchase]'))p.innerHTML=p.innerHTML.replace(/ · [^·<>]+ đ$/, '');
- for(const button of root.querySelectorAll('[data-pa="op-detail"]')){const n=C.findNode(db.quote.products,button.dataset.id),r=result.nodes[n?.id]?.ownOps?.[Number(button.dataset.index)];button.innerHTML=`Lượng công việc<small>${num(r?.basis,4)} ${esc(r?.unit||'')} · xem / sửa</small>`;}
+ for(const button of root.querySelectorAll('[data-pa="op-detail"]:not(.pa-op-quantity)')){const n=C.findNode(db.quote.products,button.dataset.id),r=result.nodes[n?.id]?.ownOps?.[Number(button.dataset.index)];button.innerHTML=`Lượng công việc<small>${num(r?.basis,4)} ${esc(r?.unit||'')} · xem / sửa</small>`;}
  root.querySelectorAll('.mfg-summary .subtext').forEach(x=>x.remove());
 }
 function tmcFreightNotice(){

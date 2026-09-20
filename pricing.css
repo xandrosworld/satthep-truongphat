@@ -36,3 +36,8 @@
 /* Show each trial calculation step on its own line. */
 #expense-preview-result { display: block; }
 #expense-preview-result p { margin: .4rem 0; }
+
+/* Keep per-job settings visible in the compact operation matrix. */
+.pa-operations [data-pa-op-mode]{width:120px;max-width:100%;display:block;margin:4px auto}
+.pa-operations.pa-compact .review-complexity{display:block;font-size:11px;padding:4px 6px;width:100%;margin:4px 0}
+.pa-operations .pa-op-quantity{display:block;width:100%;font-size:11px;padding:4px 6px;white-space:normal;margin:4px 0}

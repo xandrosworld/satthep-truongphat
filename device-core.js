@@ -25,7 +25,6 @@ function calculate(q,base,logistics){
   let quantity=value(r.count,'Số lượng thiết bị',true),basis=0,rate=0,cost=0,source=null;
   if(['percent','unit'].includes(e.mode)){
    if(!['production','base'].includes(e.stage))throw Error('Chưa xác nhận lớp giá sản xuất hay giá gốc');
-   if(e.scopeConfirmed!==true)throw Error('Chưa xác nhận công việc chưa tính ở nơi khác');
    rate=value(e.rate,e.mode==='percent'?'Tỷ lệ %':'Đơn giá công');
    if(e.mode==='percent'){
     if(e.basis==='selected-price'){basis=value(n.spec.price,'Đơn giá thiết bị')*quantity;if(e.priceConfirmed!==true)throw Error('Chưa xác nhận cơ sở giá thiết bị');}
@@ -38,7 +37,8 @@ function calculate(q,base,logistics){
    if(e.scopeConfirmed!==true)throw Error('Xác nhận nguồn đã bao gồm đúng công việc này');
   }else if(e.mode==='supplier'&&e.scopeConfirmed!==true)throw Error('Xác nhận nhà cung cấp đã gồm đúng công việc này');
   if(!Number.isFinite(cost)||!Number.isFinite(basis))throw Error('Chi phí thiết bị vượt giới hạn');
-  const item={...e,name:n.name,materialId:n.materialId,brand:n.spec.brand||'',unit:n.spec.unit,productId:r.productId,purchaseUnitPrice:n.spec.price,quantity,basis,rate,cost,source};items.push(item);
+  const warning=['percent','unit'].includes(e.mode)&&e.scopeConfirmed!==true&&sources(q,base,logistics,n.id).length?'Có công đoạn hoặc khoản lắp đặt trong cùng phạm vi; rà lại để tránh tính trùng.':'';
+  const item={...e,warning,name:n.name,materialId:n.materialId,brand:n.spec.brand||'',unit:n.spec.unit,productId:r.productId,purchaseUnitPrice:n.spec.price,quantity,basis,rate,cost,source};items.push(item);
   const target=allocations[r.productId]??={factory:0,install:0};target[e.stage==='production'?'factory':'install']+=cost;
  }catch(err){const message=(e?.work||'Lắp đặt thiết bị')+': '+err.message;errors.push(message);items.push({...e,error:message,cost:0});}}
  for(const n of objects(q))if(n.deviceWorkRequired&&!entries.some(e=>e?.nodeId===n.id))errors.push(n.name+': dòng đã yêu cầu công lắp nhưng chưa có cấu hình trong báo giá này; khai lại sau khi nhân bản/gọi mẫu');
