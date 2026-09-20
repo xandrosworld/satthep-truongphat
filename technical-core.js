@@ -4,7 +4,7 @@
 const copy=x=>JSON.parse(JSON.stringify(x));
 const nodeKeys=['lineNote','id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent','pieceMass'];
 const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','stockOptions','shapeDefinition','massOverride','areaOverride'];
-const opKeys=['id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
+const opKeys=['complexity','id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
 const ruleKeys=['id','name','shape','length','width','measurementRules','fields','shapes'];
 const quoteKeys=['customer','project','id','date','kerf','nestingPlans','remnantMode','remnantSelections','request'];
 const pick=(x,keys)=>Object.fromEntries(keys.filter(k=>x?.[k]!==undefined).map(k=>[k,copy(x[k])]));

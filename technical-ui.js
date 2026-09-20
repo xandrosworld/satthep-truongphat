@@ -6,7 +6,6 @@ function technicalCatalogPage(){return technicalOnly()&&['materials','library','
 function technicalCatalogClean(root){
  if(!technicalOnly()||!root)return;
  if(!Team.permissions.sections.includes('catalogRules'))root.querySelectorAll('[data-rc-tab]:not([data-rc-tab=operations]),[data-pg-add],[data-close-gap]').forEach(x=>x.hidden=true);
- if(technicalOnly())root.querySelectorAll('.review-complexity').forEach(x=>x.remove());
  for(const table of root.querySelectorAll('table')){const headers=[...table.querySelectorAll('thead tr:first-child th')];headers.forEach((h,i)=>{if(/đơn giá|giá tham chiếu|thành tiền|chi phí/i.test(h.textContent))for(const row of table.rows)if(row.cells[i])row.cells[i].hidden=true;});}
  for(const input of root.querySelectorAll('[name=price]')){input.value='0';input.closest('label').hidden=true;}
  root.querySelectorAll('[data-rc-tab=factors],[data-rc-tab=transport],[data-rc-tab=customers],[data-rc-tab=complexity],[data-close-gap=catalog-candidates],[data-team=backup]').forEach(x=>x.hidden=true);
