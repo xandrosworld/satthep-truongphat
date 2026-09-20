@@ -88,21 +88,22 @@ function nest(items,spec,kerf,strategy='best'){
   if(!(stockL>0)||isSheet&&!(stockW>0))throw Error('Khổ vật tư mua chưa hợp lệ');
   if(!(kerf>=0))throw Error('Mạch cắt không hợp lệ');
   const pieces=[];
-  for(const row of items){if(!Number.isInteger(row.count)||row.count<1)throw Error('Số phôi phải là số nguyên dương');if(pieces.length+row.count>5000)throw Error('Demo hỗ trợ tối đa 5.000 phôi cho mỗi mã vật tư');for(let i=0;i<row.count;i++)pieces.push({rowId:row.id,label:row.label,l:row.geometry.length,w:row.geometry.width,color:row.color});}
+  for(const row of items){if(!Number.isInteger(row.count)||row.count<1)throw Error('Số phôi phải là số nguyên dương');if(pieces.length+row.count>5000)throw Error('Demo hỗ trợ tối đa 5.000 phôi cho mỗi mã vật tư');for(let i=0;i<row.count;i++)pieces.push({rowId:row.id,label:row.label,l:row.geometry.length,w:row.geometry.width,color:row.color,...(row.geometry.polygon?{polygon:row.geometry.polygon}:{})});}
   if(strategy==='mixed'){const queues=items.map(r=>pieces.filter(p=>p.rowId===r.id)),mixed=[];for(let i=0;queues.some(q=>q.length>i);i++)for(const q of queues)if(q[i])mixed.push(q[i]);pieces.splice(0,pieces.length,...mixed);}else pieces.sort((a,b)=>(isSheet?b.l*b.w-a.l*a.w:b.l-a.l));
   const stocks=[];
   for(const p of pieces){if(isSheet?!((p.l<=stockL&&p.w<=stockW)||(rotateAllowed&&p.w<=stockL&&p.l<=stockW)):p.l>stockL)throw Error('Chi tiết '+p.label+' vượt khổ vật tư mua');
     if(!isSheet){let stock=stocks.find(s=>s.remaining>=p.l);if(!stock){stock={placements:[],remaining:stockL};stocks.push(stock);}const x=stockL-stock.remaining;stock.placements.push({...p,x,y:0});stock.remaining=Math.max(0,stock.remaining-p.l-kerf);continue;}
     let chosen=null;
-    for(let si=0;si<stocks.length;si++){const s=stocks[si];for(let fi=0;fi<s.free.length;fi++){const f=s.free[fi];for(const rotate of (rotateAllowed?[false,true]:[false])){const l=rotate?p.w:p.l,w=rotate?p.l:p.w;if(l<=f.l&&w<=f.w){const score=f.l*f.w-l*w;if(!chosen||score<chosen.score)chosen={si,fi,l,w,score};}}}if(chosen)break;}
-    if(!chosen){stocks.push({placements:[],free:[{x:0,y:0,l:stockL,w:stockW}]});const rotate=p.l>stockL||p.w>stockW;chosen={si:stocks.length-1,fi:0,l:rotate?p.w:p.l,w:rotate?p.l:p.w};}
+    for(let si=0;si<stocks.length;si++){const s=stocks[si];for(let fi=0;fi<s.free.length;fi++){const f=s.free[fi];for(const rotate of (rotateAllowed?[false,true]:[false])){const l=rotate?p.w:p.l,w=rotate?p.l:p.w;if(l<=f.l&&w<=f.w){const score=f.l*f.w-l*w;if(!chosen||score<chosen.score)chosen={si,fi,l,w,score,rotate};}}}if(chosen)break;}
+    if(!chosen){stocks.push({placements:[],free:[{x:0,y:0,l:stockL,w:stockW}]});const rotate=p.l>stockL||p.w>stockW;chosen={si:stocks.length-1,fi:0,rotate,l:rotate?p.w:p.l,w:rotate?p.l:p.w};}
     const s=stocks[chosen.si],f=s.free.splice(chosen.fi,1)[0],{l,w}=chosen;
-    s.placements.push({...p,l,w,x:f.x,y:f.y});
+    s.placements.push({...p,l,w,x:f.x,y:f.y,...(p.polygon?{polygon:p.polygon.map(([x,y])=>chosen.rotate?[f.x+p.w-y,f.y+x]:[f.x+x,f.y+y])}:{})});
     if(f.l-l-kerf>0)s.free.push({x:f.x+l+kerf,y:f.y,l:f.l-l-kerf,w});
     if(f.w-w-kerf>0)s.free.push({x:f.x,y:f.y+w+kerf,l:f.l,w:f.w-w-kerf});
   }
   const used=pieces.reduce((s,p)=>s+(isSheet?p.l*p.w:p.l),0),purchased=stocks.length*(isSheet?stockL*stockW:stockL);
-  return {stocks,stockL,stockW,used,purchased,util:purchased?used/purchased:0};
+  const netUsed=isSheet&&items.some(r=>r.geometry.polygon)?items.reduce((sum,r)=>sum+r.geometry.blankArea*1e6,0):undefined;
+  return {stocks,stockL,stockW,used,purchased,...(netUsed!==undefined?{netUsed,contourOffcut:Math.max(0,used-netUsed)}:{}),util:purchased?(netUsed??used)/purchased:0};
 }
 // Compare a rectangular baseline with regular/staggered circle rows in both orientations.
 // Different diameters can share the baseline; staggered alternatives keep diameter batches separate.

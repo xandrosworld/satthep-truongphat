@@ -3,12 +3,13 @@
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const modes=['bounding','bounding-fixed','circle','right-triangle'];
 const ids=rows=>rows.map(r=>r.id).sort();
-function fingerprint(rows,spec,kerf){return JSON.stringify([spec.id,spec.shape,spec.stockL,spec.stockW,Number(kerf),rows.map(r=>[r.id,r.count,r.geometry.length,r.geometry.width,r.geometry.blankArea]).sort((a,b)=>a[0].localeCompare(b[0]))]);}
+function fingerprint(rows,spec,kerf){return JSON.stringify([spec.id,spec.shape,spec.stockL,spec.stockW,Number(kerf),rows.map(r=>[r.id,r.count,r.geometry.length,r.geometry.width,r.geometry.blankArea,...(r.geometry.polygon?[r.geometry.polygon]:[])]).sort((a,b)=>a[0].localeCompare(b[0]))]);}
 function validatePlans(plans){if(plans===undefined)return;if(!Array.isArray(plans)||plans.length>1000)throw Error('Danh sách phương án xếp phôi không hợp lệ');const seen=new Set();for(const p of plans){if(!p||!Array.isArray(p.rowIds)||!p.rowIds.length||p.rowIds.some(id=>typeof id!=='string'||seen.has(id))||new Set(p.rowIds).size!==p.rowIds.length||typeof p.fingerprint!=='string'||p.fingerprint.length>150000||!modes.includes(p.mode)||p.placements!==undefined&&(!Array.isArray(p.placements)||p.placements.length>500))throw Error('Phương án xếp phôi không hợp lệ hoặc trùng dòng');p.rowIds.forEach(id=>seen.add(id));}}
 function choice(rows,spec,mode){
  if(!modes.includes(mode))throw Error('Chọn cách xếp phôi hợp lệ');
  if(spec.shape!=='sheet'&&mode!=='bounding')throw Error('Thanh chỉ xếp theo chiều dài');
  if(['circle','right-triangle'].includes(mode))for(const r of rows){const g=r.geometry,area=g.blankArea/r.count*1e6,expected=mode==='circle'?Math.PI*g.length*g.length/4:g.length*g.width/2;
+  if(g.polygon&&mode==='circle')throw Error('Biên đa giác không dùng cách xếp tấm tròn');
   if(mode==='circle'&&Math.abs(g.length-g.width)>1e-7||Math.abs(area-expected)>Math.max(1e-5,expected*1e-8))throw Error('Hình dạng/diện tích phôi không khớp cách xếp đã chọn');
   if(mode==='right-triangle'&&spec.shapeDefinition?.nesting!=='right-triangle')throw Error('Chỉ ghép cặp quy ước tam giác vuông đã khai; không suy đoán từ diện tích');
  }
@@ -26,7 +27,7 @@ function manual(rows,spec,kerf,mode,placements){
   if(p.rotate&&(!sheet||mode==='bounding-fixed'))throw Error('Phương án này không cho phép xoay');
   const l=p.rotate?r.geometry.width:r.geometry.length,w=sheet?(p.rotate?r.geometry.length:r.geometry.width):0;
   if(p.x+l>stockL+1e-7||sheet&&p.y+w>stockW+1e-7||!sheet&&p.y!==0)throw Error('Phôi vượt ra ngoài khổ mua');
-  const stock=stocks[p.stock]??={placements:[],free:[]};const piece={rowId:r.id,label:r.label,color:r.color,x:p.x,y:p.y,l,w,...(mode==='circle'?{circle:true}:{})};
+  const stock=stocks[p.stock]??={placements:[],free:[]};const piece={rowId:r.id,label:r.label,color:r.color,x:p.x,y:p.y,l,w,...(mode==='circle'?{circle:true}:r.geometry.polygon?{polygon:r.geometry.polygon.map(([x,y])=>p.rotate?[p.x+r.geometry.width-y,p.y+x]:[p.x+x,p.y+y])}:{})};
   for(const q of stock.placements){const separated=mode==='circle'?Math.hypot(piece.x+l/2-q.x-q.l/2,piece.y+w/2-q.y-q.w/2)+1e-7>=(l+q.l)/2+kerf:p.x+l+kerf<=q.x+1e-7||q.x+q.l+kerf<=p.x+1e-7||sheet&&(p.y+w+kerf<=q.y+1e-7||q.y+q.w+kerf<=p.y+1e-7);if(!separated)throw Error('Phôi chồng nhau hoặc chưa đủ khoảng cách mạch cắt');}
   stock.placements.push(piece);used+=sheet?l*w:l;netUsed+=sheet?r.geometry.blankArea/r.count*1e6:l;
  }
