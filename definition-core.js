@@ -8,6 +8,15 @@ const units={mm:[0,1],number:[0,0],'kg/m':[1,-1],'m²/m':[0,1]};
 const blankVariables=['PHOI_D','PHOI_R','KL_DV','DT_DV'];
 // Keep any historic input named L0/W0 intact; use legacy output aliases in that definition only.
 function unfoldSymbols(d){const used=new Set([...d.fields||[],...d.unfoldOutputs||[]].map(f=>f.key));return {length:used.has('L0')?'PHOI_D':'L0',width:used.has('W0')?'PHOI_R':'W0'};}
+// Display the declared contour dimensions, not the rectangular envelope aliases.
+function displayedUnfolding(d){
+ const outputs=(d.unfoldOutputs||[]).map(o=>({symbol:o.key,key:'output-'+o.key,formula:o.formula}));
+ if(outputs.length)return outputs;
+ const compact=x=>String(x||'').replace(/\s/g,'');
+ const diameter=compact(d.length),legacyCircle=d.base==='sheet'&&diameter===compact(d.width)&&['D','D0'].includes(diameter)&&/PI/.test(d.blankSurface||'');
+ if(d.nesting==='circle'||legacyCircle)return [{symbol:'D0',key:'output-D0',formula:d.length}];
+ const names=unfoldSymbols(d);return [{symbol:names.length,key:'length',formula:d.length},...(d.base==='sheet'?[{symbol:names.width,key:'width',formula:d.width}]:[])];
+}
 function unfoldAliases(d,length,width){const names=unfoldSymbols(d);return {PHOI_D:length,PHOI_R:width,[names.length]:length,[names.width]:width};}
 function editorFormulas(d){const names=unfoldSymbols(d);return Object.fromEntries(Object.entries(blankFormulas(d)).map(([key,value])=>[key,value.replace(/\b(PHOI_D|PHOI_R)\b/g,name=>name==='PHOI_D'?names.length:names.width)]));}
 function blankFormulas(d){const factor=d.base==='sheet'?'PHOI_D * PHOI_R / 1000000':'PHOI_D / 1000';return {blankMass:d.blankMass||factor+' * KL_DV',blankSurface:d.blankSurface||factor+' * DT_DV'};}
@@ -116,5 +125,5 @@ function example(kind){
  return {...d,name:'Mẫu · '+name,notes:kind==='table'?'Số minh họa KM = 10 kg/m, AM = 0,5 m²/m, không phải bảng tra tiêu chuẩn. Thay bằng số liệu nhà cung cấp theo từng mã; KM và AM nhập cố định khi tạo mã vật tư.':sheet?'Mẫu kiểm thử; thay kích thước, khổ mua và mạch cắt theo thực tế.':'Tiết diện hình học lý tưởng, bỏ qua bo góc và dung sai. Diện tích dọc thanh, không tính hai mặt đầu; hộp/ống chỉ tính mặt ngoài. Đối chiếu bảng nhà cung cấp trước khi dùng.',_testDensity:7850,_testStockL:sheet?2000:6000,_testStockW:sheet?1000:0,_testCount:['circle','triangle'].includes(kind)?8:3,_testKerf:sheet?(kind==='rectangle'?3:0):3};
 }
 const blankShapeName=d=>d.blankShapeName?.trim()||C.shapes[d.blankShape||(d.base==='sheet'?'sheet':'profile')]?.name||'';
-const api={outputOrder,outputValues,barPreset,example,sheetPreset,blankShapeName,unfoldSymbols,editorFormulas,trial,expression:E,blankFormulas,expandedFormulas,dimension,validateShape,info,values,effective,stockProperties,coefficients,geometry,applyShape,testShape,saveShape,validateStock,saveStock,stocks,draft,assign,validateCatalog};if(typeof module!=='undefined')module.exports=api;else root.TPDefinitions=api;
+const api={displayedUnfolding,outputOrder,outputValues,barPreset,example,sheetPreset,blankShapeName,unfoldSymbols,editorFormulas,trial,expression:E,blankFormulas,expandedFormulas,dimension,validateShape,info,values,effective,stockProperties,coefficients,geometry,applyShape,testShape,saveShape,validateStock,saveStock,stocks,draft,assign,validateCatalog};if(typeof module!=='undefined')module.exports=api;else root.TPDefinitions=api;
 })(typeof window!=='undefined'?window:globalThis);

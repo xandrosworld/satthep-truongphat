@@ -191,3 +191,11 @@ test('server: resending pins the immutable offer, audits recipient, rejects stal
  const visible=(await call(base,route+'/revision/3',{session:sales})).data;assert.equal(visible.document,undefined);assert.ok(visible.offer);assert.ok(!JSON.stringify(visible).includes('ratesSnapshot'));
  const stored=(await call(base,'backup',{session:admin})).data;assert.equal(JSON.parse(stored.commercial[0].document).events.length,2);
 });
+
+test('server: quotation nesting plan round-trips and rejects duplicate plan rows',async t=>{
+ const {base}=await harness(t),session=await setup(base),document=P.demoSeed(),C=require('../core'),N=require('../nesting-plan-core'),g=C.calculate(document).groups.find(g=>!g.error);
+ document.quote.nestingPlans=[N.make(g.rows,g.spec,Number(document.quote.kerf),g.spec.shapeDefinition?.nesting||'bounding')];
+ const created=await call(base,'quotes',{method:'POST',session,body:{document}});assert.equal(created.status,201,JSON.stringify(created.data));
+ const loaded=await call(base,'quotes/'+created.data.id,{session});assert.deepEqual(loaded.data.document.quote.nestingPlans,document.quote.nestingPlans);
+ document.quote.nestingPlans.push(document.quote.nestingPlans[0]);assert.equal((await call(base,'quotes/'+created.data.id,{method:'PUT',session,body:{document,expectedVersion:1}})).status,400);
+});
