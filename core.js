@@ -181,9 +181,10 @@ function nestTriangles(items,spec,kerf,strategy){
   return {...chosen,boundingStockCount:baseline.stocks.length,boundingPurchased:baseline.purchased};
 }
 function materialEstimate(n,g){
-  if(!n.materialEstimate||n.spec.shape==='piece')return null;
+  if(!n.materialEstimate)return null;
   const {method,percent}=n.materialEstimate;
   if(!['net','percent'].includes(method)||!Number.isFinite(percent)||percent<0||percent>100||method==='net'&&percent!==0)throw Error('Hao hụt dự tính phải từ 0 đến 100%; theo phôi dùng 0%');
+  if(n.spec.shape==='piece'){const basis=g.quantity*(1+percent/100);return {method,percent,basis,quantity:basis,measure:basis,weight:g.weight*(1+percent/100),area:0,unit:n.spec.unit,cost:basis*n.spec.price};}
   const multiplier=1+percent/100,weight=g.weight*multiplier,area=g.blankArea*multiplier,m=n.spec,measure=(m.shape==='sheet'?g.blankArea:g.measure)*multiplier;
   const basis=m.unit==='kg'?weight:m.unit==='m²'&&m.shape==='sheet'||m.unit==='m'&&m.shape!=='sheet'?measure:null;
   if(basis===null)throw Error('Dự tính theo phôi cần đơn giá kg, m² tấm hoặc m dài; khai đơn vị giá phù hợp trước');
@@ -217,7 +218,7 @@ function calculate(db){
       groupsResult.push({...group,signature,remnants,layout,cost,purchaseCost,recoverableCredit,reusableMeasure,kerfMeasure,totalWeight,purchasedWeight,purchasedMeasure});
     }catch(e){if(q.nestingPlans?.some(p=>p.rowIds.some(id=>group.rows.some(r=>r.id===id)))||group.rows.some(r=>!r.node.materialEstimate))errors.push(group.spec.id+': '+e.message);groupsResult.push({...group,error:e.message});}}
   // Estimation is independent of the order-wide purchasing proposal. Old quotes opt in explicitly.
-  for(const row of rows)if(row.node.materialEstimate&&row.spec.shape!=='piece')try{
+  for(const row of rows)if(row.node.materialEstimate)try{
     row.estimate=materialEstimate({...row.node,spec:row.spec},row.geometry);
     row.cost=row.purchaseCost=row.externallySupplied?0:row.estimate.cost;row.recoverableCredit=0;
   }catch(e){row.cost=row.purchaseCost=0;row.estimateError=e.message;errors.push(row.label+': '+e.message);(nodes[row.id].declarationErrors??=[]).push(e.message);}

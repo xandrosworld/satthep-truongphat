@@ -44,6 +44,7 @@ function build(db,result,options={}){
    inputs.push([where,'Mã / vật liệu',[m.id,m.substance,m.grade,m.characteristic].filter(Boolean).join(' / '),'',d?d.name+' · phiên bản '+(d.version??'đã lưu'):'Quy cách lưu trong báo giá'],[where,'Đơn giá',cell(m.price),'đ/'+m.unit,describe(m.priceSource)||m.supplier||n.supplier||'Đơn giá lưu trong báo giá; chưa ghi nguồn riêng']);
    if(!finite(m.price)||m.price<=0)issues.push(where+': đơn giá vật tư '+cell(m.price)+'; cần kiểm tra/xác nhận, không tự thay bằng giá mẫu');
    if(m.shape==='piece'){
+    if(row.estimate)trace(materials,where,'Lượng vật tư dự tính','SO_LUONG * (1 + HH / 100)',{SO_LUONG:row.count,HH:row.estimate.percent},row.estimate.basis,m.unit,'Không tăng số lượng thành phẩm hoặc nguyên công; chưa làm tròn số lượng mua');
     trace(geometry,where,'Khối lượng theo đơn vị',n.pieceMass?.mode==='manual'?'KG_DV * N':'', {...vars,KG_DV:n.pieceMass?.value},n.pieceMass?.mode==='manual'?g.weight:null,'kg',n.pieceMass?.reason||'Chưa khai khối lượng theo đơn vị',n.pieceMass?.mode==='skip'?'Đã khai bỏ qua khối lượng':'Theo khai báo');
    }else{
     const unfolding=d?D.displayedUnfolding(d):[{symbol:'L0',key:'length',formula:n.ruleSpec?.length},...(m.shape==='sheet'?[{symbol:'W0',key:'width',formula:n.ruleSpec?.width}]:[])];

@@ -86,6 +86,7 @@ function tmc(r,base,p,tier,stockNet,laborContext=()=>({})){
   stock+=eligible.filter(row=>!stockCovered.has(row.id)&&(node.tmcRemainderDetail||base.nodes[row.id].coveredBy)).reduce((s,row)=>s+row.cost,0);
   for(const n of C.flatten([node])){const rr=base.nodes[n.id];if(!node.tmcRemainderDetail&&!rr.coveredBy&&rr.ownReplaceableFactory>0&&!opsCovered.has(n.id))throw Error('Chưa phân nhóm TMC cho công đoạn tại '+n.name);}
   parts.allowance=eligible.reduce((s,row)=>{const item=items.find(x=>!x.laborOnly&&C.flatten([C.findNode([node],x.nodeId)]).some(n=>n.id===row.id));return s+(item?stockNet(row)*(1+item.loss/100):row.cost)*(row.node.auxiliaryPercent||0)/100;},0);
+  parts.allowance+=base.rows.filter(row=>row.productId===node.id&&row.spec.shape==='piece'&&!row.externallySupplied).reduce((sum,row)=>sum+row.cost*(row.node.auxiliaryPercent||0)/100,0);
   parts.stock=stock;parts.factory=parts.factory-replace+laborTotal;parts.ancillary+=ancillary;parts.tmcCommon=common;
   let commonSummary;const wholeTables=items.map(i=>p.tmcTables.find(t=>t.id===i.tableId)).filter(t=>t.common?.kind==='percent'&&t.common.basis==='scope');if(wholeTables.length){
     const rates=wholeTables.map(t=>nonnegative(t.common.value,'Tỷ lệ chi phí chung'));if(rates.some(v=>v!==rates[0])||common!==0)throw Error('Chi phí chung toàn sản phẩm cần cùng một tỷ lệ, không cộng thêm khoản chung của bảng khác');

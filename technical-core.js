@@ -45,7 +45,7 @@ function merge(original,input){
  result.quote.ratesSnapshot=rates;
  const assign=(target,source,keys)=>{for(const k of keys){if(source[k]===undefined)delete target[k];else target[k]=copy(source[k]);}return target;};
  function combine(n){const prev=old.get(n.id),next=assign(prev?copy(prev):{},n,nodeKeys);
-  if(n.auxiliaryPercent!==undefined&&(!Number.isFinite(n.auxiliaryPercent)||n.auxiliaryPercent<0||n.auxiliaryPercent>100||n.kind!=='material'||n.spec?.shape==='piece'))throw Error('Vật tư phụ chỉ khai cho phôi, từ 0 đến 100%');
+  if(n.auxiliaryPercent!==undefined&&(!Number.isFinite(n.auxiliaryPercent)||n.auxiliaryPercent<0||n.auxiliaryPercent>100||n.kind!=='material'))throw Error('Vật tư phụ chỉ khai cho vật tư, từ 0 đến 100%');
   if(!equal(n.outsource,prev?node(prev,original.quote).outsource:undefined))throw Error('Gói thuê được quản lý tại Giá & hệ số');
   if(n.kind==='product'&&n.productGroup!==prev?.productGroup&&n.productGroup){next.priceGroupId=n.productGroup==='Thang máng cáp'?'tmc':'detail';next.tmcScope=next.priceGroupId;if(next.priceGroupId==='tmc'&&!result.quote.pricing.comparisonMethods?.includes('tmc'))(result.quote.pricing.comparisonMethods??=['detail']).push('tmc');}
   if(n.spec){const material=prev?.materialId===n.materialId?prev.spec:original.materials.find(m=>m.id===n.materialId);if(!material)throw Error('Chọn mã vật tư có trong danh mục');next.spec=assign(copy(material),n.spec,specKeys);}

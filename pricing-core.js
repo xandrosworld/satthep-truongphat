@@ -81,11 +81,11 @@ function stockNet(row){const {spec:m,geometry:g}=row;
 // Quantities used to value materials, independent of prices (including zero prices).
 // Auxiliary equivalent quantities are monetary allowances, never physical demand.
 function materialValuation(row,result,q){
-  const m=row.spec,physical=m.shape!=='piece',percent=physical?Number(row.node.auxiliaryPercent||0):0;
+  const m=row.spec,physical=m.shape!=='piece',percent=Number(row.node.auxiliaryPercent||0);
   if(row.externallySupplied)return {weight:0,area:0,basis:0,unit:m.unit,method:'Bên gia công cấp — đã gồm trong gói',percent,cost:0,auxiliaryWeight:0,auxiliaryBasis:0,auxiliaryCost:0};
-  if(row.node.materialEstimate&&physical&&!row.estimate)return {error:'Chưa tính được phôi và hao hụt'};
+  if(row.node.materialEstimate&&!row.estimate)return {error:'Chưa tính được phôi và hao hụt'};
   let weight=0,basis=0,area=0,method='Theo số lượng';
-  if(!physical)basis=row.count;
+  if(!physical){basis=row.estimate?.basis??row.count;weight=row.estimate?.weight??row.geometry.weight;method=row.estimate?'Số lượng + hao hụt '+row.estimate.percent+'%':'Theo số lượng';}
   else if(row.estimate){({weight,area,basis}=row.estimate);method='Phôi + hao hụt '+row.estimate.percent+'%';}
   else {const group=result.groups.find(g=>g.rows.some(r=>r.id===row.id));
     if(!group||group.error)return {error:group?.error||'Chưa có lượng vật tư tính tiền'};
@@ -120,7 +120,7 @@ function calculate(db){
     for(const child of n.children||[]){const childResult=walk(child);for(const key of PARTS)parts[key]+=childResult.parts[key];r.replaceableFactory+=childResult.replaceableFactory;}
     if(n.kind==='material'){
       if(!rowMap.get(n.id)?.externallySupplied)amount(n.spec.price,n.materialId+' / đơn giá vật tư',errors);
-      const row=rowMap.get(n.id);parts[n.spec.shape==='piece'?'ancillary':'stock']+=row?.cost||0;if(n.spec.shape!=='piece')parts.allowance+=(row?.cost||0)*amount(n.auxiliaryPercent??0,n.name+' / vật tư phụ %',errors)/100;
+      const row=rowMap.get(n.id);parts[n.spec.shape==='piece'?'ancillary':'stock']+=row?.cost||0;parts.allowance+=(row?.cost||0)*amount(n.auxiliaryPercent??0,n.name+' / vật tư phụ %',errors)/100;
     }
     for(const [i,op] of (n.ops||[]).entries()){
       let item={name:'Nguyên công chưa có giá',mode:op.mode,unit:'',basis:0,rate:0,cost:0,factors:[],index:i};
@@ -239,7 +239,7 @@ alternatives[id]={id,name,products,total:totalOf(products),applicable:applicabil
   });
   const reuseCost=exclude=>totalOf(roots.map(r=>{
     const parts={...r.parts,stock:r.materialPurchase-r.parts.ancillary-(exclude?r.materialRecoverable:0)};
-    parts.allowance=base.rows.filter(row=>row.productId===r.node.id&&row.spec.shape!=='piece').reduce((s,row)=>s+((row.purchaseCost||0)-(exclude?(row.recoverableCredit||0):0))*(row.node.auxiliaryPercent||0)/100,0);
+    parts.allowance=base.rows.filter(row=>row.productId===r.node.id).reduce((s,row)=>s+((row.purchaseCost||0)-(exclude?(row.recoverableCredit||0):0))*(row.node.auxiliaryPercent||0)/100,0);
     const x=makeCost(r,parts);return {...x,unitSell:x.suggestedUnit,sell:Math.round(x.suggestedUnit*x.node.qty)};
   }));
   const total=totalOf(products);
