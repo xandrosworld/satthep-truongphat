@@ -96,8 +96,12 @@ function validateCatalog(db){for(const [key,validate]of [['shapeDefinitions',val
 function sheetPreset(kind){
  const field=(key,name,sample,mode='input')=>({key,name,mode,unit:'mm',sample});
  const choices={rectangle:{blankShapeName:'Tấm chữ nhật',fields:[field('L','Chiều dài',1000),field('W','Chiều rộng',200)],length:'L',width:'W',area:'L * W / 1000000'},circle:{blankShapeName:'Tấm tròn',fields:[field('D','Đường kính',1000)],length:'D',width:'D',area:'PI * D * D / 4 / 1000000'},triangle:{blankShapeName:'Tấm tam giác vuông',fields:[field('L','Cạnh đáy',1000),field('H','Chiều cao vuông góc',200)],length:'L',width:'H',area:'L * H / 2 / 1000000'}};
+ if(['trapezoid','rhombus'].includes(kind)){
+  const trapezoid=kind==='trapezoid',fields=trapezoid?[field('L','Đáy thứ nhất',1000),field('W','Đáy thứ hai',600),field('H','Chiều cao vuông góc',400)]:[field('L','Đường chéo thứ nhất',1000),field('W','Đường chéo thứ hai',600)],unfoldOutputs=fields.map(f=>({key:f.key+'0',name:f.name+' khai triển',unit:'mm',formula:f.key})),area=trapezoid?'(L0 + W0) * H0 / 2000000':'L0 * W0 / 2000000';
+  return {base:'sheet',nesting:'bounding',blankShape:'sheet',blankShapeName:trapezoid?'Tấm hình thang':'Tấm hình thoi',fields:[field('T','Chiều dày',2,'fixed'),...fields],unfoldOutputs,length:trapezoid?'MAX(L0, W0)':'L0',width:trapezoid?'H0':'W0',mass:'RHO * T / 1000',surface:'1',blankMass:'('+area+') * KL_DV',blankSurface:area,condition:trapezoid?'Mẫu hình thang có đáy nhỏ nằm trong bề rộng đáy lớn (ví dụ hình thang cân/vuông); nếu đáy lệch ra ngoài, phải khai lại khổ bao thực. Xếp khổ bao, chưa ghép sát cạnh.':'Hình thoi khai theo hai đường chéo vuông góc; xếp khổ bao chữ nhật, chưa ghép sát cạnh.'};
+ }
  const x=choices[kind];if(!x)throw Error('Chọn dạng khai triển được hỗ trợ');
- return {base:'sheet',nesting:kind==='triangle'?'right-triangle':kind==='circle'?'circle':'bounding',blankShape:'sheet',blankShapeName:x.blankShapeName,fields:[field('T','Chiều dày',2,'fixed'),...x.fields],unfoldOutputs:kind==='circle'?[{key:'D0',name:'Đường kính khai triển',unit:'mm',formula:'D'}]:[],length:kind==='circle'?'D0':x.length,width:kind==='circle'?'D0':x.width,mass:'RHO * T / 1000',surface:'1',blankMass:'('+(kind==='circle'?'PI * D0 * D0 / 4 / 1000000':x.area)+') * KL_DV',blankSurface:kind==='circle'?'PI * D0 * D0 / 4 / 1000000':x.area};
+ return {condition:'',base:'sheet',nesting:kind==='triangle'?'right-triangle':kind==='circle'?'circle':'bounding',blankShape:'sheet',blankShapeName:x.blankShapeName,fields:[field('T','Chiều dày',2,'fixed'),...x.fields],unfoldOutputs:kind==='circle'?[{key:'D0',name:'Đường kính khai triển',unit:'mm',formula:'D'}]:[],length:kind==='circle'?'D0':x.length,width:kind==='circle'?'D0':x.width,mass:'RHO * T / 1000',surface:'1',blankMass:'('+(kind==='circle'?'PI * D0 * D0 / 4 / 1000000':x.area)+') * KL_DV',blankSurface:kind==='circle'?'PI * D0 * D0 / 4 / 1000000':x.area};
 }
 function barPreset(kind){
  const f=(key,name,sample,unit='mm',mode='fixed')=>({key,name,sample,unit,mode});
@@ -105,7 +109,7 @@ function barPreset(kind){
  const x=choices[kind];if(!x)throw Error('Chọn mẫu thanh hợp lệ');return {...x,unfoldOutputs:[],base:'bar',nesting:'bounding',fields:[f('L','Chiều dài cắt',2000,'mm','input'),...x.fields],length:'L',width:'0',blankMass:'L / 1000 * KL_DV',blankSurface:'L / 1000 * DT_DV'};
 }
 function example(kind){
- const sheet=['rectangle','circle','triangle'].includes(kind),d=sheet?sheetPreset(kind):barPreset(kind),name=d.blankShapeName;
+ const sheet=['rectangle','circle','triangle','trapezoid','rhombus'].includes(kind),d=sheet?sheetPreset(kind):barPreset(kind),name=d.blankShapeName;
  if(kind==='circle')d.fields.find(f=>f.key==='D').sample=500;
  if(kind==='triangle'){d.fields.find(f=>f.key==='L').sample=1000;d.fields.find(f=>f.key==='H').sample=500;}
  if(kind==='rectangle'){d.fields.find(f=>f.key==='L').sample=900;d.fields.find(f=>f.key==='W').sample=400;}

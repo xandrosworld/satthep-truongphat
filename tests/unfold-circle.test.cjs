@@ -35,3 +35,14 @@ test('legacy circle snapshots keep rectangle packing until explicitly updated',(
 test('computed output formulas participate in server formula protection and locking records',()=>{
  const F=require('../server/formula-access.cjs'),d=circle(),record=F.records({shapeDefinitions:[d]})[0];A.ok(record.fields.some(x=>x.path==='unfoldOutputs.0.formula'&&x.value==='D'));
 });
+
+test('trapezoid and rhombus use physical area with conservative rectangular stock nesting',()=>{
+ for(const [kind,area,kg,l,w] of [['trapezoid',.32,5.024,1000,400],['rhombus',.3,4.71,1000,600]]){
+  const d={id:kind,...D.example(kind)},v=D.trial(d,{stockL:2000,stockW:1000,count:3,kerf:3});
+  near(v.g.blankArea,area);near(v.g.weight,kg);near(v.g.length,l);near(v.g.width,w);near(v.totalArea,area*3);
+  A.equal(d.nesting,'bounding');A.ok(v.measure>=v.totalArea);near(v.allowance.netMeasure+v.allowance.shapeOffcut+v.allowance.stockOffcut,v.measure);
+  const saved=D.saveShape(C.seed(),d),m=D.applyShape({id:'MAT',density:7850},saved,{T:2});
+  const n=D.assign(D.draft('shape',3),m,C.seed().rules);near(D.geometry(n,3).blankArea,area*3);
+  A.ok(!/\b[LWH]0\b/.test(D.expandedFormulas(d).blankSurface));
+ }
+});

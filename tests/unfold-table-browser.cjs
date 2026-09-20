@@ -1,7 +1,7 @@
 'use strict';
 const {chromium,expect}=require('@playwright/test'),fs=require('fs'),path=require('path'),{pathToFileURL}=require('url'),crypto=require('crypto');
 (async()=>{
- const live=process.argv.includes('--live'),build=path.resolve(process.env.UNFOLD_BUILD||'artifacts/unfold-circle-release/dist/index.html'),dir=path.resolve('artifacts/customer-review/unfold-circle/'+(live?'live':'local'));fs.mkdirSync(dir,{recursive:true});
+ const live=process.argv.includes('--live'),build=path.resolve(process.env.UNFOLD_BUILD||'artifacts/unfold-circle-release/dist/index.html'),dir=path.resolve('artifacts/customer-review/unfold-table/'+(live?'live':'local'));fs.mkdirSync(dir,{recursive:true});
  const credentials=live?JSON.parse(fs.readFileSync('artifacts/railway-team/private/credentials.json','utf8').replace(/^\uFEFF/,'')):null,url=credentials?.url||pathToFileURL(build).href;
  const hash=s=>crypto.createHash('sha256').update(s.replace(/\r\n/g,'\n').trim()).digest('hex');if(live)expect(hash(await fetch(url).then(r=>r.text()))).toBe(hash(fs.readFileSync(build,'utf8')));
  const browser=await chromium.launch({channel:'msedge',headless:true}),p=await browser.newPage({viewport:{width:1560,height:1050}}),errors=[],writes=[],checks=[];
@@ -11,6 +11,18 @@ const {chromium,expect}=require('@playwright/test'),fs=require('fs'),path=requir
  try{
   await p.goto(url);let before;
   if(live){await p.waitForFunction(()=>typeof Team!=='undefined'&&Team.available);await p.evaluate(async c=>{teamSession(await teamApi('login','POST',c));},credentials);before=await p.evaluate(async()=>({catalog:await teamApi('catalog'),quotes:await teamApi('quotes')}));await p.evaluate(()=>{db=TPPrice.demoSeed();Team.loaded=true;Team.link={workspaceKey:db.quote.workspaceKey,status:'draft',version:0};CatalogDraft.record=null;CatalogDraft.dirty=false;page='rules';render();});}
+  await p.locator('[data-page=rules]').click();await p.locator('[data-rc-tab=shapes]').click();
+  await p.locator('[data-definition=shape-new]').click();await p.locator('[name=sheetPreset]').selectOption('rectangle');await p.locator('[data-df-preset-apply]').click();
+  await p.locator('[data-definition=add-field]').click();await p.locator('[name=key3]').selectOption('L0');await p.locator('[name=mode3]').selectOption('output');
+  await expect(p.locator('#definition-fields [name=outputKey0]')).toHaveValue('L0');await expect(p.locator('[name=outputFormula0]')).toHaveValue('L');await expect(p.locator('[name=outputMode0]')).toHaveValue('output');
+  await p.locator('[name=outputMode0]').selectOption('input');await expect(p.locator('[name=key3]')).toHaveValue('L0');await expect(p.locator('[name=mode3]')).toHaveValue('input');
+  await p.locator('[name=mode3]').selectOption('output');await expect(p.locator('[name=outputFormula0]')).toHaveValue('L');
+  await p.locator('[name=sheetPreset]').selectOption('trapezoid');await p.locator('[data-df-preset-apply]').click();await p.locator('[name=name]').fill('Mẫu hình thang');await value('blankSurface',.32);await value('blankMass',5.024);await expect(p.locator('#definition-fields [data-df-output-row]')).toHaveCount(3);
+  await p.locator('[name=id]').fill('QA-TRAPEZOID');await p.locator('[name=name]').fill('Mẫu hình thang');await p.locator('[name=outputName0]').fill('Đáy lớn khai triển');await p.locator('#review-shape-check').click();await expect(p.locator('#review-shape-report [data-review-ok]')).toHaveAttribute('data-review-ok','true');await p.locator('#definition-fields').scrollIntoViewIfNeeded();await shot('00-bang-thong-so-hop-nhat');await submit();
+  await p.locator('[data-rc-definition=QA-TRAPEZOID] [data-rc=summary]').click();await expect(p.locator('[name=outputName0]')).toHaveValue('Đáy lớn khai triển');await value('blankSurface',.32);
+  await p.locator('[name=sheetPreset]').selectOption('custom');await p.locator('[data-df-preset-apply]').click();await expect(p.locator('[name=outputFormula0]')).toHaveValue('L');await expect(p.locator('[name=blankSurface]')).toHaveValue('(L0 + W0) * H0 / 2000000');await close();
+  await p.locator('[data-definition=shape-new]').click();await p.locator('[name=sheetPreset]').selectOption('rhombus');await p.locator('[data-df-preset-apply]').click();await p.locator('[name=name]').fill('Mẫu hình thoi');await value('blankSurface',.3);await value('blankMass',4.71);await close();
+  checks.push('unified symbol/mode rows; input-output conversion; named outputs save/reopen; trapezoid and rhombus numerical previews; custom formulas preserved');
   await p.locator('[data-page=rules]').click();await p.locator('[data-rc-tab=parameters]').click();await expect(p.locator('#rc-results')).toContainText('Đường kính khai triển');await p.locator('[data-rc-tab=shapes]').click();
   await p.locator('[data-definition=shape-new]').click();await p.locator('[name=sheetPreset]').selectOption('circle');await p.locator('[data-df-preset-apply]').click();
   await p.locator('[name=id]').fill('QA-CIRCLE-OUTPUT');await p.locator('[name=name]').fill('Mẫu đối chiếu tấm tròn D0');await expect(p.locator('[name=outputKey0]')).toHaveValue('D0');await expect(p.locator('[name=outputFormula0]')).toHaveValue('D');await expect(p.locator('[name=length]')).toHaveValue('D0');
@@ -29,5 +41,5 @@ const {chromium,expect}=require('@playwright/test'),fs=require('fs'),path=requir
   await row.locator('[data-rc=summary]').click();await expect(p.locator('#dialog')).toBeVisible();await p.setViewportSize({width:390,height:844});await p.locator('[data-df-output-row]').first().scrollIntoViewIfNeeded();expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await shot('03-khai-trien-mobile');await close();
   if(live)expect(await p.evaluate(async()=>({catalog:await teamApi('catalog'),quotes:await teamApi('quotes')}))).toEqual(before);
   expect(errors).toEqual([]);expect(writes).toEqual([]);fs.writeFileSync(dir+'/results.json',JSON.stringify({passed:true,live,checks,errors,writes,at:new Date().toISOString()},null,2));console.log('PASS unfold outputs and circle nesting UI'+(live?' on production; no business writes':''));
- }catch(e){await shot('FAILURE').catch(()=>{});throw e;}finally{await browser.close();}
+ }catch(e){console.error(await p.locator('#definition-preview').textContent().catch(()=>''));await shot('FAILURE').catch(()=>{});throw e;}finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

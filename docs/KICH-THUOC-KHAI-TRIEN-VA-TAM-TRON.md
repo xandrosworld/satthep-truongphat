@@ -36,3 +36,16 @@ Mẫu đầu: diện tích phôi 0,0628318531 m²; lượng mua 0,0825 m². Hao 
 - `tests/unfold-circle-server.test.cjs`: lưu/đọc danh mục và báo giá qua API; người chỉ được dùng không thấy hoặc sửa công thức D0.
 - `tests/unfold-circle-browser.cjs`: thao tác form, lưu/mở lại, tạo mã, báo giá, áp dụng hao hụt và màn hình nhỏ. Chế độ `--live` kiểm bản triển khai bằng dữ liệu QA trong trình duyệt, chặn ghi nghiệp vụ lên máy chủ.
 - Hồ sơ kết quả và ảnh: `artifacts/customer-review/unfold-circle/`.
+
+
+## Cập nhật bảng khai báo ngày 20/09/2026
+
+- Bảng thông số chung cho chọn L0, W0, D0, H0; “Nơi nhập” có lựa chọn **Kích thước khai triển**. Khi chọn, ô số thử chuyển thành công thức và kết quả mm. Có thể đổi lại thành đầu vào hoặc cố định theo mã.
+- Ví dụ: thêm dòng L0, chọn Kích thước khai triển, nhập `L`; hoặc D0 với công thức `D`. Các công thức khổ bao, diện tích, khối lượng có thể tham chiếu các đầu ra này.
+- Tên diễn giải riêng của từng đầu ra được giữ khi lưu/mở lại. Dữ liệu vẫn lưu riêng đầu vào và kết quả tính, giữ cơ chế khóa công thức/phân quyền và phiên bản báo giá.
+- Có mẫu hình thang: hai đáy L/W, cao H, đầu ra L0/W0/H0; diện tích `(L0 + W0) * H0 / 2000000` m². Mẫu 1000/600/400 mm, thép dày 2 mm: **0,32 m² và 5,024 kg/chi tiết**. Khổ bao `MAX(L0, W0) × H0` chỉ phù hợp khi đáy nhỏ nằm trong bề rộng đáy lớn; hình thang lệch phải khai khổ bao thực.
+- Có mẫu hình thoi: hai đường chéo L/W, đầu ra L0/W0; diện tích `L0 * W0 / 2000000` m². Mẫu 1000/600 mm, thép dày 2 mm: **0,3 m² và 4,71 kg/chi tiết**.
+- **Tự khai theo kích thước khai triển** giữ công thức/thông số đang sửa, chuyển về khổ bao chữ nhật. Khai các đầu ra cần thiết, công thức dài/rộng khổ bao, diện tích thực và khối lượng thực theo hình dạng. Có thể khai thêm ký hiệu riêng trong Thông số cấu kiện.
+- Hình thang, hình thoi và hình tự khai xếp theo **khổ bao chữ nhật**, có mạch cắt; hao hụt đối chiếu diện tích phôi thực với tổng tấm mua. Chưa ghép sát đường biên đa giác, không coi kết quả là tối ưu cắt CNC. Mô hình STEP/CAD động thuộc phần trao đổi GĐ2.
+
+Kiểm chứng: kiểm thử công thức/khổ mua trong `tests/unfold-circle.test.cjs`; luồng đổi loại thông số, lưu/mở lại, mẫu và hình tròn trong `tests/unfold-table-browser.cjs`; hồi quy báo giá phiên bản cũ trong `tests/unfold-symbols-browser.cjs`.
