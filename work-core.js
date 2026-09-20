@@ -125,6 +125,18 @@ function expenses(entries,base,generated){
       else if(e.scope==='materials'){rows=eligible.filter(r=>(e.materialIds||[]).includes(r.materialId));if((e.materialIds||[]).some(id=>!rows.some(r=>r.materialId===id)))throw Error('Mã vật tư đã không còn trong báo giá');targets=products.filter(p=>rows.some(r=>r.productId===p.node.id));}
       else if(e.scope==='supplier'){if(!String(e.supplier||'').trim())throw Error('Chọn nguồn mua');rows=eligible.filter(r=>r.supplier===e.supplier);targets=products.filter(p=>rows.some(r=>r.productId===p.node.id));}
       else if(e.scope!=='all'&&e.scope!==undefined)throw Error('Phạm vi chi phí chưa hợp lệ');
+      if(e.category==='outgoing'&&e.outgoingJobs!==undefined){
+        if(!Array.isArray(e.outgoingJobs)||!e.outgoingJobs.length)throw Error('Chọn công đoạn thuê ngoài cho tuyến vận chuyển');
+        if(!String(e.to||'').trim())throw Error('Khai nơi gia công / điểm đến của tuyến thuê ngoài');
+        const leafIds=new Set();
+        for(const ref of e.outgoingJobs){const node=base.nodes[ref.nodeId]?.node,op=ref.instanceId?node?.ops?.find(o=>o.instanceId===ref.instanceId):node?.ops?.[ref.index];
+          if(!op||op.id!==ref.operationId||op.mode!=='outside')throw Error('Công đoạn thuê ngoài đã đổi hoặc bị xóa; chọn lại tuyến');
+          for(const child of C.flatten([node]))if(child.kind==='material')leafIds.add(child.id);
+        }
+        rows=all.filter(r=>leafIds.has(r.id)).map(r=>({...r,purchaseKg:r.netKg}));
+        if(!rows.length)throw Error('Tuyến thuê ngoài chưa có phôi vận chuyển');
+        targets=products.filter(p=>rows.some(r=>r.productId===p.node.id));
+      }
       const allowed=e.priceSource?.applicableGroupIds??e.allowedGroupIds;
       if(allowed!==undefined){const G=typeof module!=='undefined'?require('./group-pricing-core.js'):root.TPGroupPrice,q=base.quote||{pricing:{}};if(!Array.isArray(allowed)||new Set(allowed).size!==allowed.length||allowed.some(id=>!G.groups(q).some(g=>g.id===id)))throw Error('Nhóm áp dụng đơn giá không còn hợp lệ; chọn lại đơn giá');if(allowed.length){if(targets.some(p=>!G.resolve(q,p.node).known))throw Error('Phân nhóm sản phẩm trước khi áp đơn giá theo nhóm');targets=targets.filter(p=>allowed.includes(G.resolve(q,p.node).id));rows=rows.filter(r=>targets.some(p=>p.node.id===r.productId));}}
       // A quote may narrow a shared tariff, never widen the tariff's own scope.
@@ -145,10 +157,10 @@ function expenses(entries,base,generated){
       const minimumTotal=minimum*(e.minimumScope==='trip'?tripCount:1);
       const rawCost=Math.max(basis*rate,minimumTotal)*repeats,cost=e.rounding==='vnd'?Math.round(rawCost):rawCost;
       if(!Number.isFinite(cost))throw Error('Chi phí vượt giới hạn');
-      const weights=targets.map(p=>{const rr=rows.filter(r=>r.productId===p.node.id);if(e.allocation==='blankWeight')return p.weight;if(e.allocation==='quantity')return e.scope==='nodes'?rr.reduce((s,r)=>s+r.count,0):p.node.qty;if(e.allocation==='equal')return 1;if(e.allocation==='area')return rr.reduce((s,r)=>s+r.area,0);if(e.allocation==='cost')return p.material||0;return rr.reduce((s,r)=>s+r[e.method.includes('purchase')||e.massBasis==='purchase'?'purchaseKg':'netKg'],0);});
+      const weights=targets.map(p=>{const rr=rows.filter(r=>r.productId===p.node.id);if(e.allocation==='blankWeight')return e.outgoingJobs?rr.reduce((s,r)=>s+r.netKg,0):p.weight;if(e.allocation==='quantity')return e.scope==='nodes'?rr.reduce((s,r)=>s+r.count,0):p.node.qty;if(e.allocation==='equal')return 1;if(e.allocation==='area')return rr.reduce((s,r)=>s+r.area,0);if(e.allocation==='cost')return p.material||0;return rr.reduce((s,r)=>s+r[e.method.includes('purchase')||e.massBasis==='purchase'?'purchaseKg':'netKg'],0);});
       const totalWeight=weights.reduce((s,n)=>s+n,0);if(!(totalWeight>0))throw Error('Không có cơ sở phân bổ; chọn số lượng hoặc chia đều');
       const rawShares=weights.map(w=>cost*w/totalWeight),shares=e.rounding==='vnd'?rawShares.map(Math.floor):[...rawShares],order=targets.map((p,i)=>i).sort((a,b)=>(rawShares[b]-shares[b])-(rawShares[a]-shares[a])||String(targets[a].node.id).localeCompare(String(targets[b].node.id)));if(e.rounding==='vnd'){const remaining=cost-shares.reduce((s,x)=>s+x,0);for(let i=0;i<remaining;i++)shares[order[i%order.length]]++;}else shares[shares.length-1]=cost-shares.slice(0,-1).reduce((s,x)=>s+x,0);const detail=targets.map((p,i)=>{const value=shares[i];(allocations[p.node.id]??={incoming:0,outgoing:0,delivery:0,install:0})[e.category]+=value;return {productId:p.node.id,name:p.node.name,weight:weights[i],cost:value};});
-      totals[e.category]+=cost;items.push({...e,basis,unit,baseRate,rate,repeats,factorsApplied:factors,cost,detail,tripCount,minimumTotal,minimumApplied:minimumTotal>basis*rate});
+      totals[e.category]+=cost;items.push({...e,transportKg:net,transportNodeIds:rows.map(r=>r.id),basis,unit,baseRate,rate,repeats,factorsApplied:factors,cost,detail,tripCount,minimumTotal,minimumApplied:minimumTotal>basis*rate});
     }catch(error){errors.push((e.name||'Khoản chi')+': '+error.message);items.push({...e,error:error.message});}
   }
   return {totals,allocations,items,errors,rows:all};
