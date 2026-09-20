@@ -57,3 +57,6 @@
 .pg-scope-label { color: #425a76; font-weight: 600; }
 
 #definition-fields td:nth-child(3){min-width:200px}#definition-fields td:nth-child(5){min-width:240px}#definition-fields [data-df-output-row] td{vertical-align:top}#definition-fields [data-df-output-result]{display:block;font-weight:600;color:#214e85}
+
+.df-active-formula{outline:2px solid #315776;outline-offset:1px}.df-tool-link{margin-top:6px}#definition-formula-tools [data-df-return]{align-self:end;justify-self:start}#definition-formula-tools select{max-width:100%}
+#definition-formula-tools [data-df-active-expression]{display:block;padding:10px;margin:8px 0;border:1px solid #cad7e6;border-radius:6px;background:#fff;font-family:Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
