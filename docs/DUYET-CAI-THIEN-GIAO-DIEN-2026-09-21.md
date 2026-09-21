@@ -44,3 +44,7 @@ Bổ sung theo ảnh phản hồi: đưa cách xếp cố định có sẵn ra n
 - Kiểm tra toàn bộ lựa chọn trước khi áp dụng; mỗi nguyên công lấy hệ số từ đúng bảng, kỹ thuật chỉ chọn tên mức độ.
 - Thu gọn bảng cấu thành: ẩn mã/quy cách phụ và nút kích thước trên dòng vật tư; vẫn mở chi tiết hoặc menu thao tác để xem, sửa.
 - Kiểm tra gán/lưu/mở lại, hủy, giữ đánh giá cũ, bỏ đánh giá, không đổi nguyên công ngoài lựa chọn, điện thoại và hồi quy phân quyền kỹ thuật.
+
+### Đồng bộ diễn giải số lượng khi nhập nhanh
+- Sửa dòng Lượng theo cây bị giữ số cũ sau khi sửa số lượng sản phẩm, cấu kiện hoặc vật tư. Cập nhật diễn giải theo kết quả đang tính trên bảng.
+- Kiểm tra 13 × 1 × 1 → 12 × 1 × 1 → 12 × 1 × 5 → 12 × 2 × 5: diễn giải, tổng hiển thị và kết quả tính đồng nhất; mở lại giữ đúng.
