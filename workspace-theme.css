@@ -334,3 +334,20 @@ th{color:var(--muted)}
 .rc-declaration-parameters > div + div{margin-top:10px}
 .rc-declaration-parameters > div > span{display:block;font-size:inherit;font-weight:600}
 .rc-declaration-parameters small{display:inline-block;margin-right:10px}
+
+
+/* Product dimension links: readable controls and wrapped formula helpers. */
+#dialog .product-links-form .link-config-table{width:100%;min-width:0;table-layout:fixed}
+#dialog .product-links-form .link-config-table th:first-child{width:20%}
+#dialog .product-links-form .link-config-table th:nth-child(2){width:18%}
+#dialog .product-links-form .link-config-table td{white-space:normal;overflow-wrap:anywhere}
+#dialog .product-links-form .link-formula-tools .actions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+#dialog .product-links-form .link-formula-tools button{font-size:14px;font-weight:600;color:#164c78;background:#edf6ff;border:1px solid #9dbbd6;min-height:34px;white-space:normal}
+#dialog .product-links-form input:disabled,
+#dialog .product-links-form button:disabled{opacity:1;color:#435365;-webkit-text-fill-color:#435365;background:#edf0f4;cursor:not-allowed}
+#dialog .product-links-form .dialog-footer .link-readonly-notice{flex:1 1 100%;margin:0;padding:10px;text-align:left;color:#243b53}
+@media(max-width:700px){
+#dialog .product-links-form .link-config-table thead{display:none}
+#dialog .product-links-form .link-config-table tr{display:block;padding:12px 0;border-bottom:1px solid #ccd6e0}
+#dialog .product-links-form .link-config-table td{display:block;width:100%;border:0}
+}
