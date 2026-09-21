@@ -196,3 +196,30 @@ th{color:var(--muted)}
 @media(max-width:600px){.permission-matrix th,.permission-matrix td{padding:9px 5px;font-size:12px}.permission-matrix th:first-child{width:58%}.permission-matrix th:not(:first-child),.permission-matrix td{width:21%}.section-permissions,.formula-rights{min-width:0;margin-inline:0;padding:10px}}
 
 .workspace-tabs{gap:8px;padding-bottom:4px}.workspace-tabs button{padding:10px 12px;border-radius:7px 7px 0 0}.workspace-tabs button.active{background:#dceeff;color:#0759b1;box-shadow:inset 0 0 0 1px #a8d1ff}.workspace-tabs button.active:after{height:3px;background:#087bfa}.workspace-tabs button.active span{background:#087bfa;border-color:#087bfa;color:white}.workspace-tabs .step-status{padding:2px 6px;border-radius:4px;font-weight:600}.workspace-tabs .step-done .step-status{color:#116b39;background:#d5f5df}.workspace-tabs .step-changed .step-status{color:#934800;background:#ffedc2}.workspace-tabs button.active .step-status{box-shadow:0 0 0 1px #ffffffa0}
+
+/* The formula workbench has one vertical scroll region and keeps every field reachable. */
+#dialog:has(#definition-fields){width:min(1440px,calc(100vw - 32px))!important;max-width:calc(100vw - 32px)!important;max-height:92dvh;overflow:hidden}
+#dialog:has(#definition-fields) #dialog-form{display:flex;flex-direction:column;max-height:calc(92dvh - 2px);min-height:0;overflow:hidden}
+#dialog:has(#definition-fields) .dialog-head,#dialog:has(#definition-fields) .dialog-footer{position:static;flex-shrink:0}
+#dialog:has(#definition-fields) .dialog-body{position:relative;flex:1;min-height:0;max-height:none;overflow:auto}
+#dialog #definition-fields{width:100%;min-width:0;table-layout:fixed}
+#dialog #definition-fields th,#dialog #definition-fields td{min-width:0;padding:12px 8px;white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+#dialog #definition-fields th:nth-child(1){width:20%}
+#dialog #definition-fields th:nth-child(2){width:22%}
+#dialog #definition-fields th:nth-child(3){width:18%}
+#dialog #definition-fields th:nth-child(4){width:10%}
+#dialog #definition-fields th:nth-child(5){width:22%}
+#dialog #definition-fields th:nth-child(6){width:8%}
+#dialog #definition-fields input,#dialog #definition-fields select{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+#dialog #definition-fields .button{white-space:normal;max-width:100%}
+@media(max-width:1100px){
+ #dialog #definition-fields thead{display:none}
+ #dialog #definition-fields,#dialog #definition-fields tbody{display:block}
+ #dialog #definition-fields tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-bottom:1px solid var(--line);padding:10px 0}
+ #dialog #definition-fields td{display:block;border:0}
+ #dialog #definition-fields td:last-child{align-self:end}
+}
+@media(max-width:600px){
+ #dialog:has(#definition-fields){width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important}
+ #dialog #definition-fields tr{grid-template-columns:minmax(0,1fr)}
+}
