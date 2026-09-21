@@ -324,3 +324,9 @@ th{color:var(--muted)}
 .complexity-matrix th,.complexity-matrix td{min-width:200px;padding:14px;text-align:left;vertical-align:top;border:1px solid #dce3eb}
 .complexity-matrix th{background:#f2f6fa}.complexity-matrix td label{margin:0}.complexity-matrix td label>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 @media(max-width:700px){.complexity-matrix-scroll{overflow:visible}.complexity-matrix,.complexity-matrix tbody,.complexity-matrix tr,.complexity-matrix td{display:block;width:100%;min-width:0}.complexity-matrix thead,.complexity-matrix tbody th{display:none}.complexity-matrix td{border:0;border-bottom:1px solid #dce3eb;padding:14px 0}.complexity-matrix td label>span{position:static;width:auto;height:auto;overflow:visible;clip-path:none}}
+
+/* Keep secondary material details in the existing detail/actions panels. */
+.quick-row:not(.assembly-row) .quick-identity > span:last-child > small,
+.quick-row:not(.assembly-row) .b2-node-meta [data-b2-dim]{display:none}
+.bulk-operation-list > section > label{display:flex;align-items:center;gap:10px}
+.bulk-operation-list > section > label input[type=checkbox]{width:auto;margin:0}
