@@ -149,8 +149,8 @@ function nestTriangles(items,spec,kerf,strategy){
     const {length:l,width:w}=row.geometry;
     if(!Number.isFinite(l)||!Number.isFinite(w)||l<=0||w<=0||!Number.isInteger(row.count)||row.count<1)throw Error('Kích thước và số tam giác chưa hợp lệ');
     if((count+=row.count)>5000)throw Error('Tối đa 5.000 phôi cho mỗi mã vật tư');
-    const key=JSON.stringify([l,w]);if(!buckets.has(key))buckets.set(key,[]);
-    for(let i=0;i<row.count;i++)buckets.get(key).push({rowId:row.id,label:row.label,color:row.color,l,w});
+    const key=JSON.stringify([l,w,row.geometry.polygon]);if(!buckets.has(key))buckets.set(key,[]);
+    for(let i=0;i<row.count;i++)buckets.get(key).push({rowId:row.id,label:row.label,color:row.color,l,w,...(row.geometry.polygon?{polygon:row.geometry.polygon}:{})});
   }
   const plain={...spec,shapeDefinition:{...spec.shapeDefinition,nesting:'bounding'}};
   function arrange(pair){
@@ -159,8 +159,9 @@ function nestTriangles(items,spec,kerf,strategy){
       const first=pieces[i++],{l,w}=first,h=Math.hypot(l,w),dx=kerf*w/h,dy=kerf*l/h;
       const fits=(l+dx<=spec.stockL&&w+dy<=spec.stockW)||(w+dy<=spec.stockL&&l+dx<=spec.stockW);
       const second=pair&&i<pieces.length&&fits?pieces[i++]:null;
-      const points=[[[0,0],[l,0],[0,w]]];
-      if(second)points.push([[l+dx,w+dy],[dx,w+dy],[l+dx,dy]]);
+      const base=first.polygon||[[0,0],[l,0],[0,w]],right=base.find(a=>base.some(b=>b!==a&&Math.abs(a[0]-b[0])<1e-7)&&base.some(b=>b!==a&&Math.abs(a[1]-b[1])<1e-7)),sx=right&&right[0]>l/2?-1:1,sy=right&&right[1]>w/2?-1:1;
+      const points=[base.map(([x,y])=>[x+(second&&sx<0?dx:0),y+(second&&sy<0?dy:0)])];
+      if(second)points.push(base.map(([x,y])=>[l-x+(sx>0?dx:0),w-y+(sy>0?dy:0)]));
       const members=second?[first,second]:[first];
       blocks.push({id:'triangle-block-'+blocks.length,label:first.label,count:1,color:first.color,geometry:{length:l+(second?dx:0),width:w+(second?dy:0)},members,points});
     }
@@ -182,10 +183,11 @@ function nestTriangles(items,spec,kerf,strategy){
 }
 function materialEstimate(n,g){
   if(!n.materialEstimate)return null;
-  const {method,percent}=n.materialEstimate;
-  if(!['net','percent'].includes(method)||!Number.isFinite(percent)||percent<0||percent>100||method==='net'&&percent!==0)throw Error('Hao hụt dự tính phải từ 0 đến 100%; theo phôi dùng 0%');
-  if(n.spec.shape==='piece'){const basis=g.quantity*(1+percent/100);return {method,percent,basis,quantity:basis,measure:basis,weight:g.weight*(1+percent/100),area:0,unit:n.spec.unit,cost:basis*n.spec.price};}
-  const multiplier=1+percent/100,weight=g.weight*multiplier,area=g.blankArea*multiplier,m=n.spec,measure=(m.shape==='sheet'?g.blankArea:g.measure)*multiplier;
+  const {method,percent,basis:lossBasis}=n.materialEstimate;const consumed=lossBasis==='consumed';if(lossBasis!==undefined&&!consumed)throw Error('Cách tính hao hụt chưa hợp lệ');
+  if(!['net','percent'].includes(method)||!Number.isFinite(percent)||percent<0||(consumed?percent>=100:percent>100)||method==='net'&&percent!==0)throw Error(consumed?'Hao hụt phải từ 0 đến dưới 100%; theo phôi dùng 0%':'Hao hụt dự tính phải từ 0 đến 100%; theo phôi dùng 0%');
+  const multiplier=consumed?1/(1-percent/100):1+percent/100;
+  if(n.spec.shape==='piece'){const basis=g.quantity*multiplier;return {method,percent,basis,quantity:basis,measure:basis,weight:g.weight*multiplier,area:0,unit:n.spec.unit,cost:basis*n.spec.price};}
+  const weight=g.weight*multiplier,area=g.blankArea*multiplier,m=n.spec,measure=(m.shape==='sheet'?g.blankArea:g.measure)*multiplier;
   const basis=m.unit==='kg'?weight:m.unit==='m²'&&m.shape==='sheet'||m.unit==='m'&&m.shape!=='sheet'?measure:null;
   if(basis===null)throw Error('Dự tính theo phôi cần đơn giá kg, m² tấm hoặc m dài; khai đơn vị giá phù hợp trước');
   return {method,percent,weight,area,measure,basis,unit:m.unit,cost:basis*m.price};

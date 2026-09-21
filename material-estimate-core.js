@@ -8,13 +8,15 @@ function comparisons(result,ids){
   const {purchased}=g.layout,sheet=g.spec.shape==='sheet',used=sheet?g.rows.reduce((s,r)=>s+r.geometry.blankArea*1e6,0):g.layout.used;
   if(!(used>0)||used>g.layout.used+1e-6)return {group:g,rows,error:'Diện tích phôi thực không hợp lệ hoặc vượt khổ bao; kiểm tra công thức diện tích'};
   const reusable=g.reusableMeasure||0,purchasedWeight=g.purchasedWeight,blankWeight=g.totalWeight,reusableWeight=purchasedWeight*reusable/purchased;
+  if(used+reusable>purchased+1e-6)return {group:g,rows,error:'Phôi và phần tận dụng vượt lượng mua; kiểm tra lại sơ đồ'};
   const remainingWeight=purchasedWeight-blankWeight-reusableWeight;
   if(!(blankWeight>0)||!Number.isFinite(remainingWeight)||remainingWeight < -1e-7)return {group:g,rows,error:'Khối lượng phôi và phần tận dụng vượt lượng mua; kiểm tra công thức khối lượng'};
   const rawPercent=Math.max(0,remainingWeight)/blankWeight*100,percent=rawPercent>100&&rawPercent<100+1e-8?100:rawPercent;
-  return {group:g,rows,used,purchased,reusable,purchasedWeight,blankWeight,reusableWeight,remainingWeight:Math.max(0,remainingWeight),stockPercent:Math.max(0,remainingWeight)/purchasedWeight*100,boundingUsed:g.layout.used,shapeOffcut:Math.max(0,g.layout.used-used),percent,applicable:Number.isFinite(percent)&&percent<=100,
+  const remaining=Math.max(0,purchased-used-reusable),lossPercent=remaining/(used+remaining)*100;
+  return {lossPercent,lossApplicable:Number.isFinite(lossPercent)&&lossPercent<100,group:g,rows,used,purchased,reusable,purchasedWeight,blankWeight,reusableWeight,remainingWeight:Math.max(0,remainingWeight),stockPercent:Math.max(0,remainingWeight)/purchasedWeight*100,boundingUsed:g.layout.used,shapeOffcut:Math.max(0,g.layout.used-used),percent,applicable:Number.isFinite(percent)&&percent<=100,
    stockCount:g.layout.stocks.length,pieceCount:g.rows.reduce((s,r)=>s+r.count,0),
    utilization:used/purchased*100,remaining:Math.max(0,purchased-used-reusable),
-   current:rows.map(r=>({id:r.id,percent:r.node.materialEstimate?.percent??null}))};
+   current:rows.map(r=>({id:r.id,percent:r.node.materialEstimate?(r.node.materialEstimate.basis==='consumed'?r.node.materialEstimate.percent:r.node.materialEstimate.percent/(100+r.node.materialEstimate.percent)*100):null}))};
  });
 }
 const api={comparisons};if(typeof module!=='undefined')module.exports=api;else root.TPMaterialEstimate=api;

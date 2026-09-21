@@ -15,13 +15,13 @@ test('explanation matches independent quantity, surface and sequential cost answ
  const order=rows(r,'Gia phuong an da chon').map(x=>x[1]);A.ok(order.indexOf('Giá gốc')<order.indexOf('Lợi nhuận'));
  A.equal(rows(r,'Tong hop doi chieu').find(x=>x[0]==='Giá trước thuế')[2],P.calculate(d).total.beforeTax);
 });
-test('triangle report uses actual three-side contour and reuse percentage on net blank mass',()=>{
+test('triangle report uses actual three-side contour and loss percentage excluding selected reuse',()=>{
  const d=seed(),def={id:'POLY',name:'Tam giác ba cạnh',...D.polygonPreset('triangle')},m=D.applyShape({id:'POLY-M',name:'Phôi thử',density:7850,unit:'kg',price:100,stockL:1000,stockW:1000},def,{T:2});
  const n=D.assign(D.draft('Tam giác',2),m,d.rules);d.quote.products[0].qty=1;d.quote.products[0].children=[n];
  const old=P.calculate(d),g=old.groups[0];d.quote.remnantSelections={[g.signature]:[g.remnants[0].id]};const r=R.build(d);
  near(step(r,'Dien giai khoi luong','Khối lượng phôi toàn dòng')[4],1.884);near(step(r,'Dien giai khoi luong','Diện tích phôi toàn dòng')[4],.12);
  const geometry=rows(r,'Dien giai khoi luong');A.ok(geometry.some(x=>x[1]==='C01'));A.ok(!geometry.some(x=>['L0','W0'].includes(x[1])));
- const waste=step(r,'Vat tu va hao hut','Phần còn lại và mạch cắt')[4],percent=step(r,'Vat tu va hao hut','Hao hụt gợi ý trên phôi')[4];near(percent,waste/1.884*100);A.ok(step(r,'Vat tu va hao hut','Phần dư đã chọn tận dụng')[4]>0);
+ const waste=step(r,'Vat tu va hao hut','Phần còn lại và mạch cắt')[4],percent=step(r,'Vat tu va hao hut','Hao hụt sau tận dụng')[4];near(percent,waste/(1.884+waste)*100);A.ok(step(r,'Vat tu va hao hut','Phần dư đã chọn tận dụng')[4]>0);
 });
 test('declared price source and VAT normalization remain traceable',()=>{
  const d=seed(),x=Cost.rows(d.quote).find(x=>x.key.startsWith('material:'));
