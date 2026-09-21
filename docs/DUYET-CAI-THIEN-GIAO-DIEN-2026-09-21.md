@@ -54,3 +54,8 @@ Bổ sung theo ảnh phản hồi: đưa cách xếp cố định có sẵn ra n
 - Chỉ vai trò Admin có quyền khóa/mở khóa và sửa nội dung đã khóa. Bỏ lựa chọn cấp quyền mở khóa cho nhân viên; quyền đã cấp trước đây không còn vượt khóa.
 - Máy chủ kiểm tra cả danh mục, bản sao trong báo giá và hệ số phức tạp nhập trực tiếp. Nhân viên vẫn sử dụng công thức, nhập số lượng/kích thước và chọn mức độ đã khai.
 - Kiểm tra API với tài khoản thật: chặn sửa/xóa/thêm hệ số và đổi phạm vi, chặn mở khóa được ủy quyền, giữ quyền dùng công thức, khóa/mở có kiểm tra phiên bản. Kiểm tra cửa sổ khóa và chặn chỉnh hệ số trên trình duyệt.
+
+### Xóa bản nháp từ danh sách máy chủ
+- Admin có nút Xóa bản nháp bên cạnh Mở; nhập đúng mã để xác nhận. Chỉ áp dụng bản nháp chưa từng duyệt, chưa chuyển đơn hàng.
+- Xóa khỏi danh sách làm việc, giữ dữ liệu và lịch sử trong bản sao lưu cùng dấu vết người xóa. Các tài khoản không thể mở/sửa hoặc phục hồi qua đường dẫn cũ.
+- Kiểm tra quyền, mã xác nhận, phiên bản thay đổi, trạng thái đã trình/duyệt/mở sửa sau duyệt, danh sách kỹ thuật, giữ lịch sử, hủy thao tác và xóa bản đang mở.
