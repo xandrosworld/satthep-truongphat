@@ -223,3 +223,8 @@ th{color:var(--muted)}
  #dialog:has(#definition-fields){width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important}
  #dialog #definition-fields tr{grid-template-columns:minmax(0,1fr)}
 }
+
+[data-notice=inbox].notice-arrived{animation:notice-arrived .45s ease-in-out 4}
+@keyframes notice-arrived{50%{box-shadow:0 0 0 5px #ffbf604d;transform:rotate(-3deg)}}
+.notice-sound[aria-pressed="true"]{color:#176346;background:#eefaf3;border-color:#8acbad}
+@media(prefers-reduced-motion:reduce){[data-notice=inbox].notice-arrived{animation:none;outline:3px solid #df8a25}}
