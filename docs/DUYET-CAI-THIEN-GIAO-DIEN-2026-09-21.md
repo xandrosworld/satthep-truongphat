@@ -59,3 +59,7 @@ Bổ sung theo ảnh phản hồi: đưa cách xếp cố định có sẵn ra n
 - Admin có nút Xóa bản nháp bên cạnh Mở; nhập đúng mã để xác nhận. Chỉ áp dụng bản nháp chưa từng duyệt, chưa chuyển đơn hàng.
 - Xóa khỏi danh sách làm việc, giữ dữ liệu và lịch sử trong bản sao lưu cùng dấu vết người xóa. Các tài khoản không thể mở/sửa hoặc phục hồi qua đường dẫn cũ.
 - Kiểm tra quyền, mã xác nhận, phiên bản thay đổi, trạng thái đã trình/duyệt/mở sửa sau duyệt, danh sách kỹ thuật, giữ lịch sử, hủy thao tác và xóa bản đang mở.
+
+### Thu gọn mã quy ước trong khai báo hình dạng
+- Ẩn ô mã quy ước, giữ mã nội bộ khi tạo/lưu/mở lại; mục mở rộng đổi tên thành Thông tin bổ sung.
+- Kiểm tra luồng khai hình, giữ mã, lưu/mở lại và bố cục màn hình.

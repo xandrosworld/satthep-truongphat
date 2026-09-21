@@ -111,8 +111,8 @@ function reviewShape(){
  const body=form.querySelector('.dialog-body'),preview=form.querySelector('#definition-preview'),allowance=form.querySelector('[data-df-allowance]'),metadata=body.querySelector(':scope > .form-grid'),sheet=form.querySelector('[data-df-sheet-presets]'),polygon=form.querySelector('[data-df-polygon]');
  const section=(title,key)=>{const el=document.createElement('section');el.className='review-shape-step';el.dataset.shapeStep=key;const h=document.createElement('h3');h.textContent=title;el.append(h);return el;};
  const info=section('1. Thông tin hình dạng','info');metadata.before(info);info.append(metadata);
- const extra=reviewDetails('Mã và thông tin bổ sung','shape-metadata'),extraGrid=document.createElement('div');extraGrid.className='form-grid';extra.append(extraGrid);info.append(extra);
- for(const name of ['id','blankShape','blankShapeName'])extraGrid.append(form.elements[name].closest('label'));
+ const extra=reviewDetails('Thông tin bổ sung','shape-metadata'),extraGrid=document.createElement('div');extraGrid.className='form-grid';extra.append(extraGrid);info.append(extra);
+ for(const name of ['blankShape','blankShapeName'])extraGrid.append(form.elements[name].closest('label'));
  metadata.prepend(form.elements.name.closest('label'));form.elements.name.closest('label').querySelector('span').textContent='Tên hình / nhóm chi tiết';
  const metadataHint=info.nextElementSibling;if(metadataHint?.matches('p.help-text'))extra.append(metadataHint);
  const methods=section('2. Chọn hình và cách khai kích thước','method');sheet.before(methods);methods.append(sheet,polygon);
