@@ -307,3 +307,12 @@ th{color:var(--muted)}
 #dialog .review-shape-reset-hint{display:block;margin-top:8px;color:#526578;line-height:1.5}
 #dialog .review-shape-flow [data-shape-step=info]>.form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:700px){#dialog .review-shape-flow [data-shape-step=info]>.form-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Row selection is available at every screen width, outside horizontal scrolling. */
+.review-op-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 14px;margin:10px 0;background:#e9f4ff;border:1px solid #bddaf1;border-radius:8px}
+.review-op-toolbar[hidden]{display:none}.review-op-toolbar [role=status]{font-weight:600;margin-right:auto}
+.pa-operations .review-op-select{display:flex;align-items:center;gap:7px;min-height:32px;margin-bottom:5px;font-size:13px;font-weight:500}
+.pa-operations .review-op-select input{width:17px;height:17px;flex:none;accent-color:#087bf0}
+.pa-operations.review-selectable-operations .pa-complexity-row{display:none!important}
+.pa-operations .review-op-selected>th,.pa-operations .review-op-selected>td{box-shadow:inset 0 2px #85bbdf,inset 0 -2px #85bbdf}
+.review-op-review-list{display:grid;gap:10px}.review-op-review-list .button{text-align:left;white-space:normal}

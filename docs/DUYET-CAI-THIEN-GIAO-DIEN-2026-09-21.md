@@ -25,3 +25,10 @@ Bổ sung theo ảnh phản hồi: đưa cách xếp cố định có sẵn ra n
 - Nút Tạo bảng thông số dùng chung; đổi lựa chọn chưa tạo bảng thì chưa cho lưu nhầm công thức cũ. Tạo lại có hướng dẫn rõ việc thay thông số/công thức của bản đang sửa.
 - Mã và thông tin phụ thu gọn; giữ phần công thức, khổ mua thử và cách khai riêng trong Mở rộng. Tên và nhóm đang nhập được giữ khi tạo bảng.
 - Kiểm tra trình duyệt: thứ tự, từng hình, đổi hình, góc đối chiếu, lưu/mở lại, công thức riêng, màn hình 390/800/1440 px. Các kiểm tra tam giác và giao diện đã duyệt đạt; 26 kiểm tra hình dạng/tính toán đạt.
+
+### Chọn dòng và thao tác nhanh ở bảng Công đoạn & định mức
+- Thêm ô chọn từng dòng và Chọn tất cả dòng đang hiển thị, dùng đồng nhất trên máy tính/điện thoại. Chọn dòng mới hiện thanh Gán nguyên công / Đánh giá mức độ / Bỏ chọn.
+- Thu gọn các nút Đánh giá nhanh lặp lại. Khi chọn nhiều dòng, đánh giá mở danh sách để vào từng dòng; các mức độ vẫn lấy theo bảng khai báo, kỹ thuật không thấy hệ số.
+- Gán nguyên công dùng lại cách khai hiện có, bổ sung chọn tất cả nguyên công. Nếu chọn cả cha/con thì áp tại cấp cao nhất và ghi rõ các dòng thực sự áp dụng trong cửa sổ.
+- Lựa chọn độc lập với bảng cấu thành, không ghi vào báo giá; tìm kiếm bỏ các dòng không còn hiển thị khỏi lựa chọn. Bản khóa/tài khoản không có quyền không được thao tác sửa.
+- Kiểm tra: chọn/lọc/hủy không sửa dữ liệu, gán nhiều dòng, giữ lựa chọn cấu thành, máy tính/điện thoại, lưu/mở lại; tài khoản kỹ thuật thật lưu máy chủ và không thấy hệ số; 5 kiểm tra phân quyền/độ phức tạp đạt.

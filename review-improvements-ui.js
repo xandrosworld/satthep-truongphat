@@ -67,8 +67,40 @@ function reviewStepNavigation(){
  if(tab==='intake'&&existing){existing.parentElement.classList.add('review-intake-next');return;}
  const footer=document.createElement('div');footer.className='review-step-footer';footer.dataset.reviewStepFooter='';footer.append(button);host.append(footer);
 }
+const ReviewOperationSelection={checked:new Set(),document:null};
+function reviewOperationWritable(){return !Team.loaded||!!(Team.permissions?.edit&&Team.permissions?.sections?.includes('operations')&&teamCurrent()?.status==='draft'&&!teamCurrent()?.readOnly);}
+function reviewOperationSelection(){
+ const matrix=document.querySelector('#content .pa-operations');if(page!=='quote'||tab!=='operations'||!matrix){ReviewOperationSelection.checked.clear();return;}
+ const state=ReviewOperationSelection,key=teamCurrent()?.id||db.quote;if(state.document!==key){state.checked.clear();state.document=key;}
+ if(!matrix.hasAttribute('data-review-selection')){matrix.dataset.reviewSelection='';
+  for(const cell of matrix.querySelectorAll('tbody th[scope=row]')){const button=cell.querySelector('[data-ux=row-actions]'),n=button&&C.findNode(db.quote.products,button.dataset.id);if(!n)continue;
+   const label=document.createElement('label');label.className='review-op-select';const input=document.createElement('input');input.type='checkbox';input.dataset.reviewOpRow=n.id;input.setAttribute('aria-label','Chọn dòng '+(n.materialId||n.name));label.append(input,document.createTextNode('Chọn dòng'));cell.prepend(label);
+  }
+  const header=matrix.querySelector('thead th');if(header)header.insertAdjacentHTML('afterbegin','<label class="review-op-select"><input type="checkbox" data-review-op-all aria-label="Chọn tất cả dòng đang hiển thị"> Chọn tất cả</label>');
+  const bar=document.createElement('div');bar.className='review-op-toolbar';bar.dataset.reviewOpToolbar='';bar.hidden=true;
+  bar.innerHTML='<span data-review-op-count role="status"></span><button type="button" class="button small" data-review-op-action="assign">Gán nguyên công</button><button type="button" class="button small" data-review-op-action="complexity">Đánh giá mức độ</button><button type="button" class="button small" data-review-op-action="clear">Bỏ chọn</button>';
+  matrix.before(bar);matrix.classList.add('review-selectable-operations');
+ }
+ reviewOperationSelectionSync();
+}
+function reviewOperationSelectionSync(){
+ const state=ReviewOperationSelection,boxes=[...document.querySelectorAll('.pa-operations [data-review-op-row]')],visible=new Set(boxes.map(b=>b.dataset.reviewOpRow));
+ state.checked=new Set([...state.checked].filter(id=>visible.has(id)));
+ for(const box of boxes){box.checked=state.checked.has(box.dataset.reviewOpRow);box.closest('tr').classList.toggle('review-op-selected',box.checked);}
+ const count=state.checked.size,all=document.querySelector('[data-review-op-all]');if(all){all.checked=!!boxes.length&&count===boxes.length;all.indeterminate=count>0&&count<boxes.length;all.disabled=!boxes.length;}
+ const bar=document.querySelector('[data-review-op-toolbar]');if(bar){bar.hidden=!count;bar.querySelector('[data-review-op-count]').textContent='Đã chọn '+count+' dòng';for(const b of bar.querySelectorAll('button'))b.disabled=b.dataset.reviewOpAction!=='clear'&&!reviewOperationWritable();}
+}
+function reviewOperationAction(action){
+ const ids=[...ReviewOperationSelection.checked];if(action==='clear'){ReviewOperationSelection.checked.clear();reviewOperationSelectionSync();return;}
+ inWritable();if(!reviewOperationWritable())throw Error('Cần quyền Công đoạn & định mức để sửa.');if(!ids.length)return;
+ if(action==='assign')return bulkOperation(ids);
+ const nodes=ids.map(id=>C.findNode(db.quote.products,id)).filter(n=>n?.ops?.length);
+ if(!nodes.length)return toast('Chọn nguyên công trên dòng trước khi đánh giá mức độ.');
+ if(nodes.length===1)return reviewComplexityEdit(nodes[0].id);
+ openDialog('Đánh giá mức độ · '+nodes.length+' dòng',`<p>Chọn dòng cần đánh giá. Mức độ lấy từ bảng đã khai cho từng nguyên công.</p><div class="review-op-review-list">${nodes.map(n=>`<button type="button" class="button" data-review="complexity-row" data-review-id="${esc(n.id)}">${esc(n.materialId||n.name)} · ${esc(n.name)}</button>`).join('')}</div>`,'Đóng',()=>closeDialog());
+}
 function reviewPaint(){
- reviewHeader();reviewNotes();reviewTasks();reviewHelp($('#content'));reviewExports();reviewStepNavigation();
+ reviewHeader();reviewNotes();reviewTasks();reviewOperationSelection();reviewHelp($('#content'));reviewExports();reviewStepNavigation();
  if(Team.loaded)document.querySelectorAll('[data-action=approve]').forEach(b=>b.textContent=teamCurrent()?.status==='submitted'&&Team.permissions?.approve?'Duyệt báo giá':'Gửi duyệt');
  document.querySelectorAll('[data-team=submit]').forEach(b=>b.textContent='Gửi duyệt');
  document.querySelectorAll('[data-team=save]').forEach(b=>b.textContent='Lưu báo giá lên máy chủ');
@@ -118,6 +150,9 @@ function reviewShape(){
  reviewHelp(body);
 }
 function installReviewImprovementsUI(){
+ document.addEventListener('change',e=>{const el=e.target;if(el.hasAttribute('data-review-op-row')){el.checked?ReviewOperationSelection.checked.add(el.dataset.reviewOpRow):ReviewOperationSelection.checked.delete(el.dataset.reviewOpRow);reviewOperationSelectionSync();}else if(el.hasAttribute('data-review-op-all')){ReviewOperationSelection.checked=new Set(el.checked?[...document.querySelectorAll('.pa-operations [data-review-op-row]')].map(b=>b.dataset.reviewOpRow):[]);reviewOperationSelectionSync();}});
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-review-op-action]');if(!b)return;try{reviewOperationAction(b.dataset.reviewOpAction);}catch(err){toast(err.message);}});
+
  const draw=render;render=()=>{draw();reviewPaint();};const paint=noticePaint;noticePaint=()=>{paint();reviewPaint();};
  document.addEventListener('click',e=>{const b=e.target.closest('[data-review-next]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();document.querySelector('.workspace-tabs [data-tab="'+b.dataset.reviewNext+'"]')?.click();window.scrollTo(0,0);},true);
  const shape=dfShapeEdit;dfShapeEdit=(...args)=>{const value=shape(...args);reviewShape();return value;};
