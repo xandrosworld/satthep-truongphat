@@ -50,3 +50,5 @@
 .complexity-level-row{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #dce3ec}
 .complexity-level-row .field{margin:0;min-width:0}.complexity-level-row .help-text{grid-column:1/-1;margin:0}
 @media(max-width:700px){.complexity-level-row{grid-template-columns:1fr;gap:8px}}
+
+.pa-operations .pa-op-setup{display:block;margin:7px auto 0;min-width:95px;color:#155eae;border-color:#bed8f6;background:#f5faff}.pa-op-declared{display:block;margin:5px 0;text-align:center;white-space:normal;color:#496179;font-size:11px}.op-declaration{padding:16px 0;border-bottom:1px solid #dce4ec}.op-declaration [data-op-section]{padding:14px 0 0 24px}.op-declaration summary{cursor:pointer;font-weight:600;color:#2467a4;margin-bottom:12px}.op-declaration [hidden]{display:none!important}
