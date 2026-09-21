@@ -10,3 +10,5 @@ Căn cứ: báo cáo Bao-cao-de-xuat-giao-dien-Truong-Phat.pdf và phản hồi 
 Các việc của đợt này: thu gọn đầu trang; phân biệt nút lưu danh mục và báo giá; đơn giản màn hình khai hình; nới cột nhập; rút gọn hướng dẫn; chỉ chỗ cần hoàn tất; dùng câu chữ đúng trạng thái; gom nút xuất báo giá.
 
 Đã kiểm tra: nhập và lưu lại tam giác ba cạnh; mở công thức nâng cao; lưu báo giá và danh mục dùng chung; giữ ghi chú khi tải lại; bàn giao kỹ thuật → giá → duyệt; tài khoản kỹ thuật đọc đầu vào nhưng không xem giá; chuông thông báo; bố cục màn hình 1440, 1024 và 390 px.
+
+Bổ sung theo ảnh phản hồi: đưa cách xếp cố định có sẵn ra ngay trên sơ đồ phôi; xem trước rồi áp dụng, chọn phần dư tận dụng để cập nhật hao hụt. Nút Tiếp nằm cuối bên phải các bước và theo quyền tài khoản. Không mở rộng ghép chung / tùy chỉnh cấu kiện trong đợt này.

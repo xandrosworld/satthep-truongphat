@@ -55,8 +55,20 @@ function reviewExports(){
  for(const node of nodes){node.textContent=node.dataset.work?'Excel (.xlsx) — gửi khách':node.dataset.action==='export-quote'?'Bảng dữ liệu (.csv)':'In / lưu PDF';section.querySelector('.actions').append(node);}
  host.querySelectorAll('.export-customer-action').forEach(el=>{if(!el.children.length)el.remove();});
 }
+function reviewStepNavigation(){
+ if(page!=='quote')return;
+ const host=$('#content'),tabs=[...host.querySelectorAll('.workspace-tabs [data-tab]')].filter(b=>!b.disabled&&getComputedStyle(b).display!=='none'),index=tabs.findIndex(b=>b.dataset.tab===tab),next=tabs[index+1];
+ if(index<0||!next)return;
+ const destination=next.dataset.tab,labels={bom:'Cấu thành sản phẩm',operations:'Công đoạn & định mức',waste:'Khai triển & hao hụt',mass:'Khối lượng & diện tích',prices:'Giá & hệ số',pricing:'Phân tích giá',preview:'Bản chào giá'};
+ if(host.querySelector('[data-review-next]'))return;
+ const existing=host.querySelector('[data-intake="goto"][data-id="bom"],[data-action="quick-waste"],[data-remnant="open-mass"]');
+ const button=existing||document.createElement('button');button.type='button';button.className='button primary';button.textContent='Tiếp: '+(labels[destination]||next.textContent.trim())+' →';button.dataset.reviewNext=destination;
+ // Keep the original intake row: transfer on the left, next step on the right.
+ if(tab==='intake'&&existing){existing.parentElement.classList.add('review-intake-next');return;}
+ const footer=document.createElement('div');footer.className='review-step-footer';footer.dataset.reviewStepFooter='';footer.append(button);host.append(footer);
+}
 function reviewPaint(){
- reviewHeader();reviewNotes();reviewTasks();reviewHelp($('#content'));reviewExports();
+ reviewHeader();reviewNotes();reviewTasks();reviewHelp($('#content'));reviewExports();reviewStepNavigation();
  if(Team.loaded)document.querySelectorAll('[data-action=approve]').forEach(b=>b.textContent=teamCurrent()?.status==='submitted'&&Team.permissions?.approve?'Duyệt báo giá':'Gửi duyệt');
  document.querySelectorAll('[data-team=submit]').forEach(b=>b.textContent='Gửi duyệt');
  document.querySelectorAll('[data-team=save]').forEach(b=>b.textContent='Lưu báo giá lên máy chủ');
@@ -86,6 +98,7 @@ function reviewShape(){
 }
 function installReviewImprovementsUI(){
  const draw=render;render=()=>{draw();reviewPaint();};const paint=noticePaint;noticePaint=()=>{paint();reviewPaint();};
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-review-next]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();document.querySelector('.workspace-tabs [data-tab="'+b.dataset.reviewNext+'"]')?.click();window.scrollTo(0,0);},true);
  const shape=dfShapeEdit;dfShapeEdit=(...args)=>{const value=shape(...args);reviewShape();return value;};
  document.addEventListener('click',e=>{const b=e.target.closest('[data-review-jump]');if(!b)return;const destination=b.dataset.reviewJump;if(destination==='cost'){document.querySelector('[data-cost-sources]')?.scrollIntoView({behavior:'smooth',block:'start'});document.querySelector('[data-b6=cost]')?.focus({preventScroll:true});return;}tab=destination==='materials'?'prices':destination;if(destination==='materials')Intake.priceTab='materials';render();window.scrollTo(0,0);});
 }

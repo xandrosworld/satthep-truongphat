@@ -29,7 +29,8 @@ function choice(rows,spec,mode){
  }
  return {...spec,shapeDefinition:{...spec.shapeDefinition,nesting:mode}};
 }
-function auto(rows,spec,kerf,mode){const selected=choice(rows,spec,mode);return C.nest(mode==='right-triangle'?rows.map(r=>({...r,geometry:normalizedTriangle(r.geometry)})):rows,selected,kerf);}
+function available(rows,spec){return modes.filter(mode=>{try{choice(rows,spec,mode);return true;}catch(_){return false;}});}
+function auto(rows,spec,kerf,mode){const selected=choice(rows,spec,mode);const layout=C.nest(mode==='right-triangle'?rows.map(r=>({...r,geometry:normalizedTriangle(r.geometry)})):rows,selected,kerf);if(['bounding','bounding-fixed'].includes(mode)&&available(rows,spec).includes('circle')){for(const stock of layout.stocks)for(const p of stock.placements)p.circle=true;layout.netUsed=rows.reduce((sum,r)=>sum+r.geometry.blankArea*1e6,0);layout.contourOffcut=Math.max(0,layout.used-layout.netUsed);layout.util=layout.purchased?layout.netUsed/layout.purchased:0;}return layout;}
 function draft(rows,spec,kerf,mode){const layout=auto(rows,spec,kerf,mode),counts={};return layout.stocks.flatMap((s,stock)=>s.placements.map(p=>{const g=rowGeometry(rows.find(r=>r.id===p.rowId).geometry,mode);let angle=Math.abs(p.l-g.length)>1e-7?90:0;if(p.polygon){const target=p.polygon.map(([x,y])=>[x-p.x,y-p.y]);const base=outline(g),angles=[0,90,180,270,...base.flatMap((v,i)=>target.map((t,j)=>(Math.atan2(target[(j+1)%target.length][1]-t[1],target[(j+1)%target.length][0]-t[0])-Math.atan2(base[(i+1)%base.length][1]-v[1],base[(i+1)%base.length][0]-v[0]))*180/Math.PI))];angle=angles.find(a=>outline(g,a).every(v=>target.some(t=>Math.hypot(v[0]-t[0],v[1]-t[1])<1e-5)));if(angle===undefined)throw Error('Không chuyển được hướng phôi từ gợi ý');}return {rowId:p.rowId,index:counts[p.rowId]=(counts[p.rowId]??-1)+1,stock,x:p.x,y:p.y,rotate:angle===90,...(![0,90].includes(angle)?{angle}:{})};}));}
 function manual(rows,spec,kerf,mode,placements){
  choice(rows,spec,mode);
@@ -53,5 +54,5 @@ function manual(rows,spec,kerf,mode,placements){
 }
 function apply(rows,spec,kerf,plan){if(plan.fingerprint!==fingerprint(rows,spec,kerf)||JSON.stringify([...plan.rowIds].sort())!==JSON.stringify(ids(rows)))throw Error('Phương án xếp phôi đã cũ: kích thước, số lượng, khổ mua hoặc mạch cắt đã đổi. Mở Sắp xếp phôi để lập lại');return plan.placements?manual(rows,spec,kerf,plan.mode,plan.placements):auto(rows,spec,kerf,plan.mode);}
 function make(rows,spec,kerf,mode,placements){const p={rowIds:ids(rows),fingerprint:fingerprint(rows,spec,kerf),mode,...(placements?{placements}: {})};apply(rows,spec,kerf,p);return p;}
-const api={outline,rightTriangle,separatedPolygons,modes,ids,fingerprint,validatePlans,auto,draft,manual,apply,make};C.nestingPlans=api;if(typeof module!=='undefined')module.exports=api;else root.TPNestingPlan=api;
+const api={available,outline,rightTriangle,separatedPolygons,modes,ids,fingerprint,validatePlans,auto,draft,manual,apply,make};C.nestingPlans=api;if(typeof module!=='undefined')module.exports=api;else root.TPNestingPlan=api;
 })(typeof window!=='undefined'?window:globalThis);

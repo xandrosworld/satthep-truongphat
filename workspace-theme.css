@@ -277,3 +277,15 @@ th{color:var(--muted)}
 
 .review-details>.quote-technical-overview{margin:0;border:0}
 #dialog .review-shape-simple .review-dimension-name+label>span{display:none}
+
+.nesting-presets{margin:16px 20px;padding:14px;border:1px solid #b8d1e8;border-radius:8px;background:#f4f9ff}
+.nesting-presets p{margin:6px 0;font-size:var(--ui-font-12,12px)}
+.nesting-presets .actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.nesting-presets [aria-pressed=true]{background:#dceeff;border-color:#1681ef;color:#07539c}
+.review-step-footer{display:flex;justify-content:flex-end;align-items:center;padding:16px;background:#eaf3fd;border:1px solid #d7e4f2;border-radius:7px;margin-top:16px}
+.review-intake-next{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.review-intake-next [data-review-next]{margin-left:auto}
+@media(max-width:600px){.nesting-presets{margin:12px}.nesting-presets .button{white-space:normal;text-align:left}.review-step-footer .button{white-space:normal}}
+@media print{.review-step-footer,.nesting-presets{display:none}}
+
+.np-preset-preview label:has([name=npEditing]),.np-preset-preview #np-seed,.np-preset-preview #np-reset,.np-preset-preview [data-np-manual-help]{display:none}
