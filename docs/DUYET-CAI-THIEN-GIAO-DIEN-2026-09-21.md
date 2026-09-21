@@ -48,3 +48,9 @@ Bổ sung theo ảnh phản hồi: đưa cách xếp cố định có sẵn ra n
 ### Đồng bộ diễn giải số lượng khi nhập nhanh
 - Sửa dòng Lượng theo cây bị giữ số cũ sau khi sửa số lượng sản phẩm, cấu kiện hoặc vật tư. Cập nhật diễn giải theo kết quả đang tính trên bảng.
 - Kiểm tra 13 × 1 × 1 → 12 × 1 × 1 → 12 × 1 × 5 → 12 × 2 × 5: diễn giải, tổng hiển thị và kết quả tính đồng nhất; mở lại giữ đúng.
+
+### Khóa công thức và hệ số đã chốt
+- Nút Khóa công thức và hệ số có thêm mục khóa chung bảng hệ số, phạm vi áp dụng, hệ số nguyên công/vận chuyển, hệ số giá và hao hụt chung. Khóa theo dữ liệu đã lưu trên máy chủ.
+- Chỉ vai trò Admin có quyền khóa/mở khóa và sửa nội dung đã khóa. Bỏ lựa chọn cấp quyền mở khóa cho nhân viên; quyền đã cấp trước đây không còn vượt khóa.
+- Máy chủ kiểm tra cả danh mục, bản sao trong báo giá và hệ số phức tạp nhập trực tiếp. Nhân viên vẫn sử dụng công thức, nhập số lượng/kích thước và chọn mức độ đã khai.
+- Kiểm tra API với tài khoản thật: chặn sửa/xóa/thêm hệ số và đổi phạm vi, chặn mở khóa được ủy quyền, giữ quyền dùng công thức, khóa/mở có kiểm tra phiên bản. Kiểm tra cửa sổ khóa và chặn chỉnh hệ số trên trình duyệt.

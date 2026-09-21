@@ -24,7 +24,7 @@ test('formula use without view: opaque transport, numeric evaluation, server sav
  await grant(u,{canFormulaView:true});A.equal((await call('quotes/'+made.data.id,'GET',undefined,u.session)).data.document.rules.find(r=>r.id==='tray').width,'W + 2 * H + 2 * F');
  await grant(u,{canFormulaUse:true,canFormulaEdit:true});A.equal((await call('quotes/'+made.data.id,'PUT',{document:d,expectedVersion:2},u.session)).status,200);
 });
-test('locked formula cannot change via catalog, quotation or library; lock CAS and delegation',async t=>{
+test('locked formula cannot change via catalog, quotation or library; lock CAS and admin-only unlock',async t=>{
  const {call,admin,create,grant}=await harness(t),u=await create('editor',{canFormulaEdit:true,canFormulaUnlock:false,sections:require('../section-access.js').keys});
  let r=await call('formulas/locks','POST',{key:'rules:tray',locked:true,expectedVersion:0,reason:'Chốt công thức'},admin);A.equal(r.status,200);
  A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:0,reason:'Stale'},admin)).status,409);
@@ -34,8 +34,9 @@ test('locked formula cannot change via catalog, quotation or library; lock CAS a
  const doc=P.demoSeed(),q=await call('quotes','POST',{document:doc},admin);const leaf=C.flatten(doc.quote.products).find(n=>n.rule==='tray');leaf.ruleSpec.width='W + H';
  A.equal((await call('quotes/'+q.data.id,'PUT',{document:doc,expectedVersion:1},u.session)).status,403);
  A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:1,reason:'Không được cấp'},u.session)).status,403);
- await grant(u,{canFormulaUnlock:true});A.equal((await call('quotes/'+q.data.id,'PUT',{document:doc,expectedVersion:1},u.session)).status,200);
- A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:1,reason:'Được ủy quyền'},u.session)).status,200);
+ await grant(u,{canFormulaUnlock:true});A.equal(u.session.data.permissions.formulaUnlock,false);A.equal((await call('quotes/'+q.data.id,'PUT',{document:doc,expectedVersion:1},u.session)).status,403);
+ A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:1,reason:'Được ủy quyền'},u.session)).status,403);
+ A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:1,reason:'Admin mở'},admin)).status,200);
  await grant(u,{canFormulaUnlock:false});A.equal((await call('catalog','PUT',{catalog:changed,expectedVersion:record.version},u.session)).status,200);
 });
 test('approved quote requires explicit reopen right; scopes, versions and revocation remain enforced',async t=>{
@@ -61,10 +62,29 @@ test('invalid permission update is atomic; role templates carry separate grants'
 });
 test('technical without prices or formula visibility can save dimensions; formula removal and revoked use are rejected',async t=>{
  const {call,admin,create,grant}=await harness(t),u=await create('technicaluse',{role:'technical',technicalDelegation:true,sections:['bom','catalogRules'],canViewCosts:false,canFormulaUse:true,canFormulaView:false,canFormulaEdit:false});
+ A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:true,expectedVersion:0,reason:'Technical can still work'},admin)).status,200);
  const document=P.demoSeed(),node=C.flatten(document.quote.products).find(n=>n.rule==='tray');node.dimensionLinks={L:{mode:'formula',expression:'PRODUCT_L'}};
  const made=await call('quotes','POST',{document},admin);A.equal(made.status,201,JSON.stringify(made.data));
  let record=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data,leaf=C.flatten(record.document.quote.products).find(n=>n.id===node.id);A.equal(leaf.spec.price,0);A.match(leaf.ruleSpec.width,/^__TPF_/);leaf.dims.W=410;
  let saved=await call('quotes/'+made.data.id,'PUT',{document:record.document,expectedVersion:1},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));A.equal(saved.data.total,undefined);
  record=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data;leaf=C.flatten(record.document.quote.products).find(n=>n.id===node.id);delete leaf.dimensionLinks;A.equal((await call('quotes/'+made.data.id,'PUT',{document:record.document,expectedVersion:2},u.session)).status,403);
  await grant(u,{canFormulaUse:false});record=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data;C.flatten(record.document.quote.products).find(n=>n.id===node.id).dims.W=420;A.equal((await call('quotes/'+made.data.id,'PUT',{document:record.document,expectedVersion:2},u.session)).status,403);
+});
+
+test('factor lock covers values, removal, bindings and quote snapshots; only admin bypasses',async t=>{
+ const {call,admin,create}=await harness(t),u=await create('factor-editor',{canFormulaEdit:true,canFormulaUnlock:true,canEditFactors:true,sections:require('../section-access.js').keys});
+ const catalog=(await call('catalog','GET',undefined,admin)).data;
+ A.ok((await call('formulas/locks','GET',undefined,admin)).data.some(r=>r.key==='calculationFactors:all'));
+ A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:true,expectedVersion:0,reason:'Chốt hệ số'},admin)).status,200);
+ for(const change of [d=>d.pricingDefaults.tmcLoss=9,d=>d.pricingDefaults.factorDefinitions=[{id:'forged',name:'Fake',param:'T',tiers:[]}],d=>d.rates[0].factors=[{id:'fake',tiers:[]}]] ){
+  const changed=structuredClone(catalog.catalog);change(changed);A.equal((await call('catalog','PUT',{catalog:changed,expectedVersion:catalog.version},u.session)).status,403);
+ }
+ const doc=P.demoSeed(),made=await call('quotes','POST',{document:doc},admin);A.equal(made.status,201);
+ const current=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data.document;current.quote.products[0].qty+=1;
+ A.equal((await call('quotes/'+made.data.id,'PUT',{document:current,expectedVersion:1},u.session)).status,200);
+ const forged=structuredClone(current),owner=C.flatten(forged.quote.products).find(n=>n.ops?.length);owner.ops[0].complexity={label:'Tự nhập',multiplier:9};delete owner.ops[0].complexityChoice;A.equal((await call('quotes/'+made.data.id,'PUT',{document:forged,expectedVersion:2},u.session)).status,403);
+ current.quote.pricing.tmcLoss=9;A.equal((await call('quotes/'+made.data.id,'PUT',{document:current,expectedVersion:2},u.session)).status,403);
+ A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:false,expectedVersion:1,reason:'Forged delegated right'},u.session)).status,403);
+ A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:false,expectedVersion:1,reason:'Admin sửa'},admin)).status,200);
+ A.equal((await call('quotes/'+made.data.id,'PUT',{document:current,expectedVersion:2},u.session)).status,200);
 });
