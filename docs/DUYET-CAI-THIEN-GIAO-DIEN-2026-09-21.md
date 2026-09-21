@@ -63,3 +63,7 @@ Bổ sung theo ảnh phản hồi: đưa cách xếp cố định có sẵn ra n
 ### Thu gọn mã quy ước trong khai báo hình dạng
 - Ẩn ô mã quy ước, giữ mã nội bộ khi tạo/lưu/mở lại; mục mở rộng đổi tên thành Thông tin bổ sung.
 - Kiểm tra luồng khai hình, giữ mã, lưu/mở lại và bố cục màn hình.
+
+### Gộp thông số khai báo trong danh sách hình dạng
+- Gộp hai cột khai tại mã vật tư và bổ sung báo giá thành Thông số khai báo, ghi rõ nơi nhập từng nhóm thông số và giữ đơn vị.
+- Điều chỉnh dòng nhóm và dòng mở rộng theo bảy cột. Kiểm tra hiển thị và hồi quy khai/lưu hình dạng.

@@ -330,3 +330,7 @@ th{color:var(--muted)}
 .quick-row:not(.assembly-row) .b2-node-meta [data-b2-dim]{display:none}
 .bulk-operation-list > section > label{display:flex;align-items:center;gap:10px}
 .bulk-operation-list > section > label input[type=checkbox]{width:auto;margin:0}
+
+.rc-declaration-parameters > div + div{margin-top:10px}
+.rc-declaration-parameters > div > span{display:block;font-size:inherit;font-weight:600}
+.rc-declaration-parameters small{display:inline-block;margin-right:10px}
