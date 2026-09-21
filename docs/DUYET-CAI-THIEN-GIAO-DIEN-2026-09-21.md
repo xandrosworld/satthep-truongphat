@@ -32,3 +32,9 @@ Bổ sung theo ảnh phản hồi: đưa cách xếp cố định có sẵn ra n
 - Gán nguyên công dùng lại cách khai hiện có, bổ sung chọn tất cả nguyên công. Nếu chọn cả cha/con thì áp tại cấp cao nhất và ghi rõ các dòng thực sự áp dụng trong cửa sổ.
 - Lựa chọn độc lập với bảng cấu thành, không ghi vào báo giá; tìm kiếm bỏ các dòng không còn hiển thị khỏi lựa chọn. Bản khóa/tài khoản không có quyền không được thao tác sửa.
 - Kiểm tra: chọn/lọc/hủy không sửa dữ liệu, gán nhiều dòng, giữ lựa chọn cấu thành, máy tính/điện thoại, lưu/mở lại; tài khoản kỹ thuật thật lưu máy chủ và không thấy hệ số; 5 kiểm tra phân quyền/độ phức tạp đạt.
+
+### Chọn độ phức tạp chung cho các nguyên công trong một dòng
+- Cửa sổ đánh giá có ô Độ phức tạp chung: chọn một lần để điền các nguyên công đã chọn trên dòng; vẫn chỉnh riêng từng nguyên công trước khi lưu.
+- Bảng đặt nguyên công theo cột và độ phức tạp theo hàng; trên điện thoại chuyển thành từng mục dễ đọc.
+- Chỉ đưa ra các mức có chung trong bảng khai báo của tất cả nguyên công. Khi lưu, mỗi nguyên công lấy đúng mục và hệ số của bảng riêng; kỹ thuật chỉ thấy tên mức độ.
+- Kiểm tra: chọn chung, chỉnh riêng, hủy, bỏ đánh giá, lưu/mở lại, bảng không có mức chung, một nguyên công, màn hình máy tính/điện thoại và tài khoản kỹ thuật lưu máy chủ.

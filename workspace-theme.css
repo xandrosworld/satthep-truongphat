@@ -316,3 +316,11 @@ th{color:var(--muted)}
 .pa-operations.review-selectable-operations .pa-complexity-row{display:none!important}
 .pa-operations .review-op-selected>th,.pa-operations .review-op-selected>td{box-shadow:inset 0 2px #85bbdf,inset 0 -2px #85bbdf}
 .review-op-review-list{display:grid;gap:10px}.review-op-review-list .button{text-align:left;white-space:normal}
+
+/* Common assessment is a draft fill; saving resolves each operation's own table. */
+.complexity-common{padding:16px;margin:18px 0;background:#eef6ff;border:1px solid #c7ddee;border-radius:8px}
+.complexity-common>div{max-width:420px}.complexity-common p{margin:8px 0;line-height:1.5}.complexity-common [role=status]{display:block;color:#235b3a}
+.complexity-matrix-scroll{overflow:auto;margin:16px 0}.complexity-matrix{width:100%;border-collapse:collapse}
+.complexity-matrix th,.complexity-matrix td{min-width:200px;padding:14px;text-align:left;vertical-align:top;border:1px solid #dce3eb}
+.complexity-matrix th{background:#f2f6fa}.complexity-matrix td label{margin:0}.complexity-matrix td label>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:700px){.complexity-matrix-scroll{overflow:visible}.complexity-matrix,.complexity-matrix tbody,.complexity-matrix tr,.complexity-matrix td{display:block;width:100%;min-width:0}.complexity-matrix thead,.complexity-matrix tbody th{display:none}.complexity-matrix td{border:0;border-bottom:1px solid #dce3eb;padding:14px 0}.complexity-matrix td label>span{position:static;width:auto;height:auto;overflow:visible;clip-path:none}}

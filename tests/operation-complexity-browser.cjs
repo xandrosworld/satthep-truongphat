@@ -33,7 +33,7 @@ const release=path.resolve(process.env.COMPLEXITY_RELEASE||'.'),{createApp}=requ
   const technicalView=await p.evaluate(id=>teamApi('quotes/'+id),ids.id);
   expect(JSON.stringify(technicalView)).not.toContain('multiplier');expect(JSON.stringify(technicalView)).not.toContain('percent');
   expect(technicalView.document.quote.ratesSnapshot.find(x=>x.id==='cut').complexityLevels.map(x=>x.label)).toEqual(['Dễ','Trung bình','Khó','Rất khó']);
-  await p.locator('[name=level-0]').selectOption({label:'Trung bình'});await p.locator('[name=level-1]').selectOption({label:'Khó'});
+  await p.locator('[name=commonComplexity]').selectOption({label:'Trung bình'});await expect(p.locator('[name=level-0]')).toHaveValue('1');await expect(p.locator('[name=level-1]')).toHaveValue('1');await p.locator('[name=level-1]').selectOption({label:'Khó'});await expect(p.locator('[name=commonComplexity]')).toHaveValue('');
   fs.mkdirSync('artifacts/customer-review/operation-complexity',{recursive:true});await p.screenshot({path:'artifacts/customer-review/operation-complexity/quick-row.png'});
   await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();await p.evaluate(()=>teamSave());
   const after=await admin.evaluate(id=>teamApi('quotes/'+id),ids.id),calc=await admin.evaluate(d=>{const r=TPPrice.calculate(d);return Object.fromEntries(Object.entries(r.nodes).map(([k,v])=>[k,v.ownOps]));},after.document);
