@@ -32,7 +32,7 @@ function renderRemnantWaste(){
     <div class="remnant-work-head"><div><strong>${r.selectedCount?num(r.selectedCount)+' phần dư đã chọn · '+money(r.credit)+' ₫ giá trị vật tư':'Bắt đầu: chọn phần dư có thể dùng lại'}</strong><p>Các phần cùng kích thước được gom một dòng. Có thể chọn từng phần nếu chỉ giữ lại một số.</p></div><label class="inline-field">Mạch cắt <input type="number" min="0" max="20" step="0.1" data-quote-field="kerf" value="${db.quote.kerf}"> mm</label></div>
     ${result.groups.map((g,gi)=>g.error?`<div class="panel error-panel"><h3>${esc(g.spec.id)} / ${esc(g.spec.name)}</h3><p>${esc(g.error)}</p>${meButton('Xoay / sắp xếp phôi','nesting',gi)} ${btn('Chỉnh khổ mua','edit-stock',`data-id="${esc(g.spec.id)}"`)}</div>`:renderRemnantGroup(g,gi)).join('')}
     ${!hasGroups?empty('Chưa có phôi gia công','Thêm mã vật tư tấm hoặc thanh tại Cấu thành sản phẩm.'):''}
-    <div class="remnant-final"><span>Giá chào đang áp dụng <strong>${money(result.total.grand)} ₫</strong><small>${r.mode==='exclude'?'Không tính phần tận dụng đã chọn':'Tính cả phần dư'} · Sau thuế${result.errors.length?' · Còn nội dung cần kiểm tra':''}</small></span><button class="button primary" data-remnant="open-pricing">Tiếp: kiểm tra chi phí →</button></div>`;
+    <div class="remnant-final"><span>Giá chào đang áp dụng <strong>${money(result.total.grand)} ₫</strong><small>${r.mode==='exclude'?'Không tính phần tận dụng đã chọn':'Tính cả phần dư'} · Sau thuế${result.errors.length?' · Còn nội dung cần kiểm tra':''}</small></span><button class="button primary" data-remnant="open-mass">Tiếp: Khối lượng & diện tích →</button></div>`;
 }
 function renderRemnantGroup(g,gi){
   const sheet=g.spec.shape==='sheet',batches=remnantBatches(g),limit=RemnantUI.limits.get(g.signature)||12,unit=sheet?'tấm':'thanh',selected=g.remnants.filter(r=>r.selected).length;
@@ -61,7 +61,7 @@ document.addEventListener('change',e=>{
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-remnant]');if(!el)return;e.preventDefault();const g=result.groups[Number(el.dataset.gi)];
   if(el.dataset.remnant==='compare'){const box=$('.remnant-comparison');box?.scrollIntoView({block:'start'});$('.remnant-option.active input')?.focus({preventScroll:true});}
-  else if(el.dataset.remnant==='open-waste'||el.dataset.remnant==='open-pricing'){tab=el.dataset.remnant==='open-waste'?'waste':'pricing';render();window.scrollTo(0,0);}
+  else if(['open-waste','open-pricing','open-mass'].includes(el.dataset.remnant)){tab=el.dataset.remnant==='open-waste'?'waste':el.dataset.remnant==='open-mass'?'mass':'pricing';render();window.scrollTo(0,0);}
   else if(el.dataset.remnant==='piece'){const part=g.remnants.find(r=>r.id===el.dataset.rid);remnantMutation(()=>setRemnantParts(g,[part.id],!part.selected),'[data-remnant="piece"][data-gi="'+el.dataset.gi+'"][data-rid="'+el.dataset.rid+'"]');}
   else if(el.dataset.remnant==='threshold')remnantThreshold(g);
   else if(el.dataset.remnant==='individual')individualRemnants(g,Number(el.dataset.bi));

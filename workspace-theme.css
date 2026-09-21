@@ -228,3 +228,7 @@ th{color:var(--muted)}
 @keyframes notice-arrived{50%{box-shadow:0 0 0 5px #ffbf604d;transform:rotate(-3deg)}}
 .notice-sound[aria-pressed="true"]{color:#176346;background:#eefaf3;border-color:#8acbad}
 @media(prefers-reduced-motion:reduce){[data-notice=inbox].notice-arrived{animation:none;outline:3px solid #df8a25}}
+
+.notice-work{margin-top:20px;padding-top:20px;border-top:1px solid var(--border,#dce3e9)}
+.order-state{display:inline-block;padding:4px 9px;border-radius:5px;font-size:12px;background:#eef1f5;color:#44566a}
+.order-in-progress{background:#e4f1ff;color:#165ca8}.order-completed{background:#def5e6;color:#17633c}.order-cancelled{background:#fde8e8;color:#9a3030}
