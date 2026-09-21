@@ -1,3 +1,9 @@
+function technicalQuoteDocument(document){
+ const projected=TPTechnical.project(document),baseline=Team.quoteTechnicalBaseline;
+ // Shared catalogue edits are published separately; quote saves retain their loaded catalogue.
+ if(Team.loaded&&baseline?.id===teamCurrent()?.id)return {...C.copy(baseline.document),quote:projected.quote};
+ return projected;
+}
 'use strict';
 const technicalTabs=['intake','bom','operations','waste','mass'];
 function technicalStage(){return page==='quote'&&technicalTabs.includes(tab);}
@@ -86,7 +92,7 @@ function installTechnicalUI(){
  const oldOperationPrices=inOperationPrices;inOperationPrices=()=>oldOperationPrices()+mfgSummary()+`<section class="panel panel-body"><h3>Khoản chi riêng theo cấu thành</h3><p>Khai giá gói thuê ở bảng trên; vận chuyển và lắp đặt riêng của từng dòng ở đây.</p>${C.flatten(db.quote.products).map(n=>paButton(esc(n.name),'node-costs',`data-id="${esc(n.id)}"`,'small')).join(' ')}</section>`;
  const oldPricing=renderCostAnalysis;renderCostAnalysis=()=>tmcFreightNotice()+oldPricing();
  actions['tmc-freight']=()=>{tab='prices';Intake.priceTab='logistics';render();};
- const oldDocument=teamDocument;teamDocument=()=>technicalOnly()?(technicalCatalogPage()?{...TPTechnical.projectCatalog(oldDocument()),quote:TPTechnical.project(oldDocument()).quote}:TPTechnical.project(oldDocument())):oldDocument();
+ const oldDocument=teamDocument;teamDocument=()=>technicalOnly()?(technicalCatalogPage()?{...TPTechnical.projectCatalog(oldDocument()),quote:TPTechnical.project(oldDocument()).quote}:technicalQuoteDocument(oldDocument())):oldDocument();
  const oldList=teamList;teamList=async()=>{if(!technicalOnly())return oldList();const list=await teamApi('quotes');openDialog('Báo giá · dữ liệu kỹ thuật',`<div class="actions">${teamButton('Đổi mật khẩu','own-password')}${teamButton('Đăng xuất','logout')}</div><table><thead><tr><th>Mã báo giá</th><th>Trạng thái</th><th>Phiên bản</th><th></th></tr></thead><tbody>${list.map(q=>`<tr><td>${esc(q.code)}</td><td>${esc(q.status)}</td><td>${q.version}</td><td>${teamButton('Mở','open',`data-id="${q.id}"`)}</td></tr>`).join('')}</tbody></table>`);};
  const oldSession=teamSession;teamSession=value=>{if(value.permissions?.technical){db=TPTechnical.project(TPPrice.demoSeed());result=C.calculate(db);Team.local=null;Team.loaded=false;Team.link=null;Team.dirty=false;UX.undo=[];UX.redo=[];}oldSession(value);};
  const oldRender=render;render=()=>{

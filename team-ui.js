@@ -22,6 +22,7 @@ async function teamDeleteDraft(id){
 function teamCurrent(){return Team.loaded&&Team.link?.workspaceKey===db.quote.workspaceKey?Team.link:null;}
 async function teamLoad(id,revision){if(Team.loaded&&Team.dirty){openDialog('Bản đang mở chưa lưu lên máy chủ',`<p>Lưu lại hoặc sao lưu bản đang làm trước khi chuyển báo giá.</p>`);return;}
   const record=await teamApi('quotes/'+id+(revision?'/revision/'+revision:''));if(!Team.loaded){quoteCheckpoint();Team.local=C.copy(db);}Team.loaded=true;Team.dirty=false;Team.catalogVersion=null;
+  Team.quoteTechnicalBaseline=Team.permissions?.technical?{id,document:C.copy(record.document)}:null;
   const key='server-'+id+(revision?'-v'+revision:'');db={...db,...record.document,savedQuotes:[],history:[]};db.quote.workspaceKey=key;Team.link={id,version:record.version,status:record.status,workspaceKey:key,readOnly:!!revision};selected=db.quote.products[0]?.id;page='quote';tab=Team.permissions?.technical?'bom':'pricing';UX.undo=[];UX.redo=[];UX.checked.clear();closeDialog();render();$('#save-status').textContent='Máy chủ · phiên bản '+record.version;
 }
 function teamDocument(){return {version:2,pricingDefaults:TPInputPrices.defaults(db),shapeDefinitions:C.copy(db.shapeDefinitions||[]),stockSizes:C.copy(db.stockSizes||[]),catalogPriceBaseline:db.catalogPriceBaseline?C.copy(db.catalogPriceBaseline):null,conventions:C.copy(db.conventions||{}),materialPrices:C.copy(db.materialPrices||[]),materials:C.copy(db.materials),rates:C.copy(db.rates),rules:C.copy(db.rules),library:C.copy(db.library),quote:C.copy(db.quote)};}
