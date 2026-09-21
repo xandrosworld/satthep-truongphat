@@ -18,3 +18,10 @@ Bổ sung theo ảnh phản hồi: đưa cách xếp cố định có sẵn ra n
 - Góc đối chiếu lưu cùng mẫu hình, không tự sửa báo giá cũ. Có thể sửa riêng tại Khai đa giác trong báo giá. Tam giác vẫn chỉ cần ba cạnh.
 - Tên ký hiệu ưu tiên tên thông số đang khai, tránh hiện “Chưa khai tên” khi đã có tên cạnh.
 - Kiểm tra: trình duyệt 4–10 cạnh, lưu/mở lại, góc sai, xóa góc, màn hình hẹp; hồi quy tam giác và 7 bài kiểm tra hình/phôi/hao hụt.
+
+### Sắp lại màn công thức hình dạng theo trình tự khai báo
+- Bốn phần: Thông tin hình dạng → Chọn hình và cách khai kích thước → Nhập thông số → Xem hình và kết quả.
+- Chọn vuông/chữ nhật, tròn, tam giác vuông, tam giác ba cạnh, đa giác, hình thang hoặc hình thoi; chỉ đa giác hiện cách khai góc và số cạnh.
+- Nút Tạo bảng thông số dùng chung; đổi lựa chọn chưa tạo bảng thì chưa cho lưu nhầm công thức cũ. Tạo lại có hướng dẫn rõ việc thay thông số/công thức của bản đang sửa.
+- Mã và thông tin phụ thu gọn; giữ phần công thức, khổ mua thử và cách khai riêng trong Mở rộng. Tên và nhóm đang nhập được giữ khi tạo bảng.
+- Kiểm tra trình duyệt: thứ tự, từng hình, đổi hình, góc đối chiếu, lưu/mở lại, công thức riêng, màn hình 390/800/1440 px. Các kiểm tra tam giác và giao diện đã duyệt đạt; 26 kiểm tra hình dạng/tính toán đạt.

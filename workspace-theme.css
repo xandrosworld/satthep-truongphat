@@ -289,3 +289,21 @@ th{color:var(--muted)}
 @media print{.review-step-footer,.nesting-presets{display:none}}
 
 .np-preset-preview label:has([name=npEditing]),.np-preset-preview #np-seed,.np-preset-preview #np-reset,.np-preset-preview [data-np-manual-help]{display:none}
+
+/* Shape declaration follows the same four steps for every sheet outline. */
+#dialog .review-shape-step{margin:0 0 20px;padding:0 0 20px;border-bottom:1px solid var(--border,#dce3eb)}
+#dialog .review-shape-step>h3{font-size:18px;margin:0 0 14px;color:#174e74}
+#dialog .review-shape-step fieldset{border:0;padding:0;margin:0}
+#dialog .review-shape-step .form-grid{margin:0 0 12px}
+#dialog .review-shape-flow [data-df-polygon-apply]{display:none}
+#dialog .review-shape-flow [data-df-polygon]>summary{display:none}
+#dialog .review-shape-flow [data-df-polygon]{margin:12px 0;border:0;padding:0}
+#dialog .review-shape-flow [hidden]{display:none!important}
+#dialog .review-method-hint{margin:12px 0;line-height:1.6;color:#42596c}
+#dialog .review-shape-flow [data-shape-pending]{margin-top:12px}
+#dialog .review-shape-flow [data-df-sheet-presets] .form-grid{grid-template-columns:minmax(0,1fr)}
+@media(max-width:700px){#dialog .review-shape-flow.review-shape-simple #definition-fields tbody{grid-template-columns:minmax(0,1fr)}}
+
+#dialog .review-shape-reset-hint{display:block;margin-top:8px;color:#526578;line-height:1.5}
+#dialog .review-shape-flow [data-shape-step=info]>.form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:700px){#dialog .review-shape-flow [data-shape-step=info]>.form-grid{grid-template-columns:minmax(0,1fr)}}

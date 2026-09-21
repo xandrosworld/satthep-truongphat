@@ -75,24 +75,45 @@ function reviewPaint(){
  document.querySelectorAll('[data-catalog-draft=save]').forEach(b=>b.textContent='Lưu danh mục chung');
 }
 function reviewShape(){
- const form=$('#dialog-form'),table=form?.querySelector('#definition-fields');if(!table||form.dataset.reviewShape)return;form.dataset.reviewShape='';form.classList.add('review-shape-simple');
- const body=form.querySelector('.dialog-body'),preview=form.querySelector('#definition-preview'),allowance=form.querySelector('[data-df-allowance]'),metadata=body.querySelector(':scope > .form-grid');
- const meta=reviewFold([metadata],'Thông tin quy ước','shape-metadata');if(meta&&!form.elements.name.value)meta.open=true;
- const first=body.querySelector(':scope > p');if(first)reviewFold([first],'Đơn vị và cách khai','shape-units');
- const sheet=form.querySelector('[data-df-sheet-presets]');if(sheet){const legend=sheet.querySelector('legend');if(legend)legend.textContent='1. Chọn hình';}
- const polygon=form.querySelector('[data-df-polygon]');
- if(polygon){const paragraphs=[...polygon.querySelectorAll(':scope > p')];reviewFold(paragraphs,'Cách khai cạnh và góc','shape-polygon-help');}
- if(sheet){reviewFold([...sheet.querySelectorAll(':scope > p')],'Cách dùng mẫu hình','shape-preset-help');}
- const metadataHint=meta?.nextElementSibling;if(metadataHint?.matches('p.help-text'))meta.append(metadataHint);
- const title=document.createElement('h3');title.textContent='2. Nhập kích thước để xem thử';table.parentElement.before(title);
+ const form=$('#dialog-form'),table=form?.querySelector('#definition-fields');if(!table||form.dataset.reviewShape)return;form.dataset.reviewShape='yes';form.classList.add('review-shape-simple','review-shape-flow');
+ const body=form.querySelector('.dialog-body'),preview=form.querySelector('#definition-preview'),allowance=form.querySelector('[data-df-allowance]'),metadata=body.querySelector(':scope > .form-grid'),sheet=form.querySelector('[data-df-sheet-presets]'),polygon=form.querySelector('[data-df-polygon]');
+ const section=(title,key)=>{const el=document.createElement('section');el.className='review-shape-step';el.dataset.shapeStep=key;const h=document.createElement('h3');h.textContent=title;el.append(h);return el;};
+ const info=section('1. Thông tin hình dạng','info');metadata.before(info);info.append(metadata);
+ const extra=reviewDetails('Mã và thông tin bổ sung','shape-metadata'),extraGrid=document.createElement('div');extraGrid.className='form-grid';extra.append(extraGrid);info.append(extra);
+ for(const name of ['id','blankShape','blankShapeName'])extraGrid.append(form.elements[name].closest('label'));
+ metadata.prepend(form.elements.name.closest('label'));form.elements.name.closest('label').querySelector('span').textContent='Tên hình / nhóm chi tiết';
+ const metadataHint=info.nextElementSibling;if(metadataHint?.matches('p.help-text'))extra.append(metadataHint);
+ const methods=section('2. Chọn hình và cách khai kích thước','method');sheet.before(methods);methods.append(sheet,polygon);
+ const legend=sheet.querySelector('legend');if(legend)legend.hidden=true;
+ const choose=form.elements.sheetPreset;choose.closest('label').querySelector('span').textContent='Hình cần khai';
+ for(const key of ['rectangle','circle','triangle','triangle-sides','polygon','trapezoid','rhombus','custom'])choose.append(choose.querySelector('option[value="'+key+'"]'));
+ const apply=sheet.querySelector('[data-df-preset-apply]');apply.textContent='Tạo bảng thông số';apply.classList.add('primary');const applyBox=apply.parentElement;methods.append(apply);applyBox.remove();const resetHint=document.createElement('small');resetHint.className='review-shape-reset-hint';resetHint.textContent='Tạo lại bảng sẽ thay các thông số và công thức đang sửa bằng mẫu của hình đã chọn.';methods.append(resetHint);
+ const methodHint=document.createElement('p');methodHint.className='review-method-hint';methodHint.dataset.shapeMethodHint='';apply.before(methodHint);
+ const pending=document.createElement('p');pending.className='notice';pending.dataset.shapePending='';pending.textContent='Đã đổi cách khai. Bấm “Tạo bảng thông số” để hiện các ô tương ứng. Bảng mới sẽ thay thông số và công thức đang sửa.';methods.append(pending);
+ const tableWrap=table.parentElement,entry=section('3. Nhập thông số','inputs');tableWrap.before(entry);entry.append(tableWrap);
+ const entryHint=document.createElement('p');entryHint.className='help-text';entryHint.textContent='Nhập kích thước để xem thử hình và kết quả. Kích thước dùng tại từng báo giá được nhập riêng ở báo giá đó.';tableWrap.before(entryHint);
  const advanced=reviewDetails('Mở rộng: thông số, công thức và khổ mua thử','shape-advanced');
- const start=table.parentElement.nextSibling;let node=start;
- while(node&&node!==preview){const next=node.nextSibling;advanced.append(node);node=next;}
- const results=document.createElement('section');results.className='review-shape-results';results.innerHTML='<h3>3. Xem hình và kết quả</h3>';table.parentElement.after(results);if(preview)results.append(preview);if(allowance)results.append(allowance);results.after(advanced);
- const examples=form.querySelector('[data-df-example-apply]')?.closest('details');if(examples)advanced.prepend(examples);
+ let node=entry.nextSibling;while(node&&node!==preview){const next=node.nextSibling;advanced.append(node);node=next;}
+ const results=section('4. Xem hình và kết quả','results');results.classList.add('review-shape-results');entry.after(results);if(preview)results.append(preview);if(allowance)results.append(allowance);results.after(advanced);
  const endHint=advanced.nextElementSibling;if(endHint?.tagName==='P')advanced.append(endHint);
+ const first=body.querySelector(':scope > p');if(first)advanced.append(first);
+ for(const p of [...sheet.querySelectorAll(':scope > p')])advanced.append(p);
+ const polygonHelp=reviewFold([...polygon.querySelectorAll(':scope > p')],'Hướng dẫn khai cạnh và góc','shape-polygon-help');if(polygonHelp)advanced.append(polygonHelp);
+ const examples=form.querySelector('[data-df-example-apply]')?.closest('details');if(examples)advanced.append(examples);
+ for(const p of [...body.querySelectorAll(':scope > p.help-text')])advanced.append(p);
+ polygon.querySelector(':scope > summary').textContent='Số cạnh và cách khai góc';polygon.open=true;
+ const update=()=>{if(!form.isConnected)return;const kind=choose.value,isSheet=form.elements.base.value==='sheet';
+  sheet.hidden=!isSheet;polygon.hidden=kind!=='polygon'||!isSheet;polygon.open=true;apply.hidden=!isSheet;resetHint.hidden=!isSheet;
+  const hints={rectangle:'Nhập chiều dài và chiều rộng. Hình vuông có hai kích thước bằng nhau.',circle:'Nhập đường kính hình tròn.',triangle:'Nhập cạnh đáy và chiều cao vuông góc (hai cạnh góc vuông).','triangle-sides':'Nhập chiều dài ba cạnh; không cần khai góc.',polygon:'Chọn số cạnh và cách khai góc bên dưới, sau đó tạo bảng thông số.',trapezoid:'Nhập hai đáy và chiều cao vuông góc. Mẫu dùng khi đáy nhỏ nằm trong bề rộng đáy lớn.',rhombus:'Nhập chiều dài hai đường chéo của hình thoi.',custom:'Giữ các thông số và công thức riêng; mở mục Mở rộng để chỉnh cách tính.'};
+  methodHint.textContent=isSheet?hints[kind]:'Nhập chiều dài cắt và thông số tiết diện. Các công thức riêng nằm trong mục Mở rộng.';
+  const changed=kind!==form.dataset.definitionSheetPreset||(kind==='polygon'&&(form.elements.polygonKind.value!==form.dataset.definitionPolygonKind||form.elements.polygonCount.value!==form.dataset.definitionPolygonCount));
+  pending.hidden=!changed;entry.hidden=changed;results.hidden=changed;
+  apply.textContent=changed?'Tạo bảng thông số':'Tạo lại bảng thông số';
+ };
+ choose.addEventListener('change',()=>{if(choose.value==='polygon'&&!form.dataset.definitionPolygonKind){form.elements.polygonKind.value='interior';form.elements.polygonCount.value='4';}update();});
+ form.addEventListener('change',update);form.addEventListener('input',update);update();
  advanced.addEventListener('toggle',()=>form.classList.toggle('review-shape-simple',!advanced.open));form.classList.toggle('review-shape-simple',!advanced.open);
- for(const row of table.querySelectorAll('tbody tr:not([data-df-output-row])')){const field=row.querySelector('[name^=fieldName]'),cell=row.cells[4];if(field&&cell){const label=document.createElement('strong');label.className='review-dimension-name';label.textContent=field.value+' ('+(form.elements['unit'+field.name.replace('fieldName','')]?.value||'')+')';cell.prepend(label);field.addEventListener('input',()=>label.textContent=field.value);}}
+ for(const row of table.querySelectorAll('tbody tr:not([data-df-output-row])')){const field=row.querySelector('[name^=fieldName]'),cell=row.cells[4];if(field&&cell){const label=document.createElement('strong');label.className='review-dimension-name';const unit=form.elements['unit'+field.name.replace('fieldName','')]?.value;label.textContent=field.value+(unit&&unit!=='number'?' ('+unit+')':'');cell.prepend(label);field.addEventListener('input',()=>label.textContent=field.value);}}
  form.addEventListener('invalid',e=>{for(let el=e.target.parentElement;el&&el!==form;el=el.parentElement)if(el.tagName==='DETAILS')el.open=true;advanced.open=true;form.classList.remove('review-shape-simple');},true);
  reviewHelp(body);
 }
