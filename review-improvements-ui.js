@@ -57,6 +57,7 @@ function reviewExports(){
 }
 function reviewPaint(){
  reviewHeader();reviewNotes();reviewTasks();reviewHelp($('#content'));reviewExports();
+ if(Team.loaded)document.querySelectorAll('[data-action=approve]').forEach(b=>b.textContent=teamCurrent()?.status==='submitted'&&Team.permissions?.approve?'Duyệt báo giá':'Gửi duyệt');
  document.querySelectorAll('[data-team=submit]').forEach(b=>b.textContent='Gửi duyệt');
  document.querySelectorAll('[data-team=save]').forEach(b=>b.textContent='Lưu báo giá lên máy chủ');
  document.querySelectorAll('[data-catalog-draft=save]').forEach(b=>b.textContent='Lưu danh mục chung');
