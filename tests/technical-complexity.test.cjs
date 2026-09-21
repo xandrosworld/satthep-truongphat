@@ -22,3 +22,17 @@ test('unchanged saved assessment preserves private factor; new selection resolve
  const tampered=structuredClone(saved);tampered.quote.products[0].ops[0].complexity.multiplier=99;A.throws(()=>T.resolveDocumentChoices(tampered,saved,catalog,false));
  catalog.pricingDefaults.factorDefinitions[0].categories[1].percent=1.8;A.equal(T.merge(saved,T.project(saved,catalog),catalog).quote.products[0].ops[0].complexity.multiplier,1.5);
 });
+
+
+test('scoped catalogue assessments require an explicit group and resolve after classification',()=>{
+ const d=P.demoSeed(),root=d.quote.products[0],node=root.children[0];root.productGroup='';delete node.productGroup;
+ const f={...factor(),productGroups:['Cơ khí']},catalog={rates:d.rates.map(r=>({...r,factors:[]})),pricingDefaults:{factorDefinitions:[f]}};
+ const view=T.project(d,catalog),choice={factorId:'difficulty',label:'Hard'};
+ view.quote.products[0].children[0].ops[0].complexityChoice=choice;
+ A.throws(()=>T.merge(d,view,catalog),/chưa phân nhóm/);
+ view.quote.products[0].productGroup='Other';A.throws(()=>T.merge(d,view,catalog),/không áp dụng cho nhóm Other/);
+ view.quote.products[0].productGroup='Cơ khí';const saved=T.merge(d,view,catalog);
+ A.equal(saved.quote.products[0].children[0].ops[0].complexity.multiplier,1.5);
+ A.equal(JSON.stringify(T.project(saved,catalog)).includes('multiplier'),false);
+ const bad={factorId:'missing',label:'Hard'};A.throws(()=>T.resolveComplexity(T.complexityRate(d.rates[0],catalog),bad,'Cơ khí'),/không còn trong danh mục/);
+});

@@ -24,7 +24,12 @@ function complexityLevels(r){
 function choiceFor(op){return op?.complexityChoice?pick(op.complexityChoice,['factorId','label']):(op?.complexity?{factorId:'',label:op.complexity.label}:undefined);}
 function resolveComplexity(rate,choice,group){
  const allowed=complexityLevels(rate).some(x=>x.factorId===choice?.factorId&&x.label===choice?.label&&(!x.groups.length||x.groups.includes(group))&&(!x.rateGroups.length||x.rateGroups.includes(group)));
- if(!allowed)throw Error('Mức độ phức tạp không thuộc bảng khai báo của nguyên công / nhóm sản phẩm. Tải lại danh mục để chọn.');
+ if(!allowed){
+  const matching=complexityLevels(rate).filter(x=>x.factorId===choice?.factorId&&x.label===choice?.label);
+  if(matching.length&&!group)throw Error('Sản phẩm chưa phân nhóm. Chọn nhóm sản phẩm để lấy mức độ phức tạp phù hợp trong danh mục.');
+  if(matching.length)throw Error('Mức độ phức tạp đã chọn không áp dụng cho nhóm '+group+'. Chọn lại mức theo nhóm sản phẩm hiện tại.');
+  throw Error('Mức độ phức tạp đã chọn không còn trong danh mục của nguyên công. Mở lại khai báo để chọn mức hiện có.');
+ }
  const f=rate.factors.find(x=>(x.sharedFactorId||x.id)===choice.factorId&&x.param==='complexity'),c=f.categories.find(x=>String(x.key)===choice.label),value=Number(c.percent),multiplier=f.valueMode==='multiplier'?value:1+value/100;
  if(c.percent===null||c.percent===''||!Number.isFinite(multiplier)||multiplier<=0)throw Error('Hệ số trong danh mục chưa hợp lệ; người phụ trách giá cần kiểm tra.');
  return {label:choice.label,multiplier};
