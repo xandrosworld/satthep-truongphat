@@ -237,3 +237,43 @@ th{color:var(--muted)}
 @media screen{
  :root{--ui-font-6:8px;--ui-font-7:9px;--ui-font-8:10px;--ui-font-9:11px;--ui-font-10:12px;--ui-font-11:13px;--ui-font-12:14px;--ui-font-13:15px;--ui-font-14:16px;--ui-font-15:17px;--ui-font-16:18px;--ui-font-17:19px;--ui-font-18:20px;--ui-font-19:21px;--ui-font-20:22px;--ui-font-21:23px;--ui-font-22:24px;--ui-font-23:25px;--ui-font-24:26px;--ui-font-25:27px;--ui-font-26:28px;--ui-font-27:29px;--ui-font-29:31px;--ui-font-30:32px;--ui-font-33:35px;}
 }
+
+/* Customer-approved review, phase 1. */
+.review-details{border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:8px 0}
+.review-details>summary{cursor:pointer;padding:10px 14px;font-weight:600;color:var(--blue-deep)}
+.review-details[open]>summary{border-bottom:1px solid var(--line);margin-bottom:10px}
+.review-details>.panel,.review-details>.quote-ribbon,.review-details>.quote-metrics,.review-details>.pa-intro{margin:0;border:0;box-shadow:none}
+.review-quote .page-heading{margin:12px 0}.review-quote .page-heading h1{font-size:24px}
+.review-team-banner{padding:10px 14px!important;margin-bottom:10px!important;gap:8px!important}
+.review-team-banner>div>strong{font-size:13px}.review-team-banner>div>span{font-size:12px}
+[data-review-save-state]{flex-basis:100%;font-size:13px!important}
+.review-quote>.review-details:not([open])+.page-heading{margin-top:12px}
+.review-note summary{cursor:pointer;line-height:1.5;color:var(--blue-deep);overflow-wrap:anywhere}
+.review-note:not([open]){max-width:180px}.review-note[open]{min-width:160px}
+.quick-table .identity-col{min-width:240px;width:25%}
+.quick-table th:nth-child(2){min-width:240px}
+.quick-table .quick-input input{min-width:78px}
+.quick-table .identity-col,.quick-table th:nth-child(2){position:sticky;left:0;z-index:2;background:var(--level-product-material)}
+.quick-table th:nth-child(2){z-index:3;background:#edf3fb}
+.quick-table .b1-component .identity-col{background:var(--level-component)}
+.quick-table .b1-component-material .identity-col{background:var(--level-component-material)}
+.quick-table .review-note-cell{width:130px;max-width:180px}
+.review-help{margin:8px 0}.review-help>p{margin-bottom:2px}.review-help summary{color:var(--blue-deep);cursor:pointer;font-size:13px}
+.review-help details[open]{padding:8px;border-left:3px solid var(--line)}
+.review-tasks{border-left:3px solid #d99521;background:#fff9ec;padding:12px;margin-top:12px}
+.review-tasks>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:8px}
+.review-exports{padding:16px;margin:12px 0}.review-exports .actions{margin-top:10px;flex-wrap:wrap}
+.review-dimension-name{display:block;margin-bottom:5px}
+#dialog .review-shape-simple #definition-fields thead,#dialog .review-shape-simple #definition-fields [data-df-output-row]{display:none}
+#dialog .review-shape-simple #definition-fields tr{display:block;padding:12px}
+#dialog .review-shape-simple #definition-fields td:not(:nth-child(5)){display:none}
+#dialog .review-shape-simple #definition-fields td:nth-child(5){display:block;width:100%;padding:0}
+#dialog .review-shape-simple #definition-fields{min-width:0;width:100%}
+#dialog .review-shape-simple #definition-fields tbody{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.review-shape-results{margin:16px 0}.review-shape-results>h3{margin-bottom:12px}
+.review-shape-results [data-df-allowance]{padding:12px;max-height:420px;overflow:auto}
+@media(max-width:700px){.review-tasks>div{align-items:flex-start;flex-direction:column}.review-team-banner .actions{flex-wrap:wrap}#dialog .review-shape-simple #definition-fields tbody{grid-template-columns:repeat(2,minmax(0,1fr))}.review-quote .page-heading h1{font-size:22px}}
+@media print{.review-exports,.review-tasks{display:none}}
+
+.review-details>.quote-technical-overview{margin:0;border:0}
+#dialog .review-shape-simple .review-dimension-name+label>span{display:none}
