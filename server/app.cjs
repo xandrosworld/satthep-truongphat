@@ -4,6 +4,7 @@ const {DatabaseSync}=require('node:sqlite');
 const {randomBytes,scryptSync,timingSafeEqual,createHash,randomUUID}=require('node:crypto');
 const SA=require('../section-access.js');
 const C=require('../core.js');require('../pricing-core.js');
+require('../ai-pdf-core.js').installValidation();
 const {ROLES,permissions,factorFingerprint,publicOffer,catalogSeed}=require('./access.cjs');
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const fail=(status,message)=>{const e=Error(message);e.status=status;throw e;};
@@ -33,7 +34,7 @@ function cleanDocument(input){
   if(result.total.grand>1e15||!Number.isFinite(result.total.grand))fail(400,'Giá trị vượt giới hạn dùng thử');
   return {data:safe,result};
 }
-function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'../dist'),sessionHours=8,publicOrigin='',setupKey=''}={}){
+function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'../dist'),sessionHours=8,publicOrigin='',setupKey='',aiProvider}={}){
   let origin='';if(publicOrigin){const parsed=new URL(publicOrigin);if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.pathname!=='/'||parsed.search||parsed.hash)throw Error('TP_PUBLIC_ORIGIN phải là nguồn HTTPS, không chứa đường dẫn');origin=parsed.origin;if(String(setupKey).length<24)throw Error('Cần TP_SETUP_KEY ít nhất 24 ký tự khi cấu hình địa chỉ HTTPS');}const cookieSecurity=origin?'; Secure':'';
   if(databasePath!==':memory:')fs.mkdirSync(path.dirname(path.resolve(databasePath)),{recursive:true});
   const sql=new DatabaseSync(databasePath);sql.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
@@ -89,6 +90,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const accounts=require('./accounts.cjs').createAccounts({sql,fail,readBody,transaction,audit});
   const formulaAccess=require('./formula-access.cjs').createFormulaAccess({sql,fail,readBody,audit,transaction});
   const notifications=require('./notifications.cjs').createNotifications({sql,fail,readBody,transaction,audit,getQuote});
+  const aiPdf=require('./ai-pdf.cjs').createAiPdf({sql,readBody,fail,audit,provider:aiProvider});
   const chat=require('./chat.cjs').createChat({sql,fail,readBody,transaction});
   const production=require('./production.cjs').createProduction({sql,fail,readBody,transaction,audit});
   const server=http.createServer(async(req,res)=>{let responseUser=null;
@@ -111,6 +113,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       }
       const user=session(req);if(!user)fail(401,'Cần đăng nhập');const rights=permissions(user);responseUser=user;
       if(!['GET','HEAD'].includes(req.method)&&req.headers['x-csrf-token']!==user.csrf)fail(403,'Phiên yêu cầu không hợp lệ; tải lại trang');
+      if(await aiPdf.handle({req,route,user,send}))return;
       if(await production.handle({req,route,user,send}))return;
       if(await chat.handle({req,route,user,send,res}))return;
       if(await formulaAccess.handle({req,route,user,rights,send}))return;
@@ -200,15 +203,16 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
         }
       }
       if(route==='/api/audit'&&req.method==='GET'){if(!rights.users)fail(403,'Chỉ quản trị');return send(200,all('SELECT a.at,u.name,a.action,a.entity,a.detail FROM audit a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.seq DESC LIMIT 500'));}
-      if(route==='/api/backup'&&req.method==='GET'){if(!rights.users)fail(403,'Chỉ quản trị');audit(user,'backup','workspace');return send(200,{format:'truongphat-server-backup-1',at:new Date().toISOString(),quotes:all('SELECT * FROM quotes'),quoteDeletions:all('SELECT * FROM quote_deletions'),revisions:all('SELECT * FROM revisions'),orders:all('SELECT * FROM orders'),catalog:all('SELECT * FROM catalog'),catalogRevisions:all('SELECT * FROM catalog_revisions'),commercial:all('SELECT * FROM commercial'),customers:all('SELECT * FROM intake_customers'),customerPolicy:all('SELECT * FROM customer_policy'),roleTemplates:all('SELECT * FROM role_templates'),formulaLocks:all('SELECT * FROM formula_locks'),handoffs:all('SELECT * FROM quote_handoffs'),handoffEvents:all('SELECT * FROM handoff_events'),notifications:all('SELECT * FROM notifications'),productionJobs:all('SELECT * FROM production_jobs'),productionEvents:all('SELECT * FROM production_events'),chatRooms:all('SELECT * FROM chat_rooms'),chatMembers:all('SELECT * FROM chat_members'),chatMessages:all('SELECT * FROM chat_messages'),chatMentions:all('SELECT * FROM chat_mentions'),chatTasks:all('SELECT * FROM chat_tasks'),audit:all('SELECT * FROM audit'),users:all('SELECT id,username,name,role,active,can_factors,can_below_cost,can_view_costs,can_approve,technical_delegated,section_access,role_template_id,can_formula_use,can_formula_view,can_formula_edit,can_formula_unlock,can_reopen,deleted_at FROM users')});}
+      if(route==='/api/backup'&&req.method==='GET'){if(!rights.users)fail(403,'Chỉ quản trị');audit(user,'backup','workspace');return send(200,{format:'truongphat-server-backup-1',at:new Date().toISOString(),quotes:all('SELECT * FROM quotes'),quoteDeletions:all('SELECT * FROM quote_deletions'),revisions:all('SELECT * FROM revisions'),orders:all('SELECT * FROM orders'),catalog:all('SELECT * FROM catalog'),catalogRevisions:all('SELECT * FROM catalog_revisions'),commercial:all('SELECT * FROM commercial'),customers:all('SELECT * FROM intake_customers'),customerPolicy:all('SELECT * FROM customer_policy'),roleTemplates:all('SELECT * FROM role_templates'),formulaLocks:all('SELECT * FROM formula_locks'),handoffs:all('SELECT * FROM quote_handoffs'),handoffEvents:all('SELECT * FROM handoff_events'),notifications:all('SELECT * FROM notifications'),productionJobs:all('SELECT * FROM production_jobs'),productionEvents:all('SELECT * FROM production_events'),chatRooms:all('SELECT * FROM chat_rooms'),chatMembers:all('SELECT * FROM chat_members'),chatMessages:all('SELECT * FROM chat_messages'),chatMentions:all('SELECT * FROM chat_mentions'),chatTasks:all('SELECT * FROM chat_tasks'),aiPdfJobs:all('SELECT * FROM ai_pdf_jobs'),audit:all('SELECT * FROM audit'),users:all('SELECT id,username,name,role,active,can_factors,can_below_cost,can_view_costs,can_approve,technical_delegated,section_access,role_template_id,can_formula_use,can_formula_view,can_formula_edit,can_formula_unlock,can_reopen,deleted_at FROM users')});}
       fail(404,'Không tìm thấy chức năng');
     }catch(error){if(!res.headersSent)send(error.status||500,{error:error.status?error.message:'Không thực hiện được; kiểm tra dữ liệu hoặc máy chủ'});else res.end();}
   });
   server.headersTimeout=15000;server.requestTimeout=30000;
-  server.on('close',()=>sql.close());return {server,sql};
+  server.on('close',()=>{aiPdf.stop();sql.close();});return {server,sql};
 }
 module.exports={createApp,cleanDocument};
 if(require.main===module){
+ if(fs.existsSync(path.resolve(__dirname,'../.env')))process.loadEnvFile(path.resolve(__dirname,'../.env'));
  const publicOrigin=process.env.TP_PUBLIC_ORIGIN||'',databasePath=path.resolve(process.env.TP_DATABASE_PATH||path.join(__dirname,'../data/truongphat.sqlite')),port=Number(process.env.PORT||process.env.TP_PORT||4174),host=publicOrigin?'0.0.0.0':'127.0.0.1';
  if(process.env.RAILWAY_ENVIRONMENT_ID&&(!publicOrigin||!process.env.RAILWAY_VOLUME_MOUNT_PATH||!databasePath.startsWith(process.env.RAILWAY_VOLUME_MOUNT_PATH+'/')))throw Error('Railway cần HTTPS và cơ sở dữ liệu trên volume cố định');
  const {server}=createApp({databasePath,publicOrigin,setupKey:process.env.TP_SETUP_KEY||''});
