@@ -17,7 +17,7 @@ function installSectionAccessUI(){
  const oldApi=teamApi;teamApi=async(route,method='GET',data)=>{if(method==='POST'&&(route==='users'||/^users\/[^/]+\/access$/.test(route))){const inputs=$('#dialog')?.querySelectorAll('input[name=sections]');if(inputs?.length&&data?.sections==null)data={...data,sections:[...inputs].filter(e=>e.checked).map(e=>e.value)};}return oldApi(route,method,data);};
  const oldRender=render;render=()=>{
   if(Team.requireLogin&&!Team.user){$('#content').innerHTML=heading('Đăng nhập làm việc','Báo giá, danh mục và lịch sử được lưu chung trên máy chủ.',teamButton('Đăng nhập','login','','primary'));$('#save-status').textContent='Chưa đăng nhập';return;}
-  if(page==='customers'&&Team.user&&Team.permissions.costs){oldRender();$('#content').innerHTML=renderCustomers();$('#save-status').textContent='Danh bạ dùng chung trên máy chủ';return;}
+  if(page==='customers'&&Team.user&&(Team.permissions.costs||Team.permissions.customers)){oldRender();$('#content').innerHTML=renderCustomers();$('#page-label').textContent='Đầu vào khách hàng';document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page==='customers'));$('#save-status').textContent='Danh bạ dùng chung trên máy chủ';return;}
   if(Team.requireLogin&&Team.user&&Team.permissions.costs&&(!Team.loaded||(!Team.link&&page==='quote'))){if(Team.loaded&&!Team.link&&page==='quote'){Team.loaded=false;Team.catalogVersion=null;}$('#content').innerHTML=workspaceHome();workspaceHomeMount();$('#save-status').textContent='Dữ liệu dùng chung trên máy chủ';return;}
   oldRender();if(!Team.user||!Team.permissions.costs)return;
   const rights=Team.permissions,scope=currentSection();

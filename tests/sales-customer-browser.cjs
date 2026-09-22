@@ -1,0 +1,19 @@
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs'),path=require('node:path'),fs=require('node:fs');
+(async()=>{
+ const app=createApp({staticRoot:path.resolve('artifacts/gd1-report-2026-09-20/release/dist')});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+app.server.address().port;
+ const browser=await chromium.launch({channel:'msedge',headless:true}),errors=[],dir='artifacts/customer-review/sales-customer';fs.mkdirSync(dir,{recursive:true});
+ async function init(p){p.on('pageerror',e=>errors.push(e.message));await p.route('**/api/status',async route=>{const r=await route.fetch();await route.fulfill({response:r,json:{...await r.json(),requireLogin:true}});});await p.goto(origin);await expect(p.locator('#team-entry')).toBeVisible();}
+ try{
+ const admin=await browser.newPage();await init(admin);await admin.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password:'Local-Customer-42!'}));await teamApi('users','POST',{username:'sales',name:'Sales QA',password:'Local-Customer-42!',role:'sales',canViewCosts:false,sections:['customer']});render();});
+ const p=await browser.newPage({viewport:{width:1366,height:768}});await init(p);await p.evaluate(async()=>{teamSession(await teamApi('login','POST',{username:'sales',password:'Local-Customer-42!'}));render();});
+ await p.locator('[data-page=customers]').click();await expect(p.locator('[data-intake=customer]').first()).toBeVisible();await p.locator('[data-intake=customer]').first().click();await p.locator('#dialog [name=name]').fill('Khách hàng Kinh doanh');await p.locator('#dialog [name=phone]').fill('0901234567');await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();await expect(p.locator('#content')).toContainText('Khách hàng Kinh doanh');
+ await expect(p.locator('[data-crm],[data-customer-excel],[data-intake=start]')).toHaveCount(0);
+ await p.reload();await expect.poll(()=>p.evaluate(()=>Team.user?.username)).toBe('sales');await p.locator('[data-page=customers]').click();await expect(p.locator('#content')).toContainText('0901234567');
+ await p.locator('[data-intake=customer][data-id]').click();await p.locator('#dialog [name=contact]').fill('Người liên hệ mới');await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();await expect(p.locator('#content')).toContainText('Người liên hệ mới');
+ await expect(p.locator('[data-production-launch]')).not.toBeVisible();await expect(p.locator('#page-label')).toHaveText('Đầu vào khách hàng');const nav=await p.locator('[data-page=customers]').boundingBox(),quoteNav=await p.locator('[data-page=quote]').boundingBox();expect(quoteNav.y).toBeGreaterThanOrEqual(nav.y+nav.height);await p.screenshot({path:dir+'/laptop.png',fullPage:true});
+ for(const width of [1093,1920]){await p.setViewportSize({width,height:800});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await expect(p.locator('[data-page=materials]')).not.toBeVisible();}
+ await p.locator('[data-page=quote]').click();await expect(p.locator('#content')).toContainText('Báo giá đã duyệt');
+ await admin.evaluate(async()=>{const u=(await teamApi('users')).find(u=>u.username==='sales');await teamApi('users/'+u.id+'/access','POST',{role:'sales',canViewCosts:false,sections:[]});});await p.reload();await p.evaluate(async()=>{teamSession(await teamApi('login','POST',{username:'sales',password:'Local-Customer-42!'}));render();});await expect(p.locator('[data-page=customers]')).not.toBeVisible();
+ expect(errors).toEqual([]);console.log('PASS sales create/edit/reload, basic directory only, laptop widths, permission revocation');
+ }finally{await browser.close();await new Promise(r=>app.server.close(r));}
+})().catch(e=>{console.error(e);process.exitCode=1;});

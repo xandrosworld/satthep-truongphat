@@ -35,10 +35,12 @@ function crmCareOwnerField(c){
  return select('Nhân viên chăm sóc','ownerId',owners,current).replace('<select ',`<select ${editable?'':'disabled '} `);
 }
 function installCrmUI(){
- renderCustomers=crmCustomers;
+ const basicCustomers=renderCustomers,basicEditor=inEditCustomer;
+ const basicMode=()=>inRemoteCustomers()&&!Team.permissions?.costs;
+ renderCustomers=()=>basicMode()?basicCustomers():crmCustomers();
  const load=inLoadCustomers;inLoadCustomers=async()=>{await load();await crmLoad();if(Crm.selected&&page==='customers')await crmOpen(Crm.selected);};
  const session=teamSession;teamSession=value=>{if(value.user?.id!==Team.user?.id){Crm.selected='';Crm.detail=null;Crm.owners=[];Crm.policy={};Crm.owner='';}session(value);};
- inEditCustomer=(...args)=>crmEditConfiguredCustomer(...args).catch(inError);
+ inEditCustomer=(...args)=>basicMode()?basicEditor(...args):crmEditConfiguredCustomer(...args).catch(inError);
  const quoteDialog=b1QuoteDialog;b1QuoteDialog=(...args)=>{quoteDialog(...args);crmQuoteChoices();for(const name of ['customerId','customer'])$('#dialog-form').elements[name].addEventListener('change',crmQuoteChoices);};
  document.addEventListener('change',e=>{if(e.target.name?.startsWith('crm-filter-')){Crm[e.target.name.slice(11)]=e.target.value;render();}});
  document.addEventListener('click',e=>{const el=e.target.closest('[data-crm]');if(!el)return;e.preventDefault();Promise.resolve().then(async()=>{const a=el.dataset.crm,id=el.dataset.id;if(a==='open')await crmOpen(id);if(a==='close'){Crm.selected='';Crm.detail=null;render();}if(a==='interaction')crmInteraction();if(a==='opportunity')crmOpportunity(id);if(a==='assign')crmAssign();if(a==='policy')crmPolicy();if(a==='fields')await crmFieldsSettings();if(a==='factor')crmFactor();if(a==='quote'){if(inRemoteCustomers()){if(Team.dirty)throw Error('Lưu báo giá đang sửa trước khi chuyển');await teamLoad(id);}else {const q=[db.quote,...(db.savedQuotes||[]).map(x=>x.quote)].find(q=>(q.workspaceKey||q.id)===id);if(!q)throw Error('Không tìm thấy báo giá');quoteSwitch(q);}page='quote';tab='intake';render();}if(a==='start-opportunity'){const c=Crm.detail.customer,o=c.opportunities.find(o=>o.id===id);if(inRemoteCustomers())await teamNewDocument();else quoteNew();const form=$('#dialog-form');form.elements.customerId.value=c.id;form.elements.customerId.dispatchEvent(new Event('change',{bubbles:true}));form.elements.opportunityId.value=id;form.elements.project.value=o.title;form.elements.requestNotes.value=o.description||'';}}).catch(inError);});

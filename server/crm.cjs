@@ -1,5 +1,7 @@
 'use strict';
 const CF=require('../customer-fields-core.js'),CRM=require('../crm-core.js'),{customer}=require('../intake-core.js');
+const BASIC_CUSTOMER_FIELDS=['id','name','contact','phone','email','address','taxId'];
+const basicCustomer=c=>Object.fromEntries([...BASIC_CUSTOMER_FIELDS,'version'].filter(k=>c[k]!==undefined).map(k=>[k,c[k]]));
 function createCrm({sql,fail,readBody,audit}){
  sql.exec('CREATE TABLE IF NOT EXISTS customer_policy(id INTEGER PRIMARY KEY CHECK(id=1),version INTEGER NOT NULL,document TEXT NOT NULL)');
  const read=id=>{const r=sql.prepare('SELECT document,version FROM intake_customers WHERE id=?').get(id);if(!r)fail(404,'Không tìm thấy khách hàng');return {...JSON.parse(r.document),version:r.version};};
@@ -24,17 +26,18 @@ function createCrm({sql,fail,readBody,audit}){
   const match=route.match(/^\/api\/intake\/customers\/([a-zA-Z0-9_-]{1,100})(?:\/(interaction|opportunity|assign))?$/);
   if(match&&req.method==='GET'&&!match[2]){const c=read(match[1]);send(200,{customer:c,...related(c.id)});return true;}
   if(req.method!=='POST'||!match&&route!=='/api/intake/customers')return false;
-  if(!rights.edit||!rights.sections.includes('customer'))fail(403,'Không có quyền sửa hồ sơ khách hàng');
+  if(!(route==='/api/intake/customers'&&rights.customers)&&(!rights.edit||!rights.sections.includes('customer')))fail(403,'Không có quyền sửa hồ sơ khách hàng');
   const b=await readBody(req),at=new Date().toISOString();
+  if(!rights.costs)b.customer=Object.fromEntries(BASIC_CUSTOMER_FIELDS.filter(k=>Object.hasOwn(b.customer||{},k)).map(k=>[k,b.customer[k]]));
   if(match){if(!match[2])fail(405,'Phương thức không hỗ trợ');const c=read(match[1]);if(b.expectedVersion!==c.version)fail(409,'Hồ sơ khách hàng đã đổi; tải lại trước khi lưu');if(match[2]==='assign'){if(!rights.users)fail(403,'Chỉ quản trị được điều chuyển');owner(b.ownerId);}let value;try{value=CRM.update(c,match[2],b,user,at);}catch(e){fail(400,e.message);}if(value.events.length>10000||value.opportunities.length>2000)fail(400,'Hồ sơ vượt giới hạn lưu trữ');const saved=save(value,c.version);audit(user,'customer:'+match[2],c.id);send(200,saved);return true;}
   let value;try{value=customer(b.customer||{});}catch(e){fail(400,e.message);}if(!/^[a-zA-Z0-9_-]{1,100}$/.test(value.id))fail(400,'Mã khách hàng không hợp lệ');
   const previous=sql.prepare('SELECT document,version FROM intake_customers WHERE id=?').get(value.id),old=previous?JSON.parse(previous.document):null;
   if((previous?.version||0)!==b.expectedVersion)fail(409,'Thông tin khách đã đổi. Tải lại trước khi lưu.');
   if(old)try{value=customer({...old,...b.customer,account:{...old.account,...b.customer?.account}});}catch(e){fail(400,e.message);}
   const requestedOwner=b.customer?.ownerId;if(old){if(requestedOwner!==undefined&&requestedOwner!==(old.ownerId||''))fail(400,'Dùng Điều chuyển và ghi lý do khi đổi người phụ trách');value.ownerId=old.ownerId||'';}else {value.ownerId=requestedOwner?value.ownerId:user.id;owner(value.ownerId);if(!rights.users&&value.ownerId!==user.id)fail(403,'Chỉ quản trị được giao khách cho người khác');}
-  const fieldPolicy=sql.prepare('SELECT document FROM customer_policy WHERE id=1').get();try{CF.validate(value,fieldPolicy?JSON.parse(fieldPolicy.document).fields:undefined);}catch(e){fail(400,e.message);}
+  const fieldPolicy=sql.prepare('SELECT document FROM customer_policy WHERE id=1').get();try{const fields=fieldPolicy?JSON.parse(fieldPolicy.document).fields:undefined;CF.validate(value,rights.costs?fields:Object.fromEntries(CF.FIELDS.map(f=>[f.key,BASIC_CUSTOMER_FIELDS.includes(f.key)?fields?.[f.key]:{required:false}])));}catch(e){fail(400,e.message);}
   if(['vip','risk'].includes(value.rating)&&!value.ratingReason)fail(400,'Ghi căn cứ đánh giá VIP hoặc rủi ro');
-  value=CRM.saveProfile(old,value,user,at);if(value.events.length>10000)fail(400,'Hồ sơ vượt giới hạn lịch sử');const saved=save(value,previous?.version||0);audit(user,'customer',value.id);send(200,saved);return true;
+  value=CRM.saveProfile(old,value,user,at);if(value.events.length>10000)fail(400,'Hồ sơ vượt giới hạn lịch sử');const saved=save(value,previous?.version||0);audit(user,'customer',value.id);send(200,rights.costs?saved:basicCustomer(saved));return true;
  }};
 }
-module.exports={createCrm};
+module.exports={createCrm,basicCustomer};
