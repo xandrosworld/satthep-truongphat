@@ -119,6 +119,8 @@ function reviewShape(){
  const legend=sheet.querySelector('legend');if(legend)legend.hidden=true;
  const choose=form.elements.sheetPreset;choose.closest('label').querySelector('span').textContent='Hình cần khai';
  for(const key of ['rectangle','circle','triangle','triangle-sides','polygon','trapezoid','rhombus','custom'])choose.append(choose.querySelector('option[value="'+key+'"]'));
+ const methodChoices=document.createElement('fieldset');methodChoices.className='shape-method-choices';methodChoices.innerHTML='<legend>Phương pháp khai báo</legend>'+[...choose.options].map(o=>'<label class="pa-checkbox"><input type="radio" name="shapeMethodChoice" value="'+esc(o.value)+'" '+(choose.value===o.value?'checked':'')+(choose.disabled?' disabled':'')+'>'+esc(o.textContent)+'</label>').join('');choose.closest('label').after(methodChoices);choose.closest('label').hidden=true;
+ methodChoices.addEventListener('change',e=>{if(e.target.name==='shapeMethodChoice'){choose.value=e.target.value;choose.dispatchEvent(new Event('change',{bubbles:true}));}});
  const apply=sheet.querySelector('[data-df-preset-apply]');apply.textContent='Tạo bảng thông số';apply.classList.add('primary');const applyBox=apply.parentElement;methods.append(apply);applyBox.remove();const resetHint=document.createElement('small');resetHint.className='review-shape-reset-hint';resetHint.textContent='Tạo lại bảng sẽ thay các thông số và công thức đang sửa bằng mẫu của hình đã chọn.';methods.append(resetHint);
  const methodHint=document.createElement('p');methodHint.className='review-method-hint';methodHint.dataset.shapeMethodHint='';apply.before(methodHint);
  const pending=document.createElement('p');pending.className='notice';pending.dataset.shapePending='';pending.textContent='Đã đổi cách khai. Bấm “Tạo bảng thông số” để hiện các ô tương ứng. Bảng mới sẽ thay thông số và công thức đang sửa.';methods.append(pending);
@@ -155,6 +157,6 @@ function installReviewImprovementsUI(){
 
  const draw=render;render=()=>{draw();reviewPaint();};const paint=noticePaint;noticePaint=()=>{paint();reviewPaint();};
  document.addEventListener('click',e=>{const b=e.target.closest('[data-review-next]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();document.querySelector('.workspace-tabs [data-tab="'+b.dataset.reviewNext+'"]')?.click();window.scrollTo(0,0);},true);
- const shape=dfShapeEdit;dfShapeEdit=(...args)=>{const value=shape(...args);reviewShape();return value;};
+ const shape=dfShapeEdit;dfShapeEdit=(...args)=>{const value=shape(...args);if(value?.then)return value.then(result=>{reviewShape();return result;});reviewShape();return value;};
  document.addEventListener('click',e=>{const b=e.target.closest('[data-review-jump]');if(!b)return;const destination=b.dataset.reviewJump;if(destination==='cost'){document.querySelector('[data-cost-sources]')?.scrollIntoView({behavior:'smooth',block:'start'});document.querySelector('[data-b6=cost]')?.focus({preventScroll:true});return;}tab=destination==='materials'?'prices':destination;if(destination==='materials')Intake.priceTab='materials';render();window.scrollTo(0,0);});
 }
