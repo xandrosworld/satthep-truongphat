@@ -106,8 +106,8 @@ th{color:var(--muted)}
 [data-notice=inbox]{display:inline-flex;align-items:center;gap:7px}
 [data-notice=inbox].has-unread{background:#fff0df;border:2px solid #c96800;color:#8a4000;font-weight:750}
 [data-notice=confirm]{background:#175d96;color:white;border:1px solid #124b79;font-weight:750;padding:11px 16px;font-size:var(--ui-font-14, 14px)}
-.workspace-tabs .step-done{color:#166534;background:#edf8f0}
-.workspace-tabs .step-changed{color:#934800;background:#fff4df}
+.workspace-tabs .step-done{color:#334155;background:#f1f3f5}
+.workspace-tabs .step-changed{color:#573d20;background:#f4f1ec}
 .workspace-tabs .step-status{display:block;font-size:var(--ui-font-11, 11px);margin-left:6px}
 [data-catalog-draft-panel]{margin-bottom:16px}
 /* Shared workspace: summaries and work queue are visible on arrival. */
@@ -195,7 +195,7 @@ th{color:var(--muted)}
 #dialog .permission-matrix th,#dialog .permission-matrix td{padding-block:7px}
 @media(max-width:600px){.permission-matrix th,.permission-matrix td{padding:9px 5px;font-size:var(--ui-font-12, 12px)}.permission-matrix th:first-child{width:58%}.permission-matrix th:not(:first-child),.permission-matrix td{width:21%}.section-permissions,.formula-rights{min-width:0;margin-inline:0;padding:10px}}
 
-.workspace-tabs{gap:8px;padding-bottom:4px}.workspace-tabs button{padding:10px 12px;border-radius:7px 7px 0 0}.workspace-tabs button.active{background:#dceeff;color:#0759b1;box-shadow:inset 0 0 0 1px #a8d1ff}.workspace-tabs button.active:after{height:3px;background:#087bfa}.workspace-tabs button.active span{background:#087bfa;border-color:#087bfa;color:white}.workspace-tabs .step-status{padding:2px 6px;border-radius:4px;font-weight:600}.workspace-tabs .step-done .step-status{color:#116b39;background:#d5f5df}.workspace-tabs .step-changed .step-status{color:#934800;background:#ffedc2}.workspace-tabs button.active .step-status{box-shadow:0 0 0 1px #ffffffa0}
+.workspace-tabs{gap:8px;padding-bottom:4px}.workspace-tabs button{padding:10px 12px;border-radius:7px 7px 0 0}.workspace-tabs button.active{background:#dceeff;color:#0759b1;box-shadow:inset 0 0 0 1px #a8d1ff}.workspace-tabs button.active:after{height:3px;background:#087bfa}.workspace-tabs button.active span{background:#087bfa;border-color:#087bfa;color:white}.workspace-tabs .step-status{padding:2px 6px;border-radius:4px;font-weight:600}.workspace-tabs .step-done .step-status{color:#334155;background:#e1e6eb}.workspace-tabs .step-changed .step-status{color:#573d20;background:#e9e2d8}.workspace-tabs button.active .step-status{box-shadow:0 0 0 1px #ffffffa0}
 
 /* The formula workbench has one vertical scroll region and keeps every field reachable. */
 #dialog:has(#definition-fields){width:min(1440px,calc(100vw - 32px))!important;max-width:calc(100vw - 32px)!important;max-height:92dvh;overflow:hidden}
@@ -260,7 +260,7 @@ th{color:var(--muted)}
 .quick-table .review-note-cell{width:130px;max-width:180px}
 .review-help{margin:8px 0}.review-help>p{margin-bottom:2px}.review-help summary{color:var(--blue-deep);cursor:pointer;font-size:13px}
 .review-help details[open]{padding:8px;border-left:3px solid var(--line)}
-.review-tasks{border-left:3px solid #d99521;background:#fff9ec;padding:12px;margin-top:12px}
+.review-tasks{border-left:3px solid #798797;background:#f1f3f5;padding:12px;margin-top:12px}
 .review-tasks>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:8px}
 .review-exports{padding:16px;margin:12px 0}.review-exports .actions{margin-top:10px;flex-wrap:wrap}
 .review-dimension-name{display:block;margin-bottom:5px}
