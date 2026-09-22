@@ -1,7 +1,7 @@
 function technicalQuoteDocument(document){
  const projected=TPTechnical.project(document),baseline=Team.quoteTechnicalBaseline;
  // Shared catalogue edits are published separately; quote saves retain their loaded catalogue.
- if(Team.loaded&&baseline?.id===teamCurrent()?.id)return {...C.copy(baseline.document),quote:projected.quote};
+ if(Team.loaded&&baseline?.id===teamCurrent()?.id)return TPTechnical.project({...C.copy(baseline.document),quote:document.quote});
  return projected;
 }
 'use strict';

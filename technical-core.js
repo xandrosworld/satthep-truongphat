@@ -59,7 +59,7 @@ function merge(original,input,catalog){
  // Browser identities may be assigned to legacy recipes without changing them.
  for(const r of submitted.quote?.ratesSnapshot||[]){const old=before.quote.ratesSnapshot.find(x=>x.id===r.id);if(!old)continue;for(const [i,recipe] of (r.consumptions||[]).entries())if(old.consumptions?.[i]?.id===undefined)delete recipe.id;if(r.consumption&&old.consumption?.id===undefined)delete r.consumption.id;}
  const projected=project(submitted);
- if(JSON.stringify(canonical(submitted))!==JSON.stringify(canonical(projected)))throw Error('Dữ liệu kỹ thuật chứa trường giá hoặc trường không được phép');
+ if(JSON.stringify(canonical(submitted))!==JSON.stringify(canonical(projected)))throw Error('Dữ liệu kỹ thuật chứa trường giá hoặc trường không được phép: '+differencePaths(submitted,projected).slice(0,4).join(', '));
  for(const k of Object.keys(before))if(k!=='quote'&&!equal(before[k],submitted[k]))throw Error('Không sửa danh mục qua báo giá kỹ thuật');
  for(const k of Object.keys(before.quote))if(![...quoteKeys,'products','ratesSnapshot'].includes(k)&&!equal(before.quote[k],submitted.quote[k]))throw Error('Không sửa cấu hình giá hoặc đơn giá nguyên công');
  const rates=copy(original.quote.ratesSnapshot),technicalRates=copy(submitted.quote.ratesSnapshot);
@@ -95,6 +95,11 @@ function merge(original,input,catalog){
   next.children=n.children.map(combine);return next;
  }
  assign(result.quote,submitted.quote,quoteKeys.filter(k=>!['customer','project'].includes(k)||Object.hasOwn(submitted.quote,k)));result.quote.products=submitted.quote.products.map(combine);return result;
+}
+function differencePaths(a,b,path='document'){
+ if(equal(a,b))return [];
+ if(a&&b&&typeof a==='object'&&typeof b==='object')return [...new Set([...Object.keys(a),...Object.keys(b)])].flatMap(k=>differencePaths(a[k],b[k],path+'.'+k));
+ return [path];
 }
 function canonical(x){return Array.isArray(x)?x.map(canonical):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,canonical(x[k])])):x;}
 function equal(a,b){return JSON.stringify(canonical(a))===JSON.stringify(canonical(b));}
