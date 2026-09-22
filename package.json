@@ -3,6 +3,8 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
+    "test:chat": "node --test tests/chat-server.test.cjs",
+    "test:chat:ui": "node tests/chat-browser.cjs",
     "verify:declaration-review": "node tools/verify-declaration-review.cjs",
     "test:declaration-review:ui": "node tests/declaration-review-browser.cjs",
     "verify:rules-catalog": "node tools/verify-rules-catalog.cjs",
