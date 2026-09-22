@@ -374,3 +374,6 @@ th{color:var(--muted)}
 .quick-product .quick-table .quick-input input{width:100%;min-width:0;box-sizing:border-box}
 .quick-product .quick-custom-dimensions{gap:12px 16px;min-width:0}
 .quick-product .quick-custom-dimensions>label{flex:0 1 100px}
+
+/* Give material names room while keeping the three quantity fields aligned. */
+@media(min-width:900px){#dialog .work-recipe .form-grid.three>label:first-child{grid-column:span 2}}

@@ -87,7 +87,7 @@ function qocEditRecipes(id,catalog=false){
  const rate=(catalog?db.rates:db.quote.ratesSnapshot).find(r=>r.id===id);if(!rate)return;
  if(!catalog)inWritable();
  const prior=TPWork.declaredRecipes(rate).map(r=>({...C.copy(r),_id:r.id||C.uid()}));
- openDialog('Định mức vật tư · '+rate.name,`<p>${catalog?'Lưu trong danh mục cho báo giá mới. Báo giá đã lập giữ định mức riêng.':'Áp dụng cho mọi dòng dùng công đoạn này trong báo giá hiện tại.'}</p><p>Lượng cần dùng = lượng thực hiện × định mức × số lớp × (1 + hao hụt / 100). Có thể chọn nhiều mã sơn lót, sơn phủ, dung môi.</p><label><input type="checkbox" name="recipe-enabled" ${rate.consumptionsEnabled!==false?'checked':''}> Áp dụng định mức vật tư</label><div id="work-recipes">${prior.map(workRecipeRow).join('')}</div>${workButton('+ Thêm vật tư','add-recipe')}`,'Lưu định mức',f=>{
+ openDialog('Định mức vật tư · '+rate.name,`<p>${catalog?'Lưu trong danh mục cho báo giá mới. Báo giá đã lập giữ định mức riêng.':'Áp dụng cho mọi dòng dùng công đoạn này trong báo giá hiện tại.'}</p><p>Lượng cần dùng = lượng thực hiện × định mức × số lớp × (1 + hao hụt / 100). Có thể chọn nhiều mã sơn lót, sơn phủ, dung môi.</p><label class="pa-checkbox"><input type="checkbox" name="recipe-enabled" ${rate.consumptionsEnabled!==false?'checked':''}> Áp dụng định mức vật tư</label><div id="work-recipes">${prior.map(workRecipeRow).join('')}</div>${workButton('+ Thêm vật tư','add-recipe')}`,'Lưu định mức',f=>{
  const consumptions=[...document.querySelectorAll('#work-recipes .work-recipe')].map(el=>{
  const key=el.dataset.recipeId,old=prior.find(r=>r._id===key),material=db.materials.find(m=>m.id===f.get('recipe-material-'+key));
  if(!material)throw Error('Chọn mã vật tư cho từng dòng');
