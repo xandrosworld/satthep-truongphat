@@ -9,6 +9,12 @@ test('production: approved snapshot, batches, technical isolation, preparation, 
  const d=P.demoSeed(),pid=d.quote.products[0].id,qty=d.quote.products[0].qty;
  const q=(await call('quotes','POST',{document:d},admin)).data;await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1},admin);await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2},admin);
  const order=(await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'DH-PRODUCTION'},admin)).data;A.ok(order.id);
+ A.equal((await call('production','POST',{orderId:order.id,productId:pid,quantity:1,code:'BLOCKED'},admin)).status,409);
+ A.equal((await call('orders','GET',undefined,tech)).status,403);
+ A.equal((await call('orders/'+order.id+'/confirm','POST',{quoteVersion:2},admin)).status,409);
+ A.equal((await call('orders/'+order.id+'/confirm','POST',{quoteVersion:3},sales)).status,403);
+ A.equal((await call('orders/'+order.id+'/confirm','POST',{quoteVersion:3},admin)).status,200);
+ A.equal((await call('orders/'+order.id+'/confirm','POST',{quoteVersion:3},admin)).status,200);
  const source=await call('production/orders/'+order.id,'GET',undefined,tech);A.equal(source.status,200);
  const issue={orderId:order.id,productId:pid,quantity:qty/2,code:'LSX-001'};
  A.equal((await call('production','POST',issue,tech)).status,403);A.equal((await call('production','POST',issue,{...admin,csrf:'bad'})).status,403);
