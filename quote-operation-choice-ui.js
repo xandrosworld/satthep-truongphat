@@ -54,7 +54,7 @@ function qocTechnicalEdit(id,draft){
   dfCatalogWrite(()=>{if(old)Object.assign(old,{name,machine,technicalNotes});else db.rates.push({...r,name,machine,technicalNotes});});closeDialog();toast('Đã lưu thông tin công đoạn');
  });
 }
-function qocOperationCatalog(){return `<div class="rc-toolbar"><p>Khai công đoạn kỹ thuật và máy sử dụng. Đơn giá, gói công và hệ số khai tại Đơn giá đầu vào.</p>${btn('+ Công đoạn','new-rate')}</div><section class="panel table-scroll"><table><thead><tr><th>Tên công đoạn</th><th>Máy sử dụng</th><th>Thông tin kỹ thuật</th><th></th></tr></thead><tbody>${db.rates.filter(r=>r.operationType!=='package'&&pgVisible(r)&&rcMatch(r.id+' '+r.name+' '+(r.machine||''))).map(r=>`<tr><td>${esc(r.name)}${pgBadge(r)}</td><td>${esc(r.machine||'Chưa khai')}</td><td>${esc(r.technicalNotes||'—')}</td><td><button type="button" class="button small" data-technical-rate="${esc(r.id)}">Sửa công đoạn</button></td></tr>`).join('')}</tbody></table></section>`;}
+function qocOperationCatalog(){return `<div class="rc-toolbar"><p>Khai công đoạn kỹ thuật và máy sử dụng. Đơn giá, gói công và hệ số khai tại Đơn giá đầu vào.</p>${btn('+ Công đoạn','new-rate')}</div><section class="panel table-scroll"><table><thead><tr><th>Tên công đoạn</th><th>Máy sử dụng</th><th>Thông tin kỹ thuật</th><th>Định mức vật tư</th><th></th></tr></thead><tbody>${db.rates.filter(r=>r.operationType!=='package'&&pgVisible(r)&&rcMatch(r.id+' '+r.name+' '+(r.machine||''))).map(r=>`<tr><td>${esc(r.name)}${pgBadge(r)}</td><td>${esc(r.machine||'Chưa khai')}</td><td>${esc(r.technicalNotes||'—')}</td><td>${TPWork.declaredRecipes(r).map(x=>esc((x.spec?.name||'Chưa chọn vật tư')+' · '+num(x.norm)+' '+(x.spec?.unit||'')+'/'+x.basis+' × '+(x.layers??1)+' lớp')).join('<br>')||'Chưa khai'}<br><button type="button" class="button small" data-recipe-editor="${esc(r.id)}" data-catalog="true">Khai định mức vật tư</button></td><td><button type="button" class="button small" data-technical-rate="${esc(r.id)}">Sửa công đoạn</button></td></tr>`).join('')}</tbody></table></section>`;}
 function qocSelectOperation(){
  inWritable();const rates=db.rates.filter(r=>r.enabled!==false&&r.operationType!=='package');if(!rates.length)return toast('Khai công đoạn tại Danh mục quy ước trước');
  openDialog('Chọn công đoạn đã khai',`${select('Công đoạn từ Danh mục quy ước','operationId',rates.map(r=>[r.id,pgLabel(r)+' · '+r.id+' · '+r.name]),rates[0].id)}<div id="qoc-operation-options"></div><p>Chọn cách giá cho nguyên công này, sau đó tích vào các dòng thực hiện. Giá và định mức đã lưu trong báo giá giữ nguyên đến khi chủ động lấy bảng mới.</p>`,'Áp dụng công đoạn',f=>{
@@ -82,3 +82,19 @@ function installQuoteOperationChoiceUI(){
     }catch(error){render();toast(error.message);}
   });
 }
+
+function qocEditRecipes(id,catalog=false){
+ const rate=(catalog?db.rates:db.quote.ratesSnapshot).find(r=>r.id===id);if(!rate)return;
+ if(!catalog)inWritable();
+ const prior=TPWork.declaredRecipes(rate).map(r=>({...C.copy(r),_id:r.id||C.uid()}));
+ openDialog('Định mức vật tư · '+rate.name,`<p>${catalog?'Lưu trong danh mục cho báo giá mới. Báo giá đã lập giữ định mức riêng.':'Áp dụng cho mọi dòng dùng công đoạn này trong báo giá hiện tại.'}</p><p>Lượng cần dùng = lượng thực hiện × định mức × số lớp × (1 + hao hụt / 100). Có thể chọn nhiều mã sơn lót, sơn phủ, dung môi.</p><label><input type="checkbox" name="recipe-enabled" ${rate.consumptionsEnabled!==false?'checked':''}> Áp dụng định mức vật tư</label><div id="work-recipes">${prior.map(workRecipeRow).join('')}</div>${workButton('+ Thêm vật tư','add-recipe')}`,'Lưu định mức',f=>{
+ const consumptions=[...document.querySelectorAll('#work-recipes .work-recipe')].map(el=>{
+ const key=el.dataset.recipeId,old=prior.find(r=>r._id===key),material=db.materials.find(m=>m.id===f.get('recipe-material-'+key));
+ if(!material)throw Error('Chọn mã vật tư cho từng dòng');
+ const value=k=>{const raw=f.get('recipe-'+k+'-'+key),v=Number(raw);if(raw===''||!Number.isFinite(v)||v<0||k==='layers'&&v<=0)throw Error('Định mức, số lớp và hao hụt phải hợp lệ');return v;};
+ return {id:old?.id||key,spec:C.copy(old?.spec?.id===material.id?old.spec:material),basis:f.get('recipe-basis-'+key),norm:value('norm'),layers:value('layers'),loss:value('loss')};});
+ const apply=()=>{rate.consumptions=consumptions;rate.consumptionsEnabled=f.has('recipe-enabled');delete rate.consumption;};
+ if(catalog){dfCatalogWrite(apply);closeDialog();toast('Đã ghi định mức. Lưu danh mục chung để dùng trên máy khác.');}else{inWritable();saveAndClose(apply,'Đã lưu định mức và tính lại nhu cầu vật tư');}
+ });$('#dialog').classList.add('wide-dialog');
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-recipe-editor]');if(b)try{qocEditRecipes(b.dataset.recipeEditor,b.dataset.catalog==='true');}catch(err){inError(err);}});
