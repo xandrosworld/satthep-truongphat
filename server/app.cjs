@@ -90,6 +90,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const formulaAccess=require('./formula-access.cjs').createFormulaAccess({sql,fail,readBody,audit,transaction});
   const notifications=require('./notifications.cjs').createNotifications({sql,fail,readBody,transaction,audit,getQuote});
   const chat=require('./chat.cjs').createChat({sql,fail,readBody,transaction});
+  const production=require('./production.cjs').createProduction({sql,fail,readBody,transaction,audit});
   const server=http.createServer(async(req,res)=>{let responseUser=null;
     const send=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(responseUser?formulaAccess.project(value,responseUser,permissions(responseUser)):value));};
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Cache-Control','no-store');
@@ -110,6 +111,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       }
       const user=session(req);if(!user)fail(401,'Cần đăng nhập');const rights=permissions(user);responseUser=user;
       if(!['GET','HEAD'].includes(req.method)&&req.headers['x-csrf-token']!==user.csrf)fail(403,'Phiên yêu cầu không hợp lệ; tải lại trang');
+      if(await production.handle({req,route,user,send}))return;
       if(await chat.handle({req,route,user,send,res}))return;
       if(await formulaAccess.handle({req,route,user,rights,send}))return;
       if(await accounts.handle({req,route,user,rights,send}))return;
@@ -195,7 +197,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
         }
       }
       if(route==='/api/audit'&&req.method==='GET'){if(!rights.users)fail(403,'Chỉ quản trị');return send(200,all('SELECT a.at,u.name,a.action,a.entity,a.detail FROM audit a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.seq DESC LIMIT 500'));}
-      if(route==='/api/backup'&&req.method==='GET'){if(!rights.users)fail(403,'Chỉ quản trị');audit(user,'backup','workspace');return send(200,{format:'truongphat-server-backup-1',at:new Date().toISOString(),quotes:all('SELECT * FROM quotes'),quoteDeletions:all('SELECT * FROM quote_deletions'),revisions:all('SELECT * FROM revisions'),orders:all('SELECT * FROM orders'),catalog:all('SELECT * FROM catalog'),catalogRevisions:all('SELECT * FROM catalog_revisions'),commercial:all('SELECT * FROM commercial'),customers:all('SELECT * FROM intake_customers'),customerPolicy:all('SELECT * FROM customer_policy'),roleTemplates:all('SELECT * FROM role_templates'),formulaLocks:all('SELECT * FROM formula_locks'),handoffs:all('SELECT * FROM quote_handoffs'),handoffEvents:all('SELECT * FROM handoff_events'),notifications:all('SELECT * FROM notifications'),chatRooms:all('SELECT * FROM chat_rooms'),chatMembers:all('SELECT * FROM chat_members'),chatMessages:all('SELECT * FROM chat_messages'),audit:all('SELECT * FROM audit'),users:all('SELECT id,username,name,role,active,can_factors,can_below_cost,can_view_costs,can_approve,technical_delegated,section_access,role_template_id,can_formula_use,can_formula_view,can_formula_edit,can_formula_unlock,can_reopen,deleted_at FROM users')});}
+      if(route==='/api/backup'&&req.method==='GET'){if(!rights.users)fail(403,'Chỉ quản trị');audit(user,'backup','workspace');return send(200,{format:'truongphat-server-backup-1',at:new Date().toISOString(),quotes:all('SELECT * FROM quotes'),quoteDeletions:all('SELECT * FROM quote_deletions'),revisions:all('SELECT * FROM revisions'),orders:all('SELECT * FROM orders'),catalog:all('SELECT * FROM catalog'),catalogRevisions:all('SELECT * FROM catalog_revisions'),commercial:all('SELECT * FROM commercial'),customers:all('SELECT * FROM intake_customers'),customerPolicy:all('SELECT * FROM customer_policy'),roleTemplates:all('SELECT * FROM role_templates'),formulaLocks:all('SELECT * FROM formula_locks'),handoffs:all('SELECT * FROM quote_handoffs'),handoffEvents:all('SELECT * FROM handoff_events'),notifications:all('SELECT * FROM notifications'),productionJobs:all('SELECT * FROM production_jobs'),productionEvents:all('SELECT * FROM production_events'),chatRooms:all('SELECT * FROM chat_rooms'),chatMembers:all('SELECT * FROM chat_members'),chatMessages:all('SELECT * FROM chat_messages'),audit:all('SELECT * FROM audit'),users:all('SELECT id,username,name,role,active,can_factors,can_below_cost,can_view_costs,can_approve,technical_delegated,section_access,role_template_id,can_formula_use,can_formula_view,can_formula_edit,can_formula_unlock,can_reopen,deleted_at FROM users')});}
       fail(404,'Không tìm thấy chức năng');
     }catch(error){if(!res.headersSent)send(error.status||500,{error:error.status?error.message:'Không thực hiện được; kiểm tra dữ liệu hoặc máy chủ'});else res.end();}
   });

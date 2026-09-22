@@ -1,0 +1,28 @@
+const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require(process.env.TP_PRODUCTION_RELEASE?'../artifacts/gd1-report-2026-09-20/release/server/app.cjs':'../server/app.cjs'),P=require('../pricing-core.js');
+test('production: approved snapshot, batches, technical isolation, preparation, concurrency, QC and backup',async t=>{
+ const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),dir=fs.mkdtempSync(path.join(os.tmpdir(),'tp-production-')),databasePath=path.join(dir,'app.sqlite');let app=createApp({databasePath});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(async()=>{await new Promise(r=>app.server.close(r));fs.rmSync(dir,{recursive:true,force:true});});let base='http://127.0.0.1:'+app.server.address().port;
+ const call=async(route,method='GET',body,s)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(s?{Cookie:s.cookie,'X-CSRF-Token':s.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};};
+ const password='Local-production-test-2026!';const admin=await call('setup','POST',{username:'admin',name:'Admin',password});admin.csrf=admin.data.csrf;
+ for(const role of ['technical','sales'])await call('users','POST',{username:role,name:role,password,role},admin);
+ const tech=await call('login','POST',{username:'technical',password});tech.csrf=tech.data.csrf;const sales=await call('login','POST',{username:'sales',password});sales.csrf=sales.data.csrf;
+ A.equal((await call('production')).status,401);A.equal((await call('production','GET',undefined,sales)).status,403);
+ const d=P.demoSeed(),pid=d.quote.products[0].id,qty=d.quote.products[0].qty;
+ const q=(await call('quotes','POST',{document:d},admin)).data;await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1},admin);await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2},admin);
+ const order=(await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'DH-PRODUCTION'},admin)).data;A.ok(order.id);
+ const source=await call('production/orders/'+order.id,'GET',undefined,tech);A.equal(source.status,200);
+ const issue={orderId:order.id,productId:pid,quantity:qty/2,code:'LSX-001'};
+ A.equal((await call('production','POST',issue,tech)).status,403);A.equal((await call('production','POST',issue,{...admin,csrf:'bad'})).status,403);
+ let response=await call('production','POST',issue,admin);A.equal(response.status,201,JSON.stringify(response.data));let j=response.data;A.equal((await call('production','POST',issue,admin)).data.id,j.id);A.equal((await call('production','POST',{...issue,code:'LSX-OVER',quantity:qty},admin)).status,409);
+ const noMoney=o=>{for(const [k,v]of Object.entries(o||{})){A.ok(!/^(price|cost|rate|profit|baseline|total|offer|unitPrice|unitSell|grand)$/i.test(k),'leaked '+k);if(v&&typeof v==='object')noMoney(v);}};noMoney(source.data);noMoney((await call('production/'+j.id,'GET',undefined,tech)).data);
+ A.equal(j.packet.layoutBasis,'batch-recalculated');A.equal(j.packet.product.quantity,qty/2);A.ok(j.packet.cutting.length);A.ok(j.packet.finishing[0].materialId);A.equal(j.packet.finishing[0].unit,'kg');
+ const update=async b=>{const res=await call('production/'+j.id,'PUT',{expectedVersion:j.version,...b},tech);if(res.status===200)j=res.data;return res;};
+ let op=j.progress.operations[0];A.equal((await update({action:'operation',operationId:op.id,assignee:'',status:'running',output:0,note:''})).status,409);
+ A.equal((await update({action:'prepare',deadline:'2026-10-01',workshop:'Xưởng 1',materialsReady:true,drawingReady:true,note:'Đã kiểm tra'})).status,200);
+ A.equal((await call('production/'+j.id,'PUT',{expectedVersion:1,action:'complete'},tech)).status,409);
+ for(const o of j.packet.operations){A.equal((await update({action:'operation',operationId:o.id,assignee:'',status:'running',output:0,note:''})).status,200);A.equal((await update({action:'operation',operationId:o.id,assignee:'',status:'done',output:o.quantity,note:'Đã thực hiện'})).status,200);}
+ A.equal((await update({action:'complete'})).status,409);A.equal((await update({action:'qc',passed:j.quantity+1,rejected:0,note:''})).status,400);A.equal((await update({action:'qc',passed:j.quantity,rejected:0,note:'Đạt'})).status,200);A.equal((await update({action:'complete'})).status,200);A.equal(j.state,'completed');A.equal((await update({action:'qc',passed:0,rejected:0,note:''})).status,409);
+ const backup=(await call('backup','GET',undefined,admin)).data;A.equal(backup.productionJobs.length,1);A.ok(backup.productionEvents.length>4);
+ const snapshot=j.packet;await call('quotes/'+q.id+'/reopen','POST',{expectedVersion:3,reason:'new revision'},admin);A.deepEqual((await call('production/'+j.id,'GET',undefined,tech)).data.packet,snapshot);
+ A.equal((await call('production','POST',{...issue,code:'LSX-002'},admin)).status,201);A.equal((await call('production','POST',{...issue,code:'LSX-003'},admin)).status,409);
+ await new Promise(r=>app.server.close(r));app=createApp({databasePath});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));base='http://127.0.0.1:'+app.server.address().port;const durable=(await call('production/'+j.id,'GET',undefined,tech)).data;A.equal(durable.state,'completed');A.deepEqual(durable.packet,snapshot);A.ok(durable.events.length>4);
+});
