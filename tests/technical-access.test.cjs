@@ -40,3 +40,16 @@ test('technical projection preserves geometry and selected work units without th
  A.equal(after.total.weight,before.total.weight);A.equal(after.nodes[id].ownOps[0].unit,'m²');A.equal(after.nodes[id].ownOps[0].basis,before.nodes[id].ownOps[0].basis);A.equal(after.nodes[id].ownOps[0].rate,0);A.deepEqual(T.project(view),view);
  A.deepEqual(T.merge(d,view).quote.ratesSnapshot,d.quote.ratesSnapshot);
 });
+
+test('technical saves newly published material into older quote without exposing or overwriting prices',async t=>{
+ const {call,admin,tech,id}=await harness(t),old=(await call('quotes/'+id,'GET',undefined,admin)).data;
+ const master=(await call('catalog','GET',undefined,admin)).data,m={...C.copy(master.catalog.materials[0]),id:'VT-NEW',price:45678};master.catalog.materials.push(m);
+ A.equal((await call('catalog','PUT',{catalog:master.catalog,expectedVersion:master.version},admin)).status,200);
+ const view=(await call('quotes/'+id,'GET',undefined,tech)).data,n=C.copy(view.document.quote.products[0].children.find(n=>n.kind==='material'));
+ n.id='new-material-node';n.materialId=m.id;n.spec={...T.project({...old.document,materials:[m]}).materials[0]};n.ops=[];view.document.quote.products[0].children.push(n);
+ const saved=await call('quotes/'+id,'PUT',{document:view.document,expectedVersion:view.version},tech);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const full=(await call('quotes/'+id,'GET',undefined,admin)).data;A.equal(C.flatten(full.document.quote.products).find(n=>n.id==='new-material-node').spec.price,45678);A.deepEqual(full.document.materials,old.document.materials);
+ const safe=(await call('quotes/'+id,'GET',undefined,tech)).data;A.equal(C.flatten(safe.document.quote.products).find(n=>n.id==='new-material-node').spec.price,0);
+ const child=C.flatten(safe.document.quote.products).find(n=>n.id==='new-material-node');child.materialId='UNPUBLISHED';child.spec.id='UNPUBLISHED';A.equal((await call('quotes/'+id,'PUT',{document:safe.document,expectedVersion:safe.version},tech)).status,403);
+ child.materialId=m.id;child.spec.id=m.id;child.spec.price=999;A.equal((await call('quotes/'+id,'PUT',{document:safe.document,expectedVersion:safe.version},tech)).status,403);
+});

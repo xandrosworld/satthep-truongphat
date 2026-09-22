@@ -358,7 +358,7 @@ th{color:var(--muted)}
 
 /* Completed steps remain visible beside the blue current step. */
 .workspace-tabs button.step-done{background:#e0e6ed;color:#24374d;box-shadow:inset 0 0 0 1px #8494a7;font-weight:600}
-.workspace-tabs .step-done .step-status{background:#33465e;color:#fff;padding:4px 8px;font-weight:700}
+.workspace-tabs .step-done .step-status{background:#dcecff;color:#175b91;border:1px solid #8ab6dc;padding:4px 8px;font-weight:700}
 .workspace-tabs button.step-done.active{background:#dceeff;color:#0759b1;box-shadow:inset 0 0 0 2px #087bfa}
 .quick-product .quick-table{width:100%;min-width:1250px;table-layout:fixed}
 .quick-product .quick-table th{white-space:normal;line-height:1.4}
