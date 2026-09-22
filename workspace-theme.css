@@ -351,3 +351,5 @@ th{color:var(--muted)}
 #dialog .product-links-form .link-config-table tr{display:block;padding:12px 0;border-bottom:1px solid #ccd6e0}
 #dialog .product-links-form .link-config-table td{display:block;width:100%;border:0}
 }
+
+.quick-custom-dimensions{display:flex;flex-wrap:wrap;gap:8px 12px;min-width:240px}.quick-custom-dimensions>label{display:flex;flex-direction:column;gap:4px;flex:0 1 96px;color:#334155;font-weight:600}.quick-custom-dimensions small{font-weight:400}.quick-custom-dimensions .quick-input{width:100%}
