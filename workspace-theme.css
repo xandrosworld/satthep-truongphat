@@ -353,3 +353,5 @@ th{color:var(--muted)}
 }
 
 .quick-custom-dimensions{display:flex;flex-wrap:wrap;gap:8px 12px;min-width:240px}.quick-custom-dimensions>label{display:flex;flex-direction:column;gap:4px;flex:0 1 96px;color:#334155;font-weight:600}.quick-custom-dimensions small{font-weight:400}.quick-custom-dimensions .quick-input{width:100%}
+
+.review-tasks.has-pending{border:1px solid #b26c43;border-left:5px solid #a64b23;background:#fff7f2;padding:16px;color:#442a1e}.review-tasks.has-pending h3{color:#8b361d;font-size:17px}.review-tasks.has-pending>div{padding:12px 0;border-top:1px solid #e9d4c6}.review-tasks.has-pending>div>span{font-weight:600;line-height:1.5}.review-tasks.has-pending .button{border-color:#a65a36;color:#763519;background:white;flex-shrink:0}.node-summary small{display:block;color:#475569;margin-top:5px}

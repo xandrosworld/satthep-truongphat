@@ -20,7 +20,10 @@ function material(n,unfolded=false){
   let faces=[],kind=C.shapes[m.shape].name,note='Hình học danh nghĩa theo mã và kích thước nhập. Chưa mô phỏng dung sai, bán kính góc hoặc mối hàn.';
   const dimensions=[['Dài',L],...Object.entries(p).map(([k,v])=>[k,v])];
   if(m.shape==='sheet'){
-    if(formed&&!unfolded){
+    if(g.polygon){
+      const outline=g.polygon.map(([x,y])=>[x-L/2,y-g.width/2]);if(outline.reduce((sum,a,i)=>{const b=outline[(i+1)%outline.length];return sum+a[0]*b[1]-a[1]*b[0];},0)>0)outline.reverse();
+      faces=extrusion(T,outline).map(face=>face.map(([t,x,z])=>[x,-t,z]));kind='Phôi '+g.polygon.length+' cạnh';dimensions.splice(0,dimensions.length,...g.sideLengths.map((v,i)=>['C'+(i+1),v]),['T',T]);
+    }else if(formed&&!unfolded){
       if(!(d.W>0)||!(d.F>=0)||formed==='tray'&&!(d.H>=0))throw Error('Kích thước thành hình W/H/F chưa hợp lệ');
       if(formed==='tray'){
         faces=cuboid(L,T,d.W);for(const sign of [-1,1]){if(d.H>0)faces.push(...cuboid(L,d.H,T,0,d.H/2,sign*d.W/2));if(d.F>0)faces.push(...cuboid(L,T,d.F,0,d.H,sign*(d.W+d.F)/2));}
@@ -42,6 +45,7 @@ function material(n,unfolded=false){
     measurements.push({key:'W',value:width,a:[L/2,0,-width/2],b:[L/2,0,width/2]});
     if(height>0)measurements.push({key:m.shape==='sheet'&&!bent?'T':'H',value:height,a:[-L/2,bent&&formed==='tray'?0:bent&&formed==='cover'?-height:-height/2,-width/2],b:[-L/2,bent&&formed==='tray'?height:bent&&formed==='cover'?0:height/2,-width/2]});
   }
+  if(g.polygon){measurements.splice(0,measurements.length,...g.polygon.map((a,i)=>{const b=g.polygon[(i+1)%g.polygon.length];return {key:'C'+(i+1),value:g.sideLengths[i],a:[a[0]-L/2,T/2,a[1]-g.width/2],b:[b[0]-L/2,T/2,b[1]-g.width/2]};}));}
   return {faces,kind,note,dimensions,measurements,formed,unfolded:!!unfolded,bounds:box};
 }
 function collect(node){const rows=[];function walk(n,count){if(n.kind==='material')rows.push({node:n,count});else for(const c of n.children||[])walk(c,count*c.qty);}walk(node,1);return rows;}

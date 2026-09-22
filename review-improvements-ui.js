@@ -37,6 +37,7 @@ function reviewTasks(){
  const row=(label,button)=>`<div><span>${label}</span>${button}</div>`;
  const t=result.tax,link=teamCurrent(),state=Notices.quoteId===link?.id?Notices.state:null;
  let html='<h3>Việc cần hoàn tất</h3>';
+ for(const [gi,g] of result.groups.entries())if(g.error)html+=row(esc(g.spec.id+': '+g.error),meButton('Kiểm tra cách xếp phôi','nesting',gi));
  if(link&&Team.dirty)html+=row('Lưu những thay đổi đang làm',teamButton('Lưu báo giá lên máy chủ','save'));
  if(t?.releaseErrors.length)html+=row('Bổ sung hoặc xác nhận điều kiện giá và thuế','<button class="button small" data-tax="edit">Mở điều kiện thuế</button>');
  if(t&&!t.costKnown)html+=row('Rà nguồn giá đầu vào','<button class="button small" data-review-jump="cost">Mở nguồn giá</button>');
@@ -44,6 +45,7 @@ function reviewTasks(){
  if(link&&state&&!state.technical?.current)html+=row('Rà và xác nhận phần kỹ thuật','<button class="button small" data-review-jump="operations">Mở công đoạn</button>');
  if(link&&state&&!state.materials?.current)html+=row('Rà và xác nhận giá vật tư','<button class="button small" data-review-jump="materials">Mở giá vật tư</button>');
  if(html==='<h3>Việc cần hoàn tất</h3>')html+='<p>Đã hoàn tất các phần kiểm tra ở đây. Xem Bản chào giá trước khi gửi duyệt.</p>';
+ const pending=html.includes('<div>');tasks.classList.toggle('has-pending',pending);tasks.setAttribute('role','region');tasks.setAttribute('aria-label','Việc cần hoàn tất');if(pending)html=html.replace('<h3>Việc cần hoàn tất</h3>','<h3>! Cần xử lý · '+(html.match(/<div>/g)||[]).length+' việc</h3>');
  if(tasks._reviewHtml!==html){tasks.innerHTML=html;tasks._reviewHtml=html;}if(!tasks.isConnected)panel.append(tasks);
  const errors=panel.querySelector(':scope > p.help-text');if(errors&&t?.releaseErrors.length)reviewFold([errors],'Xem các nội dung cần kiểm tra','tax-reasons');
 }
