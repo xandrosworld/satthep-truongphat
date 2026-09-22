@@ -70,7 +70,7 @@ function technicalClean(root){
  for(const table of root.querySelectorAll('table')){
   const heads=[...table.querySelectorAll('thead tr:first-child > th')],remove=[];
   heads.forEach((h,i)=>{if(/^(Giá đã chọn|Tiền tính thêm|Thành tiền|Đơn giá|Tiền vật tư|Chi phí|Giá trị|Giá vật tư)/.test(h.textContent.trim()))remove.push(i);});
-  for(const row of table.rows)for(const index of [...remove].reverse())row.children[index]?.remove();
+  for(const row of table.rows){let column=0;for(const cell of [...row.cells]){const span=cell.colSpan||1,start=column;column+=span;const hidden=remove.filter(i=>i>=start&&i<column).length;if(hidden===span)cell.remove();else if(hidden)cell.colSpan=span-hidden;}}
  }
  for(const p of root.querySelectorAll('[data-b2-purchase]'))p.innerHTML=p.innerHTML.replace(/ · [^·<>]+ đ$/, '');
  for(const button of root.querySelectorAll('[data-pa="op-detail"]:not(.pa-op-quantity)')){const n=C.findNode(db.quote.products,button.dataset.id),r=result.nodes[n?.id]?.ownOps?.[Number(button.dataset.index)];button.innerHTML=`Lượng công việc<small>${num(r?.basis,4)} ${esc(r?.unit||'')} · xem / sửa</small>`;}
