@@ -30,6 +30,8 @@ test('locked formula cannot change via catalog, quotation or library; lock CAS a
  A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:0,reason:'Stale'},admin)).status,409);
  const record=(await call('catalog','GET',undefined,admin)).data,changed=structuredClone(record.catalog);changed.rules.find(r=>r.id==='tray').width='W + H';
  A.equal((await call('catalog','PUT',{catalog:changed,expectedVersion:record.version},u.session)).status,403);
+ A.equal((await call('catalog','PUT',{catalog:changed,expectedVersion:record.version},admin)).status,403);
+ const removed=structuredClone(record.catalog);removed.rules=removed.rules.filter(r=>r.id!=='tray');A.equal((await call('catalog','PUT',{catalog:removed,expectedVersion:record.version},admin)).status,403);
  const library=structuredClone(record.catalog);C.flatten(library.library).find(n=>n.rule==='tray').ruleSpec.width='W + H';A.equal((await call('catalog','PUT',{catalog:library,expectedVersion:record.version},u.session)).status,403);
  const doc=P.demoSeed(),q=await call('quotes','POST',{document:doc},admin);const leaf=C.flatten(doc.quote.products).find(n=>n.rule==='tray');leaf.ruleSpec.width='W + H';
  A.equal((await call('quotes/'+q.data.id,'PUT',{document:doc,expectedVersion:1},u.session)).status,403);

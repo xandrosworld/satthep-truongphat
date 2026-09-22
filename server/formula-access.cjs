@@ -23,6 +23,8 @@ function createFormulaAccess({sql,fail,readBody,audit,transaction}){
  function guard(before,after,p,catalog=false){
   before=before||{};after=after||{};
   const old=records(before),next=records(after),masterRecords=records(JSON.parse(sql.prepare('SELECT document FROM catalog WHERE id=1').get().document)),blocked=new Set(locks().filter(x=>x.locked).map(x=>x.key));
+  if(catalog)for(const kind of ['shapeDefinitions','rules'])for(const item of before[kind]||[])if(blocked.has(kind+':'+item.id)&&!SA.equal(item,(after[kind]||[]).find(x=>x.id===item.id)))fail(403,'Công thức đã khóa; mở khóa trước khi sửa hoặc xóa: '+item.name);
+  if(catalog)for(const r of old)if(blocked.has(r.key)&&!SA.equal(r.fields,next.find(x=>x.key===r.key)?.fields))fail(403,'Công thức đã khóa; Admin cần mở khóa trước khi sửa hoặc xóa: '+r.name);
   for(const r of old){const n=next.find(x=>x.key===r.key);if(!SA.equal(r.fields,n?.fields)&&blocked.has(r.key)&&!p.formulaUnlock&&!(n&&SA.equal(n.fields,masterRecords.find(x=>x.key===r.key)?.fields)))fail(403,'Công thức đã khóa: '+r.name);}
   const canonical=rows=>rows.filter(r=>r.kind!=="calculationFactors").map(r=>[r.key,r.fields]).sort((a,b)=>a[0].localeCompare(b[0]));
   if(!p.formulaEdit&&!SA.equal(canonical(old),canonical(next))){const changed=next.filter(n=>!SA.equal(n.fields,old.find(r=>r.key===n.key)?.fields));if(catalog||!p.formulaUse||changed.some(n=>!SA.equal(n.fields,masterRecords.find(r=>r.key===n.key)?.fields))||old.some(r=>!next.some(n=>n.key===r.key)&&masterRecords.some(n=>n.key===r.key)))fail(403,'Chưa có quyền sửa công thức danh mục');}
