@@ -50,7 +50,7 @@ function installFormulaAccessUI(){
  const measurement=mfgEditRule;mfgEditRule=(...args)=>{if(Team.user&&!Team.permissions.formulaView)return toast('Chưa có quyền xem biểu thức công thức');measurement(...args);if(Team.user&&!Team.permissions.formulaEdit)readonly();};
  const mutate=mutation;mutation=(action,options={})=>{if(!Team.user||Team.permissions.formulaUse)return mutate(action,options);const before=C.copy(db.quote.products);return mutate(()=>{action();if(!TPSectionAccess.equal(before,db.quote.products))throw Error('Chưa có quyền sử dụng công thức để thay đổi cấu thành');},options);};
  const rows=rcFormulaRows;rcFormulaRows=d=>Team.user&&!Team.permissions.formulaView?'<p class="notice">Công thức được bảo vệ. Bạn có thể chọn dạng cấu kiện và nhập thông số để tính khi được cấp quyền sử dụng.</p>':rows(d);
- document.addEventListener('click',e=>{const list=e.target.closest('[data-formula-locks]'),b=e.target.closest('[data-formula-lock]');if(list){formulaLocks().catch(inError);return;}if(!b)return;teamDialog(b.dataset.locked==='1'?'Khóa công thức':'Mở khóa công thức',field('Lý do','reason','','text','required maxlength="500"'),'Xác nhận',async f=>{await teamApi('formulas/locks','POST',{key:b.dataset.formulaLock,locked:b.dataset.locked==='1',expectedVersion:Number(b.dataset.version),reason:f.get('reason')});await formulaRefreshLocks();render();await formulaLocks();});});
+ document.addEventListener('click',e=>{const list=e.target.closest('[data-formula-locks]'),b=e.target.closest('[data-formula-lock]');if(list){formulaLocks().catch(inError);return;}if(!b)return;if(CatalogDraft.dirty){toast('Lưu danh mục chung trước khi khóa');return;}teamDialog(b.dataset.locked==='1'?'Khóa công thức':'Mở khóa công thức',field('Lý do','reason','','text','required maxlength="500"'),'Xác nhận',async f=>{await teamApi('formulas/locks','POST',{expectedCatalogVersion:Team.catalogVersion,key:b.dataset.formulaLock,locked:b.dataset.locked==='1',expectedVersion:Number(b.dataset.version),reason:f.get('reason')});await formulaRefreshLocks();render();await formulaLocks();});});
  const observer=new MutationObserver(()=>formulaPaint());observer.observe($('#dialog'),{childList:true,subtree:true});
 }
 
@@ -64,6 +64,13 @@ async function formulaRefreshLocks(){
 }
 function formulaCatalogPaint(){
  if(!Team.user||page!=='rules')return;
+ let panel=document.querySelector('[data-factor-lock-panel]');
+ if(RulesCatalog.tab==='factors'||document.querySelector('[data-shared-factor]')){
+ const lock=FormulaCatalogLocks.rows?.find(r=>r.key==='calculationFactors:all');
+ const state=lock?.locked?'Đã khóa':'Chưa khóa',dirty=CatalogDraft.dirty;
+ if(!panel){panel=document.createElement('section');panel.className='notice';panel.dataset.factorLockPanel='';document.querySelector('[data-shared-factor]')?.closest('section')?.before(panel);}
+ panel.innerHTML=`<strong>Bảng hệ số: ${FormulaCatalogLocks.rows?state:'Đang kiểm tra…'}</strong><p>${dirty?'Có thay đổi chưa lưu: lưu danh mục chung trước khi khóa.':'Khóa áp dụng toàn bộ bảng hệ số và phạm vi công việc.'}${lock?.at?' · Cập nhật khóa: '+esc(lock.actorName||'')+' ? '+esc(new Date(lock.at).toLocaleString('vi-VN')):''}</p><div class="actions">${Team.permissions.formulaUnlock&&lock?`<button class="button" type="button" data-formula-lock="calculationFactors:all" data-version="${lock.version}" data-locked="${lock.locked?0:1}" ${dirty?'disabled':''}>${lock.locked?'Mở khóa hệ số':'Khóa hệ số'}</button>`:''}${!lock?.locked?'<button class="button" type="button" data-policy-edit="customer">Khai loại khách hàng</button><button class="button" type="button" data-policy-edit="production">Khai cấp độ sản xuất C1–C8</button>':''}</div>`;
+ }
  for(const row of document.querySelectorAll('[data-rc-definition]')){
   const key=row.dataset.rcDefinition,source=key.startsWith('source:'),lockKey=source?'rules:'+key.slice(7):'shapeDefinitions:'+key;
   const locked=FormulaCatalogLocks.rows===null||FormulaCatalogLocks.rows.some(r=>r.key===lockKey&&r.locked),editable=Team.permissions.formulaEdit&&Team.permissions.sections?.includes('catalogRules')&&!locked;
