@@ -20,6 +20,12 @@ function defaults(){return {version:2,selected:'detail',comparisonMethods:['deta
   {id:'ladder',name:'Thang cáp',unit:'m',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]},
   {id:'cover',name:'Nắp thang / máng',unit:'cái',tiers:[{max:100,price:1000},{max:500,price:1000},{max:1000,price:2000},{max:null,price:2000}]},
   {id:'accessory',name:'Phụ kiện máng',unit:'cái',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]}
+],expenseRates:[
+  {id:'VC-NHAP-01',name:'VC nhập phôi tấm (nội thành)',category:'incoming',method:'kg_km',rate:120,minimum:500000,minimumScope:'trip',massBasis:'net',distance:30,vehicleType:'Xe tải 5T',capacityKg:5000,priceMode:'catalog',factors:[],enabled:true,referencePrice:150,referenceNote:'Giá thị trường T9/2026'},
+  {id:'VC-THUE-01',name:'VC thuê ngoài gia công',category:'outgoing',method:'vehicle',rate:1500000,minimum:0,minimumScope:'total',massBasis:'net',distance:15,vehicleType:'Xe tải 3.5T',capacityKg:3500,priceMode:'catalog',factors:[],enabled:true},
+  {id:'VC-GIAO-01',name:'Giao hàng nội thành',category:'delivery',method:'trip',rate:800000,minimum:0,minimumScope:'trip',massBasis:'net',distance:20,vehicleType:'Xe tải 2T',capacityKg:2000,priceMode:'catalog',factors:[],enabled:true,referencePrice:1000000,referenceNote:'Báo giá NCC vận chuyển'},
+  {id:'VC-GIAO-02',name:'Giao hàng liên tỉnh',category:'delivery',method:'ton_km',rate:800,minimum:2000000,minimumScope:'total',massBasis:'purchase',distance:100,vehicleType:'Xe tải 8T',capacityKg:8000,priceMode:'catalog',factors:[],enabled:true},
+  {id:'LD-TAICC',name:'Lắp đặt tại công trình',category:'install',method:'product_unit',rate:350000,minimum:0,minimumScope:'total',massBasis:'net',productUnit:'bộ',priceMode:'catalog',factors:[],enabled:true}
 ]};}
 const FLOW_SEQUENCE='delivery-before-overhead-v1';
 function currentFlow(q){return q.pricing?.costSequence===FLOW_SEQUENCE;}
@@ -264,8 +270,8 @@ function demoSeed(){
   const packing={id:'VP-DONGGOI',name:'Vật tư đóng gói',group:'Vật tư phụ',shape:'piece',unit:'cái',price:5000,props:{},substance:'Đóng gói',grade:'',density:1};db.materials.push(packing);
   const factors=[{id:'thickness',name:'Chiều dày',param:'T',enabled:true,tiers:[{max:2,percent:10},{max:4,percent:20},{max:null,percent:30}]},
     {id:'quantity',name:'Số lượng tại cấp thực hiện',param:'count',enabled:true,tiers:[{max:10,percent:-5},{max:50,percent:-10},{max:null,percent:-15}]}];
-  Object.assign(db.rates.find(r=>r.id==='cut'),{inside:1000,tmcReplace:true,factors});
-  Object.assign(db.rates.find(r=>r.id==='bend'),{inside:4000,tmcReplace:true,factors:[{id:'width',name:'Khổ rộng',param:'W',enabled:true,tiers:[{max:500,percent:20},{max:null,percent:30}]}]});
+  Object.assign(db.rates.find(r=>r.id==='cut'),{inside:1000,tmcReplace:true,machine:'Máy cắt plasma CNC',factors});
+  Object.assign(db.rates.find(r=>r.id==='bend'),{inside:4000,tmcReplace:true,machine:'Máy chấn thủy lực 100T',factors:[{id:'width',name:'Khổ rộng',param:'W',enabled:true,tiers:[{max:500,percent:20},{max:null,percent:30}]}]});
   Object.assign(db.rates.find(r=>r.id==='paint'),{inside:6000,consumption:{basis:'m²',norm:.12,spec:copy(paint)},factors:[{id:'surface',name:'Diện tích bề mặt',param:'area',enabled:true,tiers:[{max:20,percent:10},{max:null,percent:5}]}]});
   db.rates.push({id:'galvanize',name:'Mạ nhúng nóng',unit:'kg',inside:8000,outside:8000});
   function product(width,finish){

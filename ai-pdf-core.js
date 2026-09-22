@@ -16,7 +16,23 @@ function plan(db,job,rows){
  }
  if(p.requestSpecification.length>4000)throw Error('Nội dung nguồn quá dài');return p;});
 }
+function arrange(db,job,rows,target='groups'){
+ const planned=plan(db,job,rows);
+ if(target==='rows')return {products:planned,target:null};
+ const product=target==='groups'?null:db.quote.products.find(p=>p.id===target);
+ if(target!=='groups'&&!product)throw Error('Sản phẩm đích không còn trong báo giá');
+ const groups=new Map();
+ planned.forEach((p,i)=>{p.kind='component';delete p.transport;delete p.install;
+ const group=String(rows[i].group??job.result.items[rows[i].index].group??'').trim();
+ if(!product&&!group)throw Error('Nhập tên cụm cho từng chi tiết được chọn');
+ if(!groups.has(group))groups.set(group,[]);groups.get(group).push(p);
+ });
+ if(product)return {target:product.id,products:planned};
+ const products=[...groups].map(([name,children])=>({id:C.uid(),kind:'product',name,manualName:true,qty:1,unit:'bộ',model:'assembly',children,ops:[]}));
+ if(db.quote.products.length+products.length>500)throw Error('Quá nhiều sản phẩm');
+ return {target:null,products};
+}
 function pendingErrors(db){return C.flatten(db.quote.products).filter(n=>n.aiSourceKey&&!C.flatten(n.children||[]).some(c=>c.kind==='material')).map(n=>n.name+': yêu cầu từ AI chưa được bóc tách vật tư');}
 function installValidation(){if(C.calculate.aiPdfValidation)return;const original=C.calculate;C.calculate=function(db){const r=original(db),errors=pendingErrors(db);if(errors.length){r.errors=[...new Set([...r.errors,...errors])];for(const a of Object.values(r.alternatives||{})){a.ready=false;a.errors=[...new Set([...(a.errors||[]),...errors])];}}return r;};C.calculate.aiPdfValidation=true;}
-const api={plan,pendingErrors,installValidation};if(typeof module!=='undefined')module.exports=api;else root.TPAiPdf=api;
+const api={plan,arrange,pendingErrors,installValidation};if(typeof module!=='undefined')module.exports=api;else root.TPAiPdf=api;
 })(typeof window!=='undefined'?window:globalThis);

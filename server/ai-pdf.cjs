@@ -35,10 +35,10 @@ function createAiPdf({sql,readBody,fail,audit,provider=extract}){
  function publicJob(j){return {id:j.id,filename:j.filename,digest:j.digest,status:j.status,created:j.created,error:j.error,...(j.result?JSON.parse(j.result):{})};}
  async function handle({req,route,user,send}){
   if(!route.startsWith('/api/ai/pdf'))return false;
-  if(user.role!=='admin')fail(403,'Chức năng AI đang dành cho Admin');
-  if(route==='/api/ai/pdf'&&req.method==='GET'){send(200,{configured:!!process.env.OPENAI_API_KEY||provider!==extract,model:process.env.OPENAI_MODEL||'gpt-5.6-terra',jobs:sql.prepare('SELECT id,filename,digest,status,created,error FROM ai_pdf_jobs ORDER BY created DESC LIMIT 20').all().map(publicJob)});return true;}
+  const admin=user.role==='admin';if(!admin&&!require('../section-access.js').sections(user).includes('bom'))fail(403,'Cần quyền cấu thành sản phẩm để dùng AI');
+  if(route==='/api/ai/pdf'&&req.method==='GET'){send(200,{configured:!!process.env.OPENAI_API_KEY||provider!==extract,model:process.env.OPENAI_MODEL||'gpt-5.6-terra',jobs:sql.prepare('SELECT id,filename,digest,status,created,error FROM ai_pdf_jobs'+(admin?'':' WHERE actor=?')+' ORDER BY created DESC LIMIT 20').all(...(admin?[]:[user.id])).map(publicJob)});return true;}
   const match=route.match(/^\/api\/ai\/pdf\/([a-f0-9-]+)(\/file)?$/);
-  if(match&&req.method==='GET'){const j=sql.prepare('SELECT * FROM ai_pdf_jobs WHERE id=?').get(match[1]);if(!j)fail(404,'Không tìm thấy lần đọc PDF');send(200,match[2]?{name:j.filename,data:j.data}:publicJob(j));return true;}
+  if(match&&req.method==='GET'){const j=sql.prepare('SELECT * FROM ai_pdf_jobs WHERE id=?').get(match[1]);if(!j||!admin&&j.actor!==user.id)fail(404,'Không tìm thấy lần đọc PDF');send(200,match[2]?{name:j.filename,data:j.data}:publicJob(j));return true;}
   if(route==='/api/ai/pdf'&&req.method==='POST'){
    const b=await readBody(req,8*1024*1024);if(typeof b.requestId!=='string'||!/^[a-f0-9-]{36}$/.test(b.requestId))fail(400,'Thiếu mã lần đọc');
    const prior=sql.prepare('SELECT * FROM ai_pdf_jobs WHERE actor=? AND request_id=?').get(user.id,b.requestId);if(prior){send(200,publicJob(prior));return true;}
