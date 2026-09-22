@@ -68,7 +68,7 @@ function remnantEligibility(m,r,rule){
 function definitions(){return typeof module!=='undefined'?require('./definition-core.js'):root.TPDefinitions;}
 function shapeInfo(m){return m.shapeDefinition?definitions().info(m):shapes[m.shape];}
 function geometry(n,count){
-  if(n.draftMaterial)throw Error('Vật tư nháp chưa chọn mã; chưa đủ dữ liệu tính giá');
+  if(n.draftMaterial)throw Error('Vật tư đang khai báo tạm; lưu danh mục và chọn lại mã vật tư trước khi hoàn tất');
   if(n.spec?.shapeDefinition)return definitions().geometry(n,count);
   const m=n.spec,vars={...n.dims,...m.props},rule=n.ruleSpec;
   if(!(count>0)&&count!==0)throw Error('Số lượng không hợp lệ');

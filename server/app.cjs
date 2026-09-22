@@ -133,7 +133,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
             const body=await readBody(req);if(q.version!==body.expectedVersion)fail(409,'Báo giá đã đổi. Tải lại trước khi lưu.');
             let document;try{document=Technical.merge(JSON.parse(q.document),formulaAccess.hydrate(body.document,user),complexityCatalog);}catch(e){fail(403,e.message);}
             const saved=saveQuote(q.id,document,user,body.expectedVersion,'draft','Cập nhật kỹ thuật');
-            return send(200,{id:saved.id,version:saved.version,status:saved.status,updated:saved.updated});
+            return send(200,{id:saved.id,version:saved.version,status:saved.status,updated:saved.updated,draftMaterialIds:C.flatten(document.quote.products).filter(n=>n.draftMaterial).map(n=>n.id)});
           }
         }
         const reopenMatch=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/(reopen|restore)$/);

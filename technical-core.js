@@ -2,7 +2,7 @@
  * local calculation inputs, never copies of confidential commercial values. */
 (function(root){'use strict';
 const copy=x=>JSON.parse(JSON.stringify(x));
-const nodeKeys=['lineNote','id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent','pieceMass'];
+const nodeKeys=['draftMaterial','lineNote','id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent','pieceMass'];
 const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','stockOptions','shapeDefinition','massOverride','areaOverride'];
 const opKeys=['quantityDeclared','complexityChoice','id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
 const ruleKeys=['id','name','shape','length','width','measurementRules','fields','shapes'];
@@ -84,7 +84,7 @@ function merge(original,input,catalog){
   if(n.auxiliaryPercent!==undefined&&(!Number.isFinite(n.auxiliaryPercent)||n.auxiliaryPercent<0||n.auxiliaryPercent>100||n.kind!=='material'))throw Error('Vật tư phụ chỉ khai cho vật tư, từ 0 đến 100%');
   if(!equal(n.outsource,prev?node(prev,original.quote).outsource:undefined))throw Error('Gói thuê được quản lý tại Giá & hệ số');
   if(n.kind==='product'&&n.productGroup!==prev?.productGroup&&n.productGroup){next.priceGroupId=n.productGroup==='Thang máng cáp'?'tmc':'detail';next.tmcScope=next.priceGroupId;if(next.priceGroupId==='tmc'&&!result.quote.pricing.comparisonMethods?.includes('tmc'))(result.quote.pricing.comparisonMethods??=['detail']).push('tmc');}
-  if(n.spec){const material=prev?.materialId===n.materialId?prev.spec:original.materials.find(m=>m.id===n.materialId)||catalog?.materials?.find(m=>m.id===n.materialId);if(!material)throw Error('Mã vật tư '+n.materialId+' chưa được lưu trong danh mục chung. Lưu danh mục chung trước rồi lưu lại báo giá.');next.spec=assign(copy(material),n.spec,specKeys);}
+  if(n.spec){const material=prev?.materialId===n.materialId&&!prev.draftMaterial?prev.spec:original.materials.find(m=>m.id===n.materialId)||catalog?.materials?.find(m=>m.id===n.materialId);next.spec=assign(copy(material||{price:null}),n.spec,specKeys);if(!material)next.draftMaterial=true;else if(prev?.draftMaterial)delete next.draftMaterial;}
   if(n.ruleSpec)next.ruleSpec=copy(n.ruleSpec);
   const used=new Set();next.ops=n.ops.map((op,index)=>{if(!original.quote.ratesSnapshot.some(r=>r.id===op.id))throw Error('Chọn công đoạn có trong báo giá');const existing=(prev?.ops||[]).find((o,i)=>!used.has(i)&&o.id===op.id&&(op.instanceId&&o.instanceId?o.instanceId===op.instanceId:i===index));if(existing)used.add(prev.ops.indexOf(existing));const merged=assign(existing?copy(existing):{},op,opKeys);
    if(!equal(choiceFor(existing),op.complexityChoice)){

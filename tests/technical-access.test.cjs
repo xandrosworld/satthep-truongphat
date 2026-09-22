@@ -50,6 +50,24 @@ test('technical saves newly published material into older quote without exposing
  const saved=await call('quotes/'+id,'PUT',{document:view.document,expectedVersion:view.version},tech);A.equal(saved.status,200,JSON.stringify(saved.data));
  const full=(await call('quotes/'+id,'GET',undefined,admin)).data;A.equal(C.flatten(full.document.quote.products).find(n=>n.id==='new-material-node').spec.price,45678);A.deepEqual(full.document.materials,old.document.materials);
  const safe=(await call('quotes/'+id,'GET',undefined,tech)).data;A.equal(C.flatten(safe.document.quote.products).find(n=>n.id==='new-material-node').spec.price,0);
- const child=C.flatten(safe.document.quote.products).find(n=>n.id==='new-material-node');child.materialId='UNPUBLISHED';child.spec.id='UNPUBLISHED';A.equal((await call('quotes/'+id,'PUT',{document:safe.document,expectedVersion:safe.version},tech)).status,403);
- child.materialId=m.id;child.spec.id=m.id;child.spec.price=999;A.equal((await call('quotes/'+id,'PUT',{document:safe.document,expectedVersion:safe.version},tech)).status,403);
+ const child=C.flatten(safe.document.quote.products).find(n=>n.id==='new-material-node');child.materialId='UNPUBLISHED';child.spec.id='UNPUBLISHED';const pending=await call('quotes/'+id,'PUT',{document:safe.document,expectedVersion:safe.version},tech);A.equal(pending.status,200);const draft=(await call('quotes/'+id,'GET',undefined,admin)).data;const item=C.findNode(draft.document.quote.products,child.id);A.equal(item.draftMaterial,true);A.equal(item.spec.price,null);A.equal(item.materialId,'UNPUBLISHED');A.equal((await call('quotes/'+id+'/submit','POST',{expectedVersion:draft.version},admin)).status,422);
+ child.materialId=m.id;child.spec.id=m.id;child.spec.price=999;A.equal((await call('quotes/'+id,'PUT',{document:safe.document,expectedVersion:draft.version},tech)).status,403);
+});
+
+test('unfinished geometry and missing stock save as technical drafts for admin repair',async t=>{
+ const {call,admin,tech,id}=await harness(t),PG=require('../polygon-core.js');
+ const v=(await call('quotes/'+id,'GET',undefined,tech)).data;
+ const n=C.flatten(v.document.quote.products).find(n=>n.kind==='material'&&n.spec.shape==='sheet');
+ n.spec.shapeDefinition={id:'DRAFT-FOUR',name:'Phôi 4 cạnh',...PG.preset('interior',4)};
+ n.spec.props={T:2};n.spec.stockL=0;n.spec.stockW=0;
+ n.dims={C1:3746,C2:100,C3:40,C4:2,A1:90};
+ const saved=await call('quotes/'+id,'PUT',{document:v.document,expectedVersion:v.version},tech);
+ A.equal(saved.status,200,JSON.stringify(saved.data));
+ const stored=(await call('quotes/'+id,'GET',undefined,admin)).data;
+ A.deepEqual(C.findNode(stored.document.quote.products,n.id).dims,n.dims);
+ A.equal(C.findNode(stored.document.quote.products,n.id).spec.stockL,0);
+ A.equal(stored.status,'draft');
+ A.equal((await call('quotes/'+id+'/handoff/technical','POST',{expectedVersion:stored.version},tech)).status,422);
+ const submit=await call('quotes/'+id+'/submit','POST',{expectedVersion:stored.version},admin);
+ A.equal(submit.status,422,JSON.stringify(submit.data));
 });
