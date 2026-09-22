@@ -75,6 +75,7 @@ function scene(node,{unfolded=false,exploded=false,limit=60}={}){
     for(const e of entries){const b=e.geometry.bounds;add(e,move(e.geometry.faces,-(b.min[0]+b.max[0])/2,-b.min[1],z-b.min[2]));z+=b.size[2]+gap;}
   }
   if(!meshes.length){mode='empty';title=units.length?'Vật tư chưa có dữ liệu hình học':'Chưa có chi tiết để dựng hình';note=units.length?'Các dòng đang tính theo đơn vị, không có kích thước/hình dạng để dựng 3D. Không tự gán mô hình từ tên vật tư.':'Thêm vật tư có hình dạng và kích thước để xem 3D.';}
+  if(!meshes.length&&issues.length){title='Chưa dựng được hình — cần kiểm tra kích thước';note='Chi tiết đã có vật tư. Mở Nhập thông số & thử kết quả để kiểm tra cạnh và góc; hệ thống giữ nguyên số đã nhập.';}
   return {meshes,rows,units,issues,mode,title,note,measurements,canAssemble:!!(trayTemplate||frameTemplate),canUnfold:entries.length===1&&!!entries[0].geometry.formed,dimensions:mode==='detail'?entries[0]?.geometry.dimensions||[]:[],omitted:Math.max(0,geometric.length-limit),bounds:bounds(meshes.flatMap(m=>m.faces))};
 }
 const api={material,scene,bounds,extrusion,collect};if(typeof module!=='undefined')module.exports=api;else root.TP3D=api;

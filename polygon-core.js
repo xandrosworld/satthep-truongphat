@@ -43,7 +43,7 @@ function interiorGeometry(p,vars){
  const points=[[0,0],[sides[0],0]];let heading=0;
  for(let i=1;i<n-2;i++){heading+=(180-angles[i-1])*Math.PI/180;const a=points.at(-1);points.push([a[0]+sides[i]*Math.cos(heading),a[1]+sides[i]*Math.sin(heading)]);}
  const end=points.at(-1),d=Math.hypot(...end),r=sides[n-1],t=sides[n-2],eps=Math.max(...sides)*1e-7;
- if(d<=eps||d>r+t+eps||d<Math.abs(r-t)-eps)throw Error('Các cạnh và góc đã nhập không khép thành hình. Kiểm tra góc giữa các cạnh theo thứ tự.');
+ if(d<=eps||d>r+t+eps||d<Math.abs(r-t)-eps){const fmt=v=>Number(v.toFixed(3)),given=p.sides.map((k,i)=>k+' = '+fmt(sides[i])+' mm').concat(p.angles.map((k,i)=>k+' = '+fmt(angles[i])+'°')).join('; ');throw Error('Các cạnh và góc đã nhập không khép thành hình. '+given+'. Khoảng nối hai cạnh cuối là '+fmt(d)+' mm; cần nằm giữa '+fmt(Math.abs(r-t))+' và '+fmt(r+t)+' mm. Nhập cạnh theo thứ tự quanh biên; A1 là góc trong giữa cạnh 1 và cạnh 2.');}
  const x=(d*d+r*r-t*t)/(2*d),h2=r*r-x*x;
  if(h2 < -eps*Math.max(...sides))throw Error('Hai cạnh cuối không nối được với nhau');
  const h=Math.sqrt(Math.max(0,h2)),u=[end[0]/d,end[1]/d],candidates=[];

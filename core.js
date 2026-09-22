@@ -85,7 +85,7 @@ function nest(items,spec,kerf,strategy='best'){
   if(spec.shape==='sheet'&&spec.shapeDefinition?.nesting==='right-triangle')return nestTriangles(items,spec,kerf,strategy);
   if(strategy==='best'&&spec.shape==='sheet'&&items.length>1){const descending=nest(items,spec,kerf,'descending');if(items.reduce((s,r)=>s+r.count,0)>1000)return descending;const mixed=nest(items,spec,kerf,'mixed');return mixed.stocks.length<descending.stocks.length?mixed:descending;}
   const isSheet=spec.shape==='sheet',rotateAllowed=spec.shapeDefinition?.nesting!=='bounding-fixed',stockL=Number(spec.stockL),stockW=isSheet?Number(spec.stockW):0;
-  if(!(stockL>0)||isSheet&&!(stockW>0))throw Error('Khổ vật tư mua chưa hợp lệ');
+  if(!(stockL>0)||isSheet&&!(stockW>0))throw Error('Khổ vật tư mua chưa hợp lệ: '+(!(stockL>0)?'chưa nhập chiều dài khổ mua lớn hơn 0 mm':'')+(isSheet&&!(stockW>0)?(!(stockL>0)?'; ':'')+'chưa nhập chiều rộng khổ mua lớn hơn 0 mm':'')+'. Mở Khai triển & hao hụt → Chỉnh khổ mua.');
   if(!(kerf>=0))throw Error('Mạch cắt không hợp lệ');
   const pieces=[];
   for(const row of items){if(!Number.isInteger(row.count)||row.count<1)throw Error('Số phôi phải là số nguyên dương');if(pieces.length+row.count>5000)throw Error('Demo hỗ trợ tối đa 5.000 phôi cho mỗi mã vật tư');for(let i=0;i<row.count;i++)pieces.push({rowId:row.id,label:row.label,l:row.geometry.length,w:row.geometry.width,color:row.color,...(row.geometry.polygon?{polygon:row.geometry.polygon}:{})});}
