@@ -29,3 +29,15 @@ Phụ lục 01, mục 27.01: chat với từng cá nhân; tạo nhóm chat; ch�
 - `node tests/chat-browser.cjs`: hai tài khoản độc lập gửi/nhận tự động; nhóm; tải lại; mất phản hồi sau khi máy chủ nhận tin; ảnh chọn tệp/dán/cắt; hiển thị văn bản an toàn; xóa phiên khi đăng xuất; bố cục 1920/1366/1093 px.
 - Luồng chụp màn hình tự động được kiểm bằng luồng video canvas mô phỏng và xác nhận dừng track. Hộp cấp quyền chia sẻ của hệ điều hành cần người dùng chọn thực tế; kiểm thử này không giả định đã xác nhận hộp quyền trên mọi máy khách.
 - Kiểm tra bản triển khai chỉ đọc; không gửi tin thử tới nhân viên và không tạo hội thoại trong dữ liệu khách.
+
+
+## Bổ sung ngày 22/09/2026 — ảnh và sticker trên laptop
+
+- Thanh công cụ có icon Lucide và nhãn rõ ràng: Sticker, Thêm ảnh, Chụp / cắt màn hình.
+- 12 sticker tĩnh Twemoji có xem trước; chọn sticker giữ nội dung đang soạn, chỉ gửi khi bấm Gửi. Sticker thay ảnh đang đính kèm (một ảnh mỗi tin).
+- Ảnh từ máy, ảnh dán và ảnh chụp đều mở trình cắt. “Dùng ảnh này” quay lại soạn; “Cắt và gửi” gửi ngay cùng nội dung đang soạn. Có thể “Cắt lại” trước khi gửi.
+- Sticker được chuyển thành PNG và đi qua cơ chế ảnh hiện có: quyền thành viên hội thoại, lưu máy chủ, giới hạn dung lượng và chống gửi trùng. Không thêm API hoặc mở rộng quyền.
+- Đổi hội thoại trong khi cửa sổ chọn màn hình đang mở sẽ hủy kết quả chụp đó; các track được dừng. Không gửi ảnh sang hội thoại mới.
+- Bộ hình và icon được đóng gói trong ứng dụng, không tải CDN lúc dùng. Nguồn/commit và giấy phép: assets/chat/SOURCES.md; ghi công Twemoji trong bộ chọn sticker.
+
+Kiểm tra: `node --test tests/chat-server.test.cjs` và `node tests/chat-browser.cjs` đều đạt. Browser kiểm tra hai tài khoản, nhóm/riêng, sticker, cắt lại + gửi ngay, phản hồi bị mất + thử lại không trùng, không đổi ảnh khi tin còn chờ, Escape, đổi phòng lúc chụp, tải lại, quyền xem ảnh và các cỡ 1093/1366/1920. Ảnh kiểm tra lưu trong artifacts/customer-review/chat-*.png. Hộp chọn màn hình của hệ điều hành được mô phỏng bằng video stream trong test; không khẳng định đã tự động kiểm tra hộp chọn thật.

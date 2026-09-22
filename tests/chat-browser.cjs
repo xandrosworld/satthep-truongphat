@@ -19,7 +19,35 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
  // A script-looking message is displayed as plain text.
  await admin.locator('#chat-text').fill('<img src=x onerror="window.chatXss=1">');await admin.locator('#chat-send').click();await expect(tech.locator('#chat-messages')).toContainText('window.chatXss',{timeout:10000});expect(await tech.evaluate(()=>window.chatXss)).toBeUndefined();
  await admin.locator('[data-chat-action=group]').click();await admin.locator('[name=title]').fill('Trao đổi sản xuất');for(const id of [ids.tech,ids.sales])await admin.locator('[name=person][value="'+id+'"]').check();await admin.locator('#chat-people-form [type=submit]').click();await expect(admin.locator('.chat-thread-head h3')).toHaveText('Trao đổi sản xuất');await admin.locator('#chat-text').fill('Nhóm trao đổi công việc của xưởng.');await admin.locator('#chat-send').click();await expect(tech.locator('[data-chat-room]')).toHaveCount(2,{timeout:10000});await tech.locator('[data-chat-room]').filter({hasText:'Trao đổi sản xuất'}).click();await expect(tech.locator('#chat-messages')).toContainText('của xưởng');await tech.locator('[data-chat-action=members]').click();expect(await tech.locator('#chat-people-form [type=submit]').count()).toBe(0);await tech.locator('[data-chat-action=back]').click();
- for(const width of [1920,1366,1093]){await admin.setViewportSize({width,height:768});expect(await admin.locator('#team-chat').evaluate(d=>d.scrollWidth<=d.clientWidth+1)).toBe(true);expect(await admin.locator('#team-chat').evaluate(d=>d.getBoundingClientRect().width)).toBeGreaterThan(Math.min(1000,width-100));expect(await admin.locator('#chat-send').isVisible()).toBe(true);await admin.screenshot({path:`artifacts/customer-review/chat-${width}.png`});}
- await admin.locator('[data-chat-action=close]').click();await admin.reload();await admin.waitForFunction(()=>Team.user);await admin.locator('[data-chat-launch]').click();await expect(admin.locator('[data-chat-room]')).toHaveCount(2);await admin.locator('[data-chat-room]').filter({hasText:'Trao đổi sản xuất'}).click();await expect(admin.locator('#chat-messages')).toContainText('của xưởng');await admin.evaluate(()=>teamSession({user:null,permissions:null,csrf:''}));expect(await admin.locator('#team-chat').count()).toBe(0);expect(await admin.evaluate(()=>TPChat.drafts.size)).toBe(0);
+
+ // Sticker selection is a preview, not a send; preserves text, reaches another account and reloads.
+ const beforeSticker=await admin.locator('.chat-message').count();
+ await admin.locator('#chat-text').fill('Đã nhận bản vẽ');
+ await admin.locator('[data-chat-action=stickers]').click();await expect(admin.locator('[data-chat-sticker]')).toHaveCount(12);
+ await admin.locator('[data-chat-sticker="1f44d"]').click();await expect(admin.locator('#chat-attachment')).toContainText('Đồng ý');
+ await expect(admin.locator('#chat-text')).toHaveValue('Đã nhận bản vẽ');expect(await admin.locator('.chat-message').count()).toBe(beforeSticker);
+ await admin.locator('#chat-send').click();await expect(tech.locator('.chat-image-button img')).toBeVisible({timeout:10000});
+ await expect(tech.locator('.chat-image-button img')).toHaveJSProperty('naturalWidth',160);
+ // Re-crop an attachment and send in one action, including text; retry after lost response is deduplicated.
+ await admin.locator('#chat-file').setInputFiles({name:'anh.png',mimeType:'image/png',buffer:Buffer.from(picture.split(',')[1],'base64')});
+ await admin.locator('#chat-crop-use').click();await admin.locator('#chat-text').fill('Ảnh cắt gửi ngay');
+ await admin.locator('[data-chat-action=recrop]').click();await admin.locator('[data-crop-field=w]').fill('30');await admin.locator('[data-crop-field=w]').dispatchEvent('change');
+ await admin.route('**/api/chat/rooms/*/messages',async route=>{if(route.request().method()==='POST'){await route.fetch();await route.abort();}else await route.continue();});
+ await admin.locator('#chat-crop-send').click();await expect(admin.locator('#chat-send')).toHaveText('Thử gửi lại');
+ await expect(admin.locator('#chat-attachment img')).toBeVisible();await admin.locator('[data-chat-action=stickers]').click();await expect(admin.locator('#chat-stickers')).toBeHidden();
+ await admin.unroute('**/api/chat/rooms/*/messages');await admin.locator('#chat-send').click();await expect(admin.locator('#chat-text')).toHaveValue('');
+ await expect(tech.locator('.chat-message').filter({hasText:'Ảnh cắt gửi ngay'})).toHaveCount(1,{timeout:10000});
+ await expect(tech.locator('.chat-message').filter({hasText:'Ảnh cắt gửi ngay'}).locator('img')).toHaveJSProperty('naturalWidth',30);
+ // Closing the sticker picker with Escape keeps the conversation open.
+ await admin.locator('[data-chat-action=stickers]').click();await admin.keyboard.press('Escape');await expect(admin.locator('#chat-stickers')).toBeHidden();await expect(admin.locator('#team-chat')).toBeVisible();
+ // A delayed screen picker must not attach to a different room; all tracks are stopped.
+ const groupId=await admin.evaluate(()=>TPChat.active);
+ await admin.evaluate(()=>{navigator.mediaDevices.getDisplayMedia=()=>new Promise(resolve=>{window.resolveChatCapture=()=>{const c=document.createElement('canvas');c.width=100;c.height=100;const stream=c.captureStream(5);window.lateCaptureTrack=stream.getTracks()[0];resolve(stream);};});});
+ await admin.locator('[data-chat-action=capture]').click();await admin.locator('[data-chat-room]').filter({hasText:'Nguyễn Văn Kỹ thuật'}).click();
+ await admin.evaluate(()=>window.resolveChatCapture());await expect(admin.locator('#chat-text')).toBeVisible();await expect(admin.locator('#chat-crop-canvas')).toHaveCount(0);
+ await expect.poll(()=>admin.evaluate(()=>window.lateCaptureTrack.readyState)).toBe('ended');
+ await admin.locator('[data-chat-room="'+groupId+'"]').click();
+ for(const width of [1920,1366,1093]){await admin.setViewportSize({width,height:768});expect(await admin.locator('#team-chat').evaluate(d=>d.scrollWidth<=d.clientWidth+1)).toBe(true);expect(await admin.locator('#team-chat').evaluate(d=>d.getBoundingClientRect().width)).toBeGreaterThan(Math.min(1000,width-100));expect(await admin.locator('#chat-send').isVisible()).toBe(true);await admin.locator('[data-chat-action=stickers]').click();expect(await admin.locator('#chat-stickers').evaluate(d=>d.scrollWidth<=d.clientWidth+1)).toBe(true);await admin.screenshot({path:`artifacts/customer-review/chat-${width}.png`});await admin.locator('[data-chat-action=close-stickers]').click();}
+ await admin.locator('[data-chat-action=close]').click();await admin.reload();await admin.waitForFunction(()=>Team.user);await admin.locator('[data-chat-launch]').click();await expect(admin.locator('[data-chat-room]')).toHaveCount(2);await admin.locator('[data-chat-room]').filter({hasText:'Trao đổi sản xuất'}).click();await expect(admin.locator('#chat-messages')).toContainText('của xưởng');await expect(admin.locator('.chat-image-button img')).toHaveCount(2);await admin.evaluate(()=>teamSession({user:null,permissions:null,csrf:''}));expect(await admin.locator('#team-chat').count()).toBe(0);expect(await admin.evaluate(()=>TPChat.drafts.size)).toBe(0);
  expect(errors).toEqual([]);console.log('PASS two accounts, live delivery, direct/group, technical access, image crop, retry deduplication, XSS escaping, reload, logout cleanup and desktop layouts');
  }finally{await b.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
