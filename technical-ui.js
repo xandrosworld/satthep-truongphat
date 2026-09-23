@@ -58,8 +58,15 @@ function technicalRecipes(id,index){const n=C.findNode(db.quote.products,id),rat
  openDialog('Vật tư định mức · '+esc(rate.name),`<p>Lượng vật tư = lượng thực hiện × định mức × số lớp × (1 + hao hụt / 100). Áp dụng cho mọi dòng dùng công đoạn này trong báo giá.</p>${recipes.map((r,i)=>`<section class="panel panel-body"><strong>${esc(r.spec?.id)} · ${esc(r.spec?.name)}</strong><div class="form-grid">${field('Định mức ('+r.spec?.unit+'/'+r.basis+')','norm-'+i,r.norm,'number','min="0" step="any" required')}${field('Số lớp','layers-'+i,r.layers??1,'number','min="0.001" step="any" required')}${field('Hao hụt (%)','loss-'+i,r.loss??0,'number','min="0" step="any" required')}</div></section>`).join('')}`,'Lưu định mức',f=>saveAndClose(()=>{const targets=rate.consumptions?.length?rate.consumptions:[rate.consumption];targets.forEach((r,i)=>{for(const key of ['norm','layers','loss'])r[key]=Number(f.get(key+'-'+i));});}));
 }
 function technicalSelectOperation(){
- const rates=(technicalOnly()?db.quote.ratesSnapshot:db.rates).filter(r=>r.enabled!==false&&r.operationType!=='package');
- openDialog('Chọn công đoạn',`${select('Công đoạn','operationId',rates.map(r=>[r.id,r.name]),rates[0]?.id)}<p>Chọn công đoạn rồi tích vào dòng thực hiện. Đơn giá được quản lý tại bước 6 — Giá & hệ số.</p>`,'Thêm công đoạn',f=>{const rate=rates.find(r=>r.id===f.get('operationId'));if(!rate)throw Error('Chọn công đoạn');saveAndClose(()=>{if(!db.quote.ratesSnapshot.some(r=>r.id===rate.id))db.quote.ratesSnapshot.push(C.copy(rate));});});
+ inWritable();
+ const existing=db.quote.ratesSnapshot,used=new Set(C.flatten(db.quote.products).flatMap(n=>(n.ops||[]).map(op=>op.id)));
+ const rates=[...existing,...(!Team.user||Team.user.role==='admin'?db.rates.filter(r=>!existing.some(x=>x.id===r.id)):[])].filter(r=>r.operationType!=='package'&&(r.enabled!==false||used.has(r.id)));
+ const selected=new Set(db.quote.operationColumns||existing.map(r=>r.id));
+ openDialog('Chọn công đoạn cho báo giá',`<p>Tích nhiều công đoạn rồi áp dụng để cập nhật các cột. Công đoạn đã có dòng thực hiện được giữ lại; bỏ công việc tại dòng đó trước nếu không còn dùng.</p><div class="actions"><button type="button" class="button" data-operation-pick-all>Chọn tất cả</button><button type="button" class="button" data-operation-pick-none>Bỏ chọn chưa sử dụng</button></div>${rates.map(r=>`<label class="pa-checkbox"><input type="checkbox" name="operationIds" value="${esc(r.id)}" ${selected.has(r.id)||used.has(r.id)?'checked':''} ${used.has(r.id)?'disabled':''}> ${esc(r.name)}${used.has(r.id)?' · Đang sử dụng':''}</label>`).join('')}`,'Áp dụng lựa chọn',f=>{
+  inWritable();const ids=[...new Set([...f.getAll('operationIds'),...used])];
+  saveAndClose(()=>{for(const r of rates)if(ids.includes(r.id)&&!existing.some(x=>x.id===r.id))existing.push(C.copy(r));db.quote.operationColumns=ids;},'Đã cập nhật các cột công đoạn');
+ });
+ for(const [attr,checked]of [['data-operation-pick-all',true],['data-operation-pick-none',false]])$('#dialog ['+attr+']').onclick=()=>document.querySelectorAll('#dialog [name=operationIds]:not(:disabled)').forEach(x=>x.checked=checked);
 }
 function technicalClean(root){
  technicalMeasurementWarnings(root);

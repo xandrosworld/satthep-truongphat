@@ -1,4 +1,13 @@
 const {test}=require('node:test'),A=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),T=require('../technical-core.js'),P=require('../pricing-core.js'),C=require('../core.js');
+test('technical operation column selection round-trips without modifying prices or jobs',()=>{
+ const original=P.demoSeed(),payload=T.project(original);
+ payload.quote.operationColumns=payload.quote.ratesSnapshot.slice(0,2).map(r=>r.id);
+ const merged=T.merge(original,payload);
+ A.deepEqual(T.project(merged).quote.operationColumns,payload.quote.operationColumns);
+ A.deepEqual(merged.quote.pricing,original.quote.pricing);
+ A.deepEqual(merged.quote.ratesSnapshot,original.quote.ratesSnapshot);
+ A.deepEqual(merged.quote.products.map(n=>n.ops),original.quote.products.map(n=>n.ops));
+});
 test('technical quote save projects with its loaded catalogue after local catalogue changes',()=>{
  const original=P.demoSeed(),baseline=T.project(original),working=structuredClone(original);working.rates[0].factors=[{id:'complex',param:'complexity',kind:'category',categories:[{key:'New',percent:10}]}];working.quote.products[0].qty=19;
  const old={...baseline,quote:T.project(working).quote};A.throws(()=>T.merge(original,old),/trường.*không được phép/);

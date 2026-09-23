@@ -6,7 +6,7 @@ const nodeKeys=['aiSourceKey','draftMaterial','lineNote','id','kind','name','man
 const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','stockOptions','shapeDefinition','massOverride','areaOverride'];
 const opKeys=['quantityDeclared','complexityChoice','id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
 const ruleKeys=['id','name','shape','length','width','measurementRules','fields','shapes'];
-const quoteKeys=['customer','project','id','date','kerf','nestingPlans','remnantMode','remnantSelections','request'];
+const quoteKeys=['operationColumns','customer','project','id','date','kerf','nestingPlans','remnantMode','remnantSelections','request'];
 const pick=(x,keys)=>Object.fromEntries(keys.filter(k=>x?.[k]!==undefined).map(k=>[k,copy(x[k])]));
 const spec=x=>({...pick(x,specKeys),price:0});
 function recipe(x){return {...pick(x,['id','norm','basis','layers','loss']),spec:spec(x.spec)};}
