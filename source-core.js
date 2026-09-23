@@ -8,5 +8,28 @@ function analysis(result){const values=Object.values(result.alternatives);return
  ['Phôi gia công',a=>a.total.parts.stock],['Linh kiện / vật tư phụ khai mã',a=>a.total.parts.ancillary],['Vật tư phụ dự tính theo %',a=>a.total.parts.allowance],['Vật tư hoàn thiện theo định mức',a=>a.total.parts.finishing],['Công đoạn tại xưởng',a=>a.total.parts.factory],['Gia công thuê ngoài',a=>a.total.parts.outside],['Chi phí chung riêng TMC',a=>a.total.parts.tmcCommon],['Vận chuyển nhập phôi / vật tư',a=>a.total.parts.incoming],['Vận chuyển thuê ngoài',a=>a.total.parts.outgoing],['Chi phí trực tiếp sản xuất',a=>a.total.direct],['Chi phí chung / hệ số sản xuất',a=>a.total.overhead],['Chi phí quản lý',a=>a.total.management],['Yếu tố khác trong sản xuất',a=>a.total.special],['Yếu tố sản xuất bổ sung',a=>a.total.productionExtras||0],['Giá sản xuất',a=>a.total.production],['Vận chuyển giao hàng',a=>a.total.parts.delivery],['Lắp đặt',a=>a.total.parts.install],['Giá gốc',a=>a.total.cost],
  ['Lợi nhuận dự kiến cộng vào giá',a=>['kg','competitor'].includes(a.id)?null:a.total.profitMarkup],['Chi phí xử lý cộng vào giá',a=>['kg','competitor'].includes(a.id)?null:a.total.processing],['Hệ số đơn hàng',a=>['kg','competitor'].includes(a.id)?null:a.total.order],['Hệ số khách hàng',a=>['kg','competitor'].includes(a.id)?null:a.total.customer],['Dự phòng / yếu tố bán thêm',a=>['kg','competitor'].includes(a.id)?null:a.total.saleExtras],['Giá chào trước thuế',a=>(a.id===result.pricing.selected?result.total:a.total).beforeTax],['Còn lại so với giá gốc — chưa phải lãi ròng',a=>(a.id===result.pricing.selected?result.total:a.total).beforeTax-a.total.cost]
  ].map(([name,get,unit='đ'])=>({name,unit,values:values.map(a=>{const amount=a.ready?get(a):null;return {amount,perKg:unit==='đ'&&amount!==null&&a.total.weight>0?amount/a.total.weight:null};})}));}
-const api={FIELDS,rows,analysis};if(typeof module!=='undefined')module.exports=api;else root.TPSource=api;
+function summary(result){
+ const methods=Object.values(result.alternatives),out=[],sum=(a,get)=>a.products.reduce((s,p)=>s+(get(p)||0),0),bundled=a=>['kg','competitor'].includes(a.id)||a.products.some(p=>p.groupCalculation),final=a=>a.id===result.pricing.selected?result.total:a.total;
+ const add=(name,unit,get,rate)=>out.push({name,unit,values:methods.map(a=>{const amount=a.ready?get(a):null;return {amount:Number.isFinite(amount)?amount:null,perKg:unit==='đ'&&Number.isFinite(amount)&&a.total.weight>0?amount/a.total.weight:null,rate:rate&&a.ready?rate(a):null};})});
+ const factor=(name,get,values)=>add(name,'%',a=>bundled(a)?null:sum(a,get),a=>bundled(a)?'Trong giá trọn gói':[...new Set(a.products.map(values))].map(v=>v+'%').join(' / '));
+ factor('Hệ số chi phí chung',p=>p.overhead,p=>p.policyRates.overhead);
+ factor('Hệ số quản lý',p=>p.management,p=>p.policyRates.management);
+ factor('Hệ số đặc thù sản xuất',p=>p.special,p=>p.policyRates.special);
+ const sale=[['profitMarkup','Hệ số lợi nhuận'],['processing','Hệ số xử lý'],['order','Hệ số đơn hàng'],['customer','Hệ số khách hàng'],['reserve','Dự phòng giảm giá']];
+ for(const [id,name]of sale)factor(name,p=>(p.saleSteps||[]).find(f=>f.id===id)?.value,p=>(p.saleSteps||[]).find(f=>f.id===id)?.percent||0);
+ for(const [field,label]of [['productionSteps','SX bổ sung'],['saleSteps','Bán bổ sung']]){const ids=new Map();for(const a of methods)for(const p of a.products)for(const f of p[field]||[])if(field==='productionSteps'||!sale.some(([id])=>id===f.id))ids.set(f.id,f.name||f.id);for(const [id,name]of ids)factor(label+' · '+name,p=>(p[field]||[]).find(f=>f.id===id)?.value,p=>(p[field]||[]).find(f=>f.id===id)?.percent||0);}
+ add('Phân loại khách hàng','',()=>null,()=>result.pricing.policySelections?.customer?.name||'Chưa khai');
+ add('Cấp độ đặc thù sản xuất','',()=>null,a=>[...new Set(a.products.map(p=>p.node.productionLevelChoice||result.pricing.policySelections?.['product:'+p.node.id]?.name||'Chưa khai'))].join(' / '));
+ add('Khối lượng vật tư mua','kg',()=>result.rows.reduce((s,r)=>s+(r.purchasedWeight||0),0));
+ add('Khối lượng phôi sản phẩm','kg',a=>a.total.weight);add('Diện tích bề mặt','m²',a=>a.total.area);
+ for(const [name,get]of [
+ ['Giá gốc',a=>a.total.cost],['Giá chào trước thuế',a=>final(a).beforeTax],
+ ['Vật tư chính + phụ + hoàn thiện',a=>a.total.material],['Sản xuất tại xưởng',a=>a.total.parts.factory],['Sản xuất thuê ngoài',a=>a.total.parts.outside],['Chi phí chung riêng TMC',a=>a.total.parts.tmcCommon],
+ ['Vận chuyển nhập vật tư',a=>a.total.parts.incoming],['Vận chuyển gia công thuê ngoài',a=>a.total.parts.outgoing],['Vận chuyển giao hàng',a=>a.total.parts.delivery],['Lắp đặt',a=>a.total.parts.install],
+ ['Chi phí chung',a=>a.total.overhead],['Chi phí quản lý',a=>a.total.management],['Đặc thù sản xuất',a=>a.total.special],['Sản xuất bổ sung',a=>a.total.productionExtras],['Chi phí xử lý',a=>bundled(a)?null:a.total.processing],
+ ['Còn lại sau giá gốc và xử lý',a=>final(a).beforeTax-a.total.cost-a.total.processing],['Thuế đầu ra',a=>final(a).vat],['Tổng tiền sau thuế',a=>final(a).grand]
+ ])add(name,'đ',get);
+ return out;
+}
+const api={FIELDS,rows,analysis,summary};if(typeof module!=='undefined')module.exports=api;else root.TPSource=api;
 })(typeof window!=='undefined'?window:globalThis);

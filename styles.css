@@ -89,3 +89,10 @@ input:disabled,select:disabled,textarea:disabled{background:#e3e9ed;color:#46596
 .quote-heading-with-totals .quote-technical-overview>.help-text{display:none}
 .quote-heading-with-totals>.actions{flex:0 0 auto}
 @media(max-width:700px){.quote-heading-with-totals>.quote-technical-overview{flex-basis:100%;min-width:0}.quote-heading-with-totals .quote-technical-totals{grid-template-columns:repeat(2,minmax(0,1fr))}.quote-heading-with-totals{gap:12px}}
+
+/* Overall comparison stays compact; technical details are opened separately. */
+.source-analysis .table-scroll{overflow:auto;max-width:100%}.source-analysis table{min-width:1100px;width:100%}.source-analysis th,.source-analysis td{padding:7px 10px;font-size:12px}.source-analysis th:first-child{min-width:220px}.source-analysis thead th{text-align:center}.source-analysis tbody th{text-align:left}.source-analysis .help-text{padding:12px}.pa-full-detail>summary{padding:16px;font-weight:600;cursor:pointer}.pa-full-detail[open]>summary{border-bottom:1px solid #d8e1ea}.quote-technical-totals:has([data-price-total]){grid-template-columns:repeat(3,minmax(0,1fr))}.quote-technical-totals [data-price-total],.quote-technical-totals [data-price-per-kg]{border-top:1px solid #c6d7e5;padding-top:8px}@media(max-width:700px){.quote-heading-with-totals .quote-technical-totals:has([data-price-total]){grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+[data-overall-analysis] table{min-width:1100px;table-layout:fixed}[data-overall-analysis] th{min-width:0;overflow-wrap:anywhere}[data-overall-analysis] thead th[rowspan],[data-overall-analysis] tbody th{width:220px;min-width:220px}[data-overall-analysis] thead tr:nth-child(2) th{min-width:0;width:auto}[data-overall-analysis] .panel-head{padding:0 0 14px}[data-overall-analysis] td{overflow-wrap:anywhere;font-family:inherit;font-variant-numeric:tabular-nums}
+
+.source-analysis[data-overall-analysis] table{min-width:1100px}.source-analysis[data-overall-analysis] tbody td:nth-child(2n){border-left:1px solid #d9e2ec}.source-analysis[data-overall-analysis] tbody tr:has(th):nth-child(even){background:#f7f9fc}
