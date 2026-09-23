@@ -1,0 +1,28 @@
+const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js');
+test('catalogue proposals require Admin, reject stale approvals; sales orders preserve price privacy',async t=>{
+ const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));const base='http://127.0.0.1:'+app.server.address().port;
+ const call=async(route,method='GET',body,s)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(s?{Cookie:s.cookie,'X-CSRF-Token':s.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
+ const password='Local-feedback-test-2026!',admin=await call('setup','POST',{username:'admin',name:'Admin',password});
+ for(const role of ['estimator','sales'])A.equal((await call('users','POST',{username:role,name:role,role,password,...(role==='estimator'?{sections:require('../section-access.js').keys}:{})},admin)).status,201);
+ const estimator=await call('login','POST',{username:'estimator',password}),sales=await call('login','POST',{username:'sales',password});
+ const original=(await call('catalog','GET',undefined,admin)).data;
+ const catalog=structuredClone(original.catalog);catalog.materials[0].name+=' reviewed';
+ const pending=await call('catalog','PUT',{expectedVersion:0,catalog},estimator);A.equal(pending.status,200,JSON.stringify(pending.data));A.equal(pending.data.pending,true);
+ A.deepEqual((await call('catalog','GET',undefined,admin)).data.catalog,original.catalog);
+ A.equal((await call('catalog/proposals/'+pending.data.proposalId+'/approve','POST',{},estimator)).status,403);
+ A.equal((await call('catalog/proposals/'+pending.data.proposalId+'/approve','POST',{},admin)).status,200);
+ A.equal((await call('catalog','GET',undefined,admin)).data.catalog.materials[0].name,catalog.materials[0].name);
+ A.equal((await call('catalog/proposals/'+pending.data.proposalId+'/approve','POST',{},admin)).status,409);
+ const next=await call('catalog','PUT',{expectedVersion:1,catalog},estimator);A.equal(next.data.pending,true);
+ A.equal((await call('catalog','PUT',{expectedVersion:1,catalog},admin)).status,200);
+ A.equal((await call('catalog/proposals/'+next.data.proposalId+'/approve','POST',{},admin)).status,409);
+ A.equal((await call('catalog/proposals/'+next.data.proposalId+'/reject','POST',{reason:'Rebase required'},admin)).status,200);
+ const d=P.demoSeed(),q=(await call('quotes','POST',{document:d},admin)).data;
+ A.equal((await call('quotes/'+q.id+'/order','POST',{expectedVersion:1,code:'DH-TEST'},sales)).status,409);
+ await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1},admin);await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2},admin);
+ const order=await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'DH-TEST'},sales);A.equal(order.status,201,JSON.stringify(order.data));A.equal(order.data.package,undefined);
+ const view=await call('orders/'+order.data.id,'GET',undefined,sales);A.equal(view.status,200);A.equal(view.data.status,'draft');A.ok(view.data.offer.products.length);A.equal(view.data.materials,undefined);A.equal(view.data.baseline,undefined);A.equal(view.data.quote,undefined);
+ A.equal((await call('orders/'+order.data.id+'/confirm','POST',{quoteVersion:3},sales)).status,403);
+ A.equal((await call('orders/'+order.data.id+'/confirm','POST',{quoteVersion:3},admin)).status,200);
+ A.equal((await call('backup','GET',undefined,admin)).data.catalogProposals.length,2);
+});

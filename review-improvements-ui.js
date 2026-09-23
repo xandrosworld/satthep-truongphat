@@ -11,7 +11,7 @@ function reviewHeader(){
  const done=['intake','technical','materials'].filter(k=>s?.[k]?.current).length;
  reviewFold([handoff],Team.dirty?'Xác nhận & bàn giao · Có thay đổi chưa lưu':`Xác nhận & bàn giao · ${done}/3 phần đã xác nhận`,key+':handoff');
  const metrics=host.querySelector('.quote-metrics'),ribbon=host.querySelector('.quote-ribbon'),intro=host.querySelector('.pa-intro');
- const figures=[ribbon,metrics,host.querySelector('.quote-technical-overview'),intro].filter(Boolean);
+ const figures=[ribbon,metrics,intro].filter(Boolean);
  if(figures.length)reviewFold(figures,'Thông tin chi tiết · '+(db.quote.customer||'Chưa khai khách hàng'),key+':info');
  const banner=host.querySelector('.team-banner');if(banner){banner.classList.add('review-team-banner');let status=banner.querySelector('[data-review-save-state]');if(!status){status=document.createElement('p');status.dataset.reviewSaveState='';banner.append(status);}const link=teamCurrent();status.textContent=(Team.dirty?'Chưa lưu thay đổi':link?'Đã lưu báo giá · v'+link.version:'Chưa lưu báo giá')+' · '+(link?.status==='approved'?'Đã duyệt báo giá':link?.status==='submitted'?'Đang chờ duyệt':'Chưa gửi duyệt');}
 }

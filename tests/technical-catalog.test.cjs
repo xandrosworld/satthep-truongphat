@@ -10,14 +10,14 @@ test('price-free technical catalogue: grant, publish, preserve prices, reject in
  const original=(await call('catalog','GET',undefined,admin)).data.catalog;
  let record=await call('catalog','GET',undefined,tech);A.equal(record.status,200,JSON.stringify(record.data));let c=record.data.catalog;A.deepEqual(c,T.projectCatalog(original));A.ok(c.materials.every(x=>x.price===0));A.ok(c.rates.every(x=>x.inside===0&&x.outside===0&&x.factors.length===0));
  c.materials[0].name+=' technical';c.library[0].name+=' technical';c.conventions.parameters=[...(c.conventions.parameters||[]),{name:'QA',label:'Test dimension',unit:'mm'}];
- let saved=await call('catalog','PUT',{expectedVersion:record.data.version,catalog:c},tech);A.equal(saved.status,200,JSON.stringify(saved.data));
+ let saved=await call('catalog','PUT',{expectedVersion:record.data.version,catalog:c},tech);A.equal(saved.status,200,JSON.stringify(saved.data));A.equal(saved.data.pending,true);A.equal((await call('catalog/proposals/'+saved.data.proposalId+'/approve','POST',{},admin)).status,200);
  const actual=(await call('catalog','GET',undefined,admin)).data.catalog;
  A.equal(actual.materials[0].price,original.materials[0].price);A.equal(actual.materials[0].name,c.materials[0].name);A.equal(actual.library[0].name,c.library[0].name);A.deepEqual(actual.rates,original.rates);A.deepEqual(actual.pricingDefaults,original.pricingDefaults);A.deepEqual(actual.materialPrices,original.materialPrices);
  const expectedLibrary=structuredClone(original.library);expectedLibrary[0].name+=' technical';A.deepEqual(actual.library,expectedLibrary,'template prices, factors and selected methods survive');
  record=(await call('catalog','GET',undefined,tech)).data;
  record.catalog.rates[0].machine='Máy laser';record.catalog.rates[0].technicalNotes='Cắt theo bản vẽ';record.catalog.rates[0].name='Cắt phôi kỹ thuật';
  record.catalog.rates.push({id:'TECH-NEW',name:'Khoan kỹ thuật',machine:'Máy khoan bàn',unit:'kg',insideUnit:'kg',outsideUnit:'kg',inside:0,outside:0,factors:[],operationType:'detail'});
- saved=await call('catalog','PUT',{expectedVersion:record.version,catalog:record.catalog},tech);A.equal(saved.status,200,JSON.stringify(saved.data));
+ saved=await call('catalog','PUT',{expectedVersion:record.version,catalog:record.catalog},tech);A.equal(saved.status,200,JSON.stringify(saved.data));A.equal(saved.data.pending,true);A.equal((await call('catalog/proposals/'+saved.data.proposalId+'/approve','POST',{},admin)).status,200);
  const changed=(await call('catalog','GET',undefined,admin)).data.catalog;
  A.deepEqual(changed.rates[0],{...original.rates[0],name:'Cắt phôi kỹ thuật',machine:'Máy laser',technicalNotes:'Cắt theo bản vẽ'});
  A.equal(changed.rates.find(x=>x.id==='TECH-NEW').machine,'Máy khoan bàn');
