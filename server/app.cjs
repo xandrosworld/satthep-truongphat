@@ -95,6 +95,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const intake=require('./intake.cjs').createIntake({sql,fail,readBody,audit});
   const accounts=require('./accounts.cjs').createAccounts({sql,fail,readBody,transaction,audit});
   const formulaAccess=require('./formula-access.cjs').createFormulaAccess({sql,fail,readBody,audit,transaction});
+  const editLeases=require('./formula-edit-leases.cjs').createEditLeases({sql,fail,transaction,readBody,audit});
   const dataAccess=require('./data-access.cjs').createDataAccess({sql,fail});
   const notifications=require('./notifications.cjs').createNotifications({sql,fail,readBody,transaction,audit,getQuote});
   const aiPdf=require('./ai-pdf.cjs').createAiPdf({sql,readBody,fail,audit,provider:aiProvider});
@@ -108,6 +109,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
           for(const template of safe.library){if(previousTemplates.get(template.id)===JSON.stringify(template))continue;for(const node of C.flatten([template])){if(node.kind==='material'&&(!materialIds.has(node.materialId)||node.rule&&!ruleIds.has(node.rule)))fail(400,'Mẫu '+template.name+': thiếu mã vật tư hoặc quy tắc trong danh mục chung');for(const op of node.ops||[])if(!rateIds.has(op.id))fail(400,'Mẫu '+template.name+': thiếu nguyên công '+op.id+' trong danh mục chung');}try{C.attachTemplateRates({ratesSnapshot:safe.rates},[],template);}catch(error){fail(400,error.message);}}
           const defaults=value.pricingDefaults||catalogSeed().pricingDefaults,check=require('../pricing-core.js').demoSeed();try{if(!rights.technical&&!proposal)require('../package-operation-core.js').synchronize(defaults,safe.rates);require('../input-prices-core.js').validateMaster(defaults);}catch(e){fail(400,e.message);}check.quote.pricing={...defaults,selected:'detail',overrides:{}};const errors=C.calculate(check).errors;if(errors.length)fail(400,'Hệ số chung không hợp lệ: '+errors.join('; '));
           try{require('./catalog-guard.cjs').protect(old?JSON.parse(old.document):catalogSeed(),safe,all('SELECT document FROM quotes UNION ALL SELECT document FROM revisions').map(x=>JSON.parse(x.document)));}catch(e){fail(400,e.message);}
+          editLeases.guard(old?JSON.parse(old.document):catalogSeed(),safe,user,body.editTokens||{});
           const document=JSON.stringify({shapeDefinitions:safe.shapeDefinitions,stockSizes:safe.stockSizes,conventions:safe.conventions,materialPrices:safe.materialPrices,materials:safe.materials,rates:safe.rates,rules:safe.rules,library:safe.library,pricingDefaults:defaults}),version=(old?.version||0)+1,updated=new Date().toISOString();const previous=old?JSON.parse(old.document):catalogSeed(),next=JSON.parse(document),technicalMaterials=user.role==='technical'&&rights.catalog&&Object.keys(next).filter(k=>!['materials','stockSizes'].includes(k)).every(k=>require('node:util').isDeepStrictEqual(next[k],previous[k]));if(user.role!=='admin'&&!technicalMaterials){const id=randomUUID();run("UPDATE catalog_proposals SET status='superseded' WHERE actor=? AND status='pending'",user.id);run('INSERT INTO catalog_proposals(id,base_version,document,actor,at,status) VALUES(?,?,?,?,?,?)',id,old?.version||0,document,user.id,updated,'pending');audit(user,'submit-catalog',id);return {pending:true,proposalId:id,version:old?.version||0,updated,actorName:user.name};}
           if(proposal)run("UPDATE catalog_proposals SET status='approved',reviewer=?,reviewed_at=? WHERE id=?",user.id,updated,proposal.id);
           run('INSERT INTO catalog(id,version,document,updated,actor) VALUES(1,?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,document=excluded.document,updated=excluded.updated,actor=excluded.actor',version,document,updated,user.id);run('INSERT INTO catalog_revisions(version,document,updated,actor) VALUES(?,?,?,?)',version,document,updated,user.id);audit(user,'catalog',String(version));return {version,updated,actorName:user.name};});}
@@ -139,6 +141,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       if(await aiPdf.handle({req,route,user,send}))return;
       if(await production.handle({req,route,user,send}))return;
       if(await chat.handle({req,route,user,send,res}))return;
+      if(await editLeases.handle({req,route,user,rights,send}))return;
       if(await formulaAccess.handle({req,route,user,rights,send}))return;
       if(await accounts.handle({req,route,user,rights,send}))return;
       if(await notifications.handle({req,route,user,rights,send}))return;

@@ -51,6 +51,7 @@ function installFormulaAccessUI(){
  const mutate=mutation;mutation=(action,options={})=>{if(!Team.user||Team.permissions.formulaUse)return mutate(action,options);const before=C.copy(db.quote.products);return mutate(()=>{action();if(!TPSectionAccess.equal(before,db.quote.products))throw Error('Chưa có quyền sử dụng công thức để thay đổi cấu thành');},options);};
  const rows=rcFormulaRows;rcFormulaRows=d=>Team.user&&!Team.permissions.formulaView?'<p class="notice">Công thức được bảo vệ. Bạn có thể chọn dạng cấu kiện và nhập thông số để tính khi được cấp quyền sử dụng.</p>':rows(d);
  document.addEventListener('click',e=>{const list=e.target.closest('[data-formula-locks]'),b=e.target.closest('[data-formula-lock]');if(list){formulaLocks().catch(inError);return;}if(!b)return;teamDialog(b.dataset.locked==='1'?'Khóa công thức':'Mở khóa công thức',field('Lý do','reason','','text','required maxlength="500"'),'Xác nhận',async f=>{if(CatalogDraft.dirty)await cdSave();await teamApi('formulas/locks','POST',{expectedCatalogVersion:Team.catalogVersion,key:b.dataset.formulaLock,locked:b.dataset.locked==='1',expectedVersion:Number(b.dataset.version),reason:f.get('reason')});await formulaRefreshLocks();render();await formulaLocks();});});
+ installFormulaEditLeases();
  const observer=new MutationObserver(()=>formulaPaint());observer.observe($('#dialog'),{childList:true,subtree:true});
 }
 
@@ -95,3 +96,20 @@ document.addEventListener('click',async e=>{
  teamDialog('Xóa công thức',`<p>Xóa <strong>${esc(item.name)}</strong> khỏi danh mục đang làm?</p><p>Lưu danh mục chung để cập nhật lên máy chủ.</p>`,'Xóa',async()=>{await check();mutation(()=>{db[kind]=db[kind].filter(d=>d.id!==id);},{preserveQuote:true});closeDialog();render();});
  }catch(err){inError(err);}
 });
+// Server leases are per editor, including separate tabs of the same account.
+function installFormulaEditLeases(){
+ const held=new Map();let active=null;const snapshot=()=>JSON.stringify(cdSnapshot());
+ const release=async key=>{const lease=held.get(key);if(!lease)return;held.delete(key);try{await teamApi('formulas/edit','POST',{action:'release',key,token:lease.token});}catch{}};
+ const api=teamApi;teamApi=async(route,method='GET',data)=>{const saving=route==='catalog'&&method==='PUT';if(saving){for(const lease of held.values())if(lease.expires<=Date.now()||lease.lost)throw Error('Khóa sửa đã hết hạn. Giữ bản nháp, mở lại công thức và đối chiếu trước khi lưu.');data={...data,editTokens:Object.fromEntries([...held].map(([key,value])=>[key,value.token]))};}const result=await api(route,method,data);if(saving){await Promise.all([...held.keys()].map(release));active=null;}return result;};
+ const protect=(fn,keyOf)=>async(...args)=>{if(!Team.user||!Team.permissions?.catalog||!(Team.permissions?.formulaEdit||Team.permissions?.factors))return fn(...args);const key=keyOf(...args);if(!key)return fn(...args);try{let lease=held.get(key);if(!lease||lease.lost||lease.expires<=Date.now()){lease=await teamApi('formulas/edit','POST',{action:'acquire',key,token:lease?.token});held.set(key,lease);}active={key,before:snapshot()};await fn(...args);if($('#dialog').open)$('#dialog-form').insertAdjacentHTML('afterbegin','<p class="notice" data-edit-lease>Đang giữ quyền sửa mục này. Lưu danh mục lên máy chủ để hoàn tất và nhả khóa.</p>');}catch(error){await fn(...args);if($('#dialog').open){$('#dialog-form').querySelectorAll('input,select,textarea,button[type=submit]').forEach(el=>el.disabled=true);$('#dialog-form').insertAdjacentHTML('afterbegin','<p class="notice warning">'+esc(error.message)+'</p>');}else toast(error.message);}};
+ dfShapeEdit=protect(dfShapeEdit,(id,working)=>working?.sourceRuleId?'rules:'+working.sourceRuleId:id?'shapeDefinitions:'+id:null);
+ editRule=protect(editRule,id=>id?'rules:'+id:null);
+ rcFactorEdit=protect(rcFactorEdit,(rate,id)=>{const f=fmResolve(rate,id);return f?'factor:'+f.id:'factors:all';});
+ rcFactorRemove=protect(rcFactorRemove,(rate,id)=>{const f=fmResolve(rate,id);return f?'factor:'+f.id:'factors:all';});
+ fmMatrix=protect(fmMatrix,()=> 'factors:all');
+ const close=closeDialog;closeDialog=()=>{const current=active;active=null;close();if(current&&snapshot()===current.before)release(current.key);};
+ actions.close=closeDialog;$('#dialog').addEventListener('cancel',e=>{if(active){e.preventDefault();closeDialog();}});
+ const session=teamSession;teamSession=value=>{if(!value.user||value.user.id!==Team.user?.id){held.clear();active=null;}return session(value);};
+ const mutate=mutation;mutation=(action,options={})=>mutate(()=>{const before=snapshot();action();if(before!==snapshot()&&[...held.values()].some(l=>l.lost||l.expires<=Date.now()))throw Error('Đã mất khóa sửa. Giữ nội dung đang nhập và mở lại để đối chiếu.');},options);
+ setInterval(()=>{for(const [key,lease]of held){if(lease.lost)continue;teamApi('formulas/edit','POST',{action:'renew',key,token:lease.token}).then(next=>{if(held.get(key)===lease)held.set(key,next);}).catch(()=>{lease.lost=true;const note=$('[data-edit-lease]');if(note)note.textContent='Đã mất kết nối hoặc khóa sửa. Nội dung đang nhập vẫn giữ; chưa thể lưu. Mở lại để đối chiếu.';});}},30000);
+}
