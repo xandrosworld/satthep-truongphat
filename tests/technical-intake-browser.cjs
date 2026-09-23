@@ -20,7 +20,7 @@ const {createApp}=require(path.join(release,'server/app.cjs'));
    teamSession(await teamApi('login','POST',{username:'admin',password:'Technical-intake-test-42!'}));
    return created.id;
   });
-  const before=await admin.evaluate(id=>teamApi('quotes/'+id),id);
+  let before=await admin.evaluate(id=>teamApi('quotes/'+id),id);
   const context=await browser.newContext({acceptDownloads:true}),p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));
   await p.goto(url);await p.waitForFunction(()=>Team.available);
   await p.evaluate(async id=>{teamSession(await teamApi('login','POST',{username:'reader',password:'Technical-intake-test-42!'}));await teamLoad(id);},id);
@@ -30,6 +30,12 @@ const {createApp}=require(path.join(release,'server/app.cjs'));
   await expect(p.locator('[data-intake=request],[data-intake=attach],[data-intake=choose-customer]')).toHaveCount(0);
   await expect(p.locator('[data-tab=prices],[data-tab=pricing]')).toHaveCount(0);
   await expect(p.locator('a[href="https://example.com/drawing.pdf"]')).toBeVisible();
+  // A colleague updates the same quotation while the technician keeps it open.
+  async function remoteInput(note){await admin.evaluate(async({id,note})=>{const q=await teamApi('quotes/'+id);q.document.quote.request.notes=note;q.document.quote.request.links=[{id:'fresh-link',name:'Updated drawing',url:'https://example.com/new-drawing.pdf'}];await teamApi('quotes/'+id,'PUT',{document:q.document,expectedVersion:q.version});},{id,note});}
+  await remoteInput('New input from sales');await p.evaluate(()=>teamRefreshIntake(true));await expect(p.locator('.intake-notes')).toContainText('New input from sales');await expect(p.locator('a[href="https://example.com/new-drawing.pdf"]')).toBeVisible();
+  await p.evaluate(()=>{Team.dirty=true;db.quote.request.notes='Local work stays';});await remoteInput('Second update from sales');await p.evaluate(()=>teamRefreshIntake(true));expect(await p.evaluate(()=>db.quote.request.notes)).toBe('Local work stays');await expect(p.locator('[data-intake-sync-status]')).toContainText('chưa lưu');
+  await p.evaluate(()=>{Team.dirty=false;});await p.evaluate(()=>teamRefreshIntake(true));await expect(p.locator('.intake-notes')).toContainText('Second update from sales');before=await admin.evaluate(id=>teamApi('quotes/'+id),id);
+
   const downloadPromise=p.waitForEvent('download');await p.locator('[data-intake=file-download]').click();const download=await downloadPromise;expect(fs.readFileSync(await download.path(),'utf8')).toBe('%PDF-1.4 QA source drawing');
   const denied=await p.evaluate(async()=>{const out=[];for(const route of ['intake/files/source-unlinked','intake/customers']){const r=await fetch('/api/'+route);out.push(r.status);}const r=await fetch('/api/intake/files',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':Team.csrf},body:JSON.stringify({})});out.push(r.status);return out;});expect(denied).toEqual([403,403,403]);
   const forged=await p.evaluate(async id=>{const r=await teamApi('quotes/'+id);r.document.quote.request.notes='Not permitted';return (await fetch('/api/quotes/'+id,{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':Team.csrf},body:JSON.stringify({document:r.document,expectedVersion:r.version})})).status;},id);expect(forged).toBe(403);

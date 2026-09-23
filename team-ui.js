@@ -59,3 +59,27 @@ async function installTeamUI(){
   if(!/^https?:$/.test(location.protocol))return;
   try{const status=await teamApi('status');Team.available=true;Team.configured=status.configured;Team.mode=status.mode;Team.requireLogin=!!status.requireLogin;render();Team.setupKeyRequired=status.setupKeyRequired;$('.top-actions').insertAdjacentHTML('afterbegin',teamButton('Đăng nhập dùng chung','login','id="team-entry"','small'));try{const generation=Team.sessionGeneration||0,current=await teamApi('me');if((Team.sessionGeneration||0)===generation){teamSession(current);render();}}catch{}}catch{}
 }
+
+// Refresh a clean intake view; never replace local edits or a historical revision.
+let teamIntakeRefreshing=false;
+async function teamRefreshIntake(manual=false){
+ const link=teamCurrent(),generation=Team.sessionGeneration;
+ if(teamIntakeRefreshing||!Team.user||!link||link.readOnly||page!=='quote'||tab!=='intake'||$('#dialog')?.open)return;
+ teamIntakeRefreshing=true;
+ try{
+  const record=await teamApi('quotes/'+link.id);
+  if(generation!==Team.sessionGeneration||teamCurrent()!==link||page!=='quote'||tab!=='intake'||$('#dialog')?.open)return;
+  const status=$('[data-intake-sync-status]');
+  if(record.version===link.version){if(manual&&status)status.textContent='Đang xem bản mới nhất · phiên bản '+link.version;return;}
+  if(Team.dirty||Quotes.conflict){if(status)status.textContent='Có bản mới trên máy chủ. Bản đang làm có thay đổi chưa lưu; hãy sao lưu và đối chiếu trước khi tải lại.';return;}
+  if(document.activeElement?.matches('input,textarea,select'))return;
+  db={...db,...record.document,savedQuotes:[],history:[]};db.quote.workspaceKey=link.workspaceKey;
+  Team.link={...link,version:record.version,status:record.status};
+  Team.quoteTechnicalBaseline=Team.permissions?.technical?{id:link.id,document:C.copy(record.document)}:null;
+  UX.undo=[];UX.redo=[];UX.checked.clear();render();
+  const updated=$('[data-intake-sync-status]');if(updated)updated.textContent='Đã cập nhật từ máy chủ · phiên bản '+record.version;
+ }catch(e){if(manual)toast(e.message);}finally{teamIntakeRefreshing=false;}
+}
+document.addEventListener('click',e=>{if(e.target.closest('[data-intake-refresh]')){e.preventDefault();teamRefreshIntake(true);}else if(e.target.closest('[data-tab="intake"],[data-intake="goto"][data-id="intake"]'))setTimeout(()=>teamRefreshIntake(),0);});
+window.addEventListener('focus',()=>teamRefreshIntake());
+setInterval(()=>{if(!document.hidden)teamRefreshIntake();},30000);
