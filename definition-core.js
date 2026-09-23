@@ -78,11 +78,16 @@ function geometry(n,count){const m=n.spec,d=m.shapeDefinition;validateShape(d);i
   const mass=m.massOverride?C.materialMass(effective(n)):rates.mass,surface=m.areaOverride?C.materialSurface(effective(n)):rates.surface;
   const blankVars={...vars,...unfoldAliases(d,length,width),KL_DV:mass,DT_DV:d.base==='sheet'?1:surface};
   const weight=(d.blankMass?positive(E.formula(d.blankMass,blankVars),'Khối lượng phôi sản phẩm'):factor*mass)*count;
-  const area=(d.blankSurface?positive(E.formula(d.blankSurface,blankVars),'Diện tích phôi sản phẩm'):factor*(d.base==='sheet'?1:surface))*count;
+  let area=(d.blankSurface?positive(E.formula(d.blankSurface,blankVars),'Diện tích phôi sản phẩm'):factor*(d.base==='sheet'?1:surface))*count;
+  // Older rectangular sheet declarations put the two-face multiplier in blankSurface.
+  // Recognize only an explicit leading 2, with matching one-layer mass and bounding area.
+  // Never suppress arbitrary oversized contours or inconsistent mass formulas.
+  const legacyTwoFaces=d.base==='sheet'&&!d.polygon&&!['circle','right-triangle'].includes(d.nesting)&&count>0&&surface===1&&/^\s*2\s*\*/.test(d.blankSurface||'')&&Math.abs(area-2*factor*count)<=Math.max(1e-9,factor*count*1e-8)&&Math.abs(weight-factor*count*mass)<=Math.max(1e-8,factor*count*mass*1e-8);
+  if(legacyTwoFaces)area/=2;
   if(d.nesting==='right-triangle'&&count>0){const expected=factor*count/2;if(Math.abs(area-expected)>Math.max(1e-9,expected*1e-8)||Math.abs(weight-expected*mass)>Math.max(1e-8,expected*mass*1e-8))throw Error('Ghép tam giác vuông cần diện tích dài × rộng / 2 và khối lượng theo diện tích đó; kiểm tra công thức hoặc chọn xếp khổ bao');}
   if(d.nesting==='circle'&&count>0){const expected=Math.PI*length*length/4/1e6*count;if(Math.abs(length-width)>1e-8||Math.abs(area-expected)>Math.max(1e-9,expected*1e-8)||Math.abs(weight-expected*mass)>Math.max(1e-8,expected*mass*1e-8))throw Error('Xếp tấm tròn cần dài = rộng = đường kính, diện tích PI × D0² / 4 và khối lượng theo diện tích đó');}
   const polygon=d.polygon?PG.geometry(d.polygon,vars):d.nesting==='right-triangle'?{points:[[0,0],[length,0],[0,width]],sides:[length,Math.hypot(length,width),width],length,width,area:length*width/2}:null;if(polygon&&(Math.abs(length-polygon.length)>1e-6||Math.abs(width-polygon.width)>1e-6||count>0&&Math.abs(area/count-polygon.area/1e6)>Math.max(1e-9,polygon.area/1e6*1e-8)))throw Error('Công thức khổ bao/diện tích không khớp biên đa giác');
-  return {...(polygon?{polygon:polygon.points,sideLengths:polygon.sides}:{}),...(d.unfoldOutputs?.length?{unfolded:Object.fromEntries(d.unfoldOutputs.map(o=>[o.key,vars[o.key]]))}:{}),length,width,weight,blankArea:area,area:d.base==='sheet'?area*surface:area,volume:weight/m.density,quantity:count,measure:factor*count};
+  return {...(polygon?{polygon:polygon.points,sideLengths:polygon.sides}:{}),...(d.unfoldOutputs?.length?{unfolded:Object.fromEntries(d.unfoldOutputs.map(o=>[o.key,vars[o.key]]))}:{}),length,width,weight,blankArea:area,area:d.base==='sheet'?area*(legacyTwoFaces?2:surface):area,volume:weight/m.density,quantity:count,measure:factor*count};
 }
 function applyShape(m,d,fixed={}){validateShape(d);const updated=C.copy(m);updated.shapeDefinition=C.copy(d);updated.shape=d.base==='sheet'?'sheet':'profile';updated.props={};for(const f of d.fields.filter(f=>f.mode==='fixed'))updated.props[f.key]=positive(fixed[f.key],'Thông số cố định '+f.key,true);delete updated.massOverride;delete updated.areaOverride;return updated;}
 function testShape(d,inputs,density=7850){const m=applyShape({id:'PREVIEW',density},d,inputs),dims=Object.fromEntries(d.fields.filter(f=>f.mode==='input').map(f=>[f.key,inputs[f.key]]));return geometry({spec:m,dims},1);}
