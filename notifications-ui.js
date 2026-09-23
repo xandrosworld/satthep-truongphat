@@ -54,7 +54,7 @@ function noticeConfirm(stage){const link=teamCurrent();if(!link||link.readOnly||
 function noticeReopen(stage){const link=teamCurrent(),generation=Team.sessionGeneration;
  if(!link||link.readOnly||link.status!=='draft')throw Error('Bản đã khóa. Người có quyền cần tạo bản sửa trước.');
  if(Team.dirty)throw Error('Lưu hoặc hoàn tác thay đổi đang làm trước khi mở sửa.');
- teamDialog('Mở sửa phần đã xác nhận',`<p>Phần này và các phần phía sau sẽ cần xác nhận lại. Lý do được ghi vào lịch sử và thông báo đến người phụ trách.</p>${b1Area('Lý do thay đổi (bắt buộc)','reason')}`,'Mở sửa và thông báo',async f=>{
+ teamDialog('Mở khóa để sửa phần đã xác nhận',`<p>Phần này và các phần phía sau sẽ cần xác nhận lại. Lý do được ghi vào lịch sử và thông báo đến người phụ trách.</p>${b1Area('Lý do thay đổi (bắt buộc)','reason')}`,'Mở sửa và thông báo',async f=>{
   const reason=String(f.get('reason')||'').trim();if(!reason)throw Error('Nhập lý do thay đổi');
   if(generation!==Team.sessionGeneration||teamCurrent()?.id!==link.id)throw Error('Phiên làm việc đã đổi');
   await teamApi('quotes/'+link.id+'/handoff/'+stage+'/reopen','POST',{expectedVersion:link.version,reason});closeDialog();await noticeRefresh();render();toast('Đã mở sửa và ghi nhận lý do. Các phần liên quan cần xác nhận lại.');
