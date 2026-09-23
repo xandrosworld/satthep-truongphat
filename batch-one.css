@@ -46,7 +46,7 @@
 .b1-intake-dialog h3{margin:24px 0 14px;padding-bottom:8px;border-bottom:1px solid #c9d5df}
 #dialog [hidden]{display:none!important}
 .def-incomplete .quick-identity strong,.def-incomplete .cell-error{color:#922b17}
-.def-incomplete .quick-identity:after{content:'Chưa chọn mã';display:block;color:#922b17;font-weight:700}
+.def-incomplete .quick-identity:after{content:attr(data-material-status);display:block;color:#922b17;font-weight:700}
 .def-state{display:block;color:#273b51!important;font-weight:700;font-size:var(--ui-font-11, 11px)}
 [data-b1-type] small,[data-b1-type] .subtext,[data-b1-type] .fixed-value{color:#465569!important}
 [data-b1-type] .cell-error{color:#922b17!important}
@@ -96,3 +96,5 @@
 @media(max-width:700px){.quick-product-head.b1-product{padding:12px;gap:8px}.quick-product-head .quick-product-title{flex:1 1 calc(100% - 86px)}.quick-product-heading{gap:5px}.quick-product-heading>strong{font-size:var(--ui-font-14, 14px)}.quick-product-head .product-quantity{margin-left:0}.quick-product-head .product-head-actions{margin-left:auto}.quick-product .product-params{display:flex;flex-direction:column;align-items:stretch;padding:12px;gap:10px}.product-param-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.product-params .param-label{flex-basis:auto}.product-params .param-label small{display:inline;margin-left:5px}.product-params>[data-ux=configure-links]{align-self:flex-start}.product-param-help{flex-direction:column;align-items:stretch;gap:3px}.product-param-help .button.quiet{text-align:left;justify-content:flex-start;padding-left:0}}
 
 .quick-product .quick-table thead th,.quick-product .quick-row .button.quiet,.quick-product .fixed-value,.quick-product .calc-col small{color:#405664}
+
+.quick-identity>span:last-child{min-width:0;flex:1}.quick-identity>span:last-child>[data-row-polygon]{display:block;width:max-content;max-width:100%;margin-top:5px}.def-incomplete .quick-identity:after{font-size:11px;max-width:150px;overflow-wrap:anywhere;flex-shrink:0}
