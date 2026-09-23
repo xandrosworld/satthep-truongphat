@@ -88,7 +88,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
     const encoded=JSON.stringify(data);
     if(old)run('UPDATE quotes SET code=?,customer=?,project=?,version=?,status=?,total=?,document=?,updated=?,actor=? WHERE id=?',data.quote.id,data.quote.customer||'',data.quote.project||'',version,status,result.total.grand,encoded,now,user.id,key);
     else run('INSERT INTO quotes(id,code,customer,project,version,status,total,document,updated,actor) VALUES(?,?,?,?,?,?,?,?,?,?)',key,data.quote.id,data.quote.customer||'',data.quote.project||'',version,status,result.total.grand,encoded,now,user.id);
-    run('INSERT INTO revisions(id,version,status,document,total,actor,at,reason) VALUES(?,?,?,?,?,?,?,?)',key,version,status,encoded,result.total.grand,user.id,now,reason||'');audit(user,status,key,reason||'');const technicalRecipients=old?undefined:notifications.created(key,user);return {id:key,version,status,total:result.total.grand,updated:now,errors:result.errors,...(technicalRecipients===undefined?{}:{technicalRecipients})};
+    run('INSERT INTO revisions(id,version,status,document,total,actor,at,reason) VALUES(?,?,?,?,?,?,?,?)',key,version,status,encoded,result.total.grand,user.id,now,reason||'');audit(user,status,key,reason||'');const technicalRecipients=old?undefined:notifications.created(key,user);if(status==='draft'){const row=one('SELECT version,document FROM catalog WHERE id=1');formulaSync.sync({version:row.version,catalog:JSON.parse(row.document)},user,key);}const current=getQuote(key);return {id:key,version:current.version,status,total:current.total,updated:current.updated,formulaUpdated:current.version>version,errors:result.errors,...(technicalRecipients===undefined?{}:{technicalRecipients})};
   });}
   async function readBody(req,limit=2000000){if(!/^application\/json(?:;|$)/i.test(req.headers['content-type']||''))fail(415,'Yêu cầu JSON');const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>limit)fail(413,'Dữ liệu quá lớn');chunks.push(chunk);}let body;try{body=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{fail(400,'JSON không hợp lệ');}if(!body||typeof body!=='object'||Array.isArray(body))fail(400,'Yêu cầu một đối tượng JSON');return session(req)?dataAccess.hydrate(body,session(req)):body;}
   const workflow=require('./workflow.cjs').createWorkflow({sql,fail,transaction,audit,readBody,getQuote,currentOffer});
@@ -97,7 +97,9 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const formulaAccess=require('./formula-access.cjs').createFormulaAccess({sql,fail,readBody,audit,transaction});
   const editLeases=require('./formula-edit-leases.cjs').createEditLeases({sql,fail,transaction,readBody,audit});
   const dataAccess=require('./data-access.cjs').createDataAccess({sql,fail});
+  const quotePresence=require('./quote-presence.cjs').createQuotePresence({sql,fail,readBody,getQuote});
   const notifications=require('./notifications.cjs').createNotifications({sql,fail,readBody,transaction,audit,getQuote});
+  const formulaSync=require('./formula-sync.cjs').createFormulaSync({sql,cleanDocument,publicOffer,audit});
   const aiPdf=require('./ai-pdf.cjs').createAiPdf({sql,readBody,fail,audit,provider:aiProvider});
   const chat=require('./chat.cjs').createChat({sql,fail,readBody,transaction});
   const production=require('./production.cjs').createProduction({sql,fail,readBody,transaction,audit});
@@ -112,7 +114,8 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
           editLeases.guard(old?JSON.parse(old.document):catalogSeed(),safe,user,body.editTokens||{});
           const document=JSON.stringify({shapeDefinitions:safe.shapeDefinitions,stockSizes:safe.stockSizes,conventions:safe.conventions,materialPrices:safe.materialPrices,materials:safe.materials,rates:safe.rates,rules:safe.rules,library:safe.library,pricingDefaults:defaults}),version=(old?.version||0)+1,updated=new Date().toISOString();const previous=old?JSON.parse(old.document):catalogSeed(),next=JSON.parse(document),technicalMaterials=user.role==='technical'&&rights.catalog&&Object.keys(next).filter(k=>!['materials','stockSizes'].includes(k)).every(k=>require('node:util').isDeepStrictEqual(next[k],previous[k]));if(user.role!=='admin'&&!technicalMaterials){const id=randomUUID();run("UPDATE catalog_proposals SET status='superseded' WHERE actor=? AND status='pending'",user.id);run('INSERT INTO catalog_proposals(id,base_version,document,actor,at,status) VALUES(?,?,?,?,?,?)',id,old?.version||0,document,user.id,updated,'pending');audit(user,'submit-catalog',id);return {pending:true,proposalId:id,version:old?.version||0,updated,actorName:user.name};}
           if(proposal)run("UPDATE catalog_proposals SET status='approved',reviewer=?,reviewed_at=? WHERE id=?",user.id,updated,proposal.id);
-          run('INSERT INTO catalog(id,version,document,updated,actor) VALUES(1,?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,document=excluded.document,updated=excluded.updated,actor=excluded.actor',version,document,updated,user.id);run('INSERT INTO catalog_revisions(version,document,updated,actor) VALUES(?,?,?,?)',version,document,updated,user.id);audit(user,'catalog',String(version));return {version,updated,actorName:user.name};});}
+          run('INSERT INTO catalog(id,version,document,updated,actor) VALUES(1,?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,document=excluded.document,updated=excluded.updated,actor=excluded.actor',version,document,updated,user.id);run('INSERT INTO catalog_revisions(version,document,updated,actor) VALUES(?,?,?,?)',version,document,updated,user.id);audit(user,'catalog',String(version));const formulaUpdates=formulaSync.sync({version,catalog:next},user);return {version,updated,actorName:user.name,formulaUpdates};});}
+  transaction(()=>{const row=one('SELECT version,document,actor FROM catalog WHERE id=1');if(row?.version){const user=one('SELECT id,name FROM users WHERE id=?',row.actor)||{id:'system',name:'Hệ thống'};formulaSync.sync({version:row.version,catalog:JSON.parse(row.document)},user);}});
   const server=http.createServer(async(req,res)=>{let responseUser=null;
     const send=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(responseUser?formulaAccess.project(dataAccess.protect(value,responseUser,!req.url.startsWith('/api/access/calculate')),responseUser,permissions(responseUser)):value));};
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Cache-Control','no-store');
@@ -145,6 +148,8 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       if(await formulaAccess.handle({req,route,user,rights,send}))return;
       if(await accounts.handle({req,route,user,rights,send}))return;
       if(await notifications.handle({req,route,user,rights,send}))return;
+      if(await quotePresence.handle({req,route,user,rights,send}))return;
+      const formulaUpdateRoute=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/formula-update(?:\/(\d+))?$/);if(formulaUpdateRoute&&req.method==='GET'){if(!(rights.costs||rights.technical))fail(403,'Không có quyền xem đối chiếu nội bộ');const current=getQuote(formulaUpdateRoute[1]),record=formulaUpdateRoute[2]?one('SELECT * FROM revisions WHERE id=? AND version=?',current.id,Number(formulaUpdateRoute[2])):current;if(!record)fail(404,'Không tìm thấy phiên bản');return send(200,formulaSync.describe(record,rights));}
       const deleteDraft=route.match(/^\/api\/quotes\/([a-f0-9-]+)$/);
       if(deleteDraft&&req.method==='DELETE'){
         if(user.role!=='admin')fail(403,'Chỉ Admin được xóa bản nháp');const body=await readBody(req);
@@ -162,7 +167,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
             const body=await readBody(req);if(q.version!==body.expectedVersion)fail(409,'Báo giá đã đổi. Tải lại trước khi lưu.');
             let document;try{document=Technical.merge(JSON.parse(q.document),formulaAccess.hydrate(body.document,user),complexityCatalog);}catch(e){fail(403,e.message);}
             const saved=saveQuote(q.id,document,user,body.expectedVersion,'draft','Cập nhật kỹ thuật');
-            return send(200,{id:saved.id,version:saved.version,status:saved.status,updated:saved.updated,draftMaterialIds:C.flatten(document.quote.products).filter(n=>n.draftMaterial).map(n=>n.id)});
+            return send(200,{id:saved.id,version:saved.version,status:saved.status,updated:saved.updated,formulaUpdated:saved.formulaUpdated,draftMaterialIds:C.flatten(document.quote.products).filter(n=>n.draftMaterial).map(n=>n.id)});
           }
         }
         const reopenMatch=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/(reopen|restore)$/);

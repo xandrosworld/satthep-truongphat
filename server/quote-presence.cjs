@@ -1,0 +1,10 @@
+﻿'use strict';
+const {permissions}=require('./access.cjs');
+// Presence is temporary activity, never a quote edit or a lock.
+function createQuotePresence({sql,fail,readBody,getQuote,now=Date.now}){
+ const rows=new Map(),ttl=75000;
+ function prune(){for(const [key,r]of rows){if(r.expires<=now()){rows.delete(key);continue;}const u=sql.prepare('SELECT u.*,s.expires AS session_expires FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND u.active=1').get(r.session);if(!u||u.session_expires<=now()||!(permissions(u).costs||permissions(u).technical)||!sql.prepare('SELECT id FROM quotes WHERE id=? AND id NOT IN (SELECT id FROM quote_deletions)').get(r.quoteId)){rows.delete(key);continue;}r.name=u.name;}}
+ function snapshot(){prune();const quotes={};for(const r of rows.values()){const people=quotes[r.quoteId]??=[],old=people.find(p=>p.id===r.userId);if(old){old.editing ||= r.editing;continue;}people.push({id:r.userId,name:r.name,editing:r.editing});}return {quotes,ttlSeconds:ttl/1000};}
+ return {async handle({req,route,user,rights,send}){if(route!=='/api/quote-presence')return false;if(!(rights.costs||rights.technical))fail(403,'Không có quyền xem hoạt động báo giá nội bộ');if(req.method==='GET'){send(200,snapshot());return true;}if(req.method!=='POST')fail(405,'Phương thức không hỗ trợ');const b=await readBody(req);if(typeof b.clientId!=='string'||!/^[a-zA-Z0-9_-]{16,80}$/.test(b.clientId))fail(400,'Phiên cửa sổ không hợp lệ');const key=user.token+':'+b.clientId;prune();if(b.quoteId===null)rows.delete(key);else{if(typeof b.quoteId!=='string'||typeof b.editing!=='boolean')fail(400,'Trạng thái hoạt động không hợp lệ');const q=getQuote(b.quoteId);if(!rows.has(key)&&[...rows.values()].filter(r=>r.session===user.token).length>=20)fail(429,'Đang mở quá nhiều cửa sổ báo giá');rows.set(key,{quoteId:q.id,session:user.token,userId:user.id,name:user.name,editing:!!(b.editing&&rights.edit&&q.status==='draft'),expires:now()+ttl});}send(200,snapshot());return true;}};
+}
+module.exports={createQuotePresence};
