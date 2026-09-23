@@ -1,0 +1,2 @@
+﻿const {test}=require('node:test'),A=require('node:assert/strict'),D=require('../definition-core.js');
+test('two faces retain physical triangle blank and purchase area',()=>{const d={...D.polygonPreset('triangle',3),id:'triangle',name:'Triangle',surface:'2',blankSurface:'PHOI_POLY_S / 1000000 * DT_DV'};const v=D.trial(d);A.equal(v.totalArea,.06);A.equal(v.g.area,.12);A.equal(v.totalKg,.942);A.equal(v.buyArea,7.32);const one=D.trial({...d,surface:'1'});A.equal(v.buyKg,one.buyKg);A.equal(v.stocks,one.stocks);});

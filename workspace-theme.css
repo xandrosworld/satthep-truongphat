@@ -377,3 +377,6 @@ th{color:var(--muted)}
 
 /* Give material names room while keeping the three quantity fields aligned. */
 @media(min-width:900px){#dialog .work-recipe .form-grid.three>label:first-child{grid-column:span 2}}
+.section-permissions .permission-matrix th:first-child{width:40%}
+.section-permissions .permission-matrix th:not(:first-child),.section-permissions .permission-matrix td{width:15%}
+.section-permissions .permission-matrix input[type=radio]{width:18px;height:18px;accent-color:var(--primary,#245887);cursor:pointer}

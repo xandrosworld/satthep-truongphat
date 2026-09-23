@@ -217,7 +217,7 @@ function calculate(db){
       });
       const reusableMeasure=remnants.filter(r=>r.selected).reduce((s,r)=>s+r.measure,0),recoverableCredit=purchaseCost*reusableMeasure/layout.purchased;
       const cost=purchaseCost-(remnantMode==='exclude'?recoverableCredit:0),kerfMeasure=Math.max(0,layout.purchased-layout.used-remnants.reduce((s,r)=>s+r.measure,0)+(layout.internalAllowance||0));
-      const totalMeasure=group.rows.reduce((s,r)=>s+r.geometry.measure,0);for(const r of group.rows){const share=r.geometry.measure/totalMeasure;r.cost=cost*share;r.purchaseCost=purchaseCost*share;r.recoverableCredit=recoverableCredit*share;r.purchasedWeight=purchasedWeight*share;r.purchasedArea=(m.shape==='sheet'&&!m.shapeDefinition?purchasedMeasure:purchasedMeasure*materialSurface(m))*share;}
+      const totalMeasure=group.rows.reduce((s,r)=>s+r.geometry.measure,0);for(const r of group.rows){const share=r.geometry.measure/totalMeasure;r.cost=cost*share;r.purchaseCost=purchaseCost*share;r.recoverableCredit=recoverableCredit*share;r.purchasedWeight=purchasedWeight*share;r.purchasedArea=(m.shape==='sheet'?purchasedMeasure:purchasedMeasure*materialSurface(m))*share;}
       groupsResult.push({...group,signature,remnants,layout,cost,purchaseCost,recoverableCredit,reusableMeasure,kerfMeasure,totalWeight,purchasedWeight,purchasedMeasure});
     }catch(e){if(q.nestingPlans?.some(p=>p.rowIds.some(id=>group.rows.some(r=>r.id===id)))||group.rows.some(r=>!r.node.materialEstimate))errors.push(group.spec.id+': '+e.message);groupsResult.push({...group,error:e.message});}}
   // Estimation is independent of the order-wide purchasing proposal. Old quotes opt in explicitly.

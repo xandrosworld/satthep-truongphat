@@ -36,7 +36,7 @@ function expandedFormulas(d){const names=unfoldSymbols(d),replacements={};
  const expand=source=>String(source).replace(/\b[A-Za-z][A-Za-z0-9_]*\b/g,name=>Object.hasOwn(replacements,name)?'('+replacements[name]+')':name);
  for(const o of outputOrder(d)){replacements[o.key]=expand(o.formula);if(replacements[o.key].length>50000)throw Error('Công thức khai triển quá phức tạp');}
  const length=expand(d.length),width=expand(d.width),mass=expand(d.mass),surface=expand(d.surface);
- Object.assign(replacements,{PHOI_D:length,PHOI_R:width,[names.length]:length,[names.width]:width,KL_DV:mass,DT_DV:surface});
+ Object.assign(replacements,{PHOI_D:length,PHOI_R:width,[names.length]:length,[names.width]:width,KL_DV:mass,DT_DV:d.base==='sheet'?1:surface});
  return Object.fromEntries(Object.entries(blankFormulas(d)).map(([key,value])=>[key,expand(value)]));
 }
 
@@ -76,13 +76,13 @@ function coefficients(m,sample=false){const d=m.shapeDefinition;validateShape(d)
 function geometry(n,count){const m=n.spec,d=m.shapeDefinition;validateShape(d);if(m.shape!==(d.base==='sheet'?'sheet':'profile'))throw Error('Dạng vật tư không khớp quy ước đã lưu');if(!Number.isFinite(count)||count<0)throw Error('Số lượng không hợp lệ');const vars=values(m,n.dims),length=positive(E.formula(d.length,vars),'Dài khai triển'),width=d.base==='sheet'?positive(E.formula(d.width,vars),'Rộng khai triển'):0;
   const factor=d.base==='sheet'?length*width/1e6:length/1000,rates=coefficients(effective(n));
   const mass=m.massOverride?C.materialMass(effective(n)):rates.mass,surface=m.areaOverride?C.materialSurface(effective(n)):rates.surface;
-  const blankVars={...vars,...unfoldAliases(d,length,width),KL_DV:mass,DT_DV:surface};
+  const blankVars={...vars,...unfoldAliases(d,length,width),KL_DV:mass,DT_DV:d.base==='sheet'?1:surface};
   const weight=(d.blankMass?positive(E.formula(d.blankMass,blankVars),'Khối lượng phôi sản phẩm'):factor*mass)*count;
-  const area=(d.blankSurface?positive(E.formula(d.blankSurface,blankVars),'Diện tích phôi sản phẩm'):factor*surface)*count;
+  const area=(d.blankSurface?positive(E.formula(d.blankSurface,blankVars),'Diện tích phôi sản phẩm'):factor*(d.base==='sheet'?1:surface))*count;
   if(d.nesting==='right-triangle'&&count>0){const expected=factor*count/2;if(Math.abs(area-expected)>Math.max(1e-9,expected*1e-8)||Math.abs(weight-expected*mass)>Math.max(1e-8,expected*mass*1e-8))throw Error('Ghép tam giác vuông cần diện tích dài × rộng / 2 và khối lượng theo diện tích đó; kiểm tra công thức hoặc chọn xếp khổ bao');}
   if(d.nesting==='circle'&&count>0){const expected=Math.PI*length*length/4/1e6*count;if(Math.abs(length-width)>1e-8||Math.abs(area-expected)>Math.max(1e-9,expected*1e-8)||Math.abs(weight-expected*mass)>Math.max(1e-8,expected*mass*1e-8))throw Error('Xếp tấm tròn cần dài = rộng = đường kính, diện tích PI × D0² / 4 và khối lượng theo diện tích đó');}
   const polygon=d.polygon?PG.geometry(d.polygon,vars):d.nesting==='right-triangle'?{points:[[0,0],[length,0],[0,width]],sides:[length,Math.hypot(length,width),width],length,width,area:length*width/2}:null;if(polygon&&(Math.abs(length-polygon.length)>1e-6||Math.abs(width-polygon.width)>1e-6||count>0&&Math.abs(area/count-polygon.area/1e6)>Math.max(1e-9,polygon.area/1e6*1e-8)))throw Error('Công thức khổ bao/diện tích không khớp biên đa giác');
-  return {...(polygon?{polygon:polygon.points,sideLengths:polygon.sides}:{}),...(d.unfoldOutputs?.length?{unfolded:Object.fromEntries(d.unfoldOutputs.map(o=>[o.key,vars[o.key]]))}:{}),length,width,weight,blankArea:area,area,volume:weight/m.density,quantity:count,measure:factor*count};
+  return {...(polygon?{polygon:polygon.points,sideLengths:polygon.sides}:{}),...(d.unfoldOutputs?.length?{unfolded:Object.fromEntries(d.unfoldOutputs.map(o=>[o.key,vars[o.key]]))}:{}),length,width,weight,blankArea:area,area:d.base==='sheet'?area*surface:area,volume:weight/m.density,quantity:count,measure:factor*count};
 }
 function applyShape(m,d,fixed={}){validateShape(d);const updated=C.copy(m);updated.shapeDefinition=C.copy(d);updated.shape=d.base==='sheet'?'sheet':'profile';updated.props={};for(const f of d.fields.filter(f=>f.mode==='fixed'))updated.props[f.key]=positive(fixed[f.key],'Thông số cố định '+f.key,true);delete updated.massOverride;delete updated.areaOverride;return updated;}
 function testShape(d,inputs,density=7850){const m=applyShape({id:'PREVIEW',density},d,inputs),dims=Object.fromEntries(d.fields.filter(f=>f.mode==='input').map(f=>[f.key,inputs[f.key]]));return geometry({spec:m,dims},1);}
@@ -96,7 +96,7 @@ function trial(d,options={}){
   const vars={...values(m,inputs),...unfoldAliases(d,g.length,g.width),KL_DV:rates.mass,DT_DV:rates.surface};
   const netMeasure=d.base==='sheet'?g.blankArea*count:g.length*count/1000,boundingMeasure=layout.used/(d.base==='sheet'?1e6:1000),remaining=measure-netMeasure;
   const allowance=netMeasure>0&&netMeasure<=boundingMeasure+1e-9?{netMeasure,boundingMeasure,purchasedMeasure:measure,remaining:Math.max(0,remaining),shapeOffcut:Math.max(0,boundingMeasure-netMeasure),stockOffcut:Math.max(0,measure-boundingMeasure),percent:Math.max(0,remaining/netMeasure*100),stockPercent:Math.max(0,remaining/measure*100),utilization:netMeasure/measure*100}:null;
-  return {g,vars,rates,stocks,stockL,stockW,count,kerf,measure,layout,allowance,buyKg:measure*rates.mass,buyArea:measure*rates.surface,totalKg:g.weight*count,totalArea:g.blankArea*count};
+  return {g,vars,rates,stocks,stockL,stockW,count,kerf,measure,layout,allowance,buyKg:measure*rates.mass,buyArea:d.base==='sheet'?measure:measure*rates.surface,totalKg:g.weight*count,totalArea:g.blankArea*count};
 }
 function saveShape(db,d){validateShape(d);testShape(d,Object.fromEntries(d.fields.map(f=>[f.key,f.sample])));db.shapeDefinitions??=[];const old=db.shapeDefinitions.find(x=>x.id===d.id),next={...C.copy(d),version:(old?.version||0)+1};if(d.productGroup!==undefined)next.productGroup=CV.productGroup(db,d.productGroup,old?.productGroup);if(old)Object.assign(old,next);else db.shapeDefinitions.push(next);return next;}
 function validateStock(s){if(!s||!/^[A-Za-z0-9_-]{1,80}$/.test(s.id)||!String(s.name||'').trim()||!['sheet','bar'].includes(s.base))throw Error('Khổ chuẩn cần mã, tên và dạng tấm/thanh');positive(s.length,'Chiều dài khổ');if(s.base==='sheet')positive(s.width,'Chiều rộng khổ');if(s.length>100000||s.width>100000)throw Error('Khổ mua tối đa 100.000 mm');for(const k of ['name','workshop','machine'])if(typeof(s[k]??'')!=='string'||(s[k]||'').length>200)throw Error('Tên/xưởng/máy tối đa 200 ký tự');return s;}
