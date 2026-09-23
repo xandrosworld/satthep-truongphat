@@ -11,7 +11,8 @@ test('sales customer permission is independent of costs; projection, preservatio
  c=(await call('intake/customers/'+c.id,'GET',undefined,admin)).data.customer;
  const list=await call('intake/customers','GET',undefined,sales);A.equal(list.status,200);A.deepEqual(Object.keys(list.data[0]).sort(),['id','name','contact','phone','email','address','taxId','version'].sort());
  for(const route of ['intake/policy','intake/owners','intake/customers/customer-a','catalog','backup'])A.equal((await call(route,'GET',undefined,sales)).status,403,route);
- for(const route of ['intake/customers/customer-a/opportunity','intake/customers/import','intake/files'])A.equal((await call(route,'POST',{},sales)).status,403,route);
+ for(const route of ['intake/customers/customer-a/opportunity','intake/customers/import'])A.equal((await call(route,'POST',{},sales)).status,403,route);
+ const file=await call('intake/files','POST',{id:'sales-source',name:'request.csv',data:'YQ==',size:1},sales);A.equal(file.status,201);A.equal((await call('intake/files/sales-source','GET',undefined,sales)).status,200);
  const saved=await call('intake/customers','POST',{customer:{...list.data[0],version:c.version,phone:'456',rating:'risk',ownerId:u.data.id,notes:'ATTACK',opportunities:[]},expectedVersion:c.version},sales);A.equal(saved.status,200,JSON.stringify(saved.data));A.equal(saved.data.phone,'456');A.equal(saved.data.notes,undefined);
  const full=(await call('intake/customers/customer-a','GET',undefined,admin)).data.customer;A.equal(full.notes,'INTERNAL');A.equal(full.rating,'vip');A.equal(full.ownerId,admin.data.user.id);A.equal(full.opportunities.length,1);A.equal(full.events.at(-1).actor,'Sales');
  A.equal((await call('intake/customers','POST',{customer:{id:c.id,name:'stale'},expectedVersion:c.version},sales)).status,409);

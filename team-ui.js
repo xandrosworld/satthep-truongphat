@@ -21,7 +21,11 @@ async function teamDeleteDraft(id){
 }
 function teamCurrent(){return Team.loaded&&Team.link?.workspaceKey===db.quote.workspaceKey?Team.link:null;}
 async function teamLoad(id,revision){if(Team.loaded&&Team.dirty){openDialog('Bản đang mở chưa lưu lên máy chủ',`<p>Lưu lại hoặc sao lưu bản đang làm trước khi chuyển báo giá.</p>`);return;}
-  const record=await teamApi('quotes/'+id+(revision?'/revision/'+revision:''));if(!Team.loaded){quoteCheckpoint();Team.local=C.copy(db);}Team.loaded=true;Team.dirty=false;Team.catalogVersion=null;
+  const generation=Team.sessionGeneration,request=Team.loadRequest=(Team.loadRequest||0)+1,openingPage=page,openingQuote=db.quote,editSequence=Team.editGeneration;
+  const record=await teamApi('quotes/'+id+(revision?'/revision/'+revision:''));
+  // A slow background refresh must not discard edits or navigation made while it was loading.
+  if(generation!==Team.sessionGeneration||request!==Team.loadRequest||Team.dirty||page!==openingPage||db.quote!==openingQuote||Team.editGeneration!==editSequence){const error=Error('Giữ nguyên nội dung đang thao tác; tải lại báo giá khi sẵn sàng.');error.cancelledQuoteLoad=true;throw error;}
+  if(!Team.loaded){quoteCheckpoint();Team.local=C.copy(db);}Team.loaded=true;Team.dirty=false;Team.catalogVersion=null;
   Team.quoteTechnicalBaseline=Team.permissions?.technical?{id,document:C.copy(record.document)}:null;
   const key='server-'+id+(revision?'-v'+revision:'');db={...db,...record.document,savedQuotes:[],history:[]};db.quote.workspaceKey=key;Team.link={id,version:record.version,status:record.status,workspaceKey:key,readOnly:!!revision};selected=db.quote.products[0]?.id;page='quote';tab=Team.permissions?.technical?'bom':'pricing';UX.undo=[];UX.redo=[];UX.checked.clear();closeDialog();render();$('#save-status').textContent='Máy chủ · phiên bản '+record.version;
 }

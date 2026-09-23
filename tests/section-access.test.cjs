@@ -16,7 +16,7 @@ test('section API: permitted edits persist; forged edits to other sections and r
 });
 test('section API: catalog publishers limited by part; stale saves, invalid grants and revoked sessions rejected',async t=>{
  const h=await harness(t),u=await h.user('catalog',['catalogMaterials']);let master=(await h.call('catalog','GET',undefined,u)).data;master.catalog.materials[0].price=33333;
- let r=await h.call('catalog','PUT',{expectedVersion:master.version,catalog:master.catalog},u);assert.equal(r.status,200,JSON.stringify(r.data));
+ let r=await h.call('catalog','PUT',{expectedVersion:master.version,catalog:master.catalog},u);assert.equal(r.status,200,JSON.stringify(r.data));assert.equal(r.data.pending,true);assert.equal((await h.call('catalog','GET',undefined,h.admin)).data.version,master.version);const approval=await h.call('catalog/proposals/'+r.data.proposalId+'/approve','POST',{},h.admin);assert.equal(approval.status,200,JSON.stringify(approval.data));
  assert.equal((await h.call('catalog','PUT',{expectedVersion:master.version,catalog:master.catalog},u)).status,409);
  master=(await h.call('catalog','GET',undefined,u)).data;master.catalog.rates[0].inside=45678;assert.equal((await h.call('catalog','PUT',{expectedVersion:master.version,catalog:master.catalog},u)).status,403);
  assert.equal((await h.call('users','POST',{username:'bad',name:'bad',role:'estimator',password:'Only-for-section-tests-42!',sections:['anything']},h.admin)).status,400);
