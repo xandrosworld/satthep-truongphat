@@ -4,6 +4,16 @@ const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const modes=['bounding','bounding-fixed','circle','right-triangle'];
 const ids=rows=>rows.map(r=>r.id).sort();
 function fingerprint(rows,spec,kerf){return JSON.stringify([spec.id,spec.shape,spec.stockL,spec.stockW,Number(kerf),rows.map(r=>[r.id,r.count,r.geometry.length,r.geometry.width,r.geometry.blankArea,...(r.geometry.polygon?[r.geometry.polygon]:[])]).sort((a,b)=>a[0].localeCompare(b[0]))]);}
+// Accept only the former two-face area fingerprint; every physical input stays identical.
+function matches(rows,spec,kerf,plan){
+ const current=fingerprint(rows,spec,kerf);if(plan.fingerprint===current)return true;
+ if(spec.shape!=='sheet'||!/^\s*2\s*\*/.test(spec.shapeDefinition?.blankSurface||''))return false;
+ try{const old=JSON.parse(plan.fingerprint),now=JSON.parse(current);if(!Array.isArray(old[5])||old[5].length!==now[5].length)return false;
+ for(let i=0;i<now[5].length;i++){const a=old[5][i],b=now[5][i],r=rows.find(r=>r.id===b[0]);if(a[4]===b[4])continue;
+ if(!Number.isFinite(a[4])||!(b[4]>0)||Math.abs(a[4]-2*b[4])>1e-9||Math.abs(r.geometry.area-2*b[4])>1e-9)return false;a[4]=b[4];}
+ return JSON.stringify(old)===current;
+ }catch{return false;}
+}
 function validatePlans(plans){if(plans===undefined)return;if(!Array.isArray(plans)||plans.length>1000)throw Error('Danh sách phương án xếp phôi không hợp lệ');const seen=new Set();for(const p of plans){if(!p||!Array.isArray(p.rowIds)||!p.rowIds.length||p.rowIds.some(id=>typeof id!=='string'||seen.has(id))||new Set(p.rowIds).size!==p.rowIds.length||typeof p.fingerprint!=='string'||p.fingerprint.length>150000||!modes.includes(p.mode)||p.placements!==undefined&&(!Array.isArray(p.placements)||p.placements.length>500))throw Error('Phương án xếp phôi không hợp lệ hoặc trùng dòng');p.rowIds.forEach(id=>seen.add(id));}}
 const cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
 function triangles(poly){
@@ -52,7 +62,7 @@ function manual(rows,spec,kerf,mode,placements){
  const purchased=stocks.length*(sheet?stockL*stockW:stockL);if(sheet)used=netUsed;
  return {stocks,stockL,stockW,used,netUsed,purchased,util:used/purchased,manual:true,mode:mode==='circle'?'circle':undefined};
 }
-function apply(rows,spec,kerf,plan){if(plan.fingerprint!==fingerprint(rows,spec,kerf)||JSON.stringify([...plan.rowIds].sort())!==JSON.stringify(ids(rows)))throw Error('Phương án xếp phôi đã cũ: kích thước, số lượng, khổ mua hoặc mạch cắt đã đổi. Mở Sắp xếp phôi để lập lại');return plan.placements?manual(rows,spec,kerf,plan.mode,plan.placements):auto(rows,spec,kerf,plan.mode);}
+function apply(rows,spec,kerf,plan){if(!matches(rows,spec,kerf,plan)||JSON.stringify([...plan.rowIds].sort())!==JSON.stringify(ids(rows)))throw Error('Phương án xếp phôi đã cũ: kích thước, số lượng, khổ mua hoặc mạch cắt đã đổi. Mở Sắp xếp phôi để lập lại');return plan.placements?manual(rows,spec,kerf,plan.mode,plan.placements):auto(rows,spec,kerf,plan.mode);}
 function make(rows,spec,kerf,mode,placements){const p={rowIds:ids(rows),fingerprint:fingerprint(rows,spec,kerf),mode,...(placements?{placements}: {})};apply(rows,spec,kerf,p);return p;}
-const api={available,outline,rightTriangle,separatedPolygons,modes,ids,fingerprint,validatePlans,auto,draft,manual,apply,make};C.nestingPlans=api;if(typeof module!=='undefined')module.exports=api;else root.TPNestingPlan=api;
+const api={available,outline,rightTriangle,separatedPolygons,modes,ids,fingerprint,matches,validatePlans,auto,draft,manual,apply,make};C.nestingPlans=api;if(typeof module!=='undefined')module.exports=api;else root.TPNestingPlan=api;
 })(typeof window!=='undefined'?window:globalThis);
