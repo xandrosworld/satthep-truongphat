@@ -2,7 +2,7 @@
  * local calculation inputs, never copies of confidential commercial values. */
 (function(root){'use strict';
 const copy=x=>JSON.parse(JSON.stringify(x));
-const nodeKeys=['dimensionProfile','aiSourceKey','draftMaterial','lineNote','id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent','pieceMass'];
+const nodeKeys=['productionLevelChoice','dimensionProfile','aiSourceKey','draftMaterial','lineNote','id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent','pieceMass'];
 const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','stockOptions','shapeDefinition','massOverride','areaOverride'];
 const opKeys=['quantityDeclared','complexityChoice','id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
 const ruleKeys=['id','name','shape','length','width','measurementRules','fields','shapes'];
@@ -44,7 +44,25 @@ function resolveDocumentChoices(d,before,catalog,canFactors){
    else if(!canFactors)throw Error('Chỉ chọn mức độ đã khai; không được nhập hệ số phức tạp.');
   }else if(!canFactors&&!equal(previous?.complexity,op.complexity))throw Error('Không được thay hệ số phức tạp; chỉ chọn mức độ từ danh mục.');
  }visit(n.children,g);}}
- visit(d.quote.products);return d;
+ visit(d.quote.products);resolveProductionLevels(d,before,catalog);return d;
+}
+function productionChoice(d,n){return n?.productionLevelChoice??d?.quote?.pricing?.policySelections?.['product:'+n?.id]?.name;}
+function resolveProductionLevels(d,before,catalog){
+ for(const n of d.quote.products||[]){const prev=before?.quote?.products?.find(x=>x.id===n.id),choice=productionChoice(d,n);
+  if(choice===productionChoice(before,prev))continue;
+  const row=catalog?.pricingDefaults?.policyTypes?.production?.find(x=>x.name===choice&&x.enabled!==false);
+  if(!row||!Number.isFinite(row.multiplier)||row.multiplier<=0)throw Error('Chọn cấp độ sản xuất hợp lệ từ danh mục đã phát hành');
+  n.productionLevelChoice=row.name;n.productionSpecialPercent=Number(((row.multiplier-1)*100).toFixed(6));
+  d.quote.pricing.policySelections??={};d.quote.pricing.policySelections['product:'+n.id]=copy(row);
+ }
+ return d;
+}
+// Called after authoritative resolution: exempt only the derived value of a changed choice.
+function productionBaseline(before,after){const b=copy(before);b.quote.products??=[];
+ for(const n of after.quote.products||[]){const prev=before.quote.products?.find(x=>x.id===n.id);if(productionChoice(after,n)===productionChoice(before,prev))continue;
+  let target=b.quote.products.find(x=>x.id===n.id);if(!target){target={id:n.id};b.quote.products.push(target);}target.productionSpecialPercent=n.productionSpecialPercent;
+  b.quote.pricing??={};b.quote.pricing.policySelections??={};b.quote.pricing.policySelections['product:'+n.id]=copy(after.quote.pricing.policySelections['product:'+n.id]);
+ }return b;
 }
 function rate(x,source){return {...pick(x,['id','name','machine','technicalNotes','unit','insideUnit','outsideUnit','finishing','productGroups','operationType','consumptionsEnabled']),...(complexityLevels(source||x).length?{complexityLevels:complexityLevels(source||x)}:{}),inside:0,outside:0,factors:[],...(x.consumption?{consumption:recipe(x.consumption)}:{}),...(x.consumptions?{consumptions:x.consumptions.map(recipe)}:{})};}
 function node(x,q={}){return {...pick(x,nodeKeys),...(x.spec?{spec:spec(x.spec)}:{}),...(x.ruleSpec?{ruleSpec:pick(x.ruleSpec,ruleKeys)}:{}),...(x.outsource?{outsource:{...pick(x.outsource,['enabled','supplier','output','materialSupply','unit','quantity']),price:0}}:{}),ops:(x.ops||[]).map(o=>{const r=q.ratesSnapshot?.find(r=>r.id===o.id),option=r?.priceOptions?.find(p=>p.id===(q.operationPriceOptions?.[o.id]||o.priceOptionId)),method=option?.method||q.operationMethods?.[o.id]||o.pricingMethod;
@@ -141,5 +159,5 @@ function mergeCatalog(original,input){
  result.library=merged.map(retain);
  return result;
 }
-const api={complexityRate,resolveDocumentChoices,complexityLevels,choiceFor,resolveComplexity,project,merge,nodeKeys,opKeys,projectCatalog,mergeCatalog,catalogSections};if(typeof module!=='undefined')module.exports=api;else root.TPTechnical=api;
+const api={productionChoice,resolveProductionLevels,productionBaseline,complexityRate,resolveDocumentChoices,complexityLevels,choiceFor,resolveComplexity,project,merge,nodeKeys,opKeys,projectCatalog,mergeCatalog,catalogSections};if(typeof module!=='undefined')module.exports=api;else root.TPTechnical=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -1,7 +1,7 @@
 let OperationMaster={user:null,rates:null,pending:false,at:0};
 function operationMasterRates(){if(db.quote.status==='approved'||Team.link?.readOnly)return null;return Team.loaded?OperationMaster.user===Team.user?.id?OperationMaster.rates:null:db.rates;}
 function operationDisplayName(r){const master=operationMasterRates();if(!master)return r.name;const current=master.find(x=>x.id===r.id&&x.enabled!==false);return current?current.name:r.name+' · Ngừng dùng trong danh mục';}
-async function operationRefreshMaster(){if(!Team.loaded||!Team.permissions?.edit)return;const user=Team.user?.id;if(OperationMaster.pending||OperationMaster.user===user&&Date.now()-OperationMaster.at<30000)return;OperationMaster.pending=true;try{const data=await teamApi('operation-catalog');if(Team.user?.id!==user)return;OperationMaster={user,rates:data.rates,pending:false,at:Date.now()};if(page==='quote')render();}catch(e){OperationMaster.at=Date.now();OperationMaster.user=user;}finally{OperationMaster.pending=false;}}
+async function operationRefreshMaster(){if(!Team.loaded||!Team.permissions?.edit)return;const user=Team.user?.id;if(OperationMaster.pending||OperationMaster.user===user&&Date.now()-OperationMaster.at<30000)return;OperationMaster.pending=true;try{const data=await teamApi('operation-catalog');if(Team.user?.id!==user)return;OperationMaster={user,rates:data.rates,productionLevels:data.productionLevels,pending:false,at:Date.now()};if(page==='quote')render();}catch(e){OperationMaster.at=Date.now();OperationMaster.user=user;}finally{OperationMaster.pending=false;}}
 function technicalQuoteDocument(document){
  const projected=TPTechnical.project(document),baseline=Team.quoteTechnicalBaseline;
  // Shared catalogue edits are published separately; quote saves retain their loaded catalogue.
@@ -129,3 +129,16 @@ function installTechnicalUI(){
   if(priceAction){e.preventDefault();e.stopImmediatePropagation();if(technicalOnly())toast('Tài khoản kỹ thuật không được xem giá');else{closeDialog();tab='prices';Intake.priceTab='operations';render();}}
  },true);
 }
+
+function operationProductionCell(n){
+ if(!db.quote.products.some(x=>x.id===n.id))return '<td class="production-level-cell"><span class="help-text">Theo sản phẩm</span></td>';
+ const rows=Team.loaded?(OperationMaster.user===Team.user?.id?OperationMaster.productionLevels||[]:[]):policyTypes('production'),value=TPTechnical.productionChoice(db,n)||'';
+ const can=db.quote.status!=='approved'&&!Team.link?.readOnly&&(!Team.loaded||Team.permissions?.sections?.includes('operations'));
+ return `<td class="production-level-cell"><select data-production-level="${esc(n.id)}" aria-label="Cấp độ sản xuất ${esc(n.name)}" ${can?'':'disabled'}><option value="" disabled ${!value?'selected':''}>Chọn cấp độ</option>${value&&!rows.some(x=>x.name===value)?`<option selected value="${esc(value)}">${esc(value)} · Đã lưu</option>`:''}${rows.map(x=>`<option value="${esc(x.name)}" ${x.name===value?'selected':''}>${esc(x.name)}${x.description?' · '+esc(x.description):''}</option>`).join('')}</select></td>`;
+}
+document.addEventListener('change',e=>{const el=e.target;if(!el.matches('[data-production-level]'))return;try{
+ inWritable();if(Team.loaded&&!Team.permissions?.sections?.includes('operations'))throw Error('Cần quyền Công đoạn & định mức');
+ const n=db.quote.products.find(x=>x.id===el.dataset.productionLevel),rows=Team.loaded?OperationMaster.productionLevels:policyTypes('production'),row=rows?.find(x=>x.name===el.value);if(!n||!row)throw Error('Cấp độ không còn trong danh mục');
+ mutation(()=>{n.productionLevelChoice=row.name;if(!Team.loaded||Team.permissions.costs){n.productionSpecialPercent=Number(((row.multiplier-1)*100).toFixed(6));db.quote.pricing.policySelections??={};db.quote.pricing.policySelections['product:'+n.id]=C.copy(row);}});
+ toast('Đã chọn cấp độ sản xuất. Lưu báo giá lên máy chủ để giữ thay đổi.');
+ }catch(err){toast(err.message);render();}});

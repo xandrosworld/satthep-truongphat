@@ -98,3 +98,5 @@
 .quick-product .quick-table thead th,.quick-product .quick-row .button.quiet,.quick-product .fixed-value,.quick-product .calc-col small{color:#405664}
 
 .quick-identity>span:last-child{min-width:0;flex:1}.quick-identity>span:last-child>[data-row-polygon]{display:block;width:max-content;max-width:100%;margin-top:5px}.def-incomplete .quick-identity:after{font-size:11px;max-width:150px;overflow-wrap:anywhere;flex-shrink:0}
+
+.pa-operations .production-level-cell{min-width:180px;max-width:230px}.pa-operations .production-level-cell select{width:100%;max-width:220px}
