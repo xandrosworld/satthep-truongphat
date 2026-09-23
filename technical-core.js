@@ -2,7 +2,7 @@
  * local calculation inputs, never copies of confidential commercial values. */
 (function(root){'use strict';
 const copy=x=>JSON.parse(JSON.stringify(x));
-const nodeKeys=['aiSourceKey','draftMaterial','lineNote','id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent','pieceMass'];
+const nodeKeys=['dimensionProfile','aiSourceKey','draftMaterial','lineNote','id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent','pieceMass'];
 const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','stockOptions','shapeDefinition','massOverride','areaOverride'];
 const opKeys=['quantityDeclared','complexityChoice','id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
 const ruleKeys=['id','name','shape','length','width','measurementRules','fields','shapes'];
