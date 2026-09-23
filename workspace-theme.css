@@ -394,3 +394,4 @@ th{color:var(--muted)}
 [data-b1-tree="prices"] .b1-tree tr>:last-child{position:sticky;right:0;z-index:2;min-width:112px;width:112px;box-sizing:border-box;background:#fff;box-shadow:-1px 0 0 #b2c5dc;padding:12px}
 [data-b1-tree="prices"] .b1-tree thead tr>:last-child{background:#eef3fa;z-index:3}
 [data-b1-tree="prices"] .b1-tree .button{max-width:none;white-space:nowrap}
+.b1-inline-price{display:flex;align-items:center;gap:6px;min-width:150px}.b1-inline-price input{width:110px;min-width:90px}.b1-inline-price small{white-space:nowrap}
