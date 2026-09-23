@@ -1,9 +1,12 @@
-﻿'use strict';
+'use strict';
 const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js'),path=require('node:path');
 (async()=>{const app=createApp({staticRoot:path.resolve('dist')});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const b=await chromium.launch({channel:'msedge',headless:true}),p=await b.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));try{
  await p.goto('http://127.0.0.1:'+app.server.address().port);
  const setup=await p.evaluate(async document=>{const password='Bulk-operation-QA-42!';teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password}));await teamApi('users','POST',{username:'tech',name:'Tech',role:'technical',sections:['bom','operations'],password});const q=await teamApi('quotes','POST',{document});const cat=await teamApi('catalog');const old=cat.catalog.rates[0];old.name='Updated cutting name';old.inside=998877;cat.catalog.rates.push({...C.copy(old),id:'new-operation-qa',name:'New operation QA'});cat.catalog.rates.push({...C.copy(old),id:'disabled-operation-qa',name:'Disabled operation QA',enabled:false});await teamApi('catalog','PUT',{expectedVersion:cat.version,catalog:cat.catalog});await teamApi('logout','POST',{});teamSession(await teamApi('login','POST',{username:'tech',password}));await teamLoad(q.id);tab='operations';render();return {id:q.id,old:old.id,node:db.quote.products[0].id};},P.demoSeed());
- await p.evaluate(async s=>await bulkOperation([s.node]),setup);
+ await p.evaluate(async s=>{await operationRefreshMaster();selected=s.node;page='quote';tab='bom';UX.mode='tree';render();},setup);
+ await expect(p.locator('#content')).toContainText('Updated cutting name');
+ await expect(p.locator('#b2-generated [data-recipe-editor="'+setup.old+'"]').first()).toHaveText('Updated cutting name');
+ await p.locator('[data-action="add-op"][data-id="'+setup.node+'"]').click();
  await expect(p.locator('#dialog')).toContainText('Updated cutting name');await expect(p.locator('#dialog')).toContainText('New operation QA');await expect(p.locator('#dialog')).not.toContainText('Disabled operation QA');await expect(p.locator('#dialog')).not.toContainText('998877');
  await p.locator('#dialog [name=operation][value="new-operation-qa"]').check();await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();
  await p.evaluate(async()=>{await teamSave();const id=teamCurrent().id;await teamLoad(id);});
