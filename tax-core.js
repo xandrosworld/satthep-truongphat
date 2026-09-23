@@ -18,6 +18,11 @@ function outputTotals(q,products){
   const breakdown=[...groups.values()].sort((a,b)=>a.rate-b.rate).map(g=>({...g,vat:Math.round(g.beforeTax*g.rate/100)}));
   return {vat:breakdown.reduce((s,g)=>s+g.vat,0),taxBreakdown:breakdown};
 }
+// IDs and timestamps assigned while opening a quote are not a change in its costs.
+function canonicalCostSignature(raw){try{const v=JSON.parse(raw),walk=nodes=>{for(const n of nodes||[]){for(const op of n.ops||[])delete op.instanceId;if(n.spec?.priceSelection)delete n.spec.priceSelection.at;walk(n.children);}};walk(v.products);
+ for(const r of v.rates||[]){if(r.consumption)delete r.consumption.id;for(const recipe of r.consumptions||[])delete recipe.id;}
+ for(const source of Object.values(v.costSources||{}))delete source.at;
+ return JSON.stringify(stable(v));}catch(_){return null;}}
 function costSignature(q){
   const pricing={...q.pricing};delete pricing.taxReview;delete pricing.selected;delete pricing.overrides;delete pricing.comparisonMethods;delete pricing.factorSuggestions;delete pricing.suggestionCustomerType;
   const products=JSON.parse(JSON.stringify(q.products||[]));for(const n of products){delete n.pricePerKg;delete n.competitorPrice;delete n.marketPrice;delete n.marketSource;}
@@ -49,7 +54,7 @@ function review(q,data,at=new Date().toISOString()){
   return q.pricing.taxReview;
 }
 function assess(q,result){
-  const d=q.pricing?.taxReview||{},costKnown=d.costSignature===costSignature(q)&&!!String(d.reason||'').trim()&&Cost.view(q).every(r=>r.tmcOnly||r.known),outputKnown=d.quoteIdentity===identity(q)&&!outputErrors(q).length&&(d.outputSignature?d.outputSignature===outputSignature(q):q.outputTax?.scope!=='product'&&rate(d.outputRate)&&Number(d.outputRate)===Number(q.vat)),methods={};
+  const d=q.pricing?.taxReview||{},costKnown=!!d.costSignature&&canonicalCostSignature(d.costSignature)===canonicalCostSignature(costSignature(q))&&!!String(d.reason||'').trim()&&Cost.view(q).every(r=>r.tmcOnly||r.known),outputKnown=d.quoteIdentity===identity(q)&&!outputErrors(q).length&&(d.outputSignature?d.outputSignature===outputSignature(q):q.outputTax?.scope!=='product'&&rate(d.outputRate)&&Number(d.outputRate)===Number(q.vat)),methods={};
   const detail=result.alternatives.detail;
   // A disjoint reference set: direct work excludes material/freight; management
   // is separate, never subtracted a second time through the production subtotal.
@@ -83,5 +88,5 @@ function assess(q,result){
   if(!outputKnown)releaseErrors.push('Chưa xác nhận thuế suất đầu ra của báo giá');
   return {costKnown,outputKnown,methods,market,marketInputs,referenceParts,reference:costKnown?reference:null,releaseErrors:[...new Set(releaseErrors)]};
 }
-const api={input,declaration,review,assess,costSignature,outputRate,outputErrors,outputSignature,outputTotals};if(typeof module!=='undefined')module.exports=api;else root.TPTax=api;
+const api={input,declaration,review,assess,costSignature,canonicalCostSignature,outputRate,outputErrors,outputSignature,outputTotals};if(typeof module!=='undefined')module.exports=api;else root.TPTax=api;
 })(typeof window!=='undefined'?window:globalThis);

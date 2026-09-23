@@ -6,7 +6,7 @@ function fingerprints(document){const q=Technical.project(document).quote;for(co
  // Loading an older quote assigns bookkeeping IDs, without changing technical work.
  const walk=nodes=>{for(const n of nodes){for(const op of n.ops||[])delete op.instanceId;walk(n.children||[]);}};walk(q.products);
  for(const rate of q.ratesSnapshot||[]){if(rate.consumption)delete rate.consumption.id;for(const recipe of rate.consumptions||[])delete recipe.id;}
- return {intake:hash({customer:q.customer,project:q.project,customerInfo:q.customerInfo,request:q.request}),technical:hash(q),materials:hash(Tax.costSignature(document.quote))};}
+ return {intake:hash({customer:q.customer,project:q.project,customerInfo:q.customerInfo,request:q.request}),technical:hash(q),materials:hash(Tax.canonicalCostSignature(Tax.costSignature(document.quote)))};}
 const canIntake=r=>r.edit&&r.sections.includes('customer');
 const canTechnical=r=>r.edit&&r.sections.some(s=>['bom','operations'].includes(s)),canMaterials=r=>r.edit&&r.costs&&r.sections.includes('materials');
 const receives=(r,stage)=>['created','intake'].includes(stage)?canTechnical(r):stage==='technical'?(canMaterials(r)||r.approve):r.approve;
@@ -20,8 +20,15 @@ function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
  const candidates=()=>sql.prepare('SELECT * FROM users WHERE active=1').all();
  function targetsFor(q,stage){const w=getState(q.id).work||{},assigned=['created','intake'].includes(stage)?w.technicalId:stage==='technical'?w.materialsId:null;return candidates().filter(u=>{const r=permissions(u);if(!receives(r,stage))return false;if(!assigned)return true;return u.id===assigned||(stage==='technical'&&r.approve);});}
  function validateAssigned(q,stage){const w=getState(q.id).work||{},id=stage==='intake'?w.technicalId:stage==='technical'?w.materialsId:null;if(id&&!candidates().some(u=>u.id===id&&(stage==='intake'?canTechnical(permissions(u)):canMaterials(permissions(u)))))fail(422,'Người được giao việc đã ngừng hoạt động hoặc đổi quyền. Chọn lại người phụ trách trước khi xác nhận.');}
- function state(quote){const saved=getState(quote.id),fp=fingerprints(JSON.parse(quote.document));return {quoteVersion:quote.version,work:workState(quote.id),intake:saved.intake?{...saved.intake,current:saved.intake.signature===fp.intake}:null,technical:saved.technical?{...saved.technical,current:saved.technical.signature===fp.technical}:null,materials:saved.materials?{...saved.materials,current:saved.technical?.signature===fp.technical&&saved.materials.technicalSignature===fp.technical&&saved.materials.signature===fp.materials}:null};}
- return {summary(quote){const s=state(quote);return {...Object.fromEntries(['intake','technical','materials'].map(k=>[k,s[k]?{current:s[k].current,at:s[k].at,quoteVersion:s[k].quoteVersion}:null])),work:s.work};},created(quoteId,user){
+ function materialMatches(quote,saved,fp){if(saved.signature===fp.materials)return true;
+  // Accept a legacy confirmation only when its stored revision proves the same costs.
+  const rev=sql.prepare('SELECT document FROM revisions WHERE id=? AND version=?').get(quote.id,saved.quoteVersion);if(!rev)return false;const old=JSON.parse(rev.document);
+  return hash(Tax.costSignature(old.quote))===saved.signature&&fingerprints(old).materials===fp.materials;
+ }
+ function state(quote){const saved=getState(quote.id),fp=fingerprints(JSON.parse(quote.document));return {quoteVersion:quote.version,work:workState(quote.id),intake:saved.intake?{...saved.intake,current:!saved.intake.unlocked&&saved.intake.signature===fp.intake}:null,technical:saved.technical?{...saved.technical,current:!saved.technical.unlocked&&saved.technical.signature===fp.technical}:null,materials:saved.materials?{...saved.materials,current:!saved.technical?.unlocked&&!saved.materials.unlocked&&saved.technical?.signature===fp.technical&&saved.materials.technicalSignature===fp.technical&&materialMatches(quote,saved.materials,fp)}:null};}
+ const priceLock=q=>({pricing:q.pricing,vat:q.vat,outputTax:q.outputTax,products:Tax.canonicalCostSignature(JSON.stringify({products:q.products}))});
+ function guard(quote,document){const before=fingerprints(JSON.parse(quote.document)),after=fingerprints(document),s=state(quote);for(const stage of ['intake','technical','materials'])if(s[stage]?.current&&(before[stage]!==after[stage]||(stage==='materials'&&hash(priceLock(JSON.parse(quote.document).quote))!==hash(priceLock(document.quote)))))fail(409,'Phần '+({intake:'đầu vào',technical:'kỹ thuật',materials:'giá vật tư'}[stage])+' đã xác nhận và khóa. Mở sửa phần này, ghi lý do trước khi thay đổi.');}
+ return {guard,summary(quote){const s=state(quote);return {...Object.fromEntries(['intake','technical','materials'].map(k=>[k,s[k]?{current:s[k].current,at:s[k].at,quoteVersion:s[k].quoteVersion}:null])),work:s.work};},created(quoteId,user){
   const q=getQuote(quoteId),id=randomUUID(),at=new Date().toISOString();
   const targets=targetsFor(q,'created');
   sql.prepare('INSERT INTO handoff_events VALUES(?,?,?,?,?,?,?)').run(id,q.id,'created',q.version,user.id,at,'');
@@ -40,11 +47,27 @@ function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
     saved.work={revision:(before.revision||0)+1,status:body.status,technicalId:body.technicalId||null,materialsId:body.materialsId||null,updated:new Date().toISOString(),actor:user.name};
     sql.prepare('INSERT INTO quote_handoffs VALUES(?,?) ON CONFLICT(quote_id) DO UPDATE SET document=excluded.document').run(q.id,JSON.stringify(saved));audit(user,'quote:work',q.id,JSON.stringify({before,after:saved.work}));return workState(q.id);});send(200,result);return true;
   }
-  const match=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/handoff(?:\/(intake|technical|materials))?$/);if(!match)return false;
+  const match=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/handoff(?:\/(intake|technical|materials)(\/reopen)?)?$/);if(!match)return false;
   if(!(rights.costs||rights.technical))fail(403,'Không có quyền xem bàn giao nội bộ');const quote=getQuote(match[1]);
   if(req.method==='GET'&&!match[2]){const s=state(quote);for(const key of ['intake','technical','materials'])if(s[key]){delete s[key].signature;delete s[key].technicalSignature;if(rights.technical)delete s[key].note;}send(200,s);return true;}
   if(req.method!=='POST'||!match[2])fail(405,'Phương thức không hỗ trợ');const stage=match[2];if(!(stage==='intake'?canIntake(rights):stage==='technical'?canTechnical(rights):canMaterials(rights)))fail(403,'Chưa được cấp quyền xác nhận phần này');const body=await readBody(req);
   const response=transaction(()=>{const q=getQuote(quote.id);if(q.version!==body.expectedVersion)fail(409,'Báo giá đã đổi. Tải lại bản mới trước khi xác nhận');if(q.status!=='draft')fail(409,'Chỉ xác nhận trên bản nháp hiện tại');const document=JSON.parse(q.document),fp=fingerprints(document),saved=getState(q.id),current=state(q);
+   if(match[3]){
+    const reason=String(body.reason||'').trim();if(!reason||reason.length>2000)fail(400,'Nhập lý do mở sửa (tối đa 2000 ký tự)');
+    const stages=['intake','technical','materials'],at=new Date().toISOString();
+    if(saved[stage]?.unlocked)return {duplicate:true,state:current,recipients:0};
+    if(!saved[stage])fail(409,'Phần này chưa được xác nhận');
+    let recipients=0;
+    for(const affected of stages.slice(stages.indexOf(stage))){
+     if(saved[affected])saved[affected]={...saved[affected],unlocked:true,changeReason:reason,changedBy:user.name,changedAt:at,changedStage:stage};
+     const id=randomUUID(),note='Mở sửa '+({intake:'đầu vào báo giá',technical:'kỹ thuật',materials:'giá vật tư'}[stage])+': '+reason+'. Cần rà và xác nhận lại phần liên quan.';
+     sql.prepare('INSERT INTO handoff_events VALUES(?,?,?,?,?,?,?)').run(id,q.id,affected,q.version,user.id,at,note);
+     for(const target of targetsFor(q,affected)){sql.prepare('INSERT INTO notifications VALUES(?,?,?,NULL)').run(randomUUID(),target.id,id);recipients++;}
+    }
+    sql.prepare('INSERT INTO quote_handoffs VALUES(?,?) ON CONFLICT(quote_id) DO UPDATE SET document=excluded.document').run(q.id,JSON.stringify(saved));
+    audit(user,'handoff:reopen:'+stage,q.id,reason);return {duplicate:false,state:state(q),recipients};
+   }
+   if(stage==='technical'&&saved.intake&&!current.intake?.current)fail(409,'Cần xác nhận lại đầu vào đã thay đổi trước khi xác nhận kỹ thuật');
    if(stage==='materials'&&!current.technical?.current)fail(409,'Cần kỹ thuật xác nhận lại dữ liệu hiện tại trước');
    validateAssigned(q,stage);const targets=targetsFor(q,stage),targetIds=targets.map(u=>u.id).sort();
    if(current[stage]?.current&&(!saved[stage].targetIds||JSON.stringify(saved[stage].targetIds)===JSON.stringify(targetIds)))return {duplicate:true,state:current,recipients:0};
@@ -53,7 +76,7 @@ function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
    if(stage==='materials'&&P.calculate(document).rows.some(r=>!r.externallySupplied&&(r.spec.price==null||r.spec.price===''||!Number.isFinite(Number(r.spec.price))||Number(r.spec.price)<0)))fail(422,'Có đơn giá vật tư chưa hợp lệ; cập nhật trước khi xác nhận');
    if(!targets.length)fail(422,'Chưa có tài khoản nhận thông báo; quản trị cần cấp quyền vật tư/phê duyệt');
    const id=randomUUID(),at=new Date().toISOString(),note=String(body.note||'').trim().slice(0,2000),entry={targetIds,eventId:id,quoteVersion:q.version,actor:user.name,at,note,signature:fp[stage],...(stage==='materials'?{technicalSignature:fp.technical}:{})};saved[stage]=entry;
-   if(stage==='technical')delete saved.materials;
+   // Downstream confirmations remain invalid until explicitly confirmed again.
    sql.prepare('INSERT INTO quote_handoffs VALUES(?,?) ON CONFLICT(quote_id) DO UPDATE SET document=excluded.document').run(q.id,JSON.stringify(saved));sql.prepare('INSERT INTO handoff_events VALUES(?,?,?,?,?,?,?)').run(id,q.id,stage,q.version,user.id,at,note);
    for(const target of targets)sql.prepare('INSERT INTO notifications VALUES(?,?,?,NULL)').run(randomUUID(),target.id,id);
    audit(user,'handoff:'+stage,q.id,'v'+q.version);return {duplicate:false,state:state(q),recipients:targets.length};
