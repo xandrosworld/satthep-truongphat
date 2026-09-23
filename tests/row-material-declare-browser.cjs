@@ -13,6 +13,15 @@
  expect(await p.evaluate(()=>db.quote.products[0].children[0].spec.props.T)).toBe(3.7);
  expect(await p.evaluate(()=>db.quote.products[0].children[0].draftMaterial)).toBe(true);
  expect(await p.evaluate(async()=>{const rows=await teamApi('catalog/proposals');return rows.some(x=>x.status==='pending');})).toBe(true);
+ await p.evaluate(async()=>{const n=db.quote.products[0].children[0];n.paramLinks={L:'PRODUCT_L/2'};n.dims.L=400;const other=C.copy(n);other.id='second-draft';db.quote.products[0].children.push(other);await teamSave();await teamLoad(teamCurrent().id);page='quote';tab='bom';UX.mode='detail';selected=n.id;render();dfAssign(n.id);});
+ await expect(p.locator('#dialog')).toContainText('đang chờ Admin duyệt');
+ await expect(p.locator('[data-row-publish-material]')).toHaveCount(0);
+ await p.evaluate(async()=>{closeDialog();const id=teamCurrent().id;await teamApi('logout','POST',{});teamSession(await teamApi('login','POST',{username:'admin',password:'Local-Tech-test-42!'}));const proposal=(await teamApi('catalog/proposals')).find(x=>x.status==='pending');await teamApi('catalog/proposals/'+proposal.id+'/approve','POST',{});await teamApi('logout','POST',{});teamSession(await teamApi('login','POST',{username:'tech',password:'Local-Tech-test-42!'}));await teamLoad(id);});
+ expect(await p.evaluate(()=>db.quote.products[0].children.every(n=>!n.draftMaterial))).toBe(true);
+ expect(await p.evaluate(()=>db.quote.products[0].children[0].paramLinks.L)).toBe('PRODUCT_L/2');
+ expect(await p.evaluate(()=>db.quote.products[0].children[0].spec.props.T)).toBe(3.7);
+ await p.evaluate(async()=>{await teamSave();await teamLoad(teamCurrent().id);});
+ expect(await p.evaluate(()=>db.quote.products[0].children.every(n=>!n.draftMaterial))).toBe(true);
  expect(errors).toEqual([]);console.log('PASS BOM new thickness and material proposal, remains draft pending admin');
  }finally{await browser.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
 
