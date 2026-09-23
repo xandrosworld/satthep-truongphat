@@ -1,0 +1,14 @@
+﻿'use strict';
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js'),path=require('node:path');
+(async()=>{const app=createApp({staticRoot:path.resolve('dist')});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const b=await chromium.launch({channel:'msedge',headless:true}),p=await b.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));try{
+ await p.goto('http://127.0.0.1:'+app.server.address().port);
+ const setup=await p.evaluate(async document=>{const password='Bulk-operation-QA-42!';teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password}));await teamApi('users','POST',{username:'tech',name:'Tech',role:'technical',sections:['bom','operations'],password});const q=await teamApi('quotes','POST',{document});const cat=await teamApi('catalog');const old=cat.catalog.rates[0];old.name='Updated cutting name';old.inside=998877;cat.catalog.rates.push({...C.copy(old),id:'new-operation-qa',name:'New operation QA'});cat.catalog.rates.push({...C.copy(old),id:'disabled-operation-qa',name:'Disabled operation QA',enabled:false});await teamApi('catalog','PUT',{expectedVersion:cat.version,catalog:cat.catalog});await teamApi('logout','POST',{});teamSession(await teamApi('login','POST',{username:'tech',password}));await teamLoad(q.id);tab='operations';render();return {id:q.id,old:old.id,node:db.quote.products[0].id};},P.demoSeed());
+ await p.evaluate(async s=>await bulkOperation([s.node]),setup);
+ await expect(p.locator('#dialog')).toContainText('Updated cutting name');await expect(p.locator('#dialog')).toContainText('New operation QA');await expect(p.locator('#dialog')).not.toContainText('Disabled operation QA');await expect(p.locator('#dialog')).not.toContainText('998877');
+ await p.locator('#dialog [name=operation][value="new-operation-qa"]').check();await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();
+ await p.evaluate(async()=>{await teamSave();const id=teamCurrent().id;await teamLoad(id);});
+ expect(await p.evaluate(s=>C.findNode(db.quote.products,s.node).ops.some(o=>o.id==='new-operation-qa'),setup)).toBe(true);
+ const revisions=app.sql.prepare('SELECT version,document FROM revisions WHERE id=? ORDER BY version').all(setup.id),first=JSON.parse(revisions[0].document),last=JSON.parse(revisions.at(-1).document);
+ expect(last.quote.ratesSnapshot.find(r=>r.id===setup.old)).toEqual(first.quote.ratesSnapshot.find(r=>r.id===setup.old));expect(last.quote.ratesSnapshot.find(r=>r.id==='new-operation-qa').inside).toBe(998877);
+ expect(errors).toEqual([]);console.log('PASS bulk assignment reads current names/new operations, excludes disabled, hides prices, saves new operation with server price and preserves existing quote rates');
+}finally{await b.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
