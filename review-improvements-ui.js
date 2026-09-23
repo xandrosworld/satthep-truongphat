@@ -49,6 +49,8 @@ function reviewTasks(){
  const tasks=panel.querySelector('[data-review-tasks]')||document.createElement('details');tasks.dataset.reviewTasks='';tasks.className='review-tasks';
  const row=(label,button)=>`<div><span>${label}</span>${button}</div>`;
  const t=result.tax,link=teamCurrent(),state=Notices.quoteId===link?.id?Notices.state:null;
+ if(link&&['submitted','approved'].includes(link.status)){const all=TPCostInput.view(db.quote),count=all.filter(r=>r.known).length;tasks.innerHTML=`<summary>Trạng thái bản ${link.status==='submitted'?'đang chờ duyệt':'đã duyệt'}</summary><p>${count}/${all.length} dòng đã xác nhận nguồn giá. Xác nhận nguồn giá và bàn giao là hai trạng thái riêng.</p>${t&&!t.costKnown?'<p>Xác nhận mặt bằng chi phí chung chưa khớp bản này. Cần kiểm tra trên bản sửa; không yêu cầu khai lại các dòng nguồn giá còn hợp lệ.</p>':''}<p>Bản này đã khóa chỉnh sửa. ${Team.permissions?.reopen&&!link.readOnly?teamButton('Tạo bản sửa','reopen'):'Nhờ quản trị hoặc người có quyền mở sửa tạo bản sửa để tiếp tục.'}</p>`;tasks._reviewHtml=null;if(!tasks.isConnected)panel.append(tasks);return;}
+
  let html='<summary>Kiểm tra trước khi gửi duyệt</summary>';
  for(const [gi,g] of result.groups.entries())if(g.error)html+=row(esc(g.spec.id+': '+g.error),meButton('Kiểm tra cách xếp phôi','nesting',gi));
  if(link&&Team.dirty)html+=row('Lưu những thay đổi đang làm',teamButton('Lưu báo giá lên máy chủ','save'));
