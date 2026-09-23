@@ -31,6 +31,19 @@ function reviewHelp(root){
   const box=document.createElement('div');box.className='review-help';const lead=document.createElement('p');lead.textContent=brief;const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Xem giải thích';details.append(summary);p.before(box);box.append(lead,details);details.append(p);
  }
 }
+function reviewHandoffAction(stage,link,state){
+ const allowed=stage==='intake'?noticeIntake():stage==='technical'?noticeTechnical():noticeMaterials();
+ const editTab=stage==='intake'?'intake':stage==='technical'?'operations':'materials';
+ const edit=`<button type="button" class="button small" data-review-jump="${editTab}">Xem / sửa dữ liệu</button>`;
+ let action='';
+ if(!allowed)action='<small>Cần người có quyền xác nhận phần này thực hiện.</small>';
+ else if(link.readOnly||link.status!=='draft')action='<small>Bản đã khóa; cần mở bản sửa trước.</small>';
+ else if(Team.dirty)action='<small>Lưu thay đổi trước để xác nhận đúng bản đang làm.</small>'+teamButton('Lưu thay đổi','save');
+ else if(state.quoteVersion!==link.version)action='<small>Máy chủ có bản mới; mở lại báo giá từ Danh sách trước khi xác nhận.</small>'+teamButton('Mở danh sách','list');
+ else if(stage==='materials'&&!state.technical?.current)action='<small>Cần xác nhận kỹ thuật trước khi bàn giao giá vật tư.</small>'+(noticeTechnical()?noticeButton('Xác nhận kỹ thuật','confirm','technical'):'');
+ else action=noticeButton(stage==='intake'?'Xác nhận đầu vào':stage==='technical'?'Xác nhận kỹ thuật':'Xác nhận bàn giao giá vật tư','confirm',stage);
+ return `<span class="review-task-actions">${action}${edit}</span>`;
+}
 function reviewTasks(){
  const panel=document.querySelector('[data-tax-panel]');if(!panel)return;
  const tasks=panel.querySelector('[data-review-tasks]')||document.createElement('details');tasks.dataset.reviewTasks='';tasks.className='review-tasks';
@@ -41,9 +54,9 @@ function reviewTasks(){
  if(link&&Team.dirty)html+=row('Lưu những thay đổi đang làm',teamButton('Lưu báo giá lên máy chủ','save'));
  if(t&&!t.outputKnown)html+=row('Thuế đầu ra chưa được xác nhận cho dữ liệu hiện tại','<button class="button small" data-tax="edit">Mở điều kiện thuế</button>');
  if(t&&!t.costKnown){const sources=TPCostInput.view(db.quote).filter(r=>!r.tmcOnly),missing=sources.filter(r=>!r.known);html+=missing.length?row('Còn '+missing.length+'/'+sources.length+' dòng chưa xác nhận nguồn giá. Các dòng đã xác nhận vẫn được giữ.','<button class="button small" data-review-jump="cost">Xem dòng chưa xác nhận</button>'):row('Đã xác nhận từng nguồn giá; còn xác nhận mặt bằng chi phí chung của báo giá.','<button class="button small" data-tax="edit">Xác nhận chi phí chung</button>');}
- if(link&&state&&!state.intake?.current)html+=row('Rà và xác nhận đầu vào báo giá','<button class="button small" data-review-jump="intake">Mở đầu vào</button>');
- if(link&&state&&!state.technical?.current)html+=row('Rà và xác nhận phần kỹ thuật','<button class="button small" data-review-jump="operations">Mở công đoạn</button>');
- if(link&&state&&!state.materials?.current)html+=row(state.materials?'Bàn giao giá vật tư trên bản máy chủ cần xác nhận lại; đây là bước riêng với khai nguồn giá':'Chưa xác nhận bàn giao phần giá vật tư','<button class="button small" data-review-jump="materials">Mở giá vật tư</button>');
+ if(link&&state&&!state.intake?.current)html+=row('Rà và xác nhận đầu vào báo giá',reviewHandoffAction('intake',link,state));
+ if(link&&state&&!state.technical?.current)html+=row('Rà và xác nhận phần kỹ thuật',reviewHandoffAction('technical',link,state));
+ if(link&&state&&!state.materials?.current)html+=row(state.materials?'Bàn giao giá vật tư trên bản máy chủ cần xác nhận lại; đây là bước riêng với khai nguồn giá':'Chưa xác nhận bàn giao phần giá vật tư',reviewHandoffAction('materials',link,state));
  if(t?.costKnown&&t.outputKnown&&t.releaseErrors.length)html+=row(esc(t.releaseErrors.join('; ')),'<button class="button small" data-tax="edit">Kiểm tra điều kiện giá</button>');
  if(html==='<summary>Kiểm tra trước khi gửi duyệt</summary>')html+='<p>Đã hoàn tất các phần kiểm tra ở đây. Xem Bản chào giá trước khi gửi duyệt.</p>';
  const pending=html.includes('<div>');tasks.classList.toggle('has-pending',pending);tasks.setAttribute('role','region');tasks.setAttribute('aria-label','Việc cần hoàn tất');if(pending)html=html.replace('<summary>Kiểm tra trước khi gửi duyệt</summary>','<summary>Cần kiểm tra '+(html.match(/<div>/g)||[]).length+' nội dung trước khi gửi duyệt</summary>');
@@ -161,5 +174,5 @@ function installReviewImprovementsUI(){
  const draw=render;render=()=>{draw();reviewPaint();};const paint=noticePaint;noticePaint=()=>{paint();reviewPaint();};
  document.addEventListener('click',e=>{const b=e.target.closest('[data-review-next]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();document.querySelector('.workspace-tabs [data-tab="'+b.dataset.reviewNext+'"]')?.click();window.scrollTo(0,0);},true);
  const shape=dfShapeEdit;dfShapeEdit=(...args)=>{const value=shape(...args);if(value?.then)return value.then(result=>{reviewShape();return result;});reviewShape();return value;};
- document.addEventListener('click',e=>{const b=e.target.closest('[data-review-jump]');if(!b)return;const destination=b.dataset.reviewJump;if(destination==='cost'){if(!document.querySelector('[data-cost-sources]')){tab='prices';render();}(document.querySelector('[data-cost-known="false"]')||document.querySelector('[data-cost-sources]'))?.scrollIntoView({behavior:'smooth',block:'start'});document.querySelector('[data-cost-known="false"] input, [data-cost-inline] input')?.focus({preventScroll:true});return;}tab=destination==='materials'?'prices':destination;if(destination==='materials')Intake.priceTab='materials';render();window.scrollTo(0,0);});
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-review-jump]');if(!b)return;const destination=b.dataset.reviewJump;if(destination==='cost'){if(!document.querySelector('[data-cost-sources]')){tab='prices';render();}(document.querySelector('[data-cost-known="false"]')||document.querySelector('[data-cost-sources]'))?.scrollIntoView({behavior:'smooth',block:'start'});(document.querySelector('[data-cost-known="false"] input')||document.querySelector('[data-cost-inline] input'))?.focus({preventScroll:true});return;}tab=destination==='materials'?'prices':destination;if(destination==='materials')Intake.priceTab='materials';render();window.scrollTo(0,0);});
 }
