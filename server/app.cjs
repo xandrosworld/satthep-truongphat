@@ -34,7 +34,7 @@ function cleanDocument(input){
   if(result.total.grand>1e15||!Number.isFinite(result.total.grand))fail(400,'Giá trị vượt giới hạn dùng thử');
   return {data:safe,result};
 }
-function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'../dist'),sessionHours=8,publicOrigin='',setupKey='',aiProvider}={}){
+function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'../dist'),sessionHours=8,publicOrigin='',setupKey='',aiProvider,maintenanceFile=''}={}){
   let origin='';if(publicOrigin){const parsed=new URL(publicOrigin);if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.pathname!=='/'||parsed.search||parsed.hash)throw Error('TP_PUBLIC_ORIGIN phải là nguồn HTTPS, không chứa đường dẫn');origin=parsed.origin;if(String(setupKey).length<24)throw Error('Cần TP_SETUP_KEY ít nhất 24 ký tự khi cấu hình địa chỉ HTTPS');}const cookieSecurity=origin?'; Secure':'';
   if(databasePath!==':memory:')fs.mkdirSync(path.dirname(path.resolve(databasePath)),{recursive:true});
   const sql=new DatabaseSync(databasePath);sql.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
@@ -111,6 +111,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
     try{
       const url=new URL(req.url,'http://localhost'),route=url.pathname;
       if(route==='/healthz'&&req.method==='GET')return send(200,{ok:!!one('SELECT 1 AS ready')});
+      if(maintenanceFile&&fs.existsSync(maintenanceFile)){res.setHeader('Retry-After','120');if(!route.startsWith('/api/')){res.writeHead(503,{'Content-Type':'text/html; charset=utf-8'});return res.end('<!doctype html><html lang="vi"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Đang chuyển máy chủ</title><main style="max-width:640px;margin:12vh auto;padding:24px;font:18px/1.6 system-ui"><h1>Hệ thống đang bảo trì</h1><p>Đang chuyển dữ liệu sang máy chủ mới. Vui lòng giữ nguyên các nội dung chưa lưu trên máy và thử lại sau.</p></main></html>');}return send(503,{error:'Đang chuyển máy chủ; tạm dừng lưu dữ liệu. Giữ nội dung chưa lưu và thử lại sau.'});}
       // Bind to loopback; optional explicit HTTPS origin behind an operator-managed proxy. Reject other hosts and cross-origin writes.
       if(origin?req.headers.host!==new URL(origin).host:!/^(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/.test(req.headers.host||''))fail(403,'Địa chỉ máy chủ không hợp lệ');
       if(!route.startsWith('/api/')){if(req.method!=='GET'||!['/','/index.html'].includes(route))fail(404,'Không tìm thấy');const html=fs.readFileSync(path.join(staticRoot,'index.html'));res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end(html);}
@@ -223,7 +224,7 @@ if(require.main===module){
  if(fs.existsSync(path.resolve(__dirname,'../.env')))process.loadEnvFile(path.resolve(__dirname,'../.env'));
  const publicOrigin=process.env.TP_PUBLIC_ORIGIN||'',databasePath=path.resolve(process.env.TP_DATABASE_PATH||path.join(__dirname,'../data/truongphat.sqlite')),port=Number(process.env.PORT||process.env.TP_PORT||4174),host=publicOrigin?'0.0.0.0':'127.0.0.1';
  if(process.env.RAILWAY_ENVIRONMENT_ID&&(!publicOrigin||!process.env.RAILWAY_VOLUME_MOUNT_PATH||!databasePath.startsWith(process.env.RAILWAY_VOLUME_MOUNT_PATH+'/')))throw Error('Railway cần HTTPS và cơ sở dữ liệu trên volume cố định');
- const {server}=createApp({databasePath,publicOrigin,setupKey:process.env.TP_SETUP_KEY||''});
+ const {server}=createApp({databasePath,publicOrigin,setupKey:process.env.TP_SETUP_KEY||'',maintenanceFile:process.env.TP_MAINTENANCE_FILE||path.join(path.dirname(databasePath),'maintenance')});
  server.listen(port,host,()=>console.log('Truong Phat team server listening on port '+port));
  const stop=()=>server.close(()=>process.exit(0));process.on('SIGTERM',stop);process.on('SIGINT',stop);
 }

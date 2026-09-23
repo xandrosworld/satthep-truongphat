@@ -1,0 +1,36 @@
+'use strict';
+const {test}=require('node:test'),A=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {createApp}=require('../server/app.cjs'),{exportDatabase,verifyDatabase,restoreDatabase,inventory}=require('../server/migrate.cjs'),{maintenance}=require('../server/maintenance.cjs');
+test('full migration keeps credentials and uploaded bytes, verifies transfer and refuses overwrite',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'tp-migrate-')),source=path.join(dir,'old.sqlite'),target=path.join(dir,'new.sqlite'),exported=path.join(dir,'transfer.sqlite'),marker=path.join(dir,'maintenance');
+ const app=createApp({databasePath:source,maintenanceFile:marker});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));let next;
+ t.after(async()=>{if(next)await new Promise(r=>next.server.close(r));await new Promise(r=>app.server.close(r));fs.rmSync(dir,{recursive:true,force:true});});
+ const url='http://127.0.0.1:'+app.server.address().port,password='Migration-test-password!';
+ let r=await fetch(url+'/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'admin',name:'Admin',password})});A.equal(r.status,201);const session=await r.json(),cookie=r.headers.get('set-cookie').split(';')[0];
+ app.sql.prepare('INSERT INTO intake_files VALUES(?,?,?,?,?)').run('source-file','input.pdf',4,'dGVzdA==',session.user.id);
+ app.sql.prepare('INSERT INTO chat_rooms VALUES(?,?,?,?,?,?)').run('room','group','Room',session.user.id,null,new Date().toISOString());
+ app.sql.prepare('INSERT INTO chat_messages(room,sender,client_id,body,image,mime,at) VALUES(?,?,?,?,?,?,?)').run('room',session.user.id,'msg','Message','dGVzdA==','image/png',new Date().toISOString());
+ const originalPassword=app.sql.prepare('SELECT password FROM users').get().password;
+ maintenance('enable',marker);A.equal((await fetch(url+'/healthz')).status,200);A.equal((await fetch(url+'/api/me',{headers:{Cookie:cookie}})).status,503);A.equal((await fetch(url+'/')).status,503);
+ A.equal((await fetch(url+'/api/logout',{method:'POST',headers:{Cookie:cookie,'X-CSRF-Token':session.csrf}})).status,503);
+ await A.rejects(exportDatabase(source,exported,{frozenMarker:marker}),/60 seconds/);
+ const earlier=new Date(Date.now()-61000);fs.utimesSync(marker,earlier,earlier);
+ const report=await exportDatabase(source,exported,{frozenMarker:marker});A.equal(report.tables.intake_files,1);A.equal(report.tables.chat_messages,1);A.ok(report.tables.sessions>0);await verifyDatabase(exported);
+ A.ok(!fs.existsSync(exported+'-wal'));A.ok(!fs.existsSync(exported+'-shm'));
+ await A.rejects(exportDatabase(source,exported),/already exists/);
+ const restored=await restoreDatabase(exported,target);A.equal(restored.tables.sessions,0);A.equal(restored.tables.users,report.tables.users);A.equal(restored.tables.intake_files,1);
+ await A.rejects(restoreDatabase(exported,target),/not empty/);
+ next=createApp({databasePath:target});await new Promise(r=>next.server.listen(0,'127.0.0.1',r));
+ A.equal(next.sql.prepare('SELECT password FROM users').get().password,originalPassword);A.equal(next.sql.prepare('SELECT data FROM intake_files').get().data,'dGVzdA==');A.equal(next.sql.prepare('SELECT image FROM chat_messages').get().image,'dGVzdA==');
+ r=await fetch('http://127.0.0.1:'+next.server.address().port+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'admin',password})});A.equal(r.status,200);
+ fs.appendFileSync(exported,'corrupt');await A.rejects(verifyDatabase(exported),/checksum/);
+ maintenance('disable',marker);A.equal((await fetch(url+'/api/me',{headers:{Cookie:cookie}})).status,200);
+});
+test('final migration refuses active AI and unrelated databases',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'tp-migrate-ai-')),source=path.join(dir,'db.sqlite'),marker=path.join(dir,'maintenance'),app=createApp({databasePath:source});
+ t.after(()=>{app.sql.close();fs.rmSync(dir,{recursive:true,force:true});});
+ app.sql.prepare('INSERT INTO ai_pdf_jobs(id,actor,request_id,filename,digest,data,status,created) VALUES(?,?,?,?,?,?,?,?)').run('job','actor','req','file.pdf','hash','data','processing',new Date().toISOString());
+ maintenance('enable',marker);const earlier=new Date(Date.now()-61000);fs.utimesSync(marker,earlier,earlier);
+ await A.rejects(exportDatabase(source,path.join(dir,'final.sqlite'),{frozenMarker:marker}),/running AI/);A.ok(!fs.existsSync(path.join(dir,'final.sqlite')));
+ const {DatabaseSync}=require('node:sqlite'),wrong=path.join(dir,'other.sqlite'),db=new DatabaseSync(wrong);db.exec('CREATE TABLE other(id INTEGER)');db.close();A.throws(()=>inventory(wrong),/missing users/);
+});
