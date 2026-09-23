@@ -72,3 +72,21 @@ test('unfinished geometry and missing stock save as technical drafts for admin r
  A.equal(submit.status,422,JSON.stringify(submit.data));
 });
 test('technical production level saves through API with authoritative hidden coefficient',async t=>{const {call,admin,tech,id}=await harness(t);const m=(await call('catalog','GET',undefined,admin)).data;m.catalog.pricingDefaults.policyTypes={production:[{name:'C6',description:'High precision',multiplier:1.6}]};A.equal((await call('catalog','PUT',{catalog:m.catalog,expectedVersion:m.version},admin)).status,200);const choices=await call('operation-catalog','GET',undefined,tech);A.deepEqual(choices.data.productionLevels,[{name:'C6',description:'High precision'}]);const v=(await call('quotes/'+id,'GET',undefined,tech)).data;v.document.quote.products[0].productionLevelChoice='C6';const saved=await call('quotes/'+id,'PUT',{document:v.document,expectedVersion:v.version},tech);A.equal(saved.status,200,JSON.stringify(saved.data));const full=(await call('quotes/'+id,'GET',undefined,admin)).data;A.equal(full.document.quote.products[0].productionSpecialPercent,60);A.equal((await call('quotes/'+id,'GET',undefined,tech)).data.document.quote.products[0].productionSpecialPercent,undefined);});
+
+test('reopen then technical edit retains prices entered for draft materials and all commercial sections',async t=>{
+ const {app,call,admin,tech,id}=await harness(t);
+ const before=(await call('quotes/'+id,'GET',undefined,admin)).data;
+ for(const [i,n] of C.flatten(before.document.quote.products).filter(n=>n.kind==='material').entries()){n.draftMaterial=true;n.spec.price=83000+i;n.spec.priceSelection={supplier:'nv-002',at:'2026-09-23',price:n.spec.price};n.spec.costSource={sourcePrice:n.spec.price,evidence:'Supplier quotation'};}
+ const written=await call('quotes/'+id,'PUT',{document:before.document,expectedVersion:before.version},admin);A.equal(written.status,200,JSON.stringify(written.data));
+ const baseline=(await call('quotes/'+id,'GET',undefined,admin)).data;
+ app.sql.prepare("UPDATE quotes SET status='submitted' WHERE id=?").run(id);
+ const reopened=await call('quotes/'+id+'/reopen','POST',{expectedVersion:baseline.version,reason:'Adjust technical quantities only'},admin);A.equal(reopened.status,200,JSON.stringify(reopened.data));
+ const draft=(await call('quotes/'+id,'GET',undefined,admin)).data;A.deepEqual(draft.document.quote.products,baseline.document.quote.products);
+ const view=(await call('quotes/'+id,'GET',undefined,tech)).data;view.document.quote.products[0].qty++;
+ const saved=await call('quotes/'+id,'PUT',{document:view.document,expectedVersion:view.version},tech);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const after=(await call('quotes/'+id,'GET',undefined,admin)).data;
+ for(const n of C.flatten(baseline.document.quote.products).filter(n=>n.kind==='material'))A.deepEqual(C.findNode(after.document.quote.products,n.id).spec,n.spec);
+ for(const key of ['pricing','vat','outputTax','expenses','ratesSnapshot'])A.deepEqual(after.document.quote[key],baseline.document.quote[key],key);
+ A.equal(after.document.quote.products[0].qty,baseline.document.quote.products[0].qty+1);
+ const revision=(await call('quotes/'+id+'/revision/'+baseline.version,'GET',undefined,admin)).data;A.deepEqual(revision.document.quote.products,baseline.document.quote.products);
+});

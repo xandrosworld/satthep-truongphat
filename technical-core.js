@@ -71,7 +71,7 @@ function node(x,q={}){return {...pick(x,nodeKeys),...(x.spec?{spec:spec(x.spec)}
  }),children:(x.children||[]).map(n=>node(n,q))};}
 function sameMaterial(a,b){return !!a&&!!b&&['id','shape','substance','grade','characteristic','brand'].every(k=>(a[k]||'')===(b[k]||''))&&equal(a.props||{},b.props||{});}
 function reconcileDrafts(d,catalog){
- const visit=ns=>{for(const n of ns||[]){if(n.draftMaterial&&n.spec?.id===n.materialId){const m=catalog?.materials?.find(x=>x.id===n.materialId);if(sameMaterial(n.spec,m)){delete n.draftMaterial;n.spec.price=m.price;}}visit(n.children);}};visit(d.quote?.products);return d;
+ const visit=ns=>{for(const n of ns||[]){if(n.draftMaterial&&n.spec?.id===n.materialId){const m=catalog?.materials?.find(x=>x.id===n.materialId);if(sameMaterial(n.spec,m)){delete n.draftMaterial;}}visit(n.children);}};visit(d.quote?.products);return d;
 }
 function project(d,catalog){if(d.quote?.status==='draft'&&catalog)d=reconcileDrafts(copy(d),catalog);const source=r=>complexityRate(r,catalog||d);return {version:2,materials:(d.materials||[]).map(spec),rates:(d.rates||[]).map(r=>rate(r,source(r))),rules:(d.rules||[]).map(x=>pick(x,ruleKeys)),library:(d.library||[]).map(n=>node(n,{ratesSnapshot:d.rates})),shapeDefinitions:copy(d.shapeDefinitions||[]),stockSizes:copy(d.stockSizes||[]),conventions:{},materialPrices:[],history:[],quote:{...pick(d.quote,quoteKeys),...(d.quote.customerInfo?{customerInfo:pick(d.quote.customerInfo,['id','name','contact','phone','email','address','taxId'])}:{}),status:d.quote.status,products:d.quote.products.map(n=>node(n,d.quote)),ratesSnapshot:(d.quote.ratesSnapshot||[]).map(r=>rate(r,source(r))),pricing:{version:2,selected:'detail',comparisonMethods:['detail'],overhead:0,management:0,special:0,profit:0,processing:0,order:0,customer:0,incoming:0,outgoing:0,delivery:0,install:0},vat:0,expenses:[]}};}
 function merge(original,input,catalog){
@@ -108,7 +108,13 @@ function merge(original,input,catalog){
   if(n.auxiliaryPercent!==undefined&&(!Number.isFinite(n.auxiliaryPercent)||n.auxiliaryPercent<0||n.auxiliaryPercent>100||n.kind!=='material'))throw Error('Vật tư phụ chỉ khai cho vật tư, từ 0 đến 100%');
   if(!equal(n.outsource,prev?node(prev,original.quote).outsource:undefined))throw Error('Gói thuê được quản lý tại Giá & hệ số');
   if(n.kind==='product'&&n.productGroup!==prev?.productGroup&&n.productGroup){next.priceGroupId=n.productGroup==='Thang máng cáp'?'tmc':'detail';next.tmcScope=next.priceGroupId;if(next.priceGroupId==='tmc'&&!result.quote.pricing.comparisonMethods?.includes('tmc'))(result.quote.pricing.comparisonMethods??=['detail']).push('tmc');}
-  if(n.spec){const material=prev?.materialId===n.materialId&&!prev.draftMaterial?prev.spec:original.materials.find(m=>m.id===n.materialId)||catalog?.materials?.find(m=>m.id===n.materialId);next.spec=assign(copy(material||{price:null}),n.spec,specKeys);if(!material)next.draftMaterial=true;else if(!n.draftMaterial||sameMaterial(n.spec,material))delete next.draftMaterial;}
+  if(n.spec){
+   const sameLine=prev?.materialId===n.materialId&&prev.spec;
+   const material=sameLine&&!prev.draftMaterial?prev.spec:original.materials.find(m=>m.id===n.materialId)||catalog?.materials?.find(m=>m.id===n.materialId);
+   // Technical declarations never replace the commercial snapshot of an existing material line.
+   next.spec=assign(copy(sameLine?prev.spec:material||{price:null}),n.spec,specKeys);
+   if(!material)next.draftMaterial=true;else if(!n.draftMaterial||sameMaterial(n.spec,material))delete next.draftMaterial;
+  }
   if(n.ruleSpec)next.ruleSpec=copy(n.ruleSpec);
   const used=new Set();next.ops=n.ops.map((op,index)=>{if(!original.quote.ratesSnapshot.some(r=>r.id===op.id))throw Error('Chọn công đoạn có trong báo giá');const existing=(prev?.ops||[]).find((o,i)=>!used.has(i)&&o.id===op.id&&(op.instanceId&&o.instanceId?o.instanceId===op.instanceId:i===index));if(existing)used.add(prev.ops.indexOf(existing));const merged=assign(existing?copy(existing):{},op,opKeys);
    if(!equal(choiceFor(existing),op.complexityChoice)){
