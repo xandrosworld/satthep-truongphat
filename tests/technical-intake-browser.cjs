@@ -30,6 +30,8 @@ const {createApp}=require(path.join(release,'server/app.cjs'));
   await expect(p.locator('[data-intake=request],[data-intake=attach],[data-intake=choose-customer]')).toHaveCount(0);
   await expect(p.locator('[data-tab=prices],[data-tab=pricing]')).toHaveCount(0);
   await expect(p.locator('a[href="https://example.com/drawing.pdf"]')).toBeVisible();
+  // Restored local content may be incomplete even when its version number matches.
+  await p.evaluate(()=>{db.quote.request.links=[];render();});await p.locator('[data-intake-refresh]').click();await expect(p.locator('a[href="https://example.com/drawing.pdf"]')).toBeVisible();await expect(p.locator('[data-intake-sync-status]')).toContainText('1 link tài liệu');
   // A colleague updates the same quotation while the technician keeps it open.
   async function remoteInput(note){await admin.evaluate(async({id,note})=>{const q=await teamApi('quotes/'+id);q.document.quote.request.notes=note;q.document.quote.request.links=[{id:'fresh-link',name:'Updated drawing',url:'https://example.com/new-drawing.pdf'}];await teamApi('quotes/'+id,'PUT',{document:q.document,expectedVersion:q.version});},{id,note});}
   await remoteInput('New input from sales');await p.evaluate(()=>teamRefreshIntake(true));await expect(p.locator('.intake-notes')).toContainText('New input from sales');await expect(p.locator('a[href="https://example.com/new-drawing.pdf"]')).toBeVisible();

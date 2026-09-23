@@ -70,14 +70,14 @@ async function teamRefreshIntake(manual=false){
   const record=await teamApi('quotes/'+link.id);
   if(generation!==Team.sessionGeneration||teamCurrent()!==link||page!=='quote'||tab!=='intake'||$('#dialog')?.open)return;
   const status=$('[data-intake-sync-status]');
-  if(record.version===link.version){if(manual&&status)status.textContent='Đang xem bản mới nhất · phiên bản '+link.version;return;}
+  if(record.version===link.version&&!manual&&JSON.stringify(record.document.quote.request||{})===JSON.stringify(db.quote.request||{}))return;
   if(Team.dirty||Quotes.conflict){if(status)status.textContent='Có bản mới trên máy chủ. Bản đang làm có thay đổi chưa lưu; hãy sao lưu và đối chiếu trước khi tải lại.';return;}
-  if(document.activeElement?.matches('input,textarea,select'))return;
+  if(!manual&&document.activeElement?.matches('input,textarea,select'))return;
   db={...db,...record.document,savedQuotes:[],history:[]};db.quote.workspaceKey=link.workspaceKey;
   Team.link={...link,version:record.version,status:record.status};
   Team.quoteTechnicalBaseline=Team.permissions?.technical?{id:link.id,document:C.copy(record.document)}:null;
   UX.undo=[];UX.redo=[];UX.checked.clear();render();
-  const updated=$('[data-intake-sync-status]');if(updated)updated.textContent='Đã cập nhật từ máy chủ · phiên bản '+record.version;
+  const updated=$('[data-intake-sync-status]');if(updated)updated.textContent='Đã tải từ máy chủ · phiên bản '+record.version+' · '+(db.quote.request?.links?.length||0)+' link tài liệu · '+(db.quote.request?.files?.length||0)+' tệp';
  }catch(e){if(manual)toast(e.message);}finally{teamIntakeRefreshing=false;}
 }
 document.addEventListener('click',e=>{if(e.target.closest('[data-intake-refresh]')){e.preventDefault();teamRefreshIntake(true);}else if(e.target.closest('[data-tab="intake"],[data-intake="goto"][data-id="intake"]'))setTimeout(()=>teamRefreshIntake(),0);});
