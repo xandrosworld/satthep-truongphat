@@ -167,6 +167,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
         }
         if(!((route==='/api/catalog'||route==='/api/catalog/proposals'&&req.method==='GET')&&(rights.catalog||req.method==='GET'&&rights.catalogRead))&&!/^\/api\/intake\/files(?:\/[a-zA-Z0-9_-]{1,100})?$/.test(route)&&!['/api/me','/api/logout','/api/me/password'].includes(route))fail(403,'Tài khoản kỹ thuật chỉ được làm việc với dữ liệu kỹ thuật, không được xem giá');
       }
+      if(await require('./quote-intakes.cjs').createQuoteIntakes({all,one,getQuote,saveQuote,readBody,fail})({req,route,user,rights,send}))return;
       if(await intake.handle({req,route,user,rights,send}))return;
       if(await workflow.handle({req,route,user,rights,send}))return;
       if(route==='/api/me/password'&&req.method==='POST'){

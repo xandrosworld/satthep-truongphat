@@ -380,3 +380,8 @@ th{color:var(--muted)}
 .section-permissions .permission-matrix th:first-child{width:40%}
 .section-permissions .permission-matrix th:not(:first-child),.section-permissions .permission-matrix td{width:15%}
 .section-permissions .permission-matrix input[type=radio]{width:18px;height:18px;accent-color:var(--primary,#245887);cursor:pointer}
+
+#dialog.sales-intake-dialog .dialog-body{overflow:auto;min-width:0}
+#dialog.sales-intake-dialog .table-scroll{overflow:auto;max-width:100%;min-width:0}
+
+.team-sales #content .actions{flex-wrap:wrap;max-width:100%}
