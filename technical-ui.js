@@ -1,3 +1,7 @@
+let OperationMaster={user:null,rates:null,pending:false,at:0};
+function operationMasterRates(){if(db.quote.status==='approved'||Team.link?.readOnly)return null;return Team.loaded?OperationMaster.user===Team.user?.id?OperationMaster.rates:null:db.rates;}
+function operationDisplayName(r){const master=operationMasterRates();if(!master)return r.name;const current=master.find(x=>x.id===r.id&&x.enabled!==false);return current?current.name:r.name+' · Ngừng dùng trong danh mục';}
+async function operationRefreshMaster(){if(!Team.loaded||!Team.permissions?.edit)return;const user=Team.user?.id;if(OperationMaster.pending||OperationMaster.user===user&&Date.now()-OperationMaster.at<30000)return;OperationMaster.pending=true;try{const data=await teamApi('operation-catalog');if(Team.user?.id!==user)return;OperationMaster={user,rates:data.rates,pending:false,at:Date.now()};if(page==='quote')render();}catch(e){OperationMaster.at=Date.now();OperationMaster.user=user;}finally{OperationMaster.pending=false;}}
 function technicalQuoteDocument(document){
  const projected=TPTechnical.project(document),baseline=Team.quoteTechnicalBaseline;
  // Shared catalogue edits are published separately; quote saves retain their loaded catalogue.
@@ -60,9 +64,9 @@ function technicalRecipes(id,index){const n=C.findNode(db.quote.products,id),rat
 function technicalSelectOperation(){
  inWritable();
  const existing=db.quote.ratesSnapshot,used=new Set(C.flatten(db.quote.products).flatMap(n=>(n.ops||[]).map(op=>op.id)));
- const rates=[...existing,...(!Team.user||Team.user.role==='admin'?db.rates.filter(r=>!existing.some(x=>x.id===r.id)):[])].filter(r=>r.operationType!=='package'&&(r.enabled!==false||used.has(r.id)));
+ const master=operationMasterRates();if(!master)return toast('Đang tải danh mục công đoạn; mở lại sau vài giây');const rates=[...master.filter(r=>r.enabled!==false),...existing.filter(r=>used.has(r.id)&&!master.some(x=>x.id===r.id&&x.enabled!==false))].filter(r=>r.operationType!=='package');
  const selected=new Set(db.quote.operationColumns||existing.map(r=>r.id));
- openDialog('Chọn công đoạn cho báo giá',`<p>Tích nhiều công đoạn rồi áp dụng để cập nhật các cột. Công đoạn đã có dòng thực hiện được giữ lại; bỏ công việc tại dòng đó trước nếu không còn dùng.</p><div class="actions"><button type="button" class="button" data-operation-pick-all>Chọn tất cả</button><button type="button" class="button" data-operation-pick-none>Bỏ chọn chưa sử dụng</button></div>${rates.map(r=>`<label class="pa-checkbox"><input type="checkbox" name="operationIds" value="${esc(r.id)}" ${selected.has(r.id)||used.has(r.id)?'checked':''} ${used.has(r.id)?'disabled':''}> ${esc(r.name)}${used.has(r.id)?' · Đang sử dụng':''}</label>`).join('')}`,'Áp dụng lựa chọn',f=>{
+ openDialog('Chọn công đoạn cho báo giá',`<p>Tích nhiều công đoạn rồi áp dụng để cập nhật các cột. Công đoạn đã có dòng thực hiện được giữ lại; bỏ công việc tại dòng đó trước nếu không còn dùng.</p><div class="actions"><button type="button" class="button" data-operation-pick-all>Chọn tất cả</button><button type="button" class="button" data-operation-pick-none>Bỏ chọn chưa sử dụng</button></div>${rates.map(r=>`<label class="pa-checkbox"><input type="checkbox" name="operationIds" value="${esc(r.id)}" ${selected.has(r.id)||used.has(r.id)?'checked':''} ${used.has(r.id)?'disabled':''}> ${esc(operationDisplayName(r))}${used.has(r.id)?' · Đang sử dụng':''}</label>`).join('')}`,'Áp dụng lựa chọn',f=>{
   inWritable();const ids=[...new Set([...f.getAll('operationIds'),...used])];
   saveAndClose(()=>{for(const r of rates)if(ids.includes(r.id)&&!existing.some(x=>x.id===r.id))existing.push(C.copy(r));db.quote.operationColumns=ids;},'Đã cập nhật các cột công đoạn');
  });
@@ -91,6 +95,7 @@ function tmcFreightNotice(){
  return `<section class="notice ${!configured||invalid?'warning':''}" data-tmc-freight><strong>${esc(paNames.incoming)}: ${invalid?'Chưa tính đủ':money(amount)+' đ'}</strong><span>${status}. ${configured?'Khoản này nằm trong chi phí sản xuất; không cộng thêm lần nữa vào giá chào.':'Chọn TMC không tự sinh phí vận chuyển. Khai khoản phí thực tế tại Giá & hệ số → Vận chuyển / lắp đặt.'}</span>${btn('Mở vận chuyển / lắp đặt','tmc-freight')}</section>`;
 }
 function installTechnicalUI(){
+ const masterRender=render;render=()=>{masterRender();if(page==='quote')operationRefreshMaster();};
  document.addEventListener('click',e=>{const b=e.target.closest('[data-technical-operation]');if(b){e.preventDefault();try{technicalOperation(b.dataset.id,Number(b.dataset.index));}catch(error){toast(error.message);}}});
  const oldDetail=paOperationDetail;paOperationDetail=(id,index)=>technicalStage()?technicalOperation(id,index):oldDetail(id,index);
  const oldOperation=workOperationDetail;workOperationDetail=(id,index)=>technicalStage()?technicalOperation(id,index):oldOperation(id,index);

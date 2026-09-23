@@ -125,6 +125,8 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
         if(String(body.password||'').length>200)fail(401,'Tài khoản hoặc mật khẩu không đúng');const user=one('SELECT * FROM users WHERE username=? AND active=1',String(body.username||'').trim().toLowerCase());const [salt,hash]=(user?.password||'00000000000000000000000000000000:'+('0'.repeat(128))).split(':');const test=scryptSync(String(body.password||''),salt,64);if(!user||!timingSafeEqual(test,Buffer.from(hash,'hex')))fail(401,'Tài khoản hoặc mật khẩu không đúng');attempts.delete(key);const {password,...publicUser}=user;audit(user,'login',user.id);return send(200,beginSession(publicUser,res));
       }
       const user=session(req);if(!user)fail(401,'Cần đăng nhập');const rights=permissions(user);responseUser=user;
+ if(route==='/api/operation-catalog'&&req.method==='GET'){if(!rights.edit)fail(403,'Không có quyền khai báo công đoạn');const row=one('SELECT document FROM catalog WHERE id=1'),master=row?JSON.parse(row.document):catalogSeed();return send(200,{rates:!rights.costs?require('../technical-core.js').projectCatalog(master).rates:master.rates});}
+
       if(!['GET','HEAD'].includes(req.method)&&req.headers['x-csrf-token']!==user.csrf)fail(403,'Phiên yêu cầu không hợp lệ; tải lại trang');
       if(await aiPdf.handle({req,route,user,send}))return;
       if(await production.handle({req,route,user,send}))return;
