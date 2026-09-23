@@ -69,7 +69,7 @@ function definitions(){return typeof module!=='undefined'?require('./definition-
 function shapeInfo(m){return m.shapeDefinition?definitions().info(m):shapes[m.shape];}
 function geometry(n,count){
   if(n.draftMaterial&&!n.materialId)throw Error('Vật tư chưa chọn mã; mở Chọn / hoàn tất vật tư để khai báo');
-  if(n.draftMaterial)throw Error('Vật tư chưa được xác nhận trong danh mục chung; mở Chọn / hoàn tất vật tư để kiểm tra khai báo và trạng thái Admin duyệt');
+  if(n.draftMaterial)throw Error('Vật tư chưa được xác nhận trong danh mục chung; mở Chọn / hoàn tất vật tư để xác nhận khai báo vật tư');
   if(n.spec?.shapeDefinition)return definitions().geometry(n,count);
   const m=n.spec,vars={...n.dims,...m.props},rule=n.ruleSpec;
   if(!(count>0)&&count!==0)throw Error('Số lượng không hợp lệ');

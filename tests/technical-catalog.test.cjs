@@ -9,6 +9,11 @@ test('price-free technical catalogue: grant, publish, preserve prices, reject in
  let tech=await call('login','POST',{username:'tech',password});A.equal(tech.data.permissions.costs,false);A.equal(tech.data.permissions.catalog,true);A.equal(tech.data.permissions.factors,false);
  const original=(await call('catalog','GET',undefined,admin)).data.catalog;
  let record=await call('catalog','GET',undefined,tech);A.equal(record.status,200,JSON.stringify(record.data));let c=record.data.catalog;A.deepEqual(c,T.projectCatalog(original));A.ok(c.materials.every(x=>x.price===0));A.ok(c.rates.every(x=>x.inside===0&&x.outside===0&&x.factors.length===0));
+ const newMaterial={...structuredClone(c.materials[0]),id:'TECH-MATERIAL-NEW',name:'Technical declared material',price:0};c.materials.push(newMaterial);
+ const direct=await call('catalog','PUT',{expectedVersion:record.data.version,catalog:c},tech);A.equal(direct.status,200,JSON.stringify(direct.data));A.notEqual(direct.data.pending,true);
+ const published=(await call('catalog','GET',undefined,admin)).data.catalog;A.equal(published.materials.find(m=>m.id===newMaterial.id).price,null);A.equal(published.materials[0].price,original.materials[0].price);
+ A.equal((await call('catalog','PUT',{expectedVersion:record.data.version,catalog:c},tech)).status,409);
+ record=await call('catalog','GET',undefined,tech);c=record.data.catalog;
  c.materials[0].name+=' technical';c.library[0].name+=' technical';c.conventions.parameters=[...(c.conventions.parameters||[]),{name:'QA',label:'Test dimension',unit:'mm'}];
  let saved=await call('catalog','PUT',{expectedVersion:record.data.version,catalog:c},tech);A.equal(saved.status,200,JSON.stringify(saved.data));A.equal(saved.data.pending,true);A.equal((await call('catalog/proposals/'+saved.data.proposalId+'/approve','POST',{},admin)).status,200);
  const actual=(await call('catalog','GET',undefined,admin)).data.catalog;
