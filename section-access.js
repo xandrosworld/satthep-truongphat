@@ -2,8 +2,11 @@
 'use strict';
 const labels={customer:'Đầu vào báo giá / khai báo khách hàng',bom:'Cấu thành, kích thước và hao hụt',operations:'Nguyên công và định mức',materials:'Giá vật tư',logistics:'Vận chuyển và lắp đặt',factors:'Hệ số tác động',commercial:'Giá chào, thuế và lịch sử gửi',manage:'Tạo và trình báo giá',catalogMaterials:'Danh mục vật tư',catalogTechnicalOperations:'Danh mục công đoạn kỹ thuật (không gồm giá)',catalogOperations:'Đơn giá nguyên công và nhóm sản phẩm',catalogLogistics:'Bảng giá vận chuyển, lắp đặt',catalogRules:'Danh mục quy ước và công thức',catalogLibrary:'Thư viện mẫu'};
 const keys=Object.keys(labels),catalogKeys=keys.filter(k=>k.startsWith('catalog'));
-function parse(value){if(value==null)return null;const x=typeof value==='string'?JSON.parse(value):value;if(!Array.isArray(x)||x.some(k=>!keys.includes(k)))throw Error('Danh sách quyền không hợp lệ');return [...new Set(x)];}
+const modeLabels={configure:'Bổ sung / cài đặt trước khi khóa',use:'Sử dụng / vận hành',view:'Chỉ xem',none:'Không được xem'};
+function parseModes(value){if(value==null)return null;const x=typeof value==='string'?JSON.parse(value):value;if(!x||Array.isArray(x)||typeof x!=='object'||Object.entries(x).some(([k,v])=>!keys.includes(k)||!Object.hasOwn(modeLabels,v)))throw Error('Cấp độ quyền không hợp lệ');return Object.fromEntries(keys.map(k=>[k,x[k]||'none']));}
+function parse(value){if(value==null)return null;const x=typeof value==='string'?JSON.parse(value):value;if(!Array.isArray(x)){const m=parseModes(x);return keys.filter(k=>m[k]==='configure'||m[k]==='use'&&!catalogKeys.includes(k));}if(x.some(k=>!keys.includes(k)))throw Error('Danh sách quyền không hợp lệ');return [...new Set(x)];}
 function sections(user){if(user.role==='admin')return keys;const custom=parse(user.section_access);if(custom!==null)return custom;return user.role==='technical'?['bom','operations']:user.role==='estimator'?keys.filter(k=>!catalogKeys.includes(k)):user.role==='sales'?['commercial']:[];}
+function modes(user){if(user.role==='admin')return Object.fromEntries(keys.map(k=>[k,'configure']));const raw=typeof user.section_access==='string'?JSON.parse(user.section_access):user.section_access;if(raw&&!Array.isArray(raw))return parseModes(raw);const edits=sections(user),costs=user.role==='technical'&&!user.technical_delegated?false:user.can_view_costs==null?!['technical','sales'].includes(user.role):!!user.can_view_costs;return Object.fromEntries(keys.map(k=>[k,edits.includes(k)?'configure':costs||user.role==='technical'&&['bom','operations'].includes(k)||user.role==='sales'&&k==='commercial'?'view':'none']));}
 function canonical(x){if(Array.isArray(x))return x.map(canonical);if(x&&typeof x==='object')return Object.fromEntries(Object.keys(x).sort().filter(k=>x[k]!==undefined).map(k=>[k,canonical(x[k])]));return x;}
 const equal=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
 const nodeSection=k=>k==='productionSpecialPercent'?'factors':k==='productionLevelChoice'||k==='ops'||['outsource','workQuantities','measurementConfirmed','workMeasurement','processMass','processArea'].includes(k)?'operations':['transport','install','freightIn','freightOut'].includes(k)?'logistics':['offerName','offerSpecification','benchmarkScope','pricePerKg','competitorPrice','marketPrice','marketSource','groupPricing','tmcKind','tmcTableId'].includes(k)?'commercial':'bom';
@@ -42,5 +45,5 @@ const ar=rateParts(a.ratesSnapshot),br=rateParts(b.ratesSnapshot);for(const r of
  }
  return [...bad];
 }
-const api={labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
+const api={modeLabels,parseModes,modes,labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

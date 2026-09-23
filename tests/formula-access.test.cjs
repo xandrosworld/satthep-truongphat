@@ -88,5 +88,5 @@ test('factor lock covers values, removal, bindings and quote snapshots; only adm
  current.quote.pricing.tmcLoss=9;A.equal((await call('quotes/'+made.data.id,'PUT',{document:current,expectedVersion:2},u.session)).status,403);
  A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:false,expectedVersion:1,reason:'Forged delegated right'},u.session)).status,403);
  A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:false,expectedVersion:1,reason:'Admin sửa'},admin)).status,200);
- A.equal((await call('quotes/'+made.data.id,'PUT',{document:current,expectedVersion:2},u.session)).status,200);
+ const unlocked=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data;unlocked.document.quote.pricing.tmcLoss=9;A.equal((await call('quotes/'+made.data.id,'PUT',{document:unlocked.document,expectedVersion:unlocked.version},u.session)).status,200);
 });
