@@ -14,6 +14,9 @@ function quoteAuxiliaryPercent(id){
  });
 }
 function installQuoteWorkspaceUI(){
+ const placeOverview=()=>{if(page!=='quote')return;const heading=document.querySelector('#content .page-heading'),summary=document.querySelector('#content .quote-technical-overview');if(heading&&summary){heading.classList.add('quote-heading-with-totals');heading.insertBefore(summary,heading.querySelector(':scope > .actions'));}};
+ const previousRender=render;render=()=>{previousRender();placeOverview();};
+
  const intro=paIntro;paIntro=()=>technicalStage()?quoteTechnicalOverview():intro();
  b1Legend=()=>'';
  actions['quote-symbols']=()=>rcSelect('symbols');
