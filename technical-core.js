@@ -150,7 +150,7 @@ function mergeCatalog(original,input){
   const out=copy(base);for(const k of technicalKeys){if(r[k]===undefined)delete out[k];else out[k]=copy(r[k]);}return out;
  });
  const assign=(old,item,keys)=>{const out=copy(old||{});for(const k of keys){if(item[k]===undefined)delete out[k];else out[k]=copy(item[k]);}return out;};
- result.materials=input.materials.map(m=>{const old=original.materials.find(x=>x.id===m.id);return {...assign(old,m,specKeys),price:old?.price??0};});
+ result.materials=input.materials.map(m=>{const old=original.materials.find(x=>x.id===m.id);return {...assign(old,m,specKeys),price:old?.price??null};});
  result.rules=input.rules.map(r=>assign(original.rules.find(x=>x.id===r.id),r,ruleKeys));
  for(const k of ['shapeDefinitions','stockSizes'])result[k]=copy(input[k]);
  result.conventions??={};for(const k of conventionKinds){if(!Object.hasOwn(input.conventions,k)){delete result.conventions[k];continue;}result.conventions[k]=input.conventions[k].map(x=>assign(original.conventions?.[k]?.find(o=>o.name===x.name),x,conventionKeys));}
