@@ -60,3 +60,5 @@
 .team-sales.team-customer-entry .sidebar nav [data-page]:not([data-page="customers"]):not([data-page="quote"]){display:none}
 
 .team-sales .sidebar nav [data-production-launch]{display:none}
+
+.pa-material-code{display:block;margin-top:4px;color:#607289;font-size:12px;font-weight:400;overflow-wrap:anywhere}.pa-operations tbody th strong{overflow-wrap:anywhere}
