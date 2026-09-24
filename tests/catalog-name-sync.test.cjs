@@ -1,0 +1,9 @@
+'use strict';
+const {test}=require('node:test'),A=require('node:assert/strict'),C=require('../core.js'),P=require('../pricing-core.js'),D=require('../definition-core.js'),S=require('../server/formula-sync.cjs');
+test('renames by material and shape identity preserve prices, dimensions, custom offer names and are idempotent',()=>{
+ const db=P.demoSeed(),shape={id:'NAME-SHAPE',name:'Old shape',...D.sheetPreset('rectangle')},m=D.applyShape({id:'NAME-MAT',name:'Steel Old shape, 3 mm',density:7850,unit:'kg',price:12345,stockL:2000,stockW:1000},shape,{T:3});
+ db.materials=[m];db.shapeDefinitions=[shape];const node=D.assign(D.draft(),m,db.rules);node.offerName='Customer wording';node.spec.price=6789;db.quote.products=[{id:'SP',kind:'product',name:'Product',qty:2,ops:[],children:[node]}];
+ const master={materials:[C.copy(m)],shapeDefinitions:[{...shape,name:'New shape'}],rules:db.rules};const before=C.copy(db),renamed=S.apply(db,master);A.equal(renamed.document.quote.products[0].children[0].name,'Steel New shape, 3 mm');A.equal(renamed.document.quote.products[0].children[0].ruleSpec.name,'New shape');A.equal(renamed.document.quote.products[0].children[0].spec.price,6789);A.deepEqual(renamed.document.quote.products[0].children[0].dims,node.dims);A.equal(renamed.document.quote.products[0].children[0].offerName,'Customer wording');A.deepEqual(C.copy(db),before);A.equal(S.apply(renamed.document,master).changes.length,0);
+ master.materials[0].name='Renamed material';const second=S.apply(renamed.document,master);A.equal(second.document.quote.products[0].children[0].name,'Renamed material');A.equal(second.document.materials[0].name,'Renamed material');A.equal(S.apply(second.document,master).changes.length,0);
+ const unrelated=C.copy(master);unrelated.materials[0].id='OTHER';unrelated.shapeDefinitions=[];A.equal(S.apply(db,unrelated).changes.length,0);
+});

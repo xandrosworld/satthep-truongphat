@@ -18,11 +18,11 @@ test('catalogue proposals require Admin, reject stale approvals; sales orders pr
  A.equal((await call('catalog/proposals/'+next.data.proposalId+'/approve','POST',{},admin)).status,409);
  A.equal((await call('catalog/proposals/'+next.data.proposalId+'/reject','POST',{reason:'Rebase required'},admin)).status,200);
  const d=P.demoSeed(),q=(await call('quotes','POST',{document:d},admin)).data;
- A.equal((await call('quotes/'+q.id+'/order','POST',{expectedVersion:1,code:'DH-TEST'},sales)).status,409);
- await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1},admin);await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2},admin);
- const order=await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'DH-TEST'},sales);A.equal(order.status,201,JSON.stringify(order.data));A.equal(order.data.package,undefined);
+ A.equal((await call('quotes/'+q.id+'/order','POST',{expectedVersion:q.version,code:'DH-TEST'},sales)).status,409);
+ await call('quotes/'+q.id+'/submit','POST',{expectedVersion:q.version},admin);await call('quotes/'+q.id+'/approve','POST',{expectedVersion:q.version+1},admin);
+ const order=await call('quotes/'+q.id+'/order','POST',{expectedVersion:q.version+2,code:'DH-TEST'},sales);A.equal(order.status,201,JSON.stringify(order.data));A.equal(order.data.package,undefined);
  const view=await call('orders/'+order.data.id,'GET',undefined,sales);A.equal(view.status,200);A.equal(view.data.status,'draft');A.ok(view.data.offer.products.length);A.equal(view.data.materials,undefined);A.equal(view.data.baseline,undefined);A.equal(view.data.quote,undefined);
- A.equal((await call('orders/'+order.data.id+'/confirm','POST',{quoteVersion:3},sales)).status,403);
- A.equal((await call('orders/'+order.data.id+'/confirm','POST',{quoteVersion:3},admin)).status,200);
+ A.equal((await call('orders/'+order.data.id+'/confirm','POST',{quoteVersion:q.version+2},sales)).status,403);
+ A.equal((await call('orders/'+order.data.id+'/confirm','POST',{quoteVersion:q.version+2},admin)).status,200);
  A.equal((await call('backup','GET',undefined,admin)).data.catalogProposals.length,2);
 });
