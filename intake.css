@@ -6,3 +6,11 @@
 .material-price-name{display:block;font-size:14px;font-weight:700;line-height:1.5;overflow-wrap:anywhere}
 .source-analysis .analysis-section th{background:#dce9f4;text-align:left;padding:12px;font-weight:750}
 .source-analysis .analysis-profit th,.source-analysis .analysis-profit td{background:#e5f3ec;font-weight:750;border-top:2px solid #7da68d}
+@media(max-width:640px){
+ #dialog .organization-table,#dialog .organization-table tbody{display:block;min-width:0;width:100%}
+ #dialog .organization-table thead{display:none}
+ #dialog .organization-table tbody tr{display:block;padding:12px 0;border-bottom:1px solid #d8e1ea}
+ #dialog .organization-table tbody td{display:block;width:auto;border:0;padding:5px 8px;white-space:normal;overflow-wrap:anywhere}
+ #dialog .organization-table td[data-label]:not([data-label=""])::before{content:attr(data-label);display:block;color:#5d7184;font-size:11px;margin-bottom:3px}
+ #dialog .organization-table td .button{margin:3px 4px 3px 0}
+}
