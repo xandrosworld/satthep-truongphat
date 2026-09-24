@@ -56,7 +56,13 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var
 .quick-product .product-params{border-color:var(--line)}
 .quick-product-head.b1-product{border-top-color:#426d9e;border-bottom-color:#b2c5dc}
 .quick-row.b1-component>td,.b1-tree-row.b1-component>td{border-top-color:#b2c5dc}
-.b1-product,.b1-component,.b1-component-material,.b1-product-material{color:var(--ink)}
+.b1-product,.b1-component,.b1-component-material,.b1-product-material{
+  --level-product:#a9c9e8;
+  --level-component:#d0e3f5;
+  --level-component-material:#edf5fc;
+  --level-product-material:#edf5fc;
+  color:var(--ink);
+}
 [data-b1-type] small,[data-b1-type] .subtext,[data-b1-type] .fixed-value{color:var(--muted)!important}
 .b1-tree-row.b1-product>td{border-top-color:#426d9e}
 .b1-legend{color:var(--ink)}
