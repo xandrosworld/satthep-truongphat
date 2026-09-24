@@ -40,5 +40,12 @@ test('organization migration, multi-position permissions, scoped managers, chang
  await call('users/'+newId+'/disable','POST',{},admin);doc.departments[0].name='Technical A renamed';A.equal((await save()).status,200);A.equal((await login('new-person')).status,401,'unrelated changes never unlock manually disabled account');
  const teams=(await call('work-teams','GET',undefined,admin)).data;for(const entry of Object.values(teams.teams))for(const k of ['managers','members'])entry[k]=entry[k].filter(id=>id!==newId);teams.teams.technical.managers.push(users.outside.id);A.equal((await call('work-teams','PUT',{expectedVersion:teams.version,teams:teams.teams},admin)).status,409);
  doc.departments.find(d=>d.id==='b').active=false;doc.employees.find(e=>e.userId===users.worker.id).managed=false;A.equal((await save()).status,200);ws=await login('worker');A.equal(ws.data.permissions.costs,false);A.deepEqual(ws.data.permissions.sections,[]);A.equal((await call('users/'+users.worker.id+'/access','POST',{role:'admin'},admin)).status,409);
+ doc.workflows=[{id:'custom-tech',name:'Design review',stage:'technical'}];doc.departments[0].workflowId='custom-tech';doc.departments[0].stage='sales';
+ A.equal((await save()).status,200);A.equal(state.departments[0].stage,'technical','server derives routing from workflow');
+ const invalidFlow=structuredClone(doc);invalidFlow.workflows=[];A.equal((await save(invalidFlow)).status,400,'cannot delete a referenced workflow');
+ const duplicate=structuredClone(doc);duplicate.workflows.push({...duplicate.workflows[0],id:'second'});A.equal((await save(duplicate)).status,409);
+ const invalidStage=structuredClone(doc);invalidStage.workflows[0].stage='admin';A.equal((await save(invalidStage)).status,400);
+ const beforeSession=await login('head');doc.departments.reverse();A.equal((await save()).status,200);A.deepEqual(state.departments.map(d=>d.id),doc.departments.map(d=>d.id));A.equal((await call('me','GET',undefined,beforeSession)).status,200,'reorder retains sessions and rights');
+ delete doc.workflows;A.equal((await save()).status,200);A.equal(state.workflows[0].id,'custom-tech','legacy clients preserve custom workflows');
  const backup=(await call('backup','GET',undefined,admin)).data;A.equal(backup.organization.length,1);A.ok(backup.organizationRevisions.length>3);A.ok(backup.audit.some(a=>a.action==='organization:access'));
 });
