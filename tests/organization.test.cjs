@@ -15,6 +15,16 @@ test('organization migration, multi-position permissions, scoped managers, chang
  const q=(await call('quotes','POST',{document:P.demoSeed()},admin)).data,work='quotes/'+q.id+'/work';
  let options=(await call(work,'GET',undefined,head)).data;A.deepEqual(options.candidates.technical.map(u=>u.id).sort(),[users.head.id,users.worker.id].sort());
  A.equal((await call(work,'PUT',{expectedRevision:0,technicalId:users.outside.id,materialsId:null,status:'not-started'},head)).status,403);
+ // A child unit grants downward assignment scope, never access to a sibling or ancestor.
+ doc.departments[1].parentId='a';doc.departments[1].kind='team';doc.positions.find(p=>p.id==='wb').manager=true;
+ A.equal((await save()).status,200);head=await login('head');
+ options=(await call(work,'GET',undefined,head)).data;A.ok(options.candidates.technical.some(u=>u.id===users.outside.id));
+ let childHead=await login('outside');options=(await call(work,'GET',undefined,childHead)).data;A.deepEqual(options.candidates.technical.map(u=>u.id),[users.outside.id]);
+ const cycle=structuredClone(doc);cycle.departments[0].parentId='b';A.equal((await save(cycle)).status,400);
+ const missing=structuredClone(doc);missing.departments[1].parentId='missing';A.equal((await save(missing)).status,400);
+ const removed=structuredClone(doc);removed.departments=removed.departments.filter(d=>d.id!=='a');removed.positions=removed.positions.filter(p=>p.departmentId!=='a');A.equal((await save(removed)).status,400);
+ doc.departments[0].active=false;A.equal((await save()).status,200);A.equal((await call('me','GET',undefined,childHead)).status,401);childHead=await login('outside');A.deepEqual(childHead.data.permissions.sections,[]);
+ doc.departments[0].active=true;doc.departments[1].parentId=null;doc.positions.find(p=>p.id==='wb').manager=false;A.equal((await save()).status,200);head=await login('head');
  A.equal((await call('users/'+users.worker.id+'/access','POST',{role:'admin'},admin)).status,409,'legacy editing cannot override positions');
  const worker=doc.employees.find(e=>e.userId===users.worker.id);worker.positionIds=['wa','pr'];A.equal((await save()).status,200);let ws=await login('worker');A.equal(ws.data.permissions.costs,true);A.ok(ws.data.permissions.sections.includes('bom')&&ws.data.permissions.sections.includes('materials'));
  worker.positionIds=['wb'];A.equal((await save()).status,200);A.equal((await call('me','GET',undefined,ws)).status,401);options=(await call(work,'GET',undefined,head)).data;A.deepEqual(options.candidates.technical.map(u=>u.id),[users.head.id]);

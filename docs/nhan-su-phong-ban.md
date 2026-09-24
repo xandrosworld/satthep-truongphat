@@ -14,7 +14,11 @@ Khi kiêm nhiệm, hệ thống hợp các quyền được cấp: mức cao nh�
 
 Sửa bộ quyền cập nhật ngay các nhân sự dùng bộ quyền đó thông qua vị trí. Chuyển phòng/vị trí hoặc ngừng vị trí/phòng sẽ tính lại quyền. Các phiên đăng nhập chịu ảnh hưởng bị kết thúc để tránh dùng quyền cũ. Không được tự hạ quyền Admin hoặc ngừng tài khoản đang thao tác.
 
-Quản lý giao việc cho mình hoặc nhân viên thuộc đúng phòng đang phụ trách, theo luồng công việc và quyền thực hiện. Hai phòng cùng luồng kỹ thuật vẫn độc lập. Quản lý phòng A không giao cho nhân viên phòng B; Admin có đầy đủ phạm vi. Việc chuyển nhân sự không sửa lịch sử giao việc hay tự chuyển người nhận các công việc đã giao.
+Admin mở **Nhân sự & cơ cấu** ở menu bên trái. Trong mục Phòng ban, tự khai tên, loại đơn vị (ban, phòng ban, nhà máy, bộ phận, tổ), đơn vị cấp trên và luồng công việc. Danh sách hiển thị theo cây; vị trí và nhân sự hiển thị đường dẫn đầy đủ của đơn vị. Các đơn vị cũ mặc định ở cấp cao nhất; không tự suy đoán cơ cấu của công ty.
+
+Quản lý giao việc cho mình, nhân viên cùng đơn vị và nhân sự tại các đơn vị trực thuộc, theo luồng công việc và quyền thực hiện. Quản lý cấp dưới không giao ngược cho cấp trên hoặc sang đơn vị ngang cấp. Quản lý ngang cấp trong cùng đơn vị không giao cho nhau; quản lý cấp trên có thể giao cho quản lý đơn vị con. Admin có đầy đủ phạm vi. Quyền chức năng vẫn lấy từ các vị trí được gán, không tự cấp quyền Admin vì đứng đầu sơ đồ. Việc chuyển nhân sự không sửa lịch sử giao việc hay tự chuyển người nhận các công việc đã giao.
+
+Ngừng đơn vị cấp trên ngừng quyền phát sinh từ các vị trí ở toàn bộ nhánh bên dưới; quyền kiêm nhiệm tại nhánh khác vẫn áp dụng. Không cho tạo vòng lặp, chọn chính mình làm cấp trên, hoặc xóa đơn vị còn đơn vị con. Được dùng tên tổ giống nhau nếu thuộc các đơn vị cấp trên khác nhau.
 
 Ngừng làm việc khóa tài khoản, giữ hồ sơ và lịch sử. Không mở khóa tài khoản của nhân sự đang ngừng làm việc qua màn hình tài khoản. Kích hoạt lại hồ sơ đã bố trí vị trí khôi phục quyền theo cơ cấu hiện tại. Khóa riêng một tài khoản đang làm việc vẫn được giữ khi sửa thông tin cơ cấu không liên quan.
 
