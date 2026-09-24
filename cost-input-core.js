@@ -26,6 +26,14 @@ function rows(q){
 }
 function state(q,row){const d=q.costPriceSources?.[row.key],known=!!d&&d.identity===row.identity&&valid(d.net)&&valid(row.value)&&Number(d.net)===Number(row.value)&&['excluded','included'].includes(d.status)&&valid(d.original)&&(d.status!=='included'||valid(d.rate)&&Number(d.rate)<=100)&&Number(d.net)===Number(d.original)/(d.status==='included'?1+Number(d.rate)/100:1);return {known,record:d||null,status:known?d.status:'unknown'};}
 function view(q){return rows(q).map(r=>({key:r.key,label:r.label,unit:r.unit,value:r.value,identity:r.identity,tmcOnly:!!r.tmcOnly,...state(q,r)}));}
+function catalogReferences(db){
+ const rates=db.rates||[],products=[{id:'reference',kind:'product',name:'',ops:rates.flatMap(r=>[{id:r.id},...(r.priceOptions||[]).map(x=>({id:r.id,priceOptionId:x.id}))]),children:(db.materials||[]).map(m=>({id:m.id,kind:'material',name:m.name,spec:m}))}];
+ return rows({products,ratesSnapshot:rates}).filter(r=>/^(material:|rate:|rate-option:)/.test(r.key)&&valid(r.value)).map(r=>({identity:r.identity,unit:r.unit,value:Number(r.value)}));
+}
+function referenceHistory(snapshots){
+ const groups=new Map();for(const snap of snapshots){for(const r of catalogReferences(snap.document)){const id=signature([r.identity,r.unit]);if(!groups.has(id))groups.set(id,{identity:r.identity,unit:r.unit,prices:[]});const prices=groups.get(id).prices,last=prices.at(-1);if(last&&last.value===r.value){last.at=snap.at;last.version=snap.version;}else if(prices.length<4)prices.push({value:r.value,at:snap.at,version:snap.version});}}
+ return [...groups.values()].map(r=>({...r,prices:r.prices.slice(0,3)}));
+}
 function apply(q,updates,reason,at=new Date().toISOString()){
  if(['approved','submitted'].includes(q.status))throw Error('Bản đã khóa; tạo bản sửa trước');
  if(!String(reason||'').trim())throw Error('Ghi căn cứ nguồn giá / thuế');
@@ -49,5 +57,5 @@ function apply(q,updates,reason,at=new Date().toISOString()){
 function confirmNet(q,reason,at){const updates=rows(q).filter(r=>!r.tmcOnly&&!state(q,r).known).map(r=>({key:r.key,original:r.value,status:'excluded'}));if(updates.length)apply(q,updates,reason,at);}
 function catalogPrices(db){const out={};for(const m of db.materials||[])out['material:'+m.id]={price:m.price,unit:m.unit,brand:m.brand||'',specification:m.specification||'',priceSource:m.priceSource};for(const r of db.rates||[])out['rate:'+r.id]={inside:r.inside,outside:r.outside,unit:r.unit,insideUnit:r.insideUnit,outsideUnit:r.outsideUnit,priceOptions:copy(r.priceOptions||[]),consumptions:copy(r.consumptions!==undefined?r.consumptions:r.consumption?[r.consumption]:[])};for(const [i,r]of (db.materialPrices||[]).entries())out['book:'+i]=copy(r);for(const [kind,values]of Object.entries(db.conventions||{}))for(const r of values)if(Object.hasOwn(r,'price'))out['convention:'+kind+':'+r.name]={price:r.price};return out;}
 function differences(before,after){return [...new Set([...Object.keys(before),...Object.keys(after)])].filter(key=>signature(before[key])!==signature(after[key])).map(key=>({key,before:copy(before[key]??null),after:copy(after[key]??null)}));}
-const api={rows,view,state,apply,confirmNet,catalogPrices,differences,signature};if(typeof module!=='undefined')module.exports=api;else root.TPCostInput=api;
+const api={rows,view,state,apply,confirmNet,catalogPrices,differences,signature,catalogReferences,referenceHistory};if(typeof module!=='undefined')module.exports=api;else root.TPCostInput=api;
 })(typeof window!=='undefined'?window:globalThis);

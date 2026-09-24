@@ -5,6 +5,13 @@ function createIntake({sql,fail,readBody,audit}){
  sql.exec('CREATE TABLE IF NOT EXISTS offer_term_templates(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,document TEXT NOT NULL,actor TEXT NOT NULL,at TEXT NOT NULL)');
  return {async handle({req,route,user,rights,send}){
   if(!route.startsWith('/api/intake/'))return false;
+  if(route==='/api/intake/cost-price-references'&&req.method==='GET'){
+   if(!rights.costs||!rights.sections?.includes('materials'))fail(403,'Không có quyền xem giá tham khảo');
+   const core=require('../cost-input-core.js'),snapshots=[];
+   for(const row of sql.prepare('SELECT document,updated,version FROM catalog_revisions ORDER BY version DESC').iterate())snapshots.push({document:JSON.parse(row.document),at:row.updated,version:row.version});
+   const current=sql.prepare('SELECT document,updated,version FROM catalog WHERE id=1').get();if(current&&!snapshots.some(s=>s.version===current.version))snapshots.unshift({document:JSON.parse(current.document),at:current.updated,version:current.version});
+   send(200,core.referenceHistory(snapshots));return true;
+  }
   if(route==='/api/intake/offer-templates'){
    if(!rights.commercial)fail(403,'Không có quyền sửa bản chào giá');
    if(req.method==='GET'){send(200,sql.prepare('SELECT * FROM offer_term_templates ORDER BY id DESC LIMIT 200').all().map(r=>({...r,data:JSON.parse(r.document),document:undefined})));return true;}
