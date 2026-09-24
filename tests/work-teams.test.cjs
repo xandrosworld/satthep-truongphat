@@ -22,4 +22,6 @@ test('department leads assign only their team; notices and individual work track
  A.equal((await call(root+'/handoff/technical','POST',{expectedVersion:q.version},people.worker)).status,200);A.equal((await call('my-quote-work','GET',undefined,people.worker)).data[0].status,'completed');
  A.equal((await call(root+'/work','PUT',{...assignment,expectedRevision:1},people.lead)).status,409);
  A.equal((await call(root+'/work','PUT',{...assignment,expectedRevision:2,technicalId:id('lead')},people.lead)).status,200);A.equal((await call('my-quote-work','GET',undefined,people.worker)).data.length,0);
+ const changed={...teams,technical:{managers:[id('worker'),id('outsider')],members:[id('lead')]}};A.equal((await call('work-teams','PUT',{expectedVersion:1,teams:changed},admin)).status,200);A.equal((await call(root+'/work','GET',undefined,people.lead)).data.canEdit,false);for(const manager of ['worker','outsider']){const w=(await call(root+'/work','GET',undefined,people[manager])).data;A.equal(w.canEdit,true);A.ok(w.candidates.technical.some(u=>u.id===id('lead')));}A.equal((await call(root+'/work','PUT',{...assignment,expectedRevision:3},people.lead)).status,403);
+
 });
