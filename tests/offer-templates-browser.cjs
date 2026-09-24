@@ -1,0 +1,11 @@
+const {chromium,expect}=require('@playwright/test'),{pathToFileURL}=require('node:url'),path=require('node:path');
+(async()=>{const b=await chromium.launch({channel:'msedge',headless:true}),p=await b.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));try{
+ await p.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ const initial=await p.evaluate(()=>{db=TPPrice.demoSeed();db.quote.status='draft';page='quote';tab='preview';render();const n=db.quote.products[0];delete n.offerName;delete n.offerSpecification;editOfferRows();return {name:n.name,spec:quoteSpecificationFull(n)};});
+ await expect(p.locator('[name=offerName-0]')).toHaveValue(initial.name);await expect(p.locator('[name=offerSpecification-0]')).toHaveValue(initial.spec);
+ await p.locator('[name=offerName-0]').fill(initial.name+' custom');await p.locator('#dialog button[type=submit]').click();
+ await p.evaluate(()=>editOfferRows());await expect(p.locator('[name=offerName-0]')).toHaveValue(initial.name+' custom');await p.evaluate(()=>{closeDialog();b6TermsEdit();});
+ await p.locator('[name=signature]').selectOption('issuer');await p.locator('[name=delivery]').fill('At factory');await p.locator('[name=payment]').fill('30/70');await p.locator('[data-terms-template-name]').fill('Standard');await p.locator('[data-terms-template-save]').click();await expect(p.locator('[data-terms-template] option')).toHaveCount(2);
+ await p.evaluate(()=>{closeDialog();db.quote.offerTerms={};b6TermsEdit();});await p.locator('[data-terms-template]').selectOption('0');await expect(p.locator('[name=payment]')).toHaveValue('30/70');await expect(p.locator('[name=confirmTerms]')).not.toBeChecked();await p.locator('[name=payment]').fill('50/50');await p.locator('#dialog button[type=submit]').click();
+ expect(await p.evaluate(()=>db.quote.offerTerms.payment)).toBe('50/50');await p.evaluate(()=>b6TermsEdit());await p.locator('[data-terms-template]').selectOption('0');await expect(p.locator('[name=payment]')).toHaveValue('30/70');expect(errors).toEqual([]);console.log('PASS prefill, custom offer content, reusable terms and isolated quotation edits');
+ }finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

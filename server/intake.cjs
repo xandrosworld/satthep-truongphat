@@ -2,8 +2,21 @@
 function createIntake({sql,fail,readBody,audit}){
  sql.exec('CREATE TABLE IF NOT EXISTS intake_customers(id TEXT PRIMARY KEY,version INTEGER NOT NULL,document TEXT NOT NULL); CREATE TABLE IF NOT EXISTS intake_files(id TEXT PRIMARY KEY,name TEXT NOT NULL,size INTEGER NOT NULL,data TEXT NOT NULL,actor TEXT NOT NULL);');
  const crm=require('./crm.cjs').createCrm({sql,fail,readBody,audit});
+ sql.exec('CREATE TABLE IF NOT EXISTS offer_term_templates(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,document TEXT NOT NULL,actor TEXT NOT NULL,at TEXT NOT NULL)');
  return {async handle({req,route,user,rights,send}){
   if(!route.startsWith('/api/intake/'))return false;
+  if(route==='/api/intake/offer-templates'){
+   if(!rights.commercial)fail(403,'Không có quyền sửa bản chào giá');
+   if(req.method==='GET'){send(200,sql.prepare('SELECT * FROM offer_term_templates ORDER BY id DESC LIMIT 200').all().map(r=>({...r,data:JSON.parse(r.document),document:undefined})));return true;}
+   if(req.method==='POST'){
+    const b=await readBody(req),name=String(b.name||'').trim(),data={};if(!name||name.length>120)fail(400,'Tên mẫu cần từ 1 đến 120 ký tự');
+    for(const key of ['delivery','installation','payment','warranty','scope','signature','signerTitle','customerTitle','signer']){if(b.data?.[key]!=null&&typeof b.data[key]!=='string')fail(400,'Nội dung mẫu không hợp lệ');data[key]=String(b.data?.[key]||'').trim();if(data[key].length>2000)fail(400,'Nội dung mẫu quá dài');}
+    if(!['','issuer','both','none'].includes(data.signature))fail(400,'Mẫu ký không hợp lệ');
+    const document=JSON.stringify(data),old=sql.prepare('SELECT id FROM offer_term_templates WHERE name=? AND document=?').get(name,document);if(old){send(200,old);return true;}
+    const result=sql.prepare('INSERT INTO offer_term_templates(name,document,actor,at) VALUES(?,?,?,?)').run(name,document,user.id,new Date().toISOString());audit(user,'offer-template',String(result.lastInsertRowid));send(201,{id:Number(result.lastInsertRowid)});return true;
+   }
+   fail(405,'Phương thức không hợp lệ');
+  }
   if(!rights.costs&&!(rights.customers&&route==='/api/intake/customers')&&!((rights.technical||rights.customers)&&/^\/api\/intake\/files(?:\/[a-zA-Z0-9_-]{1,100})?$/.test(route)))fail(403,'Không có quyền xem tài liệu yêu cầu và danh bạ nội bộ');
   if(await crm.handle({req,route,user,rights,send}))return true;
   if(route==='/api/intake/customers'&&req.method==='GET'){send(200,sql.prepare('SELECT document,version FROM intake_customers ORDER BY rowid DESC').all().map(r=>{const c={...JSON.parse(r.document),version:r.version};return rights.costs?c:require('./crm.cjs').basicCustomer(c);}));return true;}
