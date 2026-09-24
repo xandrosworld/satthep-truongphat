@@ -1,5 +1,13 @@
 # Chat nội bộ — hạng mục 27.01
 
+## Bổ sung ngày 24/09/2026 — trả lời và trạng thái kết nối
+
+- Bấm **Trả lời** dưới tin nhắn để trích dẫn người gửi và nội dung gốc. Có thể hủy lựa chọn trước khi gửi; bản soạn giữ riêng theo hội thoại. Tin gốc là ảnh được ghi “Hình ảnh”. Trích dẫn được lưu trên máy chủ và giữ khi tải lại trang.
+- Máy chủ chỉ nhận tin gốc thuộc cùng hội thoại; người ngoài hội thoại không được xem hoặc trả lời. Gửi lại sau lỗi mạng không tạo tin trùng.
+- Danh sách và đầu hội thoại hiển thị Online/Offline; nhóm hiển thị số người khác online. Online nghĩa là phần mềm còn kết nối, không khẳng định người đó đang đọc chat hay làm việc.
+- Máy chủ ghi nhịp kết nối tối đa một lần mỗi 15 giây cho mỗi phiên; quá 75 giây không nhận nhịp sẽ coi offline. Đăng xuất làm mất hiệu lực phiên ngay; nếu còn phiên khác hoạt động thì vẫn online. Trình duyệt ngủ/đóng hoặc mất mạng được xử lý theo thời hạn này.
+- Không thu thêm phí riêng hai mục này trong lần hoàn thiện chat.
+
 ## Phạm vi hợp đồng
 
 Phụ lục 01, mục 27.01: chat với từng cá nhân; tạo nhóm chat; chụp/cắt ảnh gửi trong ô chat. Triển khai trong hệ thống web đang dùng, ưu tiên máy tính/laptop. Không bổ sung gọi thoại/video, ứng dụng di động, đồng bộ Zalo hoặc gửi tài liệu ngoài ảnh.
