@@ -5,6 +5,28 @@ function createWorkflow({sql,fail,transaction,audit,readBody,getQuote,currentOff
   const get=id=>{const row=sql.prepare('SELECT document FROM commercial WHERE id=?').get(id);return row?JSON.parse(row.document):{};};
   function describe(id,q,offerVersion){if(offerVersion===undefined)offerVersion=sql.prepare("SELECT MAX(version) AS version FROM revisions WHERE id=? AND status='approved'").get(id)?.version||0;return F.workflow(q,get(id),undefined,offerVersion);}
   async function handle({req,route,user,rights,send}){
+    const tracking=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/tracking$/);
+    if(tracking){
+      if(req.method!=='POST')fail(405,'Phương thức không hỗ trợ');
+      if(!rights.commercial)fail(403,'Không có quyền cập nhật giao dịch');
+      const body=await readBody(req),id=tracking[1];
+      const result=transaction(()=>{
+        const quote=getQuote(id),old=get(id),approved=sql.prepare("SELECT * FROM revisions WHERE id=? AND status='approved' ORDER BY version DESC LIMIT 1").get(id);
+        if(!approved&&!rights.costs)fail(403,'Chưa có bản duyệt để cập nhật giao dịch');
+        if(body.expectedQuoteVersion!==quote.version||body.expectedVersion!==(old.version||0)||body.offerVersion!==(approved?.version||null))fail(409,'Báo giá hoặc tình trạng vừa thay đổi; tải lại trước khi lưu');
+        if(!['draft','sent','accepted'].includes(body.status))fail(400,'Tình trạng không hợp lệ');
+        if(body.status!=='draft'&&!approved)fail(409,'Cần duyệt bản chào trước khi ghi nhận đã gửi hoặc đã chốt');
+        const reason=String(body.reason||'').trim();if(!reason||reason.length>1500)fail(400,'Nhập nội dung cập nhật, tối đa 1500 ký tự');
+        const q=JSON.parse((approved||quote).document).quote,version=approved?.version||0,current=describe(id,q,version),at=new Date().toISOString(),events=[...(old.events||[])];
+        const event=to=>({from:events.at(-1)?.to||current.status,to,reason,actor:user.name,at,offerVersion:version,validUntil:current.validUntil,manualTracking:true});
+        // Keep evidence of every sent version, including when a user corrects the displayed status later.
+        if(body.status==='accepted'&&!events.some(e=>e.to==='sent'&&e.offerVersion===version))events.push(event('sent'));
+        events.push(event(body.status));
+        const next={...old,status:body.status,offerVersion:version,validUntil:current.validUntil,version:(old.version||0)+1,events};
+        sql.prepare('INSERT INTO commercial(id,version,document) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,document=excluded.document').run(id,next.version,JSON.stringify(next));
+        audit(user,'commercial:tracking',id,JSON.stringify({status:body.status,offerVersion:version,reason}));return next;
+      });send(200,result);return true;
+    }
     const match=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/workflow(?:\/(\d+))?$/);if(!match)return false;
     if(!['GET','POST'].includes(req.method)||req.method==='POST'&&match[2])fail(405,'Phương thức không hỗ trợ');
     if(req.method==='POST'&&!rights.commercial)fail(403,'Không có quyền cập nhật giao dịch');
