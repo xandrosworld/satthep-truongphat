@@ -18,7 +18,7 @@ function createPush({sql,fail,readBody,transport=webpush.sendNotification.bind(w
  let busy=false,stopped=false;const testTimes=new Map();
  function eligible(job){const user=one('SELECT * FROM users WHERE id=? AND active=1 AND deleted_at IS NULL',job.user_id);if(!user)return false;
   if(job.kind==='test')return true;
-  if(job.kind==='chat')return one('SELECT 1 FROM chat_messages c JOIN chat_members m ON m.room=c.room WHERE c.seq=? AND m.user_id=? AND m.last_read<c.seq',job.reference,user.id);
+  if(job.kind==='chat')return one('SELECT 1 FROM chat_messages c JOIN chat_members m ON m.room=c.room WHERE c.seq=? AND c.recalled_at IS NULL AND m.user_id=? AND m.last_read<c.seq',job.reference,user.id);
   const n=one('SELECT e.stage,e.actor FROM notifications n JOIN handoff_events e ON e.id=n.event_id WHERE n.id=? AND n.user_id=? AND n.read_at IS NULL',job.reference,user.id);return n&&n.actor!==user.id&&receives(permissions(user),n.stage);
  }
  async function flush(){if(busy||stopped)return;busy=true;try{
