@@ -29,3 +29,25 @@
 @media(max-width:700px){.chat-message-row{gap:4px}.chat-message-actions{flex-basis:84px}.chat-message-row .chat-bubble{max-width:calc(100% - 88px)}.chat-message-actions .chat-task-link{padding:6px 3px;min-height:32px}}
 
 .chat-presence::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#8994a0;margin-right:5px}.chat-presence.is-online::before{background:#21864b}.chat-presence.is-offline{color:#687787!important}
+
+/* Keep notification settings available without consuming the mobile conversation. */
+.chat-settings{position:relative}.chat-settings>summary{display:none}.chat-settings>.chat-settings-panel{display:flex;gap:8px}
+.chat-size-controls{margin:8px 0 0}.chat-size-controls label{margin:0}
+@media(max-width:700px){
+ .chat-top{flex-wrap:nowrap;padding:4px 8px;min-height:44px;flex-shrink:0}
+ .chat-top>div{display:none}.chat-top:has(.chat-error)>div{display:block;min-width:0}
+ .chat-top h2,.chat-top #chat-status:not(.chat-error){display:none}
+ .chat-top #chat-status.chat-error{font-size:11px;margin:0;overflow-wrap:anywhere}
+ .chat-top>.button{min-height:36px;padding:6px 10px}
+ .chat-settings{margin-left:auto}
+ .chat-settings>summary{display:flex;align-items:center;justify-content:center;cursor:pointer;list-style:none;width:40px;height:36px;border:1px solid #cbd8e5;border-radius:6px;font-size:24px}
+ .chat-settings>summary::-webkit-details-marker{display:none}
+ .chat-settings>.chat-settings-panel{display:none}
+ .chat-settings[open]>.chat-settings-panel{display:flex;position:absolute;right:0;top:calc(100% + 6px);z-index:5;width:210px;padding:10px;flex-direction:column;background:white;border:1px solid #cbd8e5;border-radius:8px;box-shadow:0 6px 20px #17314b33}
+ .chat-top .chat-settings [data-chat-desktop]{max-width:none;min-height:40px;font-size:12px}
+ .chat-size-controls{gap:6px;font-size:11px;flex-wrap:nowrap;margin-top:6px}
+ .chat-size-controls label{flex:1;min-width:0;gap:6px;white-space:nowrap}
+ .chat-size-controls input[type=range]{width:70px;min-width:40px;flex:1;max-width:120px}
+ .chat-size-controls .button{font-size:11px;padding:4px 7px;min-height:30px}
+ .chat-size-controls small{display:none}
+}
