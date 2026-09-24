@@ -1,6 +1,19 @@
 # Nhân sự, phòng ban và vị trí
 
-Admin mở **Nhân sự & phòng ban** trên thanh trên cùng hoặc từ quản lý tài khoản.
+Admin mở ba mục riêng ở menu trái: **Nhân sự**, **Cơ cấu tổ chức**, **Vai trò & phân quyền**.
+
+## Bổ sung ngày 24/09/2026
+
+- **Nhân sự**: khai ngày vào làm, ngày kết thúc và công đoạn/nội dung phụ trách. Ngày kết thúc không được trước ngày vào làm. Ngày là thông tin hồ sơ; muốn khóa ngay phải chọn Ngừng làm việc hoặc khóa tài khoản, không có tự động hẹn ngày khóa.
+- Tìm theo mã/tên/liên hệ/nội dung phụ trách; lọc phòng ban gồm cấp dưới, vị trí và trạng thái. Xuất Excel danh sách đang lọc và thống kê toàn bộ phòng ban. Thống kê tính mỗi người một lần tại từng đơn vị trực tiếp; kiêm nhiệm có thể xuất hiện ở nhiều đơn vị nên không cộng các phòng thành tổng công ty.
+- Hồ sơ chưa liên kết tài khoản có thể xóa. Hồ sơ có tài khoản cần chuyển Ngừng làm việc để giữ lịch sử.
+- **Vai trò & phân quyền → Rà soát quyền**: xem nguồn quyền, vị trí, cấp quyền từng phần và quyền đặc biệt của từng tài khoản; xuất ma trận Excel. Đây là các quyền đang khai, tài khoản khóa không sử dụng được chúng. Trạng thái chứng từ và khóa công thức vẫn được kiểm tra khi thao tác.
+- **Nhật ký hệ thống**: tìm nội dung/đối tượng/người, lọc thao tác và khoảng ngày UTC, tải tiếp lịch sử cũ, xuất các dòng đã tải. Chỉ Admin truy cập được.
+- **Lịch sử quyền**: lưu giá trị trước/sau thay đổi bộ quyền, cập nhật quyền từ vị trí/bộ quyền và thao tác tài khoản từ bản triển khai này; không chứa mật khẩu. Nhật ký cũ không tự có đầy đủ giá trị trước/sau.
+- Tài khoản chưa bố trí vị trí có lựa chọn **Tự cập nhật theo bộ quyền đã chọn**. Bật thì quyền lấy nguyên từ tổng các bộ quyền và tự cập nhật khi sửa bộ quyền; phiên đăng nhập bị ảnh hưởng được thu hồi. Tắt thì giữ quyền riêng đã khai. Tài khoản cũ không tự chuyển sang chế độ này; Admin chọn rõ để tránh thay đổi quyền cũ ngoài ý muốn.
+- Nhân sự đã bố trí vị trí tiếp tục lấy quyền từ vị trí; không sửa đè bằng màn hình quyền tài khoản.
+
+Phạm vi đợt này là hồ sơ và quản trị quyền cho các chức năng hiện có. Không phải xác nhận toàn bộ các phân hệ GĐ2 đã hoàn thành. Chưa triển khai hạn mức duyệt nhiều cấp, ủy quyền theo thời gian hoặc quyền riêng từng dự án.
 
 1. Khai **Phòng ban**, chọn luồng công việc: Kinh doanh, Kỹ thuật, Cập nhật giá hoặc Khác. Có thể có nhiều phòng cùng một luồng.
 2. Khai **Bộ quyền** với các mức xem/sử dụng/cài đặt và quyền đặc biệt cần thiết.
