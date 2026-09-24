@@ -1,5 +1,11 @@
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
+## Checklist triển khai hiện hành — chốt ngày 24/09/2026
+
+Dùng [README-CHECKLIST-GD2.md](README-CHECKLIST-GD2.md) cho các đợt tiếp theo: lên khung theo luồng demo trên web hiện tại, giữ báo giá và dữ liệu đã có, tăng tương phản, hoàn thiện đủ 162 mã GĐ2 theo hợp đồng. Tài liệu tách khung giao diện, chức năng chạy thật và xác nhận nghiệm thu; có ghi phần đã triển khai và phần mở rộng chưa thống nhất.
+
+Các báo cáo bên dưới là lịch sử từng đợt, không phải trạng thái tổng thể hiện tại.
+
 ## Hiện hành — phản hồi 22:59–23:06 ngày 14/09/2026
 
 Bảng hình dạng chỉ để xem; **Sửa công thức** mở đầy đủ dữ liệu và kiểm tra trước khi lưu. Thông số có tên/diễn giải riêng. Bảng giá nguyên công khai được nhiều cách tính để chọn trong báo giá; từng công việc có độ phức tạp và hệ số nhập trực tiếp. Các dòng khai báo có **Kiểm tra tổng thể**. [Cách dùng, phạm vi và kiểm chứng](docs/DECLARATION-REVIEW-2026-09-14.md).

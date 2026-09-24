@@ -1,0 +1,11 @@
+'use strict';
+function bsOrganizationTree(rows){const walk=(parent,seen=new Set())=>{const children=rows.filter(r=>(r.parentId||null)===parent&&!seen.has(r.id));return children.length?'<ul>'+children.map(r=>'<li><strong>'+esc(r.name)+'</strong>'+walk(r.id,new Set([...seen,r.id]))+'</li>').join('')+'</ul>':'';};return '<h3>Sơ đồ tổ chức hiện tại</h3>'+ (walk(null)||'<p>Chưa khai cơ cấu tổ chức.</p>');}
+async function businessExportProfile(keys,format){
+ const p=Business.profile,parts=keys.map(k=>document.querySelector('[data-profile-section="'+k+'"]').innerHTML),t=document.createElement('template');t.innerHTML=parts.join('');t.content.querySelectorAll('button,input,select').forEach(el=>el.remove());const body=t.innerHTML;
+ if(format==='pdf'){closeDialog();bsPrint('HỒ SƠ NĂNG LỰC',body);return;}
+ const files=Object.create(null),sheets=[],details=[];let size=0;
+ if(keys.includes('company'))sheets.push({name:'Doanh nghiep',rows:[['Thông tin','Nội dung'],...Object.entries(p.company)]});
+ for(const kind of keys.filter(k=>k!=='company')){const s=bsProfileSections[kind];sheets.push({name:s.name,rows:[[...Object.values(s.fields)],...p[kind].map(r=>Object.keys(s.fields).map(k=>r[k]))]});for(const r of p[kind])for(const id of r.files||[]){const f=await bsApi('files/'+id),bytes=Uint8Array.from(atob(f.data),c=>c.charCodeAt(0));size+=bytes.length;if(size>100*1024*1024)throw Error('Gói vượt 100 MB; chọn ít phần hơn để xuất');const extension={'application/pdf':'pdf','image/png':'png','image/jpeg':'jpg'}[f.mime],name='tai-lieu/'+id+'.'+extension;files[name]=bytes;details.push('<li>'+esc(r.name||r.department)+' — <a href="'+name+'">'+esc(f.name)+'</a></li>');}}
+ files['Ho-so-nang-luc.html']='<!doctype html><html lang="vi"><meta charset="utf-8"><title>Hồ sơ năng lực</title><style>body{font:15px Arial;max-width:1000px;margin:40px auto;padding:20px;color:#18394e}table{border-collapse:collapse;width:100%}td,th{padding:8px;border:1px solid #9bafbf}th{background:#d9e8f3}p,dd{white-space:pre-wrap}h2{margin-top:30px}</style><h1>HỒ SƠ NĂNG LỰC</h1>'+body+'<h2>Tài liệu đính kèm</h2><ul>'+details.join('')+'</ul></html>';
+ files['Ho-so-nang-luc.xlsx']=TPXlsx.make(sheets);download('HO-SO-NANG-LUC.zip',TPXlsx.zip(files),'application/zip');closeDialog();
+}
