@@ -1,11 +1,14 @@
 **
 !Dockerfile
 !package.json
+!package-lock.json
+!manifest.webmanifest
 !*.js
 !*.css
 !index.html
 !assets/
 !assets/truong-phat-logo.jpg
+!assets/push-icon.png
 !tools/
 !tools/build.cjs
 !server/
