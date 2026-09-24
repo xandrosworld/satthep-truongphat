@@ -36,9 +36,9 @@ Tài liệu làm việc cho các đợt tiếp theo: bám luồng demo, triển 
 
 Hướng dẫn: [Nhân sự, cơ cấu và quyền](docs/nhan-su-phong-ban.md). Các kết quả trên chỉ xác nhận đợt chức năng vừa làm, không xác nhận toàn GĐ2. Hồ sơ phụ trách hiện có nội dung khai tay; còn rà liên kết công đoạn/công việc thực tế khi hoàn thiện sản xuất.
 
-### Chưa thực hiện trong đợt lên khung mới
+### Theo dõi đợt triển khai mới
 
-- [ ] Tổ chức khung ERP tổng thể theo các nhóm bên dưới.
+- [x] Tổ chức khung ERP; menu phân hệ còn lại ghi rõ trạng thái triển khai tiếp.
 - [ ] Kiểm tra đủ 162 mã trên bản hiện tại và ghi bằng chứng từng mã.
 - [ ] Hoàn thiện luồng xuyên các phân hệ còn thiếu.
 - [ ] Kiểm thử, chạy thử, đào tạo và nghiệm thu toàn GĐ2.
@@ -142,7 +142,7 @@ Quyền nền tảng, bảo vệ dữ liệu/giá, trạng thái và duyệt the
 | Đợt / commit | Mã đã xử lý | Bằng chứng tự kiểm | Triển khai web | Khách kiểm tra/xác nhận | Còn thiếu |
 |---|---|---|---|---|---|
 | `2ffe6e8` — trước đợt lên khung | Bổ sung nhân sự, rà soát quyền và lịch sử | 675 test; browser nhân sự/tài khoản; HTTPS desktop/mobile | Đã triển khai | Chưa ghi nhận xác nhận riêng cho đợt này | Rà từng mã; liên kết các phân hệ còn lại |
-| Đợt 1 — khung ERP & kinh doanh | 02, 06, 07, 08; khung điều hướng | Xem [hướng dẫn và test](docs/dot-1-kinh-doanh.md) | Chờ kiểm tra triển khai | Chưa ghi nhận | Nối dữ liệu các đợt sau, kiểm tra mẫu in với khách |
+| Đợt 1 — `341acaa` + `420a5b7` | 02, 06, 07, 08; khung điều hướng | 679 test; 5 browser suites; bản sao dữ liệu thật; [chi tiết](docs/dot-1-kinh-doanh.md) | Đã triển khai 25/09; healthy; live 1440/390 px; hash dữ liệu cũ giữ nguyên | Chưa ghi nhận | Nối dữ liệu các đợt sau, kiểm tra mẫu in với khách |
 
 ## 8. Danh mục kiểm tra 162 mã GĐ2
 
@@ -329,4 +329,3 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 | [ ] | D.04 | Triển khai môi trường vận hành, tài khoản và kế hoạch vận hành toàn hệ thống | Chờ rà soát |
 | [ ] | D.05 | Kiểm thử sao lưu và khôi phục đầy đủ dữ liệu toàn hệ thống | Chờ rà soát |
 | [ ] | D.06 | Nghiệm thu cuối; bàn giao mã nguồn, cấu trúc dữ liệu/migration, cấu hình/build/deploy và tài liệu | Chờ rà soát |
-

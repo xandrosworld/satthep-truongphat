@@ -1,3 +1,7 @@
+## Đợt 1 ERP — đã triển khai 25/09/2026
+
+Bản `420a5b7`: khách hàng, đơn hàng, hợp đồng, công nợ, chính sách doanh số và hồ sơ năng lực. [Hướng dẫn và kết quả kiểm tra](docs/dot-1-kinh-doanh.md). 679 test đạt; đã kiểm tra live desktop/mobile và bảo toàn dữ liệu cũ.
+
 # Trường Phát — hồ sơ bàn giao dự án và demo báo giá
 
 ## Checklist triển khai hiện hành — chốt ngày 24/09/2026

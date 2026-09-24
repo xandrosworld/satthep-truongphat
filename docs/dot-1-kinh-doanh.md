@@ -1,5 +1,9 @@
 # Đợt 1 — khung ERP và kinh doanh
 
+**Đã triển khai ngày 25/09/2026:** bản chức năng `341acaa`, bản vá quyền xem dòng hàng thương mại `420a5b7`. Web: https://truongphat-group.xyz.
+
+Kết quả cuối: **679/679 kiểm thử đạt**; 5 bộ kiểm tra trình duyệt (business, business-flow, CRM, production, organization) và bản sao dữ liệu thật đạt. Kiểm tra có đăng nhập sau triển khai trên màn hình 1440 và 390 px đạt; máy chủ healthy. Hash của 17 báo giá, 135 phiên bản, 10 khách hàng, 17 tài khoản, cơ cấu, đơn và lệnh không thay đổi. Không tạo dữ liệu nghiệp vụ mẫu trên web thật. Phiên kiểm tra tạm đã thu hồi.
+
 ## Luồng sử dụng
 
 1. **Khách hàng:** khai hồ sơ, phân loại, người phụ trách; theo dõi chăm sóc và cơ hội. Danh sách tìm/lọc và phân trang 25 dòng. Hồ sơ có 6 tab: thông tin, báo giá, đơn hàng, hợp đồng, công nợ, lịch sử giao dịch.
