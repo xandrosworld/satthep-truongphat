@@ -2,6 +2,8 @@
 
 Trong Chat hoặc bảng Thông báo công việc, bấm **Bật thông báo thiết bị** và cho phép trình duyệt gửi thông báo. Đăng ký riêng trên từng thiết bị. Thông báo nền dùng âm mặc định của hệ điều hành, tuân theo chế độ im lặng/Không làm phiền và quyền thông báo.
 
+Sau khi bật, bấm **Gửi thử thông báo**, rồi khóa màn hình. Máy chủ hẹn gửi sau 10 giây tới đúng thiết bị đang dùng; mỗi tài khoản gửi thử tối đa một lần/phút. Thông báo “đã hẹn gửi” chưa có nghĩa điện thoại đã nhận: cần nhìn thấy thông báo thử trên thiết bị để xác nhận. Không gửi tin thử vào hội thoại của đồng nghiệp.
+
 Trên iPhone/iPad (iOS/iPadOS 16.4 trở lên): mở trang bằng Safari, chọn Chia sẻ → Thêm vào Màn hình chính. Mở ứng dụng từ biểu tượng vừa thêm, đăng nhập rồi bật thông báo. Cần kiểm tra nhận tin khi khóa màn hình trên điện thoại thực tế; kiểm thử máy tính không thay thế bước này.
 
 Thông báo chỉ hiện nội dung chung, không đưa tin nhắn hay giá nội bộ ra màn hình khóa. Bấm thông báo để mở chat hoặc thông báo công việc. Nếu phiên đăng nhập hết hạn, đăng nhập lại để xem nội dung.

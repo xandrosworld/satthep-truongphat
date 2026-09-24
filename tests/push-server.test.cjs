@@ -24,6 +24,13 @@ test('persistent push: authenticated opt-in, transactional delivery, privacy, re
  await call('push','POST',{subscription},again);await send();await call('users/'+u.id+'/disable','POST',{},admin);await app.push.flush();A.equal(delivered.length,2,'disabled accounts cannot receive');
  for(const route of ['/sw.js','/manifest.webmanifest','/push-icon.png'])A.equal((await fetch(base+route)).status,200);
  A.ok(sent.seq);
+ A.equal((await call('push/test','POST',{endpoint:subscription.endpoint},admin)).status,400);
+ await call('push','POST',{subscription},admin);
+ A.equal((await call('push/test','POST',{endpoint:subscription.endpoint},{...admin,csrf:'bad'})).status,403);
+ A.equal((await call('push/test','POST',{endpoint:subscription.endpoint},admin)).status,202);
+ A.equal((await call('push/test','POST',{endpoint:subscription.endpoint},admin)).status,429);
+ await app.push.flush();A.equal(delivered.length,2,'test waits ten seconds so user can lock screen');
+ app.sql.prepare('UPDATE push_outbox SET due=0').run();await app.push.flush();A.equal(delivered.length,3);A.match(delivered.at(-1).p.tag,/^tp-test-/);A.equal(delivered.at(-1).p.userId,admin.data.user.id);
 });
 test('work outbox survives restart with stable VAPID keys and follows recipient permissions',async t=>{
  const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),dir=fs.mkdtempSync(path.join(os.tmpdir(),'tp-push-')),databasePath=path.join(dir,'db.sqlite'),sent=[];
