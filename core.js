@@ -1,6 +1,7 @@
 /* Quote engine evolved from index (1).html. No browser or network dependency. */
 (function(root){
 'use strict';
+const MAX_PHYSICAL_PIECES=100000;
 const copy=x=>JSON.parse(JSON.stringify(x));
 let serial=0;
 const uid=()=> 'n'+Date.now().toString(36)+(++serial).toString(36);
@@ -89,18 +90,25 @@ function nest(items,spec,kerf,strategy='best'){
   if(!(stockL>0)||isSheet&&!(stockW>0))throw Error('Khổ vật tư mua chưa hợp lệ: '+(!(stockL>0)?'chưa nhập chiều dài khổ mua lớn hơn 0 mm':'')+(isSheet&&!(stockW>0)?(!(stockL>0)?'; ':'')+'chưa nhập chiều rộng khổ mua lớn hơn 0 mm':'')+'. Mở Khai triển & hao hụt → Chỉnh khổ mua.');
   if(!(kerf>=0))throw Error('Mạch cắt không hợp lệ');
   const pieces=[];
-  for(const row of items){if(!Number.isInteger(row.count)||row.count<1)throw Error('Số phôi phải là số nguyên dương');if(pieces.length+row.count>5000)throw Error('Demo hỗ trợ tối đa 5.000 phôi cho mỗi mã vật tư');for(let i=0;i<row.count;i++)pieces.push({rowId:row.id,label:row.label,l:row.geometry.length,w:row.geometry.width,color:row.color,...(row.geometry.polygon?{polygon:row.geometry.polygon}:{})});}
+  for(const row of items){if(!Number.isInteger(row.count)||row.count<1)throw Error('Số phôi phải là số nguyên dương');if(pieces.length+row.count>MAX_PHYSICAL_PIECES)throw Error('Tối đa 100.000 phôi cho mỗi mã vật tư');for(let i=0;i<row.count;i++)pieces.push({rowId:row.id,label:row.label,l:row.geometry.length,w:row.geometry.width,color:row.color,...(row.geometry.polygon?{polygon:row.geometry.polygon}:{})});}
   if(strategy==='mixed'){const queues=items.map(r=>pieces.filter(p=>p.rowId===r.id)),mixed=[];for(let i=0;queues.some(q=>q.length>i);i++)for(const q of queues)if(q[i])mixed.push(q[i]);pieces.splice(0,pieces.length,...mixed);}else pieces.sort((a,b)=>(isSheet?b.l*b.w-a.l*a.w:b.l-a.l));
   const stocks=[];
+  // First-fit lookup for bars stays logarithmic even when every cut needs a new stock.
+  let treeSize=1;while(treeSize<pieces.length)treeSize*=2;
+  const remainingTree=isSheet?null:new Float64Array(treeSize*2);
+  function updateRemaining(index,value){let k=treeSize+index;remainingTree[k]=value;while(k>1){k>>=1;remainingTree[k]=Math.max(remainingTree[k*2],remainingTree[k*2+1]);}}
+  function firstFit(length){if(remainingTree[1]<length)return -1;let k=1;while(k<treeSize)k=remainingTree[k*2]>=length?k*2:k*2+1;return k-treeSize;}
+  const activeSheets=new Set(),minSide=isSheet?pieces.reduce((m,p)=>Math.min(m,p.l,p.w),Infinity):0;
   for(const p of pieces){if(isSheet?!((p.l<=stockL&&p.w<=stockW)||(rotateAllowed&&p.w<=stockL&&p.l<=stockW)):p.l>stockL)throw Error('Chi tiết '+p.label+' vượt khổ vật tư mua');
-    if(!isSheet){let stock=stocks.find(s=>s.remaining>=p.l);if(!stock){stock={placements:[],remaining:stockL};stocks.push(stock);}const x=stockL-stock.remaining;stock.placements.push({...p,x,y:0});stock.remaining=Math.max(0,stock.remaining-p.l-kerf);continue;}
+    if(!isSheet){let si=firstFit(p.l);if(si<0){si=stocks.length;stocks.push({placements:[],remaining:stockL});}const stock=stocks[si],x=stockL-stock.remaining;stock.placements.push({...p,x,y:0});stock.remaining=Math.max(0,stock.remaining-p.l-kerf);updateRemaining(si,stock.remaining);continue;}
     let chosen=null;
-    for(let si=0;si<stocks.length;si++){const s=stocks[si];for(let fi=0;fi<s.free.length;fi++){const f=s.free[fi];for(const rotate of (rotateAllowed?[false,true]:[false])){const l=rotate?p.w:p.l,w=rotate?p.l:p.w;if(l<=f.l&&w<=f.w){const score=f.l*f.w-l*w;if(!chosen||score<chosen.score)chosen={si,fi,l,w,score,rotate};}}}if(chosen)break;}
-    if(!chosen){stocks.push({placements:[],free:[{x:0,y:0,l:stockL,w:stockW}]});const rotate=p.l>stockL||p.w>stockW;chosen={si:stocks.length-1,fi:0,rotate,l:rotate?p.w:p.l,w:rotate?p.l:p.w};}
+    for(const si of activeSheets){const s=stocks[si];for(let fi=0;fi<s.free.length;fi++){const f=s.free[fi];for(const rotate of (rotateAllowed?[false,true]:[false])){const l=rotate?p.w:p.l,w=rotate?p.l:p.w;if(l<=f.l&&w<=f.w){const score=f.l*f.w-l*w;if(!chosen||score<chosen.score)chosen={si,fi,l,w,score,rotate};}}}if(chosen)break;}
+    if(!chosen){stocks.push({placements:[],free:[{x:0,y:0,l:stockL,w:stockW}]});activeSheets.add(stocks.length-1);const rotate=p.l>stockL||p.w>stockW;chosen={si:stocks.length-1,fi:0,rotate,l:rotate?p.w:p.l,w:rotate?p.l:p.w};}
     const s=stocks[chosen.si],f=s.free.splice(chosen.fi,1)[0],{l,w}=chosen;
     s.placements.push({...p,l,w,x:f.x,y:f.y,...(p.polygon?{polygon:p.polygon.map(([x,y])=>chosen.rotate?[f.x+p.w-y,f.y+x]:[f.x+x,f.y+y])}:{})});
     if(f.l-l-kerf>0)s.free.push({x:f.x+l+kerf,y:f.y,l:f.l-l-kerf,w});
     if(f.w-w-kerf>0)s.free.push({x:f.x,y:f.y+w+kerf,l:f.l,w:f.w-w-kerf});
+    if(!s.free.some(r=>r.l>=minSide&&r.w>=minSide))activeSheets.delete(chosen.si);
   }
   const used=pieces.reduce((s,p)=>s+(isSheet?p.l*p.w:p.l),0),purchased=stocks.length*(isSheet?stockL*stockW:stockL);
   const netUsed=isSheet&&items.some(r=>r.geometry.polygon)?items.reduce((sum,r)=>sum+r.geometry.blankArea*1e6,0):undefined;
@@ -112,7 +120,7 @@ function nest(items,spec,kerf,strategy='best'){
 function nestCircles(items,spec,kerf){
  const stockL=Number(spec.stockL),stockW=Number(spec.stockW),buckets=new Map();let count=0;
  if(!Number.isFinite(stockL)||!Number.isFinite(stockW)||stockL<=0||stockW<=0||!Number.isFinite(kerf)||kerf<0)throw Error('Khổ tấm hoặc mạch cắt chưa hợp lệ');
- for(const row of items){const d=row.geometry.length;if(!Number.isFinite(d)||d<=0||Math.abs(d-row.geometry.width)>1e-8||!Number.isInteger(row.count)||row.count<1)throw Error('Đường kính hoặc số tấm tròn chưa hợp lệ');if(d>Math.min(stockL,stockW))throw Error('Tấm tròn vượt khổ vật tư mua');if((count+=row.count)>5000)throw Error('Tối đa 5.000 phôi cho mỗi mã vật tư');if(!buckets.has(d))buckets.set(d,[]);for(let i=0;i<row.count;i++)buckets.get(d).push({rowId:row.id,label:row.label,color:row.color,l:d,w:d,circle:true});}
+ for(const row of items){const d=row.geometry.length;if(!Number.isFinite(d)||d<=0||Math.abs(d-row.geometry.width)>1e-8||!Number.isInteger(row.count)||row.count<1)throw Error('Đường kính hoặc số tấm tròn chưa hợp lệ');if(d>Math.min(stockL,stockW))throw Error('Tấm tròn vượt khổ vật tư mua');if((count+=row.count)>MAX_PHYSICAL_PIECES)throw Error('Tối đa 100.000 phôi cho mỗi mã vật tư');if(!buckets.has(d))buckets.set(d,[]);for(let i=0;i<row.count;i++)buckets.get(d).push({rowId:row.id,label:row.label,color:row.color,l:d,w:d,circle:true});}
  const plain={...spec,shapeDefinition:{...spec.shapeDefinition,nesting:'bounding'}},baseline=nest(items,plain,kerf);
  for(const stock of baseline.stocks)for(const p of stock.placements)p.circle=true;
  const stocks=[];let used=0;
@@ -149,7 +157,7 @@ function nestTriangles(items,spec,kerf,strategy){
   for(const row of items){
     const {length:l,width:w}=row.geometry;
     if(!Number.isFinite(l)||!Number.isFinite(w)||l<=0||w<=0||!Number.isInteger(row.count)||row.count<1)throw Error('Kích thước và số tam giác chưa hợp lệ');
-    if((count+=row.count)>5000)throw Error('Tối đa 5.000 phôi cho mỗi mã vật tư');
+    if((count+=row.count)>MAX_PHYSICAL_PIECES)throw Error('Tối đa 100.000 phôi cho mỗi mã vật tư');
     const key=JSON.stringify([l,w,row.geometry.polygon]);if(!buckets.has(key))buckets.set(key,[]);
     for(let i=0;i<row.count;i++)buckets.get(key).push({rowId:row.id,label:row.label,color:row.color,l,w,...(row.geometry.polygon?{polygon:row.geometry.polygon}:{})});
   }
@@ -285,6 +293,6 @@ function attachTemplateRates(quote,rates,node){
   }
   quote.ratesSnapshot=snapshot;
 }
-const api={copy,uid,groups,shapes,shapeInfo,formula,formulaNames,seed,cloneNode,findNode,removeNode,materialMass,materialSurface,remnantRuleKey,remnantEligibility,geometry,materialEstimate,nest,calculate,flatten,nodePath,productOwner,scopedLeaves,formatName,productParamEntries,configureProduct,applyParam,setDimension,quoteSpecification,catalogWithTemplate,attachTemplateRates};
+const api={MAX_PHYSICAL_PIECES,copy,uid,groups,shapes,shapeInfo,formula,formulaNames,seed,cloneNode,findNode,removeNode,materialMass,materialSurface,remnantRuleKey,remnantEligibility,geometry,materialEstimate,nest,calculate,flatten,nodePath,productOwner,scopedLeaves,formatName,productParamEntries,configureProduct,applyParam,setDimension,quoteSpecification,catalogWithTemplate,attachTemplateRates};
 if(typeof module!=='undefined')module.exports=api;else root.TP=api;
 })(typeof window!=='undefined'?window:globalThis);
