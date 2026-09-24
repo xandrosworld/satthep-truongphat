@@ -55,7 +55,7 @@ test('technical saves newly published material into older quote without exposing
 });
 
 test('unfinished geometry and missing stock save as technical drafts for admin repair',async t=>{
- const {call,admin,tech,id}=await harness(t),PG=require('../polygon-core.js');
+ const {call,admin,tech,id}=await harness(t),PG=require('../polygon-core.js');const master=(await call('catalog','GET',undefined,admin)).data;master.catalog.shapeDefinitions.push({id:'DRAFT-FOUR',name:'Approved four sides',...PG.preset('interior',4)});A.equal((await call('catalog','PUT',{expectedVersion:master.version,catalog:master.catalog},admin)).status,200);
  const v=(await call('quotes/'+id,'GET',undefined,tech)).data;
  const n=C.flatten(v.document.quote.products).find(n=>n.kind==='material'&&n.spec.shape==='sheet');
  n.spec.shapeDefinition={id:'DRAFT-FOUR',name:'Phôi 4 cạnh',...PG.preset('interior',4)};
