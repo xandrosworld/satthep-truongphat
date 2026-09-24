@@ -34,7 +34,7 @@ function cleanDocument(input){
   if(result.total.grand>1e15||!Number.isFinite(result.total.grand))fail(400,'Giá trị vượt giới hạn dùng thử');
   return {data:safe,result};
 }
-function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'../dist'),sessionHours=8,publicOrigin='',setupKey='',aiProvider,maintenanceFile=''}={}){
+function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'../dist'),sessionHours=8,publicOrigin='',setupKey='',aiProvider,pushTransport,pushInterval=3000,maintenanceFile=''}={}){
   let origin='';if(publicOrigin){const parsed=new URL(publicOrigin);if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.pathname!=='/'||parsed.search||parsed.hash)throw Error('TP_PUBLIC_ORIGIN phải là nguồn HTTPS, không chứa đường dẫn');origin=parsed.origin;if(String(setupKey).length<24)throw Error('Cần TP_SETUP_KEY ít nhất 24 ký tự khi cấu hình địa chỉ HTTPS');}const cookieSecurity=origin?'; Secure':'';
   if(databasePath!==':memory:')fs.mkdirSync(path.dirname(path.resolve(databasePath)),{recursive:true});
   const sql=new DatabaseSync(databasePath);sql.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
@@ -102,6 +102,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const formulaSync=require('./formula-sync.cjs').createFormulaSync({sql,cleanDocument,publicOffer,audit});
   const aiPdf=require('./ai-pdf.cjs').createAiPdf({sql,readBody,fail,audit,provider:aiProvider});
   const chat=require('./chat.cjs').createChat({sql,fail,readBody,transaction});
+  const push=require('./push.cjs').createPush({sql,fail,readBody,transport:pushTransport,interval:pushInterval});
   const production=require('./production.cjs').createProduction({sql,fail,readBody,transaction,audit});
   function publishCatalog(body,user,rights,proposal=null){return transaction(()=>{const old=one('SELECT * FROM catalog WHERE id=1');
     if(proposal){const latest=one('SELECT * FROM catalog_proposals WHERE id=?',proposal.id);if(!latest||latest.status!=='pending')fail(409,'Khai báo đã được xử lý');const author=one('SELECT * FROM users WHERE id=? AND active=1 AND deleted_at IS NULL',proposal.actor);if(!author||!permissions(author).catalog)fail(403,'Người khai báo không còn quyền danh mục');const proposed=JSON.parse(proposal.document),master=old?JSON.parse(old.document):catalogSeed();formulaAccess.guard(master,proposed,permissions(author),true);guardSections(author,master,proposed,true);}if((old?.version||0)!==body.expectedVersion)fail(409,'Danh mục đã đổi. Tải lại trước khi phát hành.');let value=formulaAccess.hydrate(body.catalog,user);if(rights.technical){try{value=require('../technical-core.js').mergeCatalog(old?JSON.parse(old.document):catalogSeed(),value);}catch(e){fail(403,e.message);}}formulaAccess.guard(old?JSON.parse(old.document):catalogSeed(),value,rights,true);guardSections(user,old?JSON.parse(old.document):catalogSeed(),value,true);if(!value||typeof value!=='object')fail(400,'Thiếu danh mục');
@@ -125,6 +126,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       if(maintenanceFile&&fs.existsSync(maintenanceFile)){res.setHeader('Retry-After','120');if(!route.startsWith('/api/')){res.writeHead(503,{'Content-Type':'text/html; charset=utf-8'});return res.end('<!doctype html><html lang="vi"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Đang chuyển máy chủ</title><main style="max-width:640px;margin:12vh auto;padding:24px;font:18px/1.6 system-ui"><h1>Hệ thống đang bảo trì</h1><p>Đang chuyển dữ liệu sang máy chủ mới. Vui lòng giữ nguyên các nội dung chưa lưu trên máy và thử lại sau.</p></main></html>');}return send(503,{error:'Đang chuyển máy chủ; tạm dừng lưu dữ liệu. Giữ nội dung chưa lưu và thử lại sau.'});}
       // Bind to loopback; optional explicit HTTPS origin behind an operator-managed proxy. Reject other hosts and cross-origin writes.
       if(origin?req.headers.host!==new URL(origin).host:!/^(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/.test(req.headers.host||''))fail(403,'Địa chỉ máy chủ không hợp lệ');
+      if(req.method==='GET'&&['/sw.js','/manifest.webmanifest','/push-icon.png'].includes(route)){const type=route==='/sw.js'?'application/javascript':route.endsWith('.png')?'image/png':'application/manifest+json';res.writeHead(200,{'Content-Type':type,'Service-Worker-Allowed':'/'});return res.end(fs.readFileSync(path.join(staticRoot,route.slice(1))));}
       if(!route.startsWith('/api/')){if(req.method!=='GET'||!['/','/index.html'].includes(route))fail(404,'Không tìm thấy');const html=fs.readFileSync(path.join(staticRoot,'index.html'));res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end(html);}
       if(req.method==='OPTIONS')fail(403,'Không cho phép truy cập khác nguồn');
       if(req.headers.origin&&req.headers.origin!==(origin||`http://${req.headers.host}`))fail(403,'Nguồn truy cập không hợp lệ');
@@ -141,6 +143,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
  if(route==='/api/operation-catalog'&&req.method==='GET'){if(!rights.edit)fail(403,'Không có quyền khai báo công đoạn');const row=one('SELECT document FROM catalog WHERE id=1'),master=row?JSON.parse(row.document):catalogSeed();return send(200,{productionLevels:(master.pricingDefaults?.policyTypes?.production||[]).filter(x=>x.enabled!==false).map(x=>rights.costs?x:{name:x.name,description:x.description}),rates:!rights.costs?require('../technical-core.js').projectCatalog(master).rates:master.rates});}
 
       if(!['GET','HEAD'].includes(req.method)&&req.headers['x-csrf-token']!==user.csrf)fail(403,'Phiên yêu cầu không hợp lệ; tải lại trang');
+      if(await push.handle({req,route,user,send}))return;
       if(await aiPdf.handle({req,route,user,send}))return;
       if(await production.handle({req,route,user,send}))return;
       if(await chat.handle({req,route,user,send,res}))return;
@@ -189,7 +192,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
         if(password.length<12||password.length>200)fail(400,'Mật khẩu cần 12–200 ký tự');const nextSalt=randomBytes(16).toString('hex');run('UPDATE users SET password=? WHERE id=?',nextSalt+':'+scryptSync(password,nextSalt,64).toString('hex'),user.id);run('DELETE FROM sessions WHERE user_id=?',user.id);audit(user,'change-password',user.id);return send(200,{ok:true});
       }
       if(route==='/api/me'&&req.method==='GET'){const {csrf,token,...publicUser}=user;return send(200,{user:publicUser,permissions:{...rights,factorsHidden:dataAccess.hideFactors(user)},csrf});}
-      if(route==='/api/logout'&&req.method==='POST'){run('DELETE FROM sessions WHERE token=?',user.token);res.setHeader('Set-Cookie','tp_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'+cookieSecurity);return send(200,{ok:true});}
+      if(route==='/api/logout'&&req.method==='POST'){push.logout(user.token);run('DELETE FROM sessions WHERE token=?',user.token);res.setHeader('Set-Cookie','tp_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'+cookieSecurity);return send(200,{ok:true});}
       if(route==='/api/catalog/candidates'&&req.method==='GET'){if(!rights.catalog)fail(403,'Chỉ quản trị danh mục');const row=one('SELECT version,document FROM catalog WHERE id=1'),master=row?JSON.parse(row.document):catalogSeed();return send(200,{version:row?.version||0,catalog:master,candidates:require('./catalog-guard.cjs').candidates(master,all('SELECT document FROM quotes').map(x=>JSON.parse(x.document)))});}
       if(route==='/api/catalog/proposals'&&req.method==='GET'){if(!rights.catalog)fail(403,'Chưa được cấp quyền danh mục');return send(200,all("SELECT p.id,p.base_version,p.at,p.status,p.reason,u.name AS actorName FROM catalog_proposals p LEFT JOIN users u ON u.id=p.actor WHERE (?='admin' OR p.actor=?) ORDER BY p.at DESC LIMIT 100",user.role,user.id));}
       const reviewCatalog=route.match(/^\/api\/catalog\/proposals\/([a-f0-9-]+)(?:\/(approve|reject))?$/);
@@ -236,7 +239,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
     }catch(error){if(!res.headersSent)send(error.status||500,{error:error.status?error.message:'Không thực hiện được; kiểm tra dữ liệu hoặc máy chủ'});else res.end();}
   });
   server.headersTimeout=15000;server.requestTimeout=30000;
-  server.on('close',()=>{aiPdf.stop();sql.close();});return {server,sql};
+  server.on('close',()=>{aiPdf.stop();push.stop();sql.close();});return {server,sql,push};
 }
 module.exports={createApp,cleanDocument};
 if(require.main===module){

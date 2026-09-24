@@ -45,5 +45,10 @@
     "test:offline": "node tests/offline.cjs && node tests/remnants-browser.cjs --offline && node tests/model3d-browser.cjs --offline && node tests/scroll-browser.cjs --offline && node tests/site-review.cjs --offline",
     "build": "node tools/build.cjs"
   },
-  "devDependencies": { "@playwright/test": "1.58.2" }
+  "devDependencies": {
+    "@playwright/test": "1.58.2"
+  },
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
 }

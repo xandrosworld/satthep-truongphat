@@ -93,4 +93,4 @@ function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
   });for(const key of ['intake','technical','materials'])if(response.state[key]){delete response.state[key].signature;delete response.state[key].technicalSignature;if(rights.technical)delete response.state[key].note;}send(200,response);return true;
  }};
 }
-module.exports={createNotifications,fingerprints};
+module.exports={createNotifications,fingerprints,receives};

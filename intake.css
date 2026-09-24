@@ -4,3 +4,5 @@
 @media(max-width:1100px){.intake-factor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.intake-panel{padding:18px}}
 @media(max-width:600px){.intake-panel{padding:16px}.intake-factor-grid{grid-template-columns:1fr 1fr;gap:12px}.intake-price-tabs{display:grid;grid-template-columns:1fr}.intake-legacy-prices{grid-template-columns:1fr}.intake-files>div{align-items:flex-start}.intake-name-suggestion{grid-column:1/-1}.intake-panel .intake-bottom .button{white-space:normal}}
 .material-price-name{display:block;font-size:14px;font-weight:700;line-height:1.5;overflow-wrap:anywhere}
+.source-analysis .analysis-section th{background:#dce9f4;text-align:left;padding:12px;font-weight:750}
+.source-analysis .analysis-profit th,.source-analysis .analysis-profit td{background:#e5f3ec;font-weight:750;border-top:2px solid #7da68d}

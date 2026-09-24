@@ -11,3 +11,6 @@ for(const file of ['core.js','nesting-plan-core.js','completion-core.js','source
 for(const file of ['cost-input-core.js','offer-terms-core.js','batch-six-ui.js','tax-core.js','tax-ui.js','device-core.js','device-ui.js','batch-three-ui.js','dimension-links-core.js','batch-two-ui.js','shape-expression-core.js','polygon-core.js','definition-core.js','definition-ui.js','batch-one-core.js','customer-fields-core.js','crm-core.js','crm-ui.js','customer-fields-ui.js','notifications-ui.js','account-review-ui.js','catalog-audit-core.js','catalog-audit-ui.js','tmc-labor-ui.js','operation-table-core.js','operation-table-ui.js','package-operation-core.js','package-operation-ui.js','intake-core.js','intake-ui.js','quote-prices-ui.js','batch-one-ui.js'])html=html.replace('<script src="'+file+'"></script>',()=>'<script>'+read(file).replace(/<\/script/gi,'<\\/script')+'</script>');
 const out=path.join(root,'dist');fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,'index.html'),html,'utf8');
 console.log('Built dist/index.html ('+Buffer.byteLength(html)+' bytes), no external runtime dependencies.');
+
+for(const file of ['sw.js','manifest.webmanifest'])fs.copyFileSync(path.join(root,file),path.join(out,file));
+fs.copyFileSync(path.join(root,'assets/push-icon.png'),path.join(out,'push-icon.png'));
