@@ -1,5 +1,7 @@
 # Chấm điểm và cảnh báo chăm sóc khách hàng
 
+Đã triển khai ngày 25/09/2026, bản `6b9ba85`, có sao lưu trước triển khai. 747/747 kiểm thử tự động đạt; ba bộ kiểm thử trình duyệt chấm điểm, CRM và cấu hình trường khách hàng đạt. Kiểm tra HTTPS thực tế xác nhận 8 tiêu chí, mốc chăm sóc, API lịch sử và màn hình 390px; chính sách trước/sau kiểm tra không thay đổi, không ghi dữ liệu nghiệp vụ. Đã thu hồi phiên kiểm tra tạm, healthcheck đạt.
+
 Theo phản hồi 25/09/2026: các mốc ngày trong ảnh chỉ là ví dụ; quản trị tự khai báo, điều chỉnh thang điểm. Không áp sẵn 7/14/30 ngày và không tự chấm khách hàng hiện có.
 
 ## Cấu hình
