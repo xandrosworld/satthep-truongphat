@@ -1,7 +1,7 @@
 'use strict';
 const DFC=()=>TPDefinitions;
 const dfButton=(label,action,id='')=>`<button type="button" class="button small" data-definition="${action}" data-id="${esc(id)}">${label}</button>`;
-function dfCatalogWrite(action){if(Team.loaded&&(!Team.permissions?.catalog||teamCurrent()?.readOnly))throw Error('Chỉ người có quyền danh mục được thay đổi bảng dùng chung');mutation(action,{preserveQuote:true});}
+function dfCatalogWrite(action){if(Team.loaded&&!Team.permissions?.catalog)throw Error('Chỉ người có quyền danh mục được thay đổi bảng dùng chung');mutation(action,{preserveQuote:true});}
 function dfParameterChoices(fields){
   const choices=TPConventions.entries(db,'parameters').filter(x=>/^[A-Za-z][A-Za-z0-9_]{0,23}$/.test(x.name)&&!['RHO','PI','BW','SA','CW','CA','PHOI_POLY_L','PHOI_POLY_W','PHOI_POLY_S','PHOI_D','PHOI_R','KL_DV','DT_DV','constructor','prototype','__proto__'].includes(x.name)&&['mm','number','kg/m','m²/m'].includes(x.unit));
   for(const f of fields)if(f.key&&!choices.some(x=>x.name===f.key))choices.push({name:f.key,label:f.name||TPConventions.parameterName(db,f.key),unit:f.unit});
