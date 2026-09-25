@@ -148,8 +148,19 @@ th{color:var(--muted)}
 .home-table td:first-child{min-width:200px;max-width:310px;overflow-wrap:anywhere}
 .home-table tbody tr:hover{background:#f7faff}
 .home-badge{display:inline-block;white-space:nowrap;padding:5px 9px;border-radius:4px;background:#eff2f5;color:#485769;font-size:var(--ui-font-12, 12px);font-weight:600}
-.home-badge.submitted{background:#fff4dd;color:#855400}
-.home-badge.approved{background:#eaf6ed;color:#22613c}
+.home-badge.submitted,.home-badge.trade-negotiating{background:#fff0c2;color:#744500}
+.home-badge.approved,.home-badge.trade-accepted{background:#d8f0df;color:#185532}
+.home-badge.draft,.home-badge.trade-draft{background:#e7ecf2;color:#37485c}
+.home-badge.trade-sent{background:#d8eaff;color:#164c85}
+.home-badge.trade-rejected,.home-badge.trade-expired{background:#fce0df;color:#8a2420}
+.home-table thead th{font-weight:750;color:#173754;background:#e8eff7;font-size:14px}
+.home-table .home-total{font-size:17px;font-weight:750;color:#173754;white-space:nowrap}
+.home-update-note{display:block;font-size:12px;line-height:1.5;margin-top:5px;max-width:250px;color:#40536a;overflow-wrap:anywhere}
+.home-table .order-state{font-weight:650}
+.home-table .order-not-started{background:#e7ecf2;color:#37485c}
+.home-table .order-in-progress{background:#d8eaff;color:#164c85}
+.home-table .order-completed{background:#d8f0df;color:#185532}
+.home-table .order-cancelled{background:#fce0df;color:#8a2420}
 .home-progress{display:grid;grid-template-columns:1fr;gap:8px;min-width:330px}
 .home-stage{display:grid;grid-template-columns:76px minmax(100px,1fr) 120px;align-items:center;gap:10px;font-size:13px;color:#49596b}
 .home-stage b{font-size:14px;font-weight:700;color:#22384e}

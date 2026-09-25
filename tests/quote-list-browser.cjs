@@ -1,0 +1,10 @@
+'use strict';
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs');
+(async()=>{const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({channel:'msedge',headless:true}),page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));try{
+ await page.goto('http://127.0.0.1:'+app.server.address().port);await expect(page.locator('#team-entry')).toBeVisible();
+ await page.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password:'Quote-list-browser-42!'}));const q=await teamApi('quotes','POST',{document:TPPrice.demoSeed()});await teamApi('quotes/'+q.id+'/submit','POST',{expectedVersion:1});await teamApi('quotes/'+q.id+'/approve','POST',{expectedVersion:2});page='quote';Team.requireLogin=true;Team.loaded=false;render();await workspaceHomeFetch(true);});
+ await expect(page.locator('.home-table')).toBeVisible();await expect(page.locator('.home-table')).toContainText('V3');await expect(page.locator('.home-update-note')).toHaveText('Duyệt báo giá');await expect(page.locator('.home-table')).not.toContainText('Đang làm');await expect(page.locator('.trade-draft')).toHaveText('Chưa gửi');
+ expect(await page.locator('.home-total').evaluate(e=>Number.parseInt(getComputedStyle(e).fontWeight))).toBeGreaterThanOrEqual(700);
+ for(const state of ['sent','negotiating','accepted','rejected','expired'])expect(await page.evaluate(s=>quoteTrackingValue({commercialStatus:s,trackingStatus:s==='expired'?'sent':s}),state)).toBe(state);
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await expect(page.locator('.home-update-note')).toBeVisible();expect(errors).toEqual([]);console.log('PASS quote list desktop/mobile, status and notes');
+ }finally{await browser.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
