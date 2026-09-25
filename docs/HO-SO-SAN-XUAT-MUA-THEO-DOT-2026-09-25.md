@@ -23,3 +23,5 @@ Lệnh sản xuất lấy dữ liệu kỹ thuật từ đúng phiên bản báo
 ## Kiểm chứng
 
 Kiểm thử API bao gồm lịch sử bản vẽ, quyền xem/sửa/tải tệp, xung đột phiên bản, khóa sau khi bắt đầu, mất xác nhận khi đổi công nghệ, tính bất biến của báo giá, mua chia đợt/gộp lệnh, chống trùng nhu cầu, phân bổ kho và tổng chi phí. Trình duyệt kiểm tra tải bản vẽ, rà soát thiết bị/phương pháp, mua gộp và màn hình 390 px; kiểm tra lại các luồng thay đổi kỹ thuật và sản xuất theo công đoạn.
+
+Đã triển khai bản `318c581` ngày 25/09/2026 sau khi sao lưu. Toàn bộ **756 kiểm thử tự động đạt**; ba luồng trình duyệt hồ sơ/mua gộp, thay đổi kỹ thuật và sản xuất theo công đoạn đạt. Kiểm tra HTTPS trên dữ liệu hiện có xác nhận hồ sơ lệnh cũ, giao diện máy tính/điện thoại và xem trước kế hoạch mua hoạt động; chặn mọi ghi dữ liệu nghiệp vụ trong phiên kiểm tra. Phiên kiểm tra tạm đã thu hồi; healthcheck đạt.
