@@ -35,9 +35,15 @@
 
 ## Kiểm tra
 
-- Toàn bộ `tests/*.test.cjs`: 733/733 đạt trước bước hoàn thiện nhật ký; kiểm tra lại nhóm sản xuất/kho sau thay đổi cuối: 7/7 đạt.
+- Toàn bộ `tests/*.test.cjs`: 733/733 đạt trên bản cuối; nhóm sản xuất/kho riêng: 7/7 đạt.
 - Trình duyệt: `production-flow-browser.cjs`, `production-browser.cjs`, `production-changes-browser.cjs`, `reports-browser.cjs` đạt. Có chạy lại trình duyệt luồng công đoạn sau thay đổi cuối.
 - Kiểm tra thực: thiếu quyền, thiếu người, chưa duyệt, chuyển bước sớm, thiếu sản lượng, sai cân bằng, gửi trùng đồng thời, hoàn dư, khóa quá khứ, nhập thành phẩm, giao hàng, báo cáo và giữ nguyên báo giá gốc.
 - Giao diện kiểm tra 1440px và 390px; không tràn khung. Nhật ký và phiếu là dữ liệu lưu trên máy chủ.
 
-Triển khai/kiểm tra HTTPS sẽ được ghi sau khi phát hành.
+## Phát hành
+
+- Runtime `6740d9a` đã triển khai lên `https://truongphat-group.xyz`; health trả `ok:true`.
+- Đã chạy sao lưu trước triển khai; bản runtime trước lưu tại `/root/truongphat-before-6740d9a.tar` trên máy chủ.
+- Kiểm tra HTTPS chỉ đọc: mở lệnh hiện có (4 công đoạn, trạng thái chờ sản xuất), tiến trình, nhật ký, kho công đoạn và bảng báo cáo; desktop 1440px và mobile 390px đạt, không lỗi JavaScript.
+- Chưa có phiếu công đoạn thực tế trên máy chủ tại thời điểm kiểm tra; không tạo giao dịch giả trên dữ liệu khách. Luồng ghi đầy đủ đã kiểm tra trong cơ sở dữ liệu thử riêng.
+- Phiên kiểm tra tạm đã thu hồi, tệp xác thực đã xóa. Không đánh dấu khách nghiệm thu.

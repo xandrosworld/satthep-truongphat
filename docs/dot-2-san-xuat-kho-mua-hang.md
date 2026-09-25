@@ -1,5 +1,7 @@
 # Đợt 2 — Sản xuất, kho và mua hàng
 
+**Bổ sung 25/09:** [Tiến trình công nghệ và kho công đoạn](DIEU-HANH-CONG-DOAN-2026-09-25.md) thay thao tác thêm/kết thúc công đoạn trực tiếp bằng đề nghị có duyệt và đối soát khối lượng. Xem tài liệu này trước khi chạy lệnh mới.
+
 Ngày triển khai: 25/09/2026. Phạm vi nhóm 09–15 và BS08 trong `README-CHECKLIST-GD2.md`. Đây là kết quả tự kiểm của bên triển khai, chưa thay thế nghiệm thu của khách.
 
 ## Luồng vận hành
