@@ -44,6 +44,7 @@ Chứng từ tiền chống gửi lặp; CAS chống ghi đè phiên bản cũ; 
 - `tests/enterprise.test.cjs`: số học lương, khoản phải trả, phân bổ, chứng từ lặp, hủy, stale inputs, khóa công, quyền và phạm vi, commission giữa hai kỳ, mở lại phân bổ và SQLite bền vững.
 - `tests/enterprise-browser.cjs`: luồng UI tài chính → công → lương → trả → giao việc/báo cáo/xác nhận, Excel, reload và bốn trang ở 390 px.
 - `tests/personnel-browser.cjs`, `tests/operations-erp-browser.cjs`: hồi quy nhân sự, mua/nhập kho/cấp lệnh và báo cáo xưởng.
-- Triển khai HTTPS và kiểm tra sau triển khai: cập nhật kết quả trong nhật ký checklist sau khi chạy thực tế.
+- Đã triển khai bản `e5aecb4` lên `https://truongphat-group.xyz` sau sao lưu SQLite. Container xác nhận đúng image; `/healthz` trả `{"ok":true}`.
+- Kiểm tra trực tiếp sau triển khai: Admin mở cả bốn màn hình ở 1440/390 px, tải lại trang; tài khoản không có quyền lương bị chặn API 403 và ẩn menu. Kiểm tra live chỉ đọc dữ liệu, không tạo giao dịch/công/lương thử trên hệ thống khách. Hai phiên xác minh tạm đã thu hồi.
 
 Các báo cáo tổng hợp nhóm 18–21 và kiểm thử/nghiệm thu toàn hệ thống nhóm D vẫn thuộc đợt tiếp theo. Không dùng các dấu tự kiểm trên để kết luận toàn GĐ2 đã nghiệm thu.
