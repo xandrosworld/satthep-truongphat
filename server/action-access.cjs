@@ -8,6 +8,7 @@ function guardRoute(route,method,user,fail){
   need('quotes','view');if(read)return;
   if(/\/followup\/assign$/.test(route))return need('quotes','assign');
   if(/\/order$/.test(route))return need('orders','create');
+  if(/\/partial-handoff$/.test(route))return need('quotes','confirm');
   const action=/\/approve$/.test(route)?'approve':/\/submit$/.test(route)?'submit':/\/(reopen|restore)$/.test(route)?'reopen':/\/handoff\//.test(route)?'confirm':/\/work$/.test(route)?'assign':method==='DELETE'?'delete':/^\/api\/(quotes|quote-intakes)$/.test(route)?'create':'edit';return need('quotes',action);
  }
  if(/^\/api\/orders(\/|$)/.test(route))return need('orders',read?'view':/\/confirm$/.test(route)?'confirm':'edit');

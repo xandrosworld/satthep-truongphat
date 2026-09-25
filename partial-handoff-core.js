@@ -1,0 +1,7 @@
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./technical-core.js'),require('./tax-core.js'));else root.TPPartialHandoff=factory(root.TPTechnical,root.TPTax);})(typeof globalThis!=='undefined'?globalThis:this,function(Technical,Tax){
+ 'use strict';
+ const stable=v=>Array.isArray(v)?v.map(stable):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;
+ function scope(document,id){const d=JSON.parse(JSON.stringify(document));let found=false;function walk(rows){return rows.flatMap(n=>{if(n.id===id){found=true;return [n];}const children=walk(n.children||[]);return children.length?[{...n,children}]:[];});}d.quote.products=walk(d.quote.products);return found?d:null;}
+ function signature(document,id,stage){let d=scope(document,id);if(!d)return null;d=Technical.project(d);const q=d.quote;for(const k of ['status','pricing','vat','workspaceKey'])delete q[k];const ids=new Set();function walk(rows){for(const n of rows){for(const o of n.ops||[]){ids.add(o.id);delete o.instanceId;}walk(n.children||[]);}}walk(q.products);q.ratesSnapshot=(q.ratesSnapshot||[]).filter(r=>ids.has(r.id));for(const r of q.ratesSnapshot){if(r.consumption)delete r.consumption.id;for(const x of r.consumptions||[])delete x.id;}const tech=JSON.stringify(stable(q));return stage==='technical'?tech:JSON.stringify([tech,Tax.canonicalCostSignature(Tax.costSignature(scope(document,id).quote))]);}
+ return {scope,signature};
+});

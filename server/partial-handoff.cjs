@@ -1,0 +1,26 @@
+'use strict';
+const Core=require('../partial-handoff-core.js'),Technical=require('../technical-core.js'),P=require('../pricing-core.js'),B=require('../batch-one-core.js'),{randomUUID}=require('node:crypto');
+module.exports=function({sql,fail,getQuote,readBody,transaction,audit,targetsFor,canTechnical,canMaterials}){
+ const saved=id=>JSON.parse(sql.prepare('SELECT document FROM quote_handoffs WHERE quote_id=?').get(id)?.document||'{}');
+ function list(q){const d=JSON.parse(q.document);return (saved(q.id).partial||[]).map(x=>({...x,current:!x.unlocked&&Core.signature(d,x.nodeId,x.stage)===x.signature}));}
+ function guard(q,d){for(const x of list(q))if(!x.unlocked&&Core.signature(d,x.nodeId,x.stage)!==x.signature)fail(409,'Phần đã bàn giao đang khóa: '+x.name+'. Mở sửa từng phần và ghi lý do trước.');}
+ async function handle({req,route,user,rights,send}){const m=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/partial-handoff$/);if(!m)return false;
+  if(!(rights.costs||rights.technical))fail(403,'Không có quyền bàn giao nội bộ');
+  if(req.method==='GET'){send(200,list(getQuote(m[1])).map(({signature,...x})=>{if(rights.technical&&x.stage==='materials'){delete x.note;delete x.reason;}return x;}));return true;}
+  if(req.method!=='POST')fail(405,'Phương thức không hỗ trợ');const b=await readBody(req,10000);if(!['technical','materials'].includes(b.stage)||!['confirm','reopen'].includes(b.action))fail(400,'Thao tác không hợp lệ');if(!(b.stage==='technical'?canTechnical(rights):canMaterials(rights)))fail(403,'Chưa có quyền xác nhận phần việc');
+  const out=transaction(()=>{const q=getQuote(m[1]);if(q.status!=='draft'||q.version!==b.expectedVersion)fail(409,'Lưu và tải lại bản nháp hiện tại trước khi bàn giao');const d=JSON.parse(q.document),s=saved(q.id),rows=s.partial||(s.partial=[]),scoped=Core.scope(d,b.nodeId);if(!scoped)fail(404,'Không còn dòng được chọn');const all=P.flatten?P.flatten(d.quote.products):require('../core.js').flatten(d.quote.products),node=all.find(n=>n.id===b.nodeId);const old=rows.find(x=>x.nodeId===b.nodeId&&x.stage===b.stage),sig=Core.signature(d,b.nodeId,b.stage),at=new Date().toISOString();let note=String(b.note||'').trim().slice(0,2000);
+   if(b.action==='confirm'){
+    if(s[b.stage]&&!s[b.stage].unlocked)fail(409,'Toàn bộ phần này đã khóa; dùng bàn giao toàn phần');
+    if(old&&!old.unlocked&&old.signature===sig)return {duplicate:true,recipients:0};
+    if(b.stage==='technical'){const projected=Technical.project(d),result=P.calculate(projected),selected=require('../core.js').findNode(projected.quote.products,b.nodeId);const issues=B.technicalSummary([selected],result).issues;if(issues.length)fail(422,'Bổ sung kỹ thuật phần này: '+issues.slice(0,5).join('; '));}
+    else {const tech=rows.some(x=>x.stage==='technical'&&require('../core.js').flatten([require('../core.js').findNode(d.quote.products,x.nodeId)].filter(Boolean)).some(n=>n.id===b.nodeId)&&!x.unlocked&&x.signature===Core.signature(d,x.nodeId,'technical'));if(!tech&&!s.technical?.signature)fail(409,'Kỹ thuật chưa bàn giao phần được chọn');if(s.technical?.unlocked&&!tech)fail(409,'Kỹ thuật đang mở sửa');const calculated=P.calculate(scoped);if(calculated.rows.some(r=>!r.externallySupplied&&(r.spec.price==null||r.spec.price===''||!Number.isFinite(Number(r.spec.price))||Number(r.spec.price)<0)))fail(422,'Bổ sung đơn giá vật tư của phần được chọn');}
+    const entry={nodeId:b.nodeId,name:node.name,stage:b.stage,signature:sig,quoteVersion:q.version,actor:user.name,at,note,unlocked:false};if(old)Object.assign(old,entry);else rows.push(entry);note='Bàn giao từng phần: '+node.name+(note?' · '+note:'');
+   }else{if(!old||old.unlocked)fail(409,'Phần này chưa khóa');if(!note)fail(400,'Nhập lý do mở sửa');old.unlocked=true;old.reason=note;old.reopenedBy=user.name;old.reopenedAt=at;
+    // Reopening an overlapping subtree invalidates its enclosing/descendant price handoffs.
+    for(const x of rows){const overlap=!!Core.scope(Core.scope(d,x.nodeId)||{quote:{products:[]}},b.nodeId)||!!Core.scope(scoped,x.nodeId);if(overlap&&(x.stage===b.stage||b.stage==='technical')){x.unlocked=true;x.reason=note;x.reopenedBy=user.name;x.reopenedAt=at;}}
+    if(b.stage==='technical'&&s.materials)s.materials={...s.materials,unlocked:true,changeReason:note,changedBy:user.name,changedAt:at};note='Mở sửa từng phần: '+node.name+' · '+note;
+   }
+   const targets=targetsFor(q,b.stage);if(!targets.length)fail(422,'Chưa có người nhận bàn giao đủ quyền');sql.prepare('INSERT INTO quote_handoffs VALUES(?,?) ON CONFLICT(quote_id) DO UPDATE SET document=excluded.document').run(q.id,JSON.stringify(s));const id=randomUUID();sql.prepare('INSERT INTO handoff_events VALUES(?,?,?,?,?,?,?)').run(id,q.id,b.stage,q.version,user.id,at,note);for(const u of targets)sql.prepare('INSERT INTO notifications VALUES(?,?,?,NULL)').run(randomUUID(),u.id,id);audit(user,'handoff:partial:'+b.action,q.id,note);return {duplicate:false,recipients:targets.length};});send(200,out);return true;
+ }
+ return {guard,handle};
+};
