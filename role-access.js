@@ -3,6 +3,16 @@
 const SA=typeof module!=='undefined'&&module.exports?require('./section-access.js'):root.TPSectionAccess;
 const stages={sales:'Kinh doanh',technical:'Kỹ thuật',materials:'Cập nhật giá'};
 const flags=['canViewCosts','canApprove','canEditFactors','canApproveBelowCost','canFormulaUse','canFormulaView','canFormulaEdit','canFormulaUnlock','canReopen'];
+// Compatibility adapter: named permission sets do not require a job-type choice.
+// Never derive administrator access from a matrix, even when every cell is enabled.
+function matrixRole(value){
+ const modes=SA.parseModes(value.sectionModes),visible=SA.keys.filter(k=>modes[k]!=='none');
+ if(value.canViewCosts)return 'estimator';
+ const technical=['bom','operations','catalogMaterials','catalogTechnicalOperations','catalogRules','catalogLibrary'];
+ if(value.canApprove||value.canApproveBelowCost||value.canEditFactors||visible.some(k=>['materials','logistics','factors','catalogOperations','catalogLogistics','manage'].includes(k)))throw Error('Các quyền giá, hệ số, lập hoặc duyệt báo giá cần bật Xem chi phí / lợi nhuận nội bộ.');
+ if(visible.some(k=>technical.includes(k))){if(visible.includes('commercial'))throw Error('Kết hợp dữ liệu kỹ thuật với giá chào cần bật Xem chi phí / lợi nhuận nội bộ.');return 'technical';}
+ return 'sales';
+}
 function workRoles(value={}){if(!value||Array.isArray(value)||typeof value!=='object'||Object.entries(value).some(([k,v])=>!Object.hasOwn(stages,k)||!['','member','manager'].includes(v)))throw Error('Vai trò bộ phận không hợp lệ');return Object.fromEntries(Object.keys(stages).map(k=>[k,value[k]||'']));}
 function combine(roles){
  if(!roles.length)return null;
@@ -15,5 +25,5 @@ function combine(roles){
  out.sections=SA.parse(out.sectionModes);out.technicalDelegation=true;
  return out;
 }
-const api={combine,workRoles,stages,flags};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPRoleAccess=api;
+const api={combine,workRoles,stages,flags,matrixRole};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPRoleAccess=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
