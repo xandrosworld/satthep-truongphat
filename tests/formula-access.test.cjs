@@ -90,3 +90,18 @@ test('factor lock covers values, removal, bindings and quote snapshots; only adm
  A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:false,expectedVersion:1,reason:'Admin sửa'},admin)).status,200);
  const unlocked=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data;unlocked.document.quote.pricing.tmcLoss=9;A.equal((await call('quotes/'+made.data.id,'PUT',{document:unlocked.document,expectedVersion:unlocked.version},u.session)).status,200);
 });
+test('locked factor snapshots allow only authoritative rate additions, never combined edits',async t=>{
+ const {sql}=await harness(t),F=require('../server/formula-access.cjs');
+ const before=P.demoSeed(),master=JSON.parse(sql.prepare('SELECT document FROM catalog WHERE id=1').get().document);
+ const source=master.rates.find(r=>r.factors?.length);A.ok(source);
+ const added={...structuredClone(source),id:'published-extra'};master.rates.push(added);
+ sql.prepare('UPDATE catalog SET document=? WHERE id=1').run(JSON.stringify(master));
+ sql.prepare('INSERT INTO formula_locks VALUES(?,?,?,?,?)').run('calculationFactors:all',1,1,'admin',new Date().toISOString());
+ const guard=F.createFormulaAccess({sql,fail:(status,message)=>{throw Object.assign(Error(message),{status});}}).guard;
+ const rights={formulaUse:true,formulaEdit:true,formulaUnlock:false};
+ const after=structuredClone(before);after.quote.ratesSnapshot.push(added);
+ A.doesNotThrow(()=>guard(before,after,rights));
+ for(const mutate of [d=>d.quote.ratesSnapshot.at(-1).factors[0].name='Forged',d=>d.quote.ratesSnapshot[0].factors=[],d=>d.quote.pricing.overhead=999,d=>d.quote.ratesSnapshot.splice(0,1)]){
+  const bad=structuredClone(after);mutate(bad);A.throws(()=>guard(before,bad,rights),e=>e.status===403);
+ }
+});
