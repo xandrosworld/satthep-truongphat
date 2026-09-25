@@ -1,5 +1,7 @@
 # Lệnh sản xuất — bàn giao ưu tiên cho xưởng
 
+**Cập nhật 25/09:** luồng kho, xác nhận công nghệ và kết thúc công đoạn đã được bổ sung; xem [hướng dẫn mới](DIEU-HANH-CONG-DOAN-2026-09-25.md). Các giới hạn mô tả bên dưới là thời điểm bàn giao 22/09.
+
 Phạm vi triển khai đợt này: chuyển dữ liệu sản xuất từ đơn hàng đã tạo theo báo giá đã duyệt sang lệnh theo sản phẩm/lô; thông số, vật tư, công đoạn, sơ đồ cắt; chuẩn bị, phân công, sản lượng, QC, lịch sử và in lệnh. Không tuyên bố hoàn thành toàn bộ các phân hệ GĐ2-B.
 
 ## Sử dụng

@@ -1,5 +1,7 @@
 # Checklist triển khai GĐ2 — Trường Phát
 
+Bổ sung điều hành xưởng 25/09: [Tiến trình công nghệ, đối soát vật tư và nhập kho công đoạn](docs/DIEU-HANH-CONG-DOAN-2026-09-25.md). Có kỹ thuật xác nhận/Admin duyệt, cân bằng vật tư và phiếu phôi–bán thành phẩm–thành phẩm. Chưa thay thế nghiệm thu vận hành với khách.
+
 Cập nhật đợt 3: [Tài chính, chấm công, lương và điều hành](docs/dot-3-tai-chinh-luong-dieu-hanh.md). Nhóm 16, 17, 22, 25, 26 đã tự kiểm chức năng; cần cấu hình nguyên tắc lương, quyền và nhập chứng từ thực tế. Báo cáo tổng hợp cập nhật ở đợt 4 bên dưới; nghiệm thu toàn hệ thống vẫn cần khách kiểm tra.
 
 **Mốc chốt hướng triển khai: trao đổi ngày 24/09/2026, 23:31–23:34.**
