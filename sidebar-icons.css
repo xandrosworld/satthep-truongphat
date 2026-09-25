@@ -1,0 +1,28 @@
+/* The icon is a quiet technical mark; the selected module carries the accent. */
+#sidebar .has-nav-icon{display:flex;align-items:center;gap:10px;text-align:left}
+#sidebar .has-nav-icon>.nav-symbol{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:0 0 30px;margin:0;border-radius:8px;color:#607b98;background:#edf2f7;transition:color .15s,background .15s;pointer-events:none}
+#sidebar .nav-symbol svg{display:block;width:21px;height:21px;overflow:visible;pointer-events:none}
+#sidebar .nav-label-text{min-width:0;line-height:1.45;text-align:left;font-size:inherit;font-weight:inherit;color:inherit}
+#sidebar .has-nav-icon:hover>.nav-symbol{color:#165c9d;background:#dfecfa}
+#sidebar .has-nav-icon.active>.nav-symbol{background:#1c64a5;color:#fff;box-shadow:0 2px 5px #174a7926}
+#sidebar .has-nav-icon.active{font-weight:600}
+#sidebar .has-nav-icon>.nav-count{margin-left:auto;flex-shrink:0}
+#sidebar .side-help.has-nav-icon{gap:9px;padding-block:10px}
+#sidebar .side-help.has-nav-icon>.nav-symbol{width:27px;height:27px;flex-basis:27px;background:transparent}
+#sidebar .side-help.has-nav-icon svg{width:19px;height:19px}
+@media screen{
+html[data-theme=dark] #sidebar .has-nav-icon{background:transparent}
+html[data-theme=dark] #sidebar .has-nav-icon>.nav-symbol{background:#2b3d51;color:#b7cce2}
+html[data-theme=dark] #sidebar .has-nav-icon:hover{background:#25394f}
+html[data-theme=dark] #sidebar .has-nav-icon:hover>.nav-symbol{background:#34536f;color:#d0e9ff}
+html[data-theme=dark] #sidebar .has-nav-icon.active{background:#25476a}
+html[data-theme=dark] #sidebar .has-nav-icon.active>.nav-symbol{background:#91c6ff;color:#122e4b;box-shadow:none}
+}
+@media(prefers-reduced-motion:reduce){#sidebar .nav-symbol{transition:none}}
+
+/* Generated steel-and-brass illustrations retain their own transparent silhouette. */
+#sidebar .has-nav-icon>.nav-symbol{width:36px;height:36px;flex-basis:36px;background:transparent!important;box-shadow:none!important}
+#sidebar .nav-symbol img{width:36px;height:36px;display:block;object-fit:contain;pointer-events:none}
+#sidebar .has-nav-icon.active>.nav-symbol{filter:drop-shadow(0 2px 2px #24588524)}
+#sidebar .side-help.has-nav-icon>.nav-symbol{width:30px;height:30px;flex-basis:30px}
+#sidebar .side-help.has-nav-icon img{width:30px;height:30px}
