@@ -44,4 +44,6 @@ Bảng tự làm mới mỗi 20 giây khi đang mở và không nhập liệu/m�
 - Kiểm thử phân cấp, nhận việc đồng thời, quyền API cũ, việc cha–con/vòng lặp, khối lượng, xử lý vướng mắc, mã thao tác, đơn vị sau báo cáo.
 - Kiểm thử công đoạn chạy thực → đối soát → bảng việc cập nhật; gửi/chăm sóc báo giá, mua hàng cập nhật theo nguồn; không lộ chi phí qua thẻ.
 - Trình duyệt: tạo/giao/nhận/báo cáo/xác nhận, bộ lọc, lịch sử, Excel, tự đồng bộ, mở nguồn, reload; máy tính 1440px và điện thoại 390px.
-- Kết quả hồi quy và HTTPS được bổ sung sau phát hành. Chưa xác nhận khách nghiệm thu.
+- Hồi quy: 737/737 kiểm thử đạt; trình duyệt bảng việc và các phân hệ enterprise đạt.
+- Đã phát hành HTTPS bản `0b06da9` ngày 25/09/2026, có sao lưu trước phát hành. Kiểm tra trực tiếp bảng/danh sách, bộ lọc, desktop 1440px và mobile 390px đạt, không lỗi JavaScript. Bảng nhận 50 việc liên thông từ dữ liệu hiện có; kiểm tra live chỉ đọc, không tạo/sửa công việc khách hàng. Phiên kiểm tra tạm đã thu hồi.
+- Chưa xác nhận khách nghiệm thu. Phân quyền nhiều vai trò và thao tác ghi được kiểm thử ở môi trường kiểm thử, không giả lập nghiệp vụ trên dữ liệu thật.
