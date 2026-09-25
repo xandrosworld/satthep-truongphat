@@ -2,6 +2,7 @@
 'use strict';
 const labels={view:'Xem',create:'Thêm',edit:'Sửa',delete:'Xóa / hủy',submit:'Trình duyệt',approve:'Duyệt',reopen:'Mở sửa',confirm:'Xác nhận / bàn giao',assign:'Giao việc',export:'Xuất / in',import:'Nhập Excel',activate:'Yêu cầu tài khoản',review:'Duyệt hồ sơ',issue:'Phát hành lệnh',qc:'Kiểm tra chất lượng',complete:'Hoàn thành',send:'Gửi tin'};
 const modules={
+ reports:['Trung tâm báo cáo',['view','export']],
  finance:['Thu chi, công nợ và giá thành',['view','create','delete','approve','export']],
  attendance:['Chấm công',['view','edit','approve','reopen','export']],
  payroll:['Hồ sơ và bảng lương',['view','edit','approve','reopen','export']],

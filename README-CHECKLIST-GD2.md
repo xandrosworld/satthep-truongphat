@@ -1,12 +1,14 @@
 # Checklist triển khai GĐ2 — Trường Phát
 
-Cập nhật đợt 3: [Tài chính, chấm công, lương và điều hành](docs/dot-3-tai-chinh-luong-dieu-hanh.md). Nhóm 16, 17, 22, 25, 26 đã tự kiểm chức năng; cần cấu hình nguyên tắc lương, quyền và nhập chứng từ thực tế. Báo cáo tổng hợp/kiểm thử nghiệm thu toàn hệ thống vẫn theo đợt tiếp theo.
+Cập nhật đợt 3: [Tài chính, chấm công, lương và điều hành](docs/dot-3-tai-chinh-luong-dieu-hanh.md). Nhóm 16, 17, 22, 25, 26 đã tự kiểm chức năng; cần cấu hình nguyên tắc lương, quyền và nhập chứng từ thực tế. Báo cáo tổng hợp cập nhật ở đợt 4 bên dưới; nghiệm thu toàn hệ thống vẫn cần khách kiểm tra.
 
 **Mốc chốt hướng triển khai: trao đổi ngày 24/09/2026, 23:31–23:34.**
 
 Tài liệu làm việc cho các đợt tiếp theo: bám luồng demo, triển khai trên web hiện tại, giữ phần báo giá và dữ liệu đã có, hoàn thiện theo hợp đồng. Checklist không tự thay đổi phạm vi, phí, tiến độ hoặc điều kiện nghiệm thu đã ký.
 
 Cập nhật đợt 2: [Sản xuất, kho và mua hàng](docs/dot-2-san-xuat-kho-mua-hang.md). Các mã 09–15 và BS08 được đối chiếu theo tài liệu này; dấu hoàn thành là tự kiểm chức năng, chưa phải nghiệm thu khách. Giờ định mức chỉ có khi nguồn khai theo giờ; khoản mua tự sinh chưa đồng nghĩa đã thanh toán.
+
+Cập nhật đợt 4: [Báo cáo và kiểm thử liên thông](docs/dot-4-bao-cao-kiem-thu.md). Nhóm 18–21 đã tự kiểm; gồm chọn kỳ, Excel, quyền nguồn và đối chiếu luồng đơn mẫu/SQLite phục hồi. Các bước chạy thử, đào tạo, diễn tập khôi phục toàn máy chủ và nghiệm thu cuối chưa tự đánh dấu hoàn thành.
 
 ## 1. Căn cứ và thứ tự áp dụng
 
@@ -287,23 +289,23 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 | [x] | 17.03 | Hồ sơ nhân sự Thông tin và công đoạn đang phụ trách | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 17.04 | Thống kê theo phòng ban | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 17.05 | Xuất Excel | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
-| [ ] | 18.01 | Trung tâm báo cáo Danh mục toàn bộ báo cáo, bấm là mở | Chờ rà soát |
-| [ ] | 18.02 | Chỉ số tổng quan Kinh doanh, sản xuất, kho, tài chính trên một màn hình | Chờ rà soát |
-| [ ] | 18.03 | Chọn kỳ báo cáo Tháng, quý, năm, khoảng ngày tuỳ chọn | Chờ rà soát |
-| [ ] | 19.01 | Sản lượng theo kỳ | Chờ rà soát |
-| [ ] | 19.02 | Tiến độ và tỷ lệ hoàn thành | Chờ rà soát |
-| [ ] | 19.03 | Hiệu suất theo phân xưởng | Chờ rà soát |
-| [ ] | 19.04 | Tỷ lệ đạt QC | Chờ rà soát |
-| [ ] | 19.05 | Xuất Excel | Chờ rà soát |
-| [ ] | 20.01 | Doanh thu theo tháng | Chờ rà soát |
-| [ ] | 20.02 | Doanh thu theo khách hàng | Chờ rà soát |
-| [ ] | 20.03 | Doanh thu theo sản phẩm | Chờ rà soát |
-| [ ] | 20.04 | Công nợ phải thu | Chờ rà soát |
-| [ ] | 20.05 | Xuất Excel | Chờ rà soát |
-| [ ] | 21.01 | Nhập – xuất – tồn theo kỳ | Chờ rà soát |
-| [ ] | 21.02 | Giá trị tồn kho | Chờ rà soát |
-| [ ] | 21.03 | Vật tư sắp hết | Chờ rà soát |
-| [ ] | 21.04 | Xuất Excel | Chờ rà soát |
+| [x] | 18.01 | Trung tâm báo cáo Danh mục toàn bộ báo cáo, bấm là mở | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 18.02 | Chỉ số tổng quan Kinh doanh, sản xuất, kho, tài chính trên một màn hình | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 18.03 | Chọn kỳ báo cáo Tháng, quý, năm, khoảng ngày tuỳ chọn | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 19.01 | Sản lượng theo kỳ | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 19.02 | Tiến độ và tỷ lệ hoàn thành | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 19.03 | Hiệu suất theo phân xưởng | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 19.04 | Tỷ lệ đạt QC | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 19.05 | Xuất Excel | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 20.01 | Doanh thu theo tháng | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 20.02 | Doanh thu theo khách hàng | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 20.03 | Doanh thu theo sản phẩm | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 20.04 | Công nợ phải thu | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 20.05 | Xuất Excel | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 21.01 | Nhập – xuất – tồn theo kỳ | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 21.02 | Giá trị tồn kho | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 21.03 | Vật tư sắp hết | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
+| [x] | 21.04 | Xuất Excel | Đã tự kiểm đợt 4; xem tài liệu báo cáo và căn cứ số liệu |
 | [x] | 22.01 | Công việc thực hiện trong ngày Xác định được khối lượng công việc thực hiện; thời gian thực hiện khối lượng đạt được. Mục tiêu đánh giá được khối lượng công việc của nhân sự cụ thể như thế nào Các bộ phận | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 22.02 | Tồn tại vướng mắc | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 22.03 | Kiến nghị đề xuất | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
@@ -331,9 +333,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 
 | Kiểm đạt | Mã | Nội dung | Bằng chứng / còn thiếu |
 |---|---|---|---|
-| [ ] | D.01 | Kiểm thử tích hợp toàn hệ thống và đối chiếu một đơn hàng mẫu từ đầu đến cuối | Chờ rà soát |
+| [ ] | D.01 | Kiểm thử tích hợp toàn hệ thống và đối chiếu một đơn hàng mẫu từ đầu đến cuối | Đã tự kiểm một đơn liên thông đợt 4; còn đối chiếu vận hành thực tế với khách |
 | [ ] | D.02 | Chạy thử với người dùng và sửa lỗi toàn bộ các phân hệ giai đoạn 2 | Chờ rà soát |
 | [ ] | D.03 | Đào tạo, hướng dẫn sử dụng và quản trị các phân hệ giai đoạn 2 | Chờ rà soát |
 | [ ] | D.04 | Triển khai môi trường vận hành, tài khoản và kế hoạch vận hành toàn hệ thống | Chờ rà soát |
-| [ ] | D.05 | Kiểm thử sao lưu và khôi phục đầy đủ dữ liệu toàn hệ thống | Chờ rà soát |
+| [ ] | D.05 | Kiểm thử sao lưu và khôi phục đầy đủ dữ liệu toàn hệ thống | Đã tự kiểm phục hồi SQLite luồng mẫu; còn diễn tập máy chủ/tệp/cấu hình đầy đủ |
 | [ ] | D.06 | Nghiệm thu cuối; bàn giao mã nguồn, cấu trúc dữ liệu/migration, cấu hình/build/deploy và tài liệu | Chờ rà soát |

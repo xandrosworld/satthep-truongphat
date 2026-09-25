@@ -108,6 +108,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const accessReview=require('./access-review.cjs').createAccessReview({sql,fail,organization,dataAccess});
   const operationsERP=require('./operations-erp.cjs').createOperationsERP({sql,fail,readBody,transaction,audit});
   const enterprise=require('./enterprise.cjs').createEnterprise({sql,fail,readBody,transaction,audit,organization});
+  const reports=require('./reports.cjs').createReports({sql,fail,audit});
   const production=require('./production.cjs').createProduction({sql,fail,readBody,transaction,audit,operationsERP});
   const business=require('./business.cjs').createBusiness({sql,fail,readBody,transaction,audit,financeContext:enterprise.contractFinancials});
   function publishCatalog(body,user,rights,proposal=null){return transaction(()=>{const old=one('SELECT * FROM catalog WHERE id=1');
@@ -124,7 +125,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
           run('INSERT INTO catalog(id,version,document,updated,actor) VALUES(1,?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,document=excluded.document,updated=excluded.updated,actor=excluded.actor',version,document,updated,user.id);run('INSERT INTO catalog_revisions(version,document,updated,actor) VALUES(?,?,?,?)',version,document,updated,user.id);audit(user,'catalog',String(version));const formulaUpdates=formulaSync.sync({version,catalog:next},user);return {version,updated,actorName:user.name,formulaUpdates};});}
   transaction(()=>{const row=one('SELECT version,document,actor FROM catalog WHERE id=1');if(row?.version){const user=one('SELECT id,name FROM users WHERE id=?',row.actor)||{id:'system',name:'Hệ thống'};formulaSync.sync({version:row.version,catalog:JSON.parse(row.document)},user);}});
   const server=http.createServer(async(req,res)=>{let responseUser=null;
-    const send=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(responseUser&&require('./governance.cjs').rawResponse(req.url,responseUser)?value:responseUser?formulaAccess.project((require('../action-access.js').explicit(responseUser)&&/^\/api\/(business|orders|production|personnel|ops)(?:[/?]|$)/.test(req.url)?value:dataAccess.protect(value,responseUser,!req.url.startsWith('/api/access/calculate'))),responseUser,permissions(responseUser)):value));};
+    const send=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(responseUser&&require('./governance.cjs').rawResponse(req.url,responseUser)?value:responseUser?formulaAccess.project((require('../action-access.js').explicit(responseUser)&&/^\/api\/(business|orders|production|personnel|ops|reports)(?:[/?]|$)/.test(req.url)?value:dataAccess.protect(value,responseUser,!req.url.startsWith('/api/access/calculate'))),responseUser,permissions(responseUser)):value));};
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Cache-Control','no-store');
     try{
       const url=new URL(req.url,'http://localhost'),route=url.pathname;
@@ -155,6 +156,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       if(await aiPdf.handle({req,route,user,send}))return;
       if(await operationsERP.handle({req,route,user,send}))return;
       if(await enterprise.handle({req,route,user,send}))return;
+      if(await reports.handle({req,route,user,send}))return;
       if(await production.handle({req,route,user,send}))return;
       if(await chat.handle({req,route,user,send,res}))return;
       if(await editLeases.handle({req,route,user,rights,send}))return;
