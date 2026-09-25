@@ -8,3 +8,5 @@ Theo phản hồi được anh Hợp xác nhận:
 - Bảng phân tích và Excel đầu vào dùng **Khối lượng vật tư tính cho báo giá**; bảng diễn giải có khối lượng mua cả khổ, phần tận dụng và khối lượng sau trừ để đối chiếu. Số tấm/thanh mua vật lý, tồn kho và kg phôi thực không giảm bởi việc chọn giữ phần dư.
 
 Kiểm chứng: 726/726 bài test đạt, gồm ba bài mới về phần dư giá 0, không trừ hai lần vào dự tính và hai loại phí độc lập. Browser hiện hành kiểm tra chọn đơn giá/phạm vi, lưu/F5, phân bổ, màn hình 390 px, công thức khối lượng và đường dẫn khai báo. Bài `remnants-browser.cjs` cũ dùng đường dẫn giao diện trước khi tách đề xuất tổ hợp; kiểm tra hiện hành nằm ở `delivery-remnant-feedback-browser.cjs`.
+
+Đã sao lưu và triển khai image `truongphat-quotation:558ce53`. Kiểm tra HTTPS trên báo giá máy chủ: hai mục giao hàng/lắp đặt hiển thị riêng ở 1440/390 px; phép đối chiếu phần dư trên mã đã deploy đạt. Không ghi dữ liệu thử vào báo giá khách. Phiên xác minh tạm đã thu hồi; health OK.
