@@ -49,3 +49,11 @@ Ngày triển khai: 25/09/2026. Phạm vi nhóm 09–15 và BS08 trong `README-C
 - `tests/operations-erp-browser.cjs`: mua → nhận → nhập → giữ → bắt đầu công đoạn; máy/giao việc/báo cáo/xử lý vướng mắc; cảnh báo quá tải; Excel; 1440/390 px; giả lập mất phản hồi sau khi máy chủ đã nhập kho rồi gửi lại, chỉ tạo một lô.
 - `tests/production-server.test.cjs`, `tests/production-browser.cjs`: hồi quy phát hành, quyền kỹ thuật, xung đột phiên bản, đủ vật tư, công đoạn, bản vẽ, QC, hoàn thành, khóa, tải lại và lưu bền.
 - Toàn bộ bộ kiểm thử máy chủ: 710 bài đạt trước triển khai. Ảnh và log tự kiểm lưu tại `artifacts/ops-*` trong workspace.
+
+## Triển khai và kiểm tra web thật
+
+- Bản chạy `dc28942`, đã đẩy mã nguồn và triển khai ngày 25/09/2026 sau khi sao lưu máy chủ.
+- `/healthz` trả `ok: true`. Kiểm tra đủ 11 tab ở 1440 px và 390 px: không lỗi JavaScript, không tràn ngang trang.
+- Máy chủ tại thời điểm kiểm tra có 0 lệnh sản xuất. Kiểm tra live chỉ đọc, chặn các yêu cầu ghi từ trình duyệt; luồng tạo chứng từ đến QC được kiểm thử trong môi trường riêng, không tạo tồn kho hoặc giao dịch giả trên web khách.
+- Phiên quản trị tạm phục vụ kiểm tra đã thu hồi. Log: `artifacts/vietnix/ops-live-check.txt`; ảnh: `artifacts/vietnix/ops-live-1440.png`, `artifacts/vietnix/ops-live-390.png`.
+- Trước vận hành thực tế cần quản trị cấp bốn nhóm quyền mới theo vị trí và bộ phận kho khai tồn thực tế/chứng từ đầu kỳ.
