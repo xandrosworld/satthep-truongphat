@@ -343,6 +343,6 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 | [ ] | D.01 | Kiểm thử tích hợp toàn hệ thống và đối chiếu một đơn hàng mẫu từ đầu đến cuối | Đã tự kiểm một đơn liên thông đợt 4; còn đối chiếu vận hành thực tế với khách |
 | [ ] | D.02 | Chạy thử với người dùng và sửa lỗi toàn bộ các phân hệ giai đoạn 2 | Chờ rà soát |
 | [ ] | D.03 | Đào tạo, hướng dẫn sử dụng và quản trị các phân hệ giai đoạn 2 | Chờ rà soát |
-| [ ] | D.04 | Triển khai môi trường vận hành, tài khoản và kế hoạch vận hành toàn hệ thống | Chờ rà soát |
-| [ ] | D.05 | Kiểm thử sao lưu và khôi phục đầy đủ dữ liệu toàn hệ thống | Đã tự kiểm phục hồi SQLite luồng mẫu; còn diễn tập máy chủ/tệp/cấu hình đầy đủ |
+| [ ] | D.04 | Triển khai môi trường vận hành, tài khoản và kế hoạch vận hành toàn hệ thống | Đã kiểm thử tải môi trường riêng; còn xác nhận tài khoản, cấu hình và kế hoạch vận hành thực tế với khách |
+| [x] | D.05 | Kiểm thử sao lưu và khôi phục đầy đủ dữ liệu toàn hệ thống | Đã tự diễn tập snapshot thật trong container không mạng: 47 bảng/1.996 bản ghi, 15 tệp, ảnh ứng dụng và cấu hình; hash khớp, phiên cũ bị xóa. Xem docs/KIEM-TRA-DO-BEN-GD2-2026-09-25.md; chưa phải ký nghiệm thu hoặc diễn tập mất toàn VPS |
 | [ ] | D.06 | Nghiệm thu cuối; bàn giao mã nguồn, cấu trúc dữ liệu/migration, cấu hình/build/deploy và tài liệu | Chờ rà soát |
