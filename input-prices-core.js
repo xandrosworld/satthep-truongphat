@@ -7,6 +7,7 @@ const copy=C.copy;
 function defaults(db){const p={...P.defaults(),...copy(db.pricingDefaults||{})},x=p.tmcLaborOperation;for(const b of [x?.default,...Object.values(x?.tables||{})]){if(!b)continue;const rate=db.rates?.find(r=>r.id===b.rate.id);if(rate)b.rate=copy(rate);}(typeof module!=='undefined'?require('./package-operation-core.js'):root.TPPackageOperation).synchronize(p,db.rates||[]);return p;}
 function amount(value,label){if(value===null||value===undefined||value===''||!Number.isFinite(Number(value))||Number(value)<0)throw Error(label+': nhập số không âm');return Number(value);}
 function validateExpense(r){
+ if(r?.method==='product_m'&&!['delivery','install'].includes(r.category))throw Error('Mét dài sản phẩm chỉ áp dụng giao hàng/lắp đặt');
  W.validateGroups(r?.productGroups);
  if(r?.applicableGroupIds!==undefined&&(!Array.isArray(r.applicableGroupIds)||new Set(r.applicableGroupIds).size!==r.applicableGroupIds.length||r.applicableGroupIds.some(id=>typeof id!=='string'||!['detail','tmc'].includes(id)&&!/^grp-[A-Za-z0-9_-]{1,60}$/.test(id))))throw Error('Chọn nhóm áp dụng đơn giá hợp lệ');
  if(!r||typeof r.id!=='string'||!r.id.trim()||typeof r.name!=='string'||!r.name.trim())throw Error('Nhập mã và tên phương thức');
@@ -17,7 +18,7 @@ function validateExpense(r){
  if(r.minimumScope!==undefined&&!['total','trip'].includes(r.minimumScope))throw Error('Chọn phạm vi phí tối thiểu');
  if(r.capacityKg!==undefined&&r.capacityKg!=='')amount(r.capacityKg,'Tải trọng xe');if(r.method==='vehicle'&&!(Number(r.capacityKg)>0))throw Error('Khai tải trọng xe lớn hơn 0');
  if(r.distance!==undefined&&r.distance!=='')amount(r.distance,'Quãng đường');if(r.referencePrice!==undefined&&r.referencePrice!=='')amount(r.referencePrice,'Giá đối chiếu');
- if(r.method==='product_unit'&&(r.category!=='install'||!String(r.productUnit||'').trim()))throw Error('Khai đơn vị sản phẩm cho giá lắp đặt');
+ if(r.method==='product_unit'&&(!['install','delivery'].includes(r.category)||!String(r.productUnit||'').trim()))throw Error('Khai đơn vị sản phẩm cho giá giao hàng/lắp đặt');
  if(r.factors!==undefined&&!Array.isArray(r.factors))throw Error('Bảng hệ số không hợp lệ');
  for(const f of r.factors||[]){if(!['weight','area','length','count','quantity','distance','trips','complexity','from','to'].includes(f.param))throw Error('Tham số hệ số khoản chi không hợp lệ');W.validateFactor(f,P.tier);}
  return r;

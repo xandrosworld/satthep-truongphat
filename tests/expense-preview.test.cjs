@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),A=require('node:assert/strict'),E=require('../expense-preview-core.js');
 test('every reference tariff reproduces an independently specified expected amount',()=>{
- const expected={'MAU-kg_km':3000000,'MAU-vehicle':1500000,'MAU-product_unit':1000000,'MAU-kg_net':600000,'MAU-kg_purchase':750000,'MAU-ton_net':600000,'MAU-ton_purchase':750000,'MAU-ton_km':3000000,'MAU-m2':400000,'MAU-m':450000,'MAU-unit':300000,'MAU-trip':1200000,'MAU-km':500000,'MAU-fixed':800000,'MAU-he-so':3300000,'MAU-toi-thieu':1000000,'MAU-lap-m2':400000,'MAU-lap-m':450000,'MAU-lap-fixed':800000};
+ const expected={'MAU-product_m':450000,'MAU-kg_km':3000000,'MAU-vehicle':1500000,'MAU-product_unit':1000000,'MAU-kg_net':600000,'MAU-kg_purchase':750000,'MAU-ton_net':600000,'MAU-ton_purchase':750000,'MAU-ton_km':3000000,'MAU-m2':400000,'MAU-m':450000,'MAU-unit':300000,'MAU-trip':1200000,'MAU-km':500000,'MAU-fixed':800000,'MAU-he-so':3300000,'MAU-toi-thieu':1000000,'MAU-lap-m2':400000,'MAU-lap-m':450000,'MAU-lap-fixed':800000};
  for(const r of E.samples()){const result=E.trial(r);A.ok(Math.abs(result.cost-expected[r.id])<1e-6,r.id);A.equal(result.detail.reduce((n,x)=>n+x.cost,0),result.cost);}
  A.equal(E.samples().length,Object.keys(expected).length);
 });
