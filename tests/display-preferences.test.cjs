@@ -1,0 +1,6 @@
+const test=require('node:test'),assert=require('node:assert/strict'),D=require('../display-preferences.js');
+test('format preferences reject invalid stored values',()=>{assert.deepEqual(D.normalize({locale:'bad',date:'bad',decimals:-1,theme:'bad',grouping:'false'}),D.defaults);assert.deepEqual(D.normalize(null),D.defaults);});
+test('number and VND formatting preserves value and explicit precision',()=>{const p=D.normalize({locale:'en-US',grouping:true,decimals:4});assert.equal(D.number(1234.5678,4,p),'1,234.5678');assert.equal(D.money(1234.8,p),'1,235');assert.equal(D.number(-1234.5,3,{...p,grouping:false}),'-1234.5');assert.equal(D.number(Infinity),'—');assert.equal(D.number(1.23456,4),'1,2346');});
+test('calendar dates preserve the day and handle invalid values',()=>{assert.equal(D.date('2026-09-25'),'25/09/2026');assert.equal(D.date('2026-09-25',false,D.normalize({date:'MM/dd/yyyy'})),'09/25/2026');assert.equal(D.date('2026-02-30'),'—');assert.equal(D.date('2024-02-29'),'29/02/2024');assert.equal(D.date('garbage'),'—');assert.equal(D.date(null),'—');});
+
+test('only plain date cells change, identifiers and HTML stay intact',()=>{assert.equal(D.cell('2026-09-25'),'25/09/2026');assert.equal(D.cell('<button data-id="2026-09-25">Open</button>'),'<button data-id="2026-09-25">Open</button>');assert.equal(D.cell(42),42);});

@@ -323,9 +323,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 | [x] | 23.04 | Phân quyền theo phân hệ Vai trò nào vào được menu nào; dữ liệu nào (ví dụ thông tin giá thì kỹ thuật sản xuất không được tiếp cận; kinh doanh chỉ biết giá cuối…) | Tự kiểm access-review/action-access/server và trình duyệt tài khoản, bộ quyền; xem báo cáo rà soát 25/09 |
 | [x] | 23.05 | Nhật ký thao tác Ai làm gì, lúc nào | Tự kiểm access-review/action-access/server và trình duyệt tài khoản, bộ quyền; xem báo cáo rà soát 25/09 |
 | [x] | 24.01 | Thông tin doanh nghiệp Tên, mã số thuế, địa chỉ, logo dùng in chứng từ | Thông tin đơn vị phát hành và hồ sơ năng lực; kiểm tra business/offer-templates, xuất hồ sơ |
-| [ ] | 24.02 | Tham số vận hành Bật tắt các quy tắc nghiệp vụ | Có cấu hình theo phân hệ; chưa đối chiếu đầy đủ danh sách tham số bàn giao |
-| [ ] | 24.03 | Định dạng số, tiền tệ, ngày | Đã dùng định dạng vi-VN; ô ngày theo trình duyệt, chưa có cấu hình tùy ý |
-| [ ] | 24.04 | Giao diện sáng / tối | Chưa có chế độ tối; giữ mở — không đánh dấu hoàn thành |
+| [x] | 24.02 | Tham số vận hành Bật tắt các quy tắc nghiệp vụ | Trung tâm Thiết lập, định dạng hiển thị và sáng/tối; tự kiểm 26/09, xem docs/THIET-LAP-GD2-2026-09-26.md |
+| [x] | 24.03 | Định dạng số, tiền tệ, ngày | Trung tâm Thiết lập, định dạng hiển thị và sáng/tối; tự kiểm 26/09, xem docs/THIET-LAP-GD2-2026-09-26.md |
+| [x] | 24.04 | Giao diện sáng / tối | Trung tâm Thiết lập, định dạng hiển thị và sáng/tối; tự kiểm 26/09, xem docs/THIET-LAP-GD2-2026-09-26.md |
 | [x] | 25.01 | Thông tin đầu vào nhân sự Có dữ liệu đầu vào các nhân sự  - Ngày vào làm: tính thâm niên  - Lương cơ bản để tính bảo hiểm - Lương thực tế | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 25.02 | Bảng nguyên tắc tính lương Thể hiện nguyên tắc tính lương cho từng đối tượng - Sản xuât - văn phòng  - Kinh doanh  - các loại hệ số: Hệ số tăng ca, làm ngày nghỉ, ngày lễ, làm công trường, khác  - Phụ cấp…. | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 25.03 | Thông tin ngày công Thể hiện được số ngày công, tăng ca, nghỉ, lễ, công trường | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
