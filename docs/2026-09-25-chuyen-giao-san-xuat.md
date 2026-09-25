@@ -17,3 +17,5 @@ Kiểm thử: `tests/production-changes.test.cjs`, `tests/production-changes-bro
 Lượt toàn bộ đầu tiên có một tiến trình `definition-server.test.cjs` kết thúc sớm không có assertion; chạy riêng đủ 8 ca đều đạt. Kết quả lượt toàn bộ cuối lưu tại `artifacts/production-changes-full-final.txt`.
 
 Kết quả: toàn bộ 727/727 ca đạt; sau khi kiểm tra thêm quyền thao tác tách riêng xác nhận kỹ thuật, 11/11 ca quyền và sản xuất đạt. Hai bài kiểm tra trình duyệt đạt, gồm luồng cũ và luồng đề nghị mới, desktop/mobile và tải lại.
+
+Đã triển khai release `1a24a55` lên HTTPS sau sao lưu. Kiểm tra trực tiếp báo giá đã duyệt: nút chuyển giao, mở danh sách từ thanh bên và hiển thị mobile đều đạt; API sản xuất hoạt động. Máy chủ hiện chưa có lệnh sản xuất nên luồng thay đổi đầy đủ được kiểm tra bằng dữ liệu thử cục bộ, không tạo dữ liệu thử vào hệ thống khách. Nhật ký tại `artifacts/vietnix/production-changes-live.txt`. Phiên kiểm tra tạm được thu hồi sau kiểm tra.
