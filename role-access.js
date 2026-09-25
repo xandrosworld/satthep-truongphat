@@ -22,7 +22,7 @@ function combine(roles){
  const types=roles.map(r=>r.role);
  out.role=types.includes('admin')?'admin':types.includes('technical')&&!out.canViewCosts?'technical':types.some(r=>['technical','estimator'].includes(r))?'estimator':types.includes('sales')?'sales':'approver';
  if(roles.length===1)out.role=roles[0].role;
- out.sections=SA.parse(out.sectionModes);out.technicalDelegation=true;
+ out.actionAccess=(typeof module!=='undefined'&&module.exports?require('./action-access.js'):root.TPActionAccess).combine(roles);out.sections=SA.parse(out.sectionModes);out.technicalDelegation=true;
  return out;
 }
 const api={combine,workRoles,stages,flags,matrixRole};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPRoleAccess=api;

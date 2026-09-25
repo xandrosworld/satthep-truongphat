@@ -1,7 +1,7 @@
 'use strict';
 const {randomUUID}=require('node:crypto'),{fields}=require('../personnel-fields.js');
 function createPersonnel({sql,fail,readBody,transaction,audit,get,validate,apply,write,effective,addUser,accounts}){
- const admin=u=>u.role==='admin',allowed=u=>admin(u)||(get().personnelEditors||[]).includes(u.id);
+ const AA=require('../action-access.js'),admin=u=>u.role==='admin',allowed=u=>AA.allows(u,'personnel','view',admin(u)||(get().personnelEditors||[]).includes(u.id)),review=u=>AA.allows(u,'personnel','review',admin(u));
  const cleanText=(v,max=2000)=>{if(v==null)return '';if(typeof v!=='string'||v.length>max)fail(400,'Thông tin hồ sơ không hợp lệ hoặc quá dài');return v.trim();};
  function date(v){const s=cleanText(v,10);if(s&&(!/^\d{4}-\d{2}-\d{2}$/.test(s)||!Number.isFinite(Date.parse(s))||new Date(s).toISOString().slice(0,10)!==s))fail(400,'Ngày trong hồ sơ không hợp lệ');return s;}
  function record(raw,old,d){
@@ -22,7 +22,7 @@ function createPersonnel({sql,fail,readBody,transaction,audit,get,validate,apply
   if(!route.startsWith('/api/personnel'))return false;
   if(route==='/api/personnel/access'&&req.method==='GET'){send(200,{allowed:allowed(user),admin:admin(user)});return true;}
   if(!allowed(user))fail(403,'Chưa được cấp quyền quản lý hồ sơ nhân sự');
-  if(route==='/api/personnel'&&req.method==='GET'){const d=get();send(200,{...d,canApprove:admin(user),requests:(d.personnelRequests||[]).filter(r=>admin(user)||r.actorId===user.id),users:admin(user)?sql.prepare('SELECT id,name,username,active FROM users WHERE deleted_at IS NULL').all():[]});return true;}
+  if(route==='/api/personnel'&&req.method==='GET'){const d=get();send(200,{...d,canApprove:review(user),requests:(d.personnelRequests||[]).filter(r=>review(user)||r.actorId===user.id),users:admin(user)?sql.prepare('SELECT id,name,username,active FROM users WHERE deleted_at IS NULL').all():[]});return true;}
   if(req.method!=='POST')fail(405,'Phương thức không hỗ trợ');const b=await readBody(req,500000);
   const result=transaction(()=>{const d=get();if(b.expectedVersion!==d.version)fail(409,'Hồ sơ đã thay đổi; tải lại trước khi lưu');d.personnelRequests??=[];
    if(route==='/api/personnel/editors'){if(!admin(user))fail(403,'Chỉ quản trị được phân quyền nhân sự');if(!Array.isArray(b.ids)||b.ids.some(id=>!sql.prepare('SELECT 1 FROM users WHERE id=? AND active=1 AND deleted_at IS NULL').get(id)))fail(400,'Tài khoản phụ trách không hợp lệ');d.personnelEditors=[...new Set(b.ids)];audit(user,'personnel:editors','1');return save(d,user);}
@@ -37,8 +37,9 @@ function createPersonnel({sql,fail,readBody,transaction,audit,get,validate,apply
     d.personnelRequests.push({id:randomUUID(),kind:'activation',employeeId:e.id,status:'pending',actorId:user.id,actor:user.name,at:new Date().toISOString()});audit(user,'personnel:activation',e.id);return save(d,user);
    }
    if(route==='/api/personnel/review'){
-    if(!admin(user))fail(403,'Chỉ quản trị được duyệt hồ sơ và kích hoạt');const r=d.personnelRequests.find(r=>r.id===b.id);if(!r||r.status!=='pending')fail(409,'Yêu cầu không còn chờ duyệt');if(!['approve','reject'].includes(b.action))fail(400,'Chọn duyệt hoặc từ chối');const reason=cleanText(b.reason,1000);if(b.action==='reject'&&!reason)fail(400,'Nhập lý do từ chối');
+    if(!review(user))fail(403,'Chưa có quyền duyệt hồ sơ');const r=d.personnelRequests.find(r=>r.id===b.id);if(!r||r.status!=='pending')fail(409,'Yêu cầu không còn chờ duyệt');if(!['approve','reject'].includes(b.action))fail(400,'Chọn duyệt hoặc từ chối');const reason=cleanText(b.reason,1000);if(b.action==='reject'&&!reason)fail(400,'Nhập lý do từ chối');
     if(b.action==='approve'){
+     if(!admin(user)&&(r.kind==='activation'||JSON.stringify(r.employee?.positionIds||[])!==JSON.stringify(r.before?.positionIds||[])||r.before?.userId&&r.employee.active!==r.before.active))fail(403,'Thay đổi vị trí, trạng thái tài khoản và kích hoạt cần quản trị duyệt');
      if(r.kind==='profile'){
       const old=d.employees.find(e=>e.id===r.employeeId);if(JSON.stringify(old||null)!==JSON.stringify(r.before))fail(409,'Hồ sơ gốc đã thay đổi; từ chối để khai lại trên bản mới');
       const e=record(r.employee,old,d);if(old)d.employees=d.employees.map(x=>x.id===e.id?e:x);else d.employees.push(e);

@@ -2,7 +2,7 @@
 const C=require('../core.js'),P=require('../pricing-core.js');
 const ROLES=['admin','estimator','approver','sales','technical'];
 const SA=require('../section-access.js');
-function permissions(user){
+function basePermissions(user){
  if(typeof user==='string')user={role:user};
  const sectionModes=SA.modes(user),viewSections=SA.keys.filter(k=>sectionModes[k]!=='none');
  if(user?.role==='technical'&&!(user.technical_delegated&&user.can_view_costs)){const safe=require('../technical-core.js').catalogSections,sections=SA.sections(user).filter(k=>['customer','bom','operations',...(user.technical_delegated?safe:[])].includes(k));return {sectionModes,viewSections,catalogRead:(user.role!=='technical'||!!user.technical_delegated)&&viewSections.some(k=>SA.catalogKeys.includes(k)),...require('./formula-access.cjs').rights(user,sections),technical:true,edit:sections.some(k=>!safe.includes(k)),approve:false,users:false,catalog:sections.some(k=>safe.includes(k)),costs:false,sections,factors:false,belowCost:false,manage:false,commercial:false};}
@@ -10,6 +10,7 @@ function permissions(user){
  return {sectionModes,viewSections,catalogRead:(user.role!=='technical'||!!user.technical_delegated)&&viewSections.some(k=>SA.catalogKeys.includes(k)),...require('./formula-access.cjs').rights(user,sections),customers:sections.includes('customer')&&(edit||role==='sales'),edit,approve,users:role==='admin',catalog:costs&&sections.some(k=>SA.catalogKeys.includes(k)),costs,sections,factors:costs&&sectionModes.factors==='configure'&&sections.includes('factors')&&(user.can_factors==null?['admin','estimator'].includes(role):!!user.can_factors),belowCost:approve&&(user.can_below_cost==null?role==='admin':!!user.can_below_cost),manage:edit&&sections.includes('manage'),commercial:sections.includes('commercial')&&(costs||role==='sales')};
 }
 
+function permissions(user){const p=basePermissions(user),A=require('../action-access.js');if(A.explicit(user)&&user.role!=='admin'){p.edit&&=A.allows(user,'quotes','edit');p.manage&&=A.allows(user,'quotes','create')||A.allows(user,'quotes','submit');p.approve&&=A.allows(user,'quotes','approve');p.reopen&&=A.allows(user,'quotes','reopen');p.belowCost&&=p.approve;p.customers=p.sectionModes.customer!=='none'&&A.allows(user,'customers','view');}return {...p,actionAccess:A.explicit(user)?A.parse(user.action_access??user.actionAccess):null};}
 const FACTOR_KEYS=['factorSuggestions','suggestionCustomerType','costSequence','overhead','management','special','profit','processing','order','reserve','customer','salesFactors','productionFactors','tmcLoss','tmcTables','tmcLaborOperation','productGroups','costFlows','operationPriceTables'];
 // Per-job complexity is a technical declaration governed by the operations section.
 // Commercial factors and shared rate tables remain protected here.

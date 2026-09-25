@@ -27,6 +27,7 @@ Tài liệu làm việc cho các đợt tiếp theo: bám luồng demo, triển 
 ### Đã triển khai, có kiểm chứng
 
 - [x] Tách menu Nhân sự / Cơ cấu tổ chức / Vai trò & phân quyền.
+- [x] Bổ sung ma trận thao tác theo phân hệ/danh mục, quyền tùy chỉnh và phạm vi dữ liệu; cộng quyền theo nhiều vị trí, thu hồi phiên khi thay quyền. Kiểm chứng các phân hệ đang có, không tính các nghiệp vụ tương lai là đã hoàn thành. Chi tiết và giới hạn: [hướng dẫn bộ quyền](docs/bo-quyen-theo-ma-tran.md), `tests/action-access.test.cjs`, `tests/action-access-browser.cjs`. Chưa thay cho xác nhận nghiệm thu của khách.
 - [x] Cơ cấu nhiều cấp, vị trí kiêm nhiệm, bộ quyền dùng chung; quản lý giao việc trong phạm vi cơ cấu.
 - [x] Thêm luồng công việc và sắp xếp đơn vị cùng cấp. Danh mục luồng này **không phải** bộ máy tự thiết kế quy trình phê duyệt bất kỳ.
 - [x] Ngày vào/kết thúc làm việc, nội dung phụ trách; bộ lọc, thống kê, Excel nhân sự; giữ lịch sử hồ sơ có tài khoản.

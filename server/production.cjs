@@ -15,9 +15,9 @@ function createProduction({sql,fail,readBody,transaction,audit}){
  sql.exec(`CREATE TABLE IF NOT EXISTS production_jobs(id TEXT PRIMARY KEY,code TEXT UNIQUE NOT NULL,order_id TEXT NOT NULL REFERENCES orders(id),product_id TEXT NOT NULL,quantity REAL NOT NULL,version INTEGER NOT NULL,state TEXT NOT NULL,packet TEXT NOT NULL,progress TEXT NOT NULL,created TEXT NOT NULL,updated TEXT NOT NULL,actor TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS production_events(seq INTEGER PRIMARY KEY AUTOINCREMENT,job_id TEXT NOT NULL REFERENCES production_jobs(id),at TEXT NOT NULL,actor TEXT NOT NULL,detail TEXT NOT NULL);`);
  const one=(s,...a)=>sql.prepare(s).get(...a),all=(s,...a)=>sql.prepare(s).all(...a);
- const canIssue=u=>u.role==='admin'||u.role==='estimator'&&require('./access.cjs').permissions(u).manage;
- const canWork=u=>canIssue(u)||u.role==='technical'&&require('./access.cjs').permissions(u).sections.includes('operations');
- const canRead=u=>u.role==='admin'||['technical','estimator','approver'].includes(u.role);
+ const AA=require('../action-access.js');const canIssue=u=>AA.allows(u,'production','issue',u.role==='admin'||u.role==='estimator'&&require('./access.cjs').permissions(u).manage);
+ const canWork=u=>AA.explicit(u)?['edit','qc','complete'].some(a=>AA.allows(u,'production',a)):canIssue(u)||u.role==='technical'&&require('./access.cjs').permissions(u).sections.includes('operations');
+ const canRead=u=>AA.allows(u,'production','view',u.role==='admin'||['technical','estimator','approver'].includes(u.role));
  const read=j=>({...pick(j,['id','code','order_id','product_id','quantity','version','state','created','updated']),packet:JSON.parse(j.packet),progress:JSON.parse(j.progress)});
  const str=(v,max=1000)=>{if(typeof v!=='string'||v.length>max)fail(400,'Nội dung không hợp lệ');return v.trim();};
  const num=(v,max)=>{if(typeof v!=='number'||!Number.isFinite(v)||v<0||v>max)fail(400,'Số lượng không hợp lệ');return v;};

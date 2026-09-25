@@ -28,8 +28,8 @@ function createDataAccess({sql,fail}){
      const section=['customer','customerInfo','request','project','attachments','sourceFiles'].includes(k)?'customer':k==='products'?'bom':['ratesSnapshot','operationColumns','operationMethods','operationPriceOptions'].includes(k)?'operations':['expenses','deviceInstallations'].includes(k)?'logistics':null;
      if(section&&modes[section]==='none'){hide(k);continue;}
     }
-    const catalogs={materials:'catalogMaterials',materialPrices:'catalogMaterials',rules:'catalogRules',shapeDefinitions:'catalogRules',stockSizes:'catalogMaterials',library:'catalogLibrary',rates:'catalogOperations',pricingDefaults:'catalogOperations'};
-    if(scoped&&(o.version===2||o.materials&&o.rates)&&catalogs[k]&&modes[catalogs[k]]==='none'){hide(k);continue;}
+    const actions=require('../action-access.js');const catalogs={materials:'catalogMaterials',materialPrices:'catalogMaterials',rules:'catalogRules',shapeDefinitions:'catalogRules',stockSizes:'catalogMaterials',library:'catalogLibrary',rates:'catalogOperations',pricingDefaults:'catalogOperations'};
+    if(scoped&&(o.version===2||o.materials&&o.rates)&&catalogs[k]&&(modes[catalogs[k]]==='none'||!actions.allows(user,catalogs[k],'view')&&!(k==='rates'&&actions.allows(user,'catalogTechnicalOperations','view')))){hide(k);continue;}
     if(scoped&&o.kind&&['product','material','component'].includes(o.kind)){const section=k==='ops'?'operations':['transport','install','outsource','freightIn','freightOut'].includes(k)?'logistics':null;if(section&&modes[section]==='none'){hide(k);continue;}}
     if(!['permissions','user','sectionModes'].includes(k))walk(o[k],k);
    }
@@ -37,7 +37,7 @@ function createDataAccess({sql,fail}){
   }walk(out);return out;
  }
  function hydrate(value,user){const out=copy(value);function walk(o){if(!o||typeof o!=='object')return;if(o.__accessRef){const row=sql.prepare('SELECT value FROM access_refs WHERE token=? AND user_id=?').get(o.__accessRef,user.id);if(!row)fail(403,'Dữ liệu bảo vệ không thuộc tài khoản. Tải lại dữ liệu.');const {saved,mask}=JSON.parse(row.value);for(const k of Object.keys(saved)){if(o[k]!==undefined&&!SA.equal(o[k],mask[k]))fail(403,'Không được sửa dữ liệu đang ẩn: '+k);o[k]=saved[k];}delete o.__accessRef;}for(const v of Object.values(o))walk(v);}walk(out);return out;}
- function guardRoute(route,method,user){if(user.role==='admin'||!explicit(user))return;const m=SA.modes(user);const scopes=[[/^\/api\/(orders|production)(?:\/|$)/,'commercial'],[/^\/api\/quotes\/[^/]+\/(commercial|revisions|revision)/,'commercial'],[/^\/api\/intake\//,'customer'],[/^\/api\/operation-catalog$/,'operations'],[/^\/api\/commercial/,'commercial']];for(const [re,k]of scopes)if(re.test(route)&&m[k]==='none')fail(403,'Không được xem phần '+SA.labels[k]);}
+ function guardRoute(route,method,user){if(user.role==='admin'||!explicit(user))return;if(require('../action-access.js').explicit(user)&&/^\/api\/(production|orders)(?:\/|$)/.test(route))return;const m=SA.modes(user);const scopes=[[/^\/api\/(orders|production)(?:\/|$)/,'commercial'],[/^\/api\/quotes\/[^/]+\/(commercial|revisions|revision)/,'commercial'],[/^\/api\/intake\//,'customer'],[/^\/api\/operation-catalog$/,'operations'],[/^\/api\/commercial/,'commercial']];for(const [re,k]of scopes)if(re.test(route)&&m[k]==='none')fail(403,'Không được xem phần '+SA.labels[k]);}
  return {protect,hydrate,hideFactors,guardRoute};
 }
 module.exports={createDataAccess};
