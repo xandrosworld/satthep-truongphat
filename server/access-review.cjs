@@ -4,7 +4,7 @@ const SA=require('../section-access.js'),{permissions}=require('./access.cjs');
 function createAccessReview({sql,fail,organization,dataAccess}){
  return {handle({req,route,user,send}){
   if(!['/api/access-review','/api/audit-search','/api/access-history'].includes(route))return false;
-  if(user.role!=='admin')fail(403,'Chỉ Admin được rà soát quyền và nhật ký');
+  require('./governance.cjs').need(user,'audit','view',fail);
   if(req.method!=='GET')fail(405,'Chỉ hỗ trợ xem dữ liệu');
   if(route==='/api/access-review'){
    const d=organization.get(),roles=sql.prepare('SELECT id,name,version,document FROM role_templates ORDER BY name').all().map(r=>({...JSON.parse(r.document),id:r.id,version:r.version}));

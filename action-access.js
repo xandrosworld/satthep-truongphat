@@ -14,7 +14,8 @@ const modules={
  chat:['Chat nội bộ',['view','send']]
 };
 const catalogs={catalogMaterials:'Vật tư và khổ mua',catalogTechnicalOperations:'Công đoạn kỹ thuật',catalogOperations:'Đơn giá công đoạn',catalogLogistics:'Vận chuyển và lắp đặt',catalogRules:'Quy ước và công thức',catalogLibrary:'Thư viện mẫu'};
-const schema={...modules,...Object.fromEntries(Object.entries(catalogs).map(([k,v])=>[k,[v,['view','create','edit','delete']]]))};
+const governance={accounts:['Tài khoản',['view','create','edit','delete','activate','assign']],roles:['Bộ quyền',['view','create','edit','delete']],organization:['Cơ cấu và bố trí nhân sự',['view','edit']],formulaLocks:['Khóa / mở công thức và hệ số',['view','edit']],audit:['Nhật ký và rà soát quyền',['view','export']],backup:['Sao lưu toàn bộ dữ liệu',['view','export']]};
+const schema={...modules,...governance,...Object.fromEntries(Object.entries(catalogs).map(([k,v])=>[k,[v,['view','create','edit','delete']]]))};
 function parse(value){if(value==null)return null;if(typeof value==='string')value=JSON.parse(value);if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Ma trận thao tác không hợp lệ');const out={};for(const [key,list]of Object.entries(value)){if(!Object.hasOwn(schema,key)||!Array.isArray(list)||list.some(a=>!schema[key][1].includes(a)))throw Error('Quyền thao tác không được hỗ trợ: '+key);out[key]=schema[key][1].filter(a=>list.includes(a));if(out[key].some(a=>a!=='view')&&!out[key].includes('view'))throw Error('Cần cấp quyền Xem trước: '+schema[key][0]);}return out;}
 function explicit(u){return u?.action_access!=null||u?.actionAccess!=null;}
 function allows(u,key,action,legacy=true){if(u?.role==='admin')return true;if(!explicit(u))return legacy;try{return !!parse(u.action_access??u.actionAccess)?.[key]?.includes(action);}catch{return false;}}
@@ -29,5 +30,5 @@ function legacy(r){
  if(r.role==='admin')for(const [k,v]of Object.entries(schema))out[k]=[...v[1]];return out;
 }
 function combine(roles){if(!roles.some(explicit))return null;const result={};for(const r of roles){const rights=explicit(r)?parse(r.actionAccess??r.action_access):legacy(r);for(const [key,list]of Object.entries(rights))result[key]=schema[key][1].filter(a=>list.includes(a)||(result[key]||[]).includes(a));}return result;}
-const api={labels,modules,catalogs,schema,parse,explicit,allows,combine,legacy};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPActionAccess=api;
+const api={labels,modules,catalogs,governance,schema,parse,explicit,allows,combine,legacy};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPActionAccess=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
