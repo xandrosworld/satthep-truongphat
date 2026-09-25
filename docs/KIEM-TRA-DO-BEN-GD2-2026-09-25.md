@@ -74,3 +74,10 @@ Diễn tập máy chủ: `sh /opt/truongphat/deploy/vietnix/rehearse.sh`. Cần 
 Kết quả: **760 kiểm thử tự động đạt**, kiểm tra lại nhóm danh sách/thông báo/ghi đồng thời sau điều chỉnh cache đạt; 2 kịch bản trình duyệt độ bền và workspace đạt. Log cục bộ: `artifacts/resilience-all-tests.log`, `resilience-unit.log`, `resilience-browser.log`, `resilience-workspace.log`, `recovery-final.log`, `load-local.json`, `load-server-final.json`, `load-onecpu.json`, `load-twocpu.json`. Dữ liệu thực và cấu hình bí mật không nằm trong các báo cáo tải.
 
 Các việc vẫn cần khách: chạy bộ dữ liệu nghiệp vụ có đáp án, rà luồng sản xuất, cấu hình vận hành, đào tạo và ký nghiệm thu. Không tự đóng các mục đó bằng kết quả kiểm thử tự động.
+
+## Triển khai bản sửa
+
+- Bản chạy: **21c38ac**, đã đẩy nguồn và triển khai sau khi sao lưu DB. Bản mã trước thay đổi nằm tại `/root/truongphat-before-21c38ac.tar` trên máy chủ.
+- Sau triển khai: container `healthy`, HTTPS `/healthz` trả `ok: true`, trang chủ và `/api/status` trả 200; HTML thực tế có bản sửa giữ thay đổi khi lưu chậm và chống lưu lặp.
+- Không ghi dữ liệu mẫu, chứng từ hoặc cấp lại quyền người dùng trên production. Các container tải/khôi phục đã kết thúc; bản phục hồi đã xóa các phiên kiểm tra.
+- Dữ liệu diễn tập và gói cấu hình được giữ hạn chế quyền tại `/srv/truongphat/rehearsals/20260925T154012Z/`; số đo cuối nằm trong `load-final.json`, `load-onecpu.json`, `load-twocpu.json`, báo cáo phục hồi trong `restored-verified/report.json`.
