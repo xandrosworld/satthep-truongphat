@@ -1,0 +1,12 @@
+'use strict';
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs');
+(async()=>{const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const b=await chromium.launch({channel:'msedge',headless:true});try{const p=await b.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://127.0.0.1:'+app.server.address().port);await p.waitForFunction(()=>Team.available);
+ const id=await p.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password:'Extra-factor-ui-2026!'}));const d=TPPrice.demoSeed();d.quote.pricing.salesFactors=[{id:'existing',name:'Existing',percent:2,reason:'Existing'}];const q=await teamApi('quotes','POST',{document:d});await teamLoad(q.id);tab='pricing';render();paPolicy();return q.id;});
+ await expect(p.locator('[data-b3="add-production-factor"]')).toBeVisible();await expect(p.locator('[data-pa="add-sales-factor"]')).toBeVisible();
+ await p.locator('[data-b3="add-production-factor"]').click();await expect(p.locator('#pa-production-factors .pa-sales-factor')).toHaveCount(1);
+ await p.evaluate(async()=>{closeDialog();await teamApi('users','POST',{username:'editor',name:'Editor',role:'estimator',password:'Extra-factor-ui-2026!',canEditFactors:true});teamSession(await teamApi('login','POST',{username:'editor',password:'Extra-factor-ui-2026!'}));});
+ await p.evaluate(async id=>{await teamLoad(id);tab='pricing';render();paPolicy();},id);
+ expect(await p.evaluate(()=>Team.permissions.factors)).toBe(true);await expect(p.locator('[data-b3="add-production-factor"]')).toHaveCount(0);await expect(p.locator('[data-pa="add-sales-factor"]')).toHaveCount(0);await expect(p.locator('[name="extra-name-existing"]')).toHaveAttribute('readonly','');await expect(p.locator('[name="extra-value-existing"]')).toBeEnabled();
+ await p.evaluate(()=>{const x=document.createElement('button');x.dataset.b3='add-production-factor';document.body.append(x);x.click();x.remove();});await expect(p.locator('#pa-production-factors .pa-sales-factor')).toHaveCount(0);
+ await p.setViewportSize({width:390,height:844});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);console.log('PASS Admin add controls; delegated editor cannot add, including injected click; existing percentages editable; mobile');
+ }finally{await b.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
