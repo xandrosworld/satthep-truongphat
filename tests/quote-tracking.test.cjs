@@ -9,7 +9,13 @@ test('list tracking: permissions, concurrent saves, sent evidence and immutable 
  let body={status:'sent',reason:'Customer received quotation',expectedVersion:0,expectedQuoteVersion:1,offerVersion:null};A.equal((await call(path,'POST',body)).status,409);A.equal((await call(path,'POST',body,tech)).status,403);A.equal((await call(path,'POST',body,{...session,csrf:''})).status,403);
  A.equal((await call('quotes/'+id+'/submit','POST',{expectedVersion:1})).status,200);A.equal((await call('quotes/'+id+'/approve','POST',{expectedVersion:2})).status,200);
  const before=app.sql.prepare('SELECT document FROM revisions WHERE id=? AND version=3').get(id).document;body={...body,offerVersion:3,expectedQuoteVersion:3,status:'accepted'};
- A.equal((await call(path,'POST',body)).status,200);A.equal((await call(path,'POST',body)).status,409);let list=(await call('quotes')).data;A.equal(list.find(q=>q.id===id).trackingStatus,'accepted');A.equal(list.find(q=>q.id===id).progress.sentCount,1);
- A.equal((await call(path,'POST',{...body,status:'draft',expectedVersion:1})).status,200);const state=(await call('quotes/'+id+'/workflow')).data;A.equal(state.storedStatus,'draft');A.ok(state.events.some(e=>e.to==='sent'&&e.offerVersion===3));A.equal((await call('quotes/'+id+'/formula-update')).data.sent,true);
- A.equal(app.sql.prepare('SELECT document FROM revisions WHERE id=? AND version=3').get(id).document,before);A.equal((await call('quotes/'+id)).data.version,3);A.equal((await call(path,'POST',{...body,status:'invalid',expectedVersion:2})).status,400);
+ A.equal((await call(path,'POST',body)).status,409);
+ const initial=(await call('quotes/'+id+'/followup')).data,actor=session.data.user.id;
+ A.equal((await call('quotes/'+id+'/followup/assign','POST',{expectedVersion:initial.revision,offerVersion:3,senderId:actor,careOwnerId:actor})).status,200);
+ let state=(await call('quotes/'+id+'/workflow')).data;
+ body={expectedVersion:state.version,offerVersion:3,status:'sent',confirmedSent:true,reason:'Sent approved offer',recipient:'Customer',channel:'Email',careOwnerId:actor};
+ A.equal((await call('quotes/'+id+'/workflow','POST',body)).status,200);A.equal((await call('quotes/'+id+'/workflow','POST',body)).status,409);
+ const list=(await call('quotes')).data;A.equal(list.find(q=>q.id===id).trackingStatus,'sent');A.equal(list.find(q=>q.id===id).progress.sentCount,1);
+ A.equal((await call(path,'POST',{...body,status:'draft'})).status,409);state=(await call('quotes/'+id+'/workflow')).data;A.equal(state.storedStatus,'sent');A.ok(state.events.some(e=>e.to==='sent'&&e.offerVersion===3));A.equal((await call('quotes/'+id+'/formula-update')).data.sent,true);
+ A.equal(app.sql.prepare('SELECT document FROM revisions WHERE id=? AND version=3').get(id).document,before);A.equal((await call('quotes/'+id)).data.version,3);
 });

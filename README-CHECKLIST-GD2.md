@@ -6,6 +6,8 @@ Tài liệu làm việc cho các đợt tiếp theo: bám luồng demo, triển 
 
 ## 1. Căn cứ và thứ tự áp dụng
 
+Cập nhật 25/09/2026: hoàn thiện [luồng gửi báo giá và chăm sóc sau gửi](docs/GUI-BAO-GIA-VA-CHAM-SOC.md), gồm phân công/thông báo sau duyệt, xác nhận gửi theo phiên bản và theo dõi phản hồi/vướng mắc/ngày chăm sóc. Đã tự kiểm thử; chưa đồng nghĩa khách nghiệm thu toàn bộ GĐ2.
+
 1. [Hợp đồng và PL01–03](hop-dong-truong-phat-2026-09-10/BAN_KY_CHINH_THUC/HOP_DONG_XANDRO_TRUONG_PHAT_65TR_BAN_KY.docx): 203 chức năng, BS01–BS10 và điều kiện bàn giao.
 2. Các URD/thay đổi đã được hai bên xác nhận; phần không sửa giữ theo hợp đồng.
 3. [Demo khách gửi](https://6a8149e7dcc8070ad3049087--sunny-sherbet-713baf.netlify.app/): tham khảo bố cục, điều hướng và luồng nghiệp vụ; không sao chép dữ liệu mẫu hay lấy chức năng demo làm giới hạn hợp đồng.

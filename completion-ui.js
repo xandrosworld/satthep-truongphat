@@ -6,6 +6,7 @@ function clReadMass(m,f){const spec=C.copy(m),mode=f.get('mass-mode');delete spe
 async function clWorkflow(requestedVersion){
   const remote=Team.loaded||Team.permissions?.costs===false,id=Team.permissions?.costs===false?Team.offerId:teamCurrent()?.id;
   if(remote&&!id)return toast('Mở một báo giá trước');
+  if(remote)return offerFollowupOpen(id,requestedVersion);
   const active=db.quote,versions=remote?[]:quoteVersions(),latest=versions.at(-1),chosen=versions.find(h=>h.version===requestedVersion)||latest,q=remote?(Team.permissions?.costs===false?{...Team.offer,status:'approved'}:db.quote):chosen?.quote||db.quote,localVersion=chosen?.version||0;
   const state=remote?await teamApi('quotes/'+id+'/workflow'+(requestedVersion?'/'+requestedVersion:'')):TPComplete.workflow(q,active.commercial,undefined,localVersion),version=remote?state.offerVersion:localVersion,canEdit=!!version&&(!remote||Team.permissions?.edit||Team.user?.role==='sales');
   const latestVersion=remote?state.latestOfferVersion:latest?.version||0,available=remote?state.approvedVersions||[]:versions;

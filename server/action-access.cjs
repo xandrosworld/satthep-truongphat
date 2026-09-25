@@ -6,6 +6,7 @@ function guardRoute(route,method,user,fail){
  const read=['GET','HEAD'].includes(method),need=(k,a)=>requireAction(user,k,a,fail);
  if(/^\/api\/(quotes|quote-intakes)(\/|$)/.test(route)){
   need('quotes','view');if(read)return;
+  if(/\/followup\/assign$/.test(route))return need('quotes','assign');
   if(/\/order$/.test(route))return need('orders','create');
   const action=/\/approve$/.test(route)?'approve':/\/submit$/.test(route)?'submit':/\/(reopen|restore)$/.test(route)?'reopen':/\/handoff\//.test(route)?'confirm':/\/work$/.test(route)?'assign':method==='DELETE'?'delete':/^\/api\/(quotes|quote-intakes)$/.test(route)?'create':'edit';return need('quotes',action);
  }

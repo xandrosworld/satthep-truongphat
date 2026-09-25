@@ -9,7 +9,7 @@ function fingerprints(document){const q=Technical.project(document).quote;for(co
  return {intake:hash({customer:q.customer,project:q.project,customerInfo:q.customerInfo,request:q.request}),technical:hash(q),materials:hash(Tax.canonicalCostSignature(Tax.costSignature(document.quote)))};}
 const canIntake=r=>r.edit&&r.sections.includes('customer');
 const canTechnical=r=>r.edit&&r.sections.some(s=>['bom','operations'].includes(s)),canMaterials=r=>r.edit&&r.costs&&r.sections.includes('materials');
-const receives=(r,stage)=>stage==='price-review'?canMaterials(r):stage==='assigned-technical'?canTechnical(r):stage==='assigned-materials'?canMaterials(r):stage==='intake'?(r.users||r.customers||canIntake(r)||canTechnical(r)||canMaterials(r)): ['created','intake'].includes(stage)?canTechnical(r):stage==='technical'?(canMaterials(r)||r.approve):r.approve;
+const receives=(r,stage)=>stage.startsWith('offer-')?r.commercial&&(r.actionAccess===null||r.actionAccess?.quotes?.includes('view')):stage==='price-review'?canMaterials(r):stage==='assigned-technical'?canTechnical(r):stage==='assigned-materials'?canMaterials(r):stage==='intake'?(r.users||r.customers||canIntake(r)||canTechnical(r)||canMaterials(r)): ['created','intake'].includes(stage)?canTechnical(r):stage==='technical'?(canMaterials(r)||r.approve):r.approve;
 function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
  sql.exec(`CREATE TABLE IF NOT EXISTS quote_handoffs(quote_id TEXT PRIMARY KEY REFERENCES quotes(id),document TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS handoff_events(id TEXT PRIMARY KEY,quote_id TEXT NOT NULL REFERENCES quotes(id),stage TEXT NOT NULL,quote_version INTEGER NOT NULL,actor TEXT NOT NULL,at TEXT NOT NULL,note TEXT NOT NULL);

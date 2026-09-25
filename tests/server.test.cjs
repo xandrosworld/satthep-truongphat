@@ -25,7 +25,7 @@ test('server: public specification describes delivered package, not suppressed f
   n.ops[0].afterPackage=true;assert.ok(publicOffer(document,P.calculate(document)).products[0].specification.includes(finishingName));
 });
 async function setup(base){const r=await call(base,'setup',{method:'POST',body:account('admin','admin')});assert.equal(r.status,201);return {cookie:r.cookie,csrf:r.data.csrf,user:r.data.user};}
-async function login(base,username){const r=await call(base,'login',{method:'POST',body:account(username)});assert.equal(r.status,200);return {cookie:r.cookie,csrf:r.data.csrf};}
+async function login(base,username){const r=await call(base,'login',{method:'POST',body:account(username)});assert.equal(r.status,200);return {cookie:r.cookie,csrf:r.data.csrf,user:r.data.user};}
 test('server: first-run setup, no password defaults, authenticated reads and no credential leakage',async t=>{
   const {base}=await harness(t);assert.equal((await call(base,'status')).data.configured,false);
   assert.equal((await call(base,'quotes')).status,401);
@@ -158,15 +158,15 @@ test('server: 50 distinct sessions can read and save concurrently without docume
 test('server: commercial tracking is independent, versioned and tied to immutable sent offer',async t=>{
   const {base}=await harness(t),admin=await setup(base);await call(base,'users',{method:'POST',session:admin,body:account('sales','sales')});const sales=await login(base,'sales');const document=P.demoSeed();document.quote.date=require('../completion-core.js').todayVN();document.materialPrices=[{substance:'Thép',grade:'CT3',unit:'kg',price:21000}];let q=await call(base,'quotes',{method:'POST',session:admin,body:{document}}),id=q.data.id;
   const A=assert;A.equal((await call(base,'quotes/'+id+'/workflow',{session:sales})).status,403);await call(base,'quotes/'+id+'/submit',{method:'POST',session:admin,body:{expectedVersion:1}});await call(base,'quotes/'+id+'/approve',{method:'POST',session:admin,body:{expectedVersion:2}});
-  let state=(await call(base,'quotes/'+id+'/workflow',{session:sales})).data;A.equal(state.offerVersion,3);let body={expectedVersion:0,offerVersion:3,status:'sent',reason:'Đã chuyển file thử nghiệm',validUntil:state.validUntil};A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body})).status,422);body.confirmedSent=true;A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body})).status,200);A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body})).status,409);
+  await assignOfferSender(base,admin,sales,id);let state=(await call(base,'quotes/'+id+'/workflow',{session:sales})).data;A.equal(state.offerVersion,3);let body={expectedVersion:state.version,careOwnerId:sales.user.id,recipient:'Customer',channel:'Email',offerVersion:3,status:'sent',reason:'Đã chuyển file thử nghiệm',validUntil:state.validUntil};A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body})).status,400);body.confirmedSent=true;A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body})).status,200);A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body})).status,409);
   A.equal((await call(base,'quotes',{session:sales})).data[0].commercialStatus,'sent');A.equal((await call(base,'quotes/'+id,{session:admin})).data.version,3);A.equal((await call(base,'quotes/'+id,{session:sales})).data.document,undefined);
-  const reopen=await call(base,'quotes/'+id+'/reopen',{method:'POST',session:admin,body:{expectedVersion:3,reason:'Điều chỉnh'}});A.equal(reopen.status,200);A.equal((await call(base,'quotes/'+id+'/workflow',{session:sales})).data.offerVersion,3);body={...body,status:'accepted',expectedVersion:1};A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body})).status,200);
+  const reopen=await call(base,'quotes/'+id+'/reopen',{method:'POST',session:admin,body:{expectedVersion:3,reason:'Điều chỉnh'}});A.equal(reopen.status,200);A.equal((await call(base,'quotes/'+id+'/workflow',{session:sales})).data.offerVersion,3);body={...body,status:'accepted',expectedVersion:3};A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body})).status,200);
   await call(base,'quotes/'+id+'/submit',{method:'POST',session:admin,body:{expectedVersion:4}});await call(base,'quotes/'+id+'/approve',{method:'POST',session:admin,body:{expectedVersion:5}});state=(await call(base,'quotes/'+id+'/workflow',{session:sales})).data;A.equal(state.status,'draft');A.equal(state.offerVersion,6);A.equal(state.events.length,2);A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body:{...body,expectedVersion:2}})).status,409);
   const previous=(await call(base,'quotes/'+id+'/workflow/3',{session:sales})).data;
   A.equal(previous.status,'accepted');A.equal(previous.latestOfferVersion,6);A.deepEqual(previous.approvedVersions,[{version:6},{version:3}]);
   A.equal((await call(base,'quotes/'+id+'/workflow/4',{session:sales})).status,409);
-  A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body:{...body,status:'negotiating',expectedVersion:2,expectedLatestVersion:3}})).status,409);
-  const followup=await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body:{...body,status:'negotiating',expectedVersion:2,expectedLatestVersion:6}});
+  A.equal((await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body:{...body,status:'negotiating',expectedVersion:5,expectedLatestVersion:3}})).status,409);
+  const followup=await call(base,'quotes/'+id+'/workflow',{method:'POST',session:sales,body:{...body,status:'negotiating',expectedVersion:5,expectedLatestVersion:6}});
   A.equal(followup.status,200);A.equal(followup.data.events.at(-1).offerVersion,3);
   A.equal((await call(base,'quotes/'+id+'/workflow',{session:sales})).data.status,'draft');
   const stored=(await call(base,'backup',{session:admin})).data;A.equal(stored.commercial.length,1);A.ok(!JSON.stringify((await call(base,'quotes',{session:sales})).data).includes('materialPrices'));
@@ -183,9 +183,9 @@ test('server: resending pins the immutable offer, audits recipient, rejects stal
  const created=await call(base,'quotes',{method:'POST',session:admin,body:{document}}),id=created.data.id,route='quotes/'+id;
  assert.equal((await call(base,route+'/submit',{method:'POST',session:admin,body:{expectedVersion:1}})).status,200);assert.equal((await call(base,route+'/approve',{method:'POST',session:admin,body:{expectedVersion:2}})).status,200);
  const original=(await call(base,route+'/revision/3',{session:admin})).data.document;
- let body={status:'sent',offerVersion:3,expectedVersion:0,reason:'Gửi QA',confirmedSent:true,recipient:'Khách QA',channel:'Zalo'};
+ await assignOfferSender(base,admin,sales,id);let body={careOwnerId:sales.user.id,status:'sent',offerVersion:3,expectedVersion:2,reason:'Gửi QA',confirmedSent:true,recipient:'Khách QA',channel:'Zalo'};
  assert.equal((await call(base,route+'/workflow',{method:'POST',session:sales,body})).status,200);
- body={...body,expectedVersion:1,resend:true,reason:'Gửi lại QA',channel:'Email'};const resent=await call(base,route+'/workflow',{method:'POST',session:sales,body});assert.equal(resent.status,200);assert.equal(resent.data.events[1].recipient,'Khách QA');assert.equal(resent.data.events[1].channel,'Email');assert.equal(resent.data.events[1].resend,true);
+ body={...body,expectedVersion:3,resend:true,reason:'Gửi lại QA',channel:'Email'};const resent=await call(base,route+'/workflow',{method:'POST',session:sales,body});assert.equal(resent.status,200);assert.equal(resent.data.events[1].recipient,'Khách QA');assert.equal(resent.data.events[1].channel,'Email');assert.equal(resent.data.events[1].resend,true);
  assert.equal((await call(base,route+'/workflow',{method:'POST',session:sales,body})).status,409);
  assert.deepEqual((await call(base,route+'/revision/3',{session:admin})).data.document,original);
  const visible=(await call(base,route+'/revision/3',{session:sales})).data;assert.equal(visible.document,undefined);assert.ok(visible.offer);assert.ok(!JSON.stringify(visible).includes('ratesSnapshot'));
@@ -199,3 +199,5 @@ test('server: quotation nesting plan round-trips and rejects duplicate plan rows
  const loaded=await call(base,'quotes/'+created.data.id,{session});assert.deepEqual(loaded.data.document.quote.nestingPlans,document.quote.nestingPlans);
  document.quote.nestingPlans.push(document.quote.nestingPlans[0]);assert.equal((await call(base,'quotes/'+created.data.id,{method:'PUT',session,body:{document,expectedVersion:1}})).status,400);
 });
+
+async function assignOfferSender(base,admin,sales,id){const state=(await call(base,'quotes/'+id+'/followup',{session:admin})).data;const response=await call(base,'quotes/'+id+'/followup/assign',{method:'POST',session:admin,body:{expectedVersion:state.revision,offerVersion:state.offerVersion,senderId:sales.user.id,careOwnerId:sales.user.id}});assert.equal(response.status,200,JSON.stringify(response.data));}
