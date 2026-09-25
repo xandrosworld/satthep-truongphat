@@ -45,7 +45,7 @@ function actionRequirement(el){
  if(d.work&&['export-workbook','export-customer-xlsx'].includes(d.work))return ['quotes','export'];
  if(d.action&&['print','export','export-csv','export-xlsx'].includes(d.action))return ['quotes','export'];
  if(d.customerExcel)return ['customers',d.customerExcel==='import'?'import':'export'];
- if(d.intake==='customer')return ['customers',d.id?'edit':'create'];if(d.intake==='start'||d.crm==='start-opportunity')return ['quotes','create'];if(d.crm==='quote')return ['quotes','view'];if(['interaction','opportunity','assign'].includes(d.crm))return ['customers','edit'];if(d.business==='commission-review')return ['costs','approve'];
+ if(d.intake==='customer')return ['customers',d.id?'edit':'create'];if(d.intake==='start'||d.crm==='start-opportunity')return ['quotes','create'];if(d.crm==='quote')return ['quotes','view'];if(['interaction','opportunity','assign','score'].includes(d.crm))return ['customers','edit'];if(d.business==='commission-review')return ['costs','approve'];
  if(el.closest('#sidebar')){if(d.page==='customers')return ['customers','view'];if(d.page==='quote')return ['quotes','view'];if(d.page==='materials')return ['catalogMaterials','view'];if(d.page==='library')return ['catalogLibrary','view'];if(d.page==='rules')return ['catalogRules','view'];}
  return null;
 }
