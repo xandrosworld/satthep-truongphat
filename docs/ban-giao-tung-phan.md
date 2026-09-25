@@ -10,3 +10,4 @@ Trong báo giá, nút **Xác nhận / bàn giao từng phần** cho chọn sản
 - Quyền xem, xác nhận kỹ thuật và xác nhận giá được kiểm tra phía máy chủ. Không dùng bàn giao từng phần để mở báo giá đã trình/duyệt.
 - Chốt toàn bộ và duyệt báo giá vẫn là bước riêng; các phần chưa hoàn thành không được tự coi là đã xác nhận.
 - Kiểm thử: 711 bài toàn bộ đạt; kiểm thử trình duyệt xác nhận kỹ thuật/giá, mở sửa, màn hình nhỏ và nhãn kích thước đạt. Kiểm tra hồi quy bàn giao toàn phần đạt.
+- Đã deploy bản `2ecc343` sau sao lưu. Kiểm tra live 1440/390 px trên báo giá có 32 dòng: mở được bảng bàn giao, nhãn kích thước đúng, không lỗi JavaScript/tràn trang. Kiểm tra live chặn yêu cầu ghi, không xác nhận thay khách. Healthcheck đạt; phiên kiểm tra tạm đã thu hồi.
