@@ -16,5 +16,5 @@ function epTrial(row,sample){
 }
 function installExpensePreviewUI(){
  const renderPrices=ipRender;ipRender=()=>renderPrices()+epSamples();
- document.addEventListener('click',e=>{const b=e.target.closest('[data-expense-preview]');if(!b)return;try{const sample=b.dataset.sample==='1',row=epRow(b.dataset.id,sample);if(!row)throw Error('Phương thức không còn trong danh mục');if(b.dataset.expensePreview==='trial')epTrial(row,sample);else if(sample&&b.dataset.expensePreview==='copy'){closeDialog();ipExpenseEdit(null,{...C.copy(row),id:'DG-'+C.uid(),enabled:false,referenceNote:'Số minh họa; cần kiểm tra đơn giá thực tế trước khi cho phép dùng trong báo giá.'});}}catch(err){inError(err);}});
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-expense-preview]');if(!b)return;try{const sample=b.dataset.sample==='1',row=epRow(b.dataset.id,sample);if(!row)throw Error('Phương thức không còn trong danh mục');if(b.dataset.expensePreview==='trial')epTrial(row,sample);else if(sample&&b.dataset.expensePreview==='copy'){closeDialog();ipExpenseEdit(null,{...C.copy(row),id:ipExpenseNewId(),enabled:false,referenceNote:'Số minh họa; cần kiểm tra đơn giá thực tế trước khi cho phép dùng trong báo giá.'});}}catch(err){inError(err);}});
 }
