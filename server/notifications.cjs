@@ -9,7 +9,7 @@ function fingerprints(document){const q=Technical.project(document).quote;for(co
  return {intake:hash({customer:q.customer,project:q.project,customerInfo:q.customerInfo,request:q.request}),technical:hash(q),materials:hash(Tax.canonicalCostSignature(Tax.costSignature(document.quote)))};}
 const canIntake=r=>r.edit&&r.sections.includes('customer');
 const canTechnical=r=>r.edit&&r.sections.some(s=>['bom','operations'].includes(s)),canMaterials=r=>r.edit&&r.costs&&r.sections.includes('materials');
-const receives=(r,stage)=>stage.startsWith('offer-')?r.commercial&&(r.actionAccess===null||r.actionAccess?.quotes?.includes('view')):stage==='price-review'?canMaterials(r):stage==='assigned-technical'?canTechnical(r):stage==='assigned-materials'?canMaterials(r):stage==='intake'?(r.users||r.customers||canIntake(r)||canTechnical(r)||canMaterials(r)): ['created','intake'].includes(stage)?canTechnical(r):stage==='technical'?(canMaterials(r)||r.approve):r.approve;
+const receives=(r,stage)=>stage==='correction'?(r.costs||r.technical)&&(r.actionAccess===null||r.actionAccess?.quotes?.includes('view')):stage.startsWith('offer-')?r.commercial&&(r.actionAccess===null||r.actionAccess?.quotes?.includes('view')):stage==='price-review'?canMaterials(r):stage==='assigned-technical'?canTechnical(r):stage==='assigned-materials'?canMaterials(r):stage==='intake'?(r.users||r.customers||canIntake(r)||canTechnical(r)||canMaterials(r)): ['created','intake'].includes(stage)?canTechnical(r):stage==='technical'?(canMaterials(r)||r.approve):r.approve;
 function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
  sql.exec(`CREATE TABLE IF NOT EXISTS quote_handoffs(quote_id TEXT PRIMARY KEY REFERENCES quotes(id),document TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS handoff_events(id TEXT PRIMARY KEY,quote_id TEXT NOT NULL REFERENCES quotes(id),stage TEXT NOT NULL,quote_version INTEGER NOT NULL,actor TEXT NOT NULL,at TEXT NOT NULL,note TEXT NOT NULL);
@@ -80,7 +80,7 @@ function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
   if(req.method==='GET'&&!match[2]){const s=state(quote);s.work.canEdit=teams.get().configured?['technical','materials'].some(stage=>teams.allowed(user,stage)):canAssign(rights);for(const key of ['intake','technical','materials'])if(s[key]){delete s[key].signature;delete s[key].technicalSignature;if(rights.technical)delete s[key].note;}send(200,s);return true;}
   if(req.method!=='POST'||!match[2])fail(405,'Phương thức không hỗ trợ');const stage=match[2];if(!(stage==='intake'?canIntake(rights):stage==='technical'?canTechnical(rights):canMaterials(rights)))fail(403,'Chưa được cấp quyền xác nhận phần này');const body=await readBody(req);
   const response=transaction(()=>{const q=getQuote(quote.id);if(q.version!==body.expectedVersion)fail(409,'Báo giá đã đổi. Tải lại bản mới trước khi xác nhận');if(q.status!=='draft')fail(409,'Chỉ xác nhận trên bản nháp hiện tại');const document=JSON.parse(q.document),fp=fingerprints(document),saved=getState(q.id),current=state(q);
-   if(match[3]){
+   if(match[3]){require('./correction-policy.cjs').guard(sql,fail,q,saved,stage,saved[stage],user);
     const reason=String(body.reason||'').trim();if(!reason||reason.length>2000)fail(400,'Nhập lý do mở sửa (tối đa 2000 ký tự)');
     const stages=['intake','technical','materials'],at=new Date().toISOString();
     if(saved[stage]?.unlocked)return {duplicate:true,state:current,recipients:0};
@@ -104,7 +104,7 @@ function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
    if(stage==='technical'){const projected=Technical.project(document),calculated=P.calculate(projected),issues=B.technicalSummary(projected.quote.products,calculated).issues;if(issues.length)fail(422,'Bổ sung dữ liệu kỹ thuật trước: '+issues.slice(0,5).join('; '));}
    if(stage==='materials'&&P.calculate(document).rows.some(r=>!r.externallySupplied&&(r.spec.price==null||r.spec.price===''||!Number.isFinite(Number(r.spec.price))||Number(r.spec.price)<0)))fail(422,'Có đơn giá vật tư chưa hợp lệ; cập nhật trước khi xác nhận');
    if(!targets.length)fail(422,'Chưa có tài khoản nhận thông báo; quản trị cần cấp quyền vật tư/phê duyệt');
-   const id=randomUUID(),at=new Date().toISOString(),note=String(body.note||'').trim().slice(0,2000),entry={targetIds,eventId:id,quoteVersion:q.version,actor:user.name,at,note,signature:fp[stage],...(stage==='materials'?{technicalSignature:fp.technical}:{})};saved[stage]=entry;
+   const id=randomUUID(),at=new Date().toISOString(),note=String(body.note||'').trim().slice(0,2000),entry={actorId:user.id,targetIds,eventId:id,quoteVersion:q.version,actor:user.name,at,note,signature:fp[stage],...(stage==='materials'?{technicalSignature:fp.technical}:{})};saved[stage]=entry;
    // Downstream confirmations remain invalid until explicitly confirmed again.
    sql.prepare('INSERT INTO quote_handoffs VALUES(?,?) ON CONFLICT(quote_id) DO UPDATE SET document=excluded.document').run(q.id,JSON.stringify(saved));sql.prepare('INSERT INTO handoff_events VALUES(?,?,?,?,?,?,?)').run(id,q.id,stage,q.version,user.id,at,note);
    for(const target of targets)sql.prepare('INSERT INTO notifications VALUES(?,?,?,NULL)').run(randomUUID(),target.id,id);

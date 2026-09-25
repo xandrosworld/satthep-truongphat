@@ -41,14 +41,14 @@ test('locked formula cannot change via catalog, quotation or library; lock CAS a
  A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:false,expectedVersion:1,reason:'Admin mở'},admin)).status,200);
  await grant(u,{canFormulaUnlock:false});A.equal((await call('catalog','PUT',{catalog:changed,expectedVersion:record.version},u.session)).status,200);
 });
-test('approved quote requires explicit reopen right; scopes, versions and revocation remain enforced',async t=>{
+test('approved quote requires approver authorization; draft restore grants and scopes remain enforced',async t=>{
  const {call,admin,create,grant}=await harness(t),u=await create('maker'),tech=await create('tech',{role:'technical',technicalDelegation:true,canViewCosts:false,canEditFactors:false,sections:['bom'],canReopen:true});
  const document=P.demoSeed(),made=await call('quotes','POST',{document},admin),id=made.data.id;
  A.equal((await call('quotes/'+id+'/submit','POST',{expectedVersion:1},admin)).status,200);A.equal((await call('quotes/'+id+'/approve','POST',{expectedVersion:2},admin)).status,200);
  A.equal((await call('quotes/'+id,'PUT',{document,expectedVersion:3},u.session)).status,409);
  for(const a of ['reopen','restore'])A.equal((await call('quotes/'+id+'/'+a,'POST',{expectedVersion:3,sourceVersion:1,reason:'Test'},u.session)).status,403);
- A.equal((await call('quotes/'+id+'/reopen','POST',{expectedVersion:3},tech.session)).status,400);
- const r=await call('quotes/'+id+'/reopen','POST',{expectedVersion:3,reason:'Kỹ thuật sửa theo yêu cầu'},tech.session);A.equal(r.status,200,JSON.stringify(r.data));A.equal(r.data.total,undefined);A.equal(r.data.version,4);
+ A.equal((await call('quotes/'+id+'/reopen','POST',{expectedVersion:3},tech.session)).status,403);
+ A.equal((await call('quotes/'+id+'/reopen','POST',{expectedVersion:3,reason:'Kỹ thuật sửa theo yêu cầu'},tech.session)).status,403);const r=await call('quotes/'+id+'/reopen','POST',{expectedVersion:3,reason:'Cho kỹ thuật sửa theo yêu cầu'},admin);A.equal(r.status,200,JSON.stringify(r.data));A.equal(r.data.version,4);
  const original=(await call('quotes/'+id+'/revision/3','GET',undefined,admin)).data;A.equal(original.status,'approved');A.equal(original.readOnly,true);
  const d=(await call('quotes/'+id,'GET',undefined,tech.session)).data.document;d.quote.customer='Not allowed';A.equal((await call('quotes/'+id,'PUT',{document:d,expectedVersion:4},tech.session)).status,403);
  await grant(u,{canReopen:true});A.equal((await call('quotes/'+id+'/restore','POST',{expectedVersion:4,sourceVersion:3,reason:'Tạo bản sửa'},u.session)).status,200);
@@ -61,7 +61,7 @@ test('reopened quote accepts logistics edits with stale masked history and prese
  A.equal((await call('quotes/'+id+'/approve','POST',{expectedVersion:2},admin)).status,200);
  const original=(await call('quotes/'+id+'/revision/3','GET',undefined,admin)).data;
  A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:true,reason:'Test protected factors',expectedVersion:0},admin)).status,200);
- A.equal((await call('quotes/'+id+'/reopen','POST',{expectedVersion:3,reason:'Update delivery'},u.session)).status,200);
+ A.equal((await call('quotes/'+id+'/reopen','POST',{expectedVersion:3,reason:'Update delivery'},u.session)).status,403);A.equal((await call('quotes/'+id+'/corrections','POST',{action:'request',sections:['logistics'],expectedVersion:3,reason:'Update delivery'},admin)).status,200);
  const view=(await call('quotes/'+id,'GET',undefined,u.session)).data;
  view.document.quote.pricing.delivery+=1234;
  view.document.quote.changeHistory.push({actor:'old browser',kind:'local pricing history',after:{delivery:1234}});

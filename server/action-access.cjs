@@ -5,7 +5,7 @@ function guardRoute(route,method,user,fail){
  if(user.role==='admin'||!A.explicit(user))return;
  const read=['GET','HEAD'].includes(method),need=(k,a)=>requireAction(user,k,a,fail);
  if(/^\/api\/(quotes|quote-intakes)(\/|$)/.test(route)){
-  need('quotes','view');if(read)return;
+  need('quotes','view');if(read||/\/corrections$/.test(route))return;
   if(/\/followup\/assign$/.test(route))return need('quotes','assign');
   if(/\/order$/.test(route))return need('orders','create');
   if(/\/partial-handoff$/.test(route))return need('quotes','confirm');

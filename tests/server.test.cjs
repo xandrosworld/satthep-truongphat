@@ -54,7 +54,8 @@ test('server: maker submits, approver approves, approved data immutable, revisio
   assert.equal((await call(base,'quotes/'+id+'/approve',{method:'POST',session:maker,body:{expectedVersion:2}})).status,403);
   assert.equal((await call(base,'quotes/'+id+'/approve',{method:'POST',session:checker,body:{expectedVersion:2}})).status,200);
   assert.equal((await call(base,'quotes/'+id,{method:'PUT',session:maker,body:{document,expectedVersion:3}})).status,409);
-  assert.equal((await call(base,'quotes/'+id+'/reopen',{method:'POST',session:maker,body:{expectedVersion:3,reason:'Khách thay số lượng'}})).status,200);
+  assert.equal((await call(base,'quotes/'+id+'/reopen',{method:'POST',session:maker,body:{expectedVersion:3,reason:'Khách thay số lượng'}})).status,403);
+  assert.equal((await call(base,'quotes/'+id+'/corrections',{method:'POST',session:checker,body:{action:'request',sections:['factors'],expectedVersion:3,reason:'Khách thay số lượng'}})).status,200);
   document.quote.pricing.customer=3;
   assert.equal((await call(base,'quotes/'+id,{method:'PUT',session:maker,body:{document,expectedVersion:4}})).status,200);
   r=await call(base,'quotes/'+id+'/revision/3',{session:checker});assert.equal(r.data.status,'approved');assert.equal(r.data.document.quote.pricing.customer,0);assert.equal(r.data.readOnly,true);

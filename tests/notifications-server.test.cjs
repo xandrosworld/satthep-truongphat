@@ -25,9 +25,9 @@ test('handoff notifications route by permissions, persist read state, reject sta
  d.quote.products[0].ops[0].amount=2;
  A.equal((await call('quotes/'+id,'PUT',{document:d,expectedVersion:2},admin)).status,409);
  A.equal((await call(path+'/technical/reopen','POST',{expectedVersion:2,reason:'Đổi định mức'},sessions.materials)).status,403);
- A.equal((await call(path+'/technical/reopen','POST',{expectedVersion:2,reason:''},sessions.tech)).status,400);
+ A.equal((await call(path+'/technical/reopen','POST',{expectedVersion:2,reason:''},sessions.tech)).status,403);
  A.equal((await call(path+'/technical/reopen','POST',{expectedVersion:1,reason:'Đổi định mức'},sessions.tech)).status,409);
- const unlocked=await call(path+'/technical/reopen','POST',{expectedVersion:2,reason:'Đổi định mức'},sessions.tech);A.equal(unlocked.status,200,JSON.stringify(unlocked.data));A.equal(unlocked.data.state.technical.current,false);A.equal(unlocked.data.state.materials.current,false);A.equal(unlocked.data.state.materials.changeReason,'Đổi định mức');
+ A.equal((await call(path+'/technical/reopen','POST',{expectedVersion:2,reason:'Đổi định mức'},sessions.tech)).status,403);const unlocked=await call(path+'/technical/reopen','POST',{expectedVersion:2,reason:'Đổi định mức'},admin);A.equal(unlocked.status,200,JSON.stringify(unlocked.data));A.equal(unlocked.data.state.technical.current,false);A.equal(unlocked.data.state.materials.current,false);A.equal(unlocked.data.state.materials.changeReason,'Đổi định mức');
  A.ok((await call('notifications','GET',undefined,sessions.materials)).data.items.some(n=>n.note.includes('Đổi định mức')));
  A.equal((await call('quotes/'+id,'PUT',{document:d,expectedVersion:2},admin)).status,200);const changed=(await call(path,'GET',undefined,admin)).data;A.equal(changed.technical.current,false);A.equal(changed.materials.current,false);
  A.equal((await call(path+'/materials','POST',{expectedVersion:3},sessions.materials)).status,409);A.equal((await call(path+'/technical','POST',{expectedVersion:2},sessions.tech)).status,409);
