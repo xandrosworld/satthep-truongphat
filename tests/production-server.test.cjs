@@ -25,6 +25,7 @@ test('production: approved snapshot, batches, technical isolation, preparation, 
  let op=j.progress.operations[0];A.equal((await update({action:'operation',operationId:op.id,assignee:'',status:'running',output:0,note:''})).status,409);
  A.equal((await update({action:'prepare',deadline:'2026-10-01',workshop:'Xưởng 1',materialsReady:true,drawingReady:true,note:'Đã kiểm tra'})).status,200);
  A.equal((await call('production/'+j.id,'PUT',{expectedVersion:1,action:'complete'},tech)).status,409);
+ await require('./ops-fixture.cjs').seedStock(call,admin,j.id);
  for(const o of j.packet.operations){A.equal((await update({action:'operation',operationId:o.id,assignee:'',status:'running',output:0,note:''})).status,200);A.equal((await update({action:'operation',operationId:o.id,assignee:'',status:'done',output:o.quantity,note:'Đã thực hiện'})).status,200);}
  A.equal((await update({action:'complete'})).status,409);A.equal((await update({action:'qc',passed:j.quantity+1,rejected:0,note:''})).status,400);A.equal((await update({action:'qc',passed:j.quantity,rejected:0,note:'Đạt'})).status,200);A.equal((await update({action:'complete'})).status,200);A.equal(j.state,'completed');A.equal((await update({action:'qc',passed:0,rejected:0,note:''})).status,409);
  const backup=(await call('backup','GET',undefined,admin)).data;A.equal(backup.productionJobs.length,1);A.ok(backup.productionEvents.length>4);

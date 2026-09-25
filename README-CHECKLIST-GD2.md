@@ -4,6 +4,8 @@
 
 Tài liệu làm việc cho các đợt tiếp theo: bám luồng demo, triển khai trên web hiện tại, giữ phần báo giá và dữ liệu đã có, hoàn thiện theo hợp đồng. Checklist không tự thay đổi phạm vi, phí, tiến độ hoặc điều kiện nghiệm thu đã ký.
 
+Cập nhật đợt 2: [Sản xuất, kho và mua hàng](docs/dot-2-san-xuat-kho-mua-hang.md). Các mã 09–15 và BS08 được đối chiếu theo tài liệu này; dấu hoàn thành là tự kiểm chức năng, chưa phải nghiệm thu khách. Giờ định mức chỉ có khi nguồn khai theo giờ; khoản mua tự sinh chưa đồng nghĩa đã thanh toán.
+
 ## 1. Căn cứ và thứ tự áp dụng
 
 Cập nhật 25/09/2026: hoàn thiện [luồng gửi báo giá và chăm sóc sau gửi](docs/GUI-BAO-GIA-VA-CHAM-SOC.md), gồm phân công/thông báo sau duyệt, xác nhận gửi theo phiên bản và theo dõi phản hồi/vướng mắc/ngày chăm sóc. Đã tự kiểm thử; chưa đồng nghĩa khách nghiệm thu toàn bộ GĐ2.
@@ -196,73 +198,73 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 
 | Kiểm đạt | Mã | Nội dung | Bằng chứng / còn thiếu |
 |---|---|---|---|
-| [ ] | 09.01 | Danh sách lệnh sản xuất Lọc theo trạng thái, phân xưởng, thời gian | Chờ rà soát |
-| [ ] | 09.02 | Chi tiết lệnh Sản phẩm, quy cách, số lượng, deadline, người phụ trách | Chờ rà soát |
-| [ ] | 09.03 | Quy trình theo công đoạn Mỗi công đoạn có người, máy, giờ máy, sản lượng, ngày bắt đầu và kết thúc. Tính toán theo từng lô hàng, từng đợt (1 lệnh sản xuất có thể chia nhiều lần, đợt sản xuất). Bao gồm tình trạng công tác chuẩn bị của hồ sơ bản vẽ phục vụ sản xuất, vật tư, …. (Bổ sung công đoạn chuẩn bị sản xuất) | Chờ rà soát |
-| [ ] | 09.04 | Bắt đầu / hoàn tất công đoạn | Chờ rà soát |
-| [ ] | 09.05 | Ghi nhận sản lượng thực tế Tiến độ tổng tính lại ngay | Chờ rà soát |
-| [ ] | 09.06 | Kiểm tra vật tư theo định mức Đối chiếu nhu cầu với tồn kho, báo thiếu | Chờ rà soát |
-| [ ] | 09.07 | Chặn sản xuất khi thiếu vật tư Hỏi tạo yêu cầu mua hàng | Chờ rà soát |
-| [ ] | 09.08 | Tự xuất kho theo định mức Khi bắt đầu sản xuất, sinh phiếu xuất | Chờ rà soát |
-| [ ] | 09.09 | Định mức công đoạn từ báo giá Giờ máy và chi phí gia công cho cả lệnh | Chờ rà soát |
-| [ ] | 09.10 | Nghiệm thu QC Số lượng đạt và số lượng lỗi | Chờ rà soát |
-| [ ] | 09.11 | In phiếu sản xuất | Chờ rà soát |
-| [ ] | 09.12 | Đối chiếu vật tư theo kích thước Khối 4 bước ngay trên lệnh sản xuất | Chờ rà soát |
-| [ ] | 09.13 | Chi phí thực tế của lệnh Tổng hợp khoản chi đã gắn vào lệnh này | Chờ rà soát |
-| [ ] | 09.14 | Đầu mục công việc của lệnh Việc giao cho từng cá nhân, gắn với báo cáo ngày | Chờ rà soát |
-| [ ] | 10.01 | Bảng điều hành xưởng Toàn bộ lệnh đang chạy, xếp theo công đoạn | Chờ rà soát |
-| [ ] | 10.02 | Năng lực từng phân xưởng Giờ máy đã dùng trên tối đa, cảnh báo quá tải | Chờ rà soát |
-| [ ] | 10.03 | Lọc theo phân xưởng, thời gian | Chờ rà soát |
-| [ ] | 10.04 | Cảnh báo lệnh trễ deadline | Chờ rà soát |
-| [ ] | 11.01 | Bảng công đoạn sản xuất Mã, tên, phân xưởng, máy / thiết bị, đơn giá giờ máy . Mở rộng được các công đoạn sản xuất, công đoạn chuẩn bị sản xuất. Các công đoạn sản xuất có hiển thị  - thông tin tại công đoạn đó  - Vướng mắc cần tháo gỡ giải quyết  - Các thông tin chính | Chờ rà soát |
-| [ ] | 11.02 | Thêm / sửa / xoá công đoạn Không giới hạn số lượng | Chờ rà soát |
-| [ ] | 11.03 | Sửa nhanh đơn giá giờ ngay trên bảng | Chờ rà soát |
-| [ ] | 11.04 | Lối tắt sang ma trận hệ số Từ công đoạn mở thẳng bảng hệ số của nó | Chờ rà soát |
-| [ ] | 11.05 | Đếm số lệnh đang dùng, chặn xoá khi đang dùng | Chờ rà soát |
-| [ ] | 11.06 | Xuất Excel | Chờ rà soát |
-| [ ] | 11.07 | Bảng hệ số điều chỉnh Bảng hệ số dùng chung, thêm / sửa / xoá từng dòng | Chờ rà soát |
-| [ ] | 12.01 | Danh sách đầu mục công việc Gắn với lệnh sản xuất, đơn hàng, công đoạn | Chờ rà soát |
-| [ ] | 12.02 | Giao đầu mục cho cá nhân Người phụ trách, ngày bắt đầu, hạn hoàn thành | Chờ rà soát |
-| [ ] | 12.03 | Báo cáo từng ngày của từng cá nhân Hôm nay làm đầu mục nào, khối lượng đạt, số giờ | Chờ rà soát |
-| [ ] | 12.04 | Ghi nhận vướng mắc Vướng cái gì, mô tả, đã xử lý hay chưa | Chờ rà soát |
-| [ ] | 12.05 | Xem theo ngày và theo cá nhân | Chờ rà soát |
-| [ ] | 12.06 | Xem cả tháng của một cá nhân Một tháng cá nhân nào vướng mắc cái gì, bao nhiêu lần | Chờ rà soát |
-| [ ] | 12.07 | Xuất Excel báo cáo tháng | Chờ rà soát |
-| [ ] | 13.01 | TAB 1 — Danh mục vật tư Mã, tên, nhóm, đơn vị, tồn, tồn tối thiểu, vị trí kho, đơn giá | Chờ rà soát |
-| [ ] | 13.02 | Thêm / sửa / xoá vật tư | Chờ rà soát |
-| [ ] | 13.03 | Lọc theo nhóm, kho, trạng thái tồn | Chờ rà soát |
-| [ ] | 13.04 | 3 trạng thái tồn Đủ tồn, sắp hết, hết hàng — cảnh báo ngay trên menu | Chờ rà soát |
-| [ ] | 13.05 | Chi tiết vật tư Lịch sử nhập xuất, lệnh sản xuất đang dùng | Chờ rà soát |
-| [ ] | 13.06 | Xuất Excel | Chờ rà soát |
-| [ ] | 13.07 | TAB 2 — Kho tấm theo kích thước Quản lý tấm theo dài × rộng × dày, số tấm, khối lượng | Chờ rà soát |
-| [ ] | 13.08 | Đối chiếu kích thước và khối lượng Từ kích thước sản phẩm ra phôi cần cắt, tìm tấm đủ kích thước gia công | Chờ rà soát |
-| [ ] | 13.09 | Đối trừ tấm đã đáp ứng Phần còn lại làm đề nghị nhập vật tư | Chờ rà soát |
-| [ ] | 13.10 | Tấm dành riêng cho lệnh sản xuất Lệnh khác không lấy được | Chờ rà soát |
-| [ ] | 13.11 | Xuất vật tư ra sản xuất Trừ đúng số tấm, sinh phiếu xuất theo khối lượng cấp ra | Chờ rà soát |
-| [ ] | 13.12 | Tấm cắt xong còn thừa Ghi rõ kích thước mảnh còn lại, nhập lại kho để tận dụng. Theo dõi được lịch sử tấm thừa này được cắt từ tấm nguyên ban đầu là tấm nào để kiểm soát 1 tấm ban đầu làm được bao nhiêu chi tiết, tấm tàn, phế | Chờ rà soát |
-| [ ] | 13.13 | Phần còn thừa làm phế Ghi nhận phế và tỷ lệ phế | Chờ rà soát |
-| [ ] | 13.14 | Cân đối khối lượng cấp ra Cấp ra = khối lượng sản phẩm + tấm tàn dùng tiếp + phế | Chờ rà soát |
-| [ ] | 13.15 | TAB 3 — Khai báo nhà cung cấp Mã, tên, mã số thuế, địa chỉ, người liên hệ, điện thoại | Chờ rà soát |
-| [ ] | 13.16 | Bảng của nhà cung cấp Danh sách vật tư kèm đơn giá mua, thời gian giao | Chờ rà soát |
-| [ ] | 13.17 | Thêm / sửa / xoá nhà cung cấp | Chờ rà soát |
-| [ ] | 13.18 | Lịch sử mua theo nhà cung cấp Đã mua gì, bao nhiêu, giá nào | Chờ rà soát |
-| [ ] | 14.01 | Danh sách phiếu nhập / xuất Lọc theo loại phiếu, kho, thời gian | Chờ rà soát |
-| [ ] | 14.02 | Lập phiếu nhập thủ công | Chờ rà soát |
-| [ ] | 14.03 | Lập phiếu xuất thủ công | Chờ rà soát |
-| [ ] | 14.04 | Tổng hợp tồn theo kho Số mã vật tư, giá trị tồn, số mã dưới định mức | Chờ rà soát |
-| [ ] | 14.05 | Giá trị nhập – xuất – tồn | Chờ rà soát |
-| [ ] | 14.06 | Truy vết chứng từ Phiếu gắn với lệnh sản xuất hay yêu cầu mua nào | Chờ rà soát |
-| [ ] | 14.07 | Xuất Excel | Chờ rà soát |
-| [ ] | 15.01 | Danh sách yêu cầu mua Lọc theo trạng thái, nhà cung cấp, thời gian | Chờ rà soát |
-| [ ] | 15.02 | Quy trình 6 bước Tạo → duyệt → đặt nhà cung cấp → đang giao → nhận hàng → nhập kho | Chờ rà soát |
-| [ ] | 15.03 | Tạo yêu cầu mua từ lệnh sản xuất Tự tính đúng số lượng thiếu cộng dự phòng | Chờ rà soát |
-| [ ] | 15.04 | Phê duyệt / từ chối Ghi nhận người duyệt | Chờ rà soát |
-| [ ] | 15.05 | Nhận hàng và cộng tồn kho thật Sinh phiếu nhập tương ứng | Chờ rà soát |
-| [ ] | 15.06 | In yêu cầu mua và đơn đặt hàng | Chờ rà soát |
-| [ ] | 15.07 | Xuất Excel | Chờ rà soát |
-| [ ] | 15.08 | Lấy giá từ bảng nhà cung cấp Tạo yêu cầu mua tự đề xuất nhà cung cấp và đơn giá | Chờ rà soát |
-| [ ] | 15.09 | Sinh phiếu chi tương ứng Khoản mua đẩy sang sổ chi, gắn vào lệnh sản xuất hoặc đơn hàng | Chờ rà soát |
-| [ ] | BS08 | Phần dư nối kho: tấm nguyên, mảnh dư, giữ riêng cho lệnh, phế; truy nguồn và cân đối khối lượng | Chờ rà soát |
+| [x] | 09.01 | Danh sách lệnh sản xuất Lọc theo trạng thái, phân xưởng, thời gian | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.02 | Chi tiết lệnh Sản phẩm, quy cách, số lượng, deadline, người phụ trách | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.03 | Quy trình theo công đoạn Mỗi công đoạn có người, máy, giờ máy, sản lượng, ngày bắt đầu và kết thúc. Tính toán theo từng lô hàng, từng đợt (1 lệnh sản xuất có thể chia nhiều lần, đợt sản xuất). Bao gồm tình trạng công tác chuẩn bị của hồ sơ bản vẽ phục vụ sản xuất, vật tư, …. (Bổ sung công đoạn chuẩn bị sản xuất) | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.04 | Bắt đầu / hoàn tất công đoạn | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.05 | Ghi nhận sản lượng thực tế Tiến độ tổng tính lại ngay | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.06 | Kiểm tra vật tư theo định mức Đối chiếu nhu cầu với tồn kho, báo thiếu | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.07 | Chặn sản xuất khi thiếu vật tư Hỏi tạo yêu cầu mua hàng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.08 | Tự xuất kho theo định mức Khi bắt đầu sản xuất, sinh phiếu xuất | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.09 | Định mức công đoạn từ báo giá Giờ máy và chi phí gia công cho cả lệnh | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.10 | Nghiệm thu QC Số lượng đạt và số lượng lỗi | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.11 | In phiếu sản xuất | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.12 | Đối chiếu vật tư theo kích thước Khối 4 bước ngay trên lệnh sản xuất | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.13 | Chi phí thực tế của lệnh Tổng hợp khoản chi đã gắn vào lệnh này | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 09.14 | Đầu mục công việc của lệnh Việc giao cho từng cá nhân, gắn với báo cáo ngày | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 10.01 | Bảng điều hành xưởng Toàn bộ lệnh đang chạy, xếp theo công đoạn | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 10.02 | Năng lực từng phân xưởng Giờ máy đã dùng trên tối đa, cảnh báo quá tải | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 10.03 | Lọc theo phân xưởng, thời gian | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 10.04 | Cảnh báo lệnh trễ deadline | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 11.01 | Bảng công đoạn sản xuất Mã, tên, phân xưởng, máy / thiết bị, đơn giá giờ máy . Mở rộng được các công đoạn sản xuất, công đoạn chuẩn bị sản xuất. Các công đoạn sản xuất có hiển thị  - thông tin tại công đoạn đó  - Vướng mắc cần tháo gỡ giải quyết  - Các thông tin chính | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 11.02 | Thêm / sửa / xoá công đoạn Không giới hạn số lượng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 11.03 | Sửa nhanh đơn giá giờ ngay trên bảng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 11.04 | Lối tắt sang ma trận hệ số Từ công đoạn mở thẳng bảng hệ số của nó | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 11.05 | Đếm số lệnh đang dùng, chặn xoá khi đang dùng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 11.06 | Xuất Excel | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 11.07 | Bảng hệ số điều chỉnh Bảng hệ số dùng chung, thêm / sửa / xoá từng dòng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 12.01 | Danh sách đầu mục công việc Gắn với lệnh sản xuất, đơn hàng, công đoạn | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 12.02 | Giao đầu mục cho cá nhân Người phụ trách, ngày bắt đầu, hạn hoàn thành | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 12.03 | Báo cáo từng ngày của từng cá nhân Hôm nay làm đầu mục nào, khối lượng đạt, số giờ | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 12.04 | Ghi nhận vướng mắc Vướng cái gì, mô tả, đã xử lý hay chưa | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 12.05 | Xem theo ngày và theo cá nhân | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 12.06 | Xem cả tháng của một cá nhân Một tháng cá nhân nào vướng mắc cái gì, bao nhiêu lần | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 12.07 | Xuất Excel báo cáo tháng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.01 | TAB 1 — Danh mục vật tư Mã, tên, nhóm, đơn vị, tồn, tồn tối thiểu, vị trí kho, đơn giá | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.02 | Thêm / sửa / xoá vật tư | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.03 | Lọc theo nhóm, kho, trạng thái tồn | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.04 | 3 trạng thái tồn Đủ tồn, sắp hết, hết hàng — cảnh báo ngay trên menu | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.05 | Chi tiết vật tư Lịch sử nhập xuất, lệnh sản xuất đang dùng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.06 | Xuất Excel | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.07 | TAB 2 — Kho tấm theo kích thước Quản lý tấm theo dài × rộng × dày, số tấm, khối lượng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.08 | Đối chiếu kích thước và khối lượng Từ kích thước sản phẩm ra phôi cần cắt, tìm tấm đủ kích thước gia công | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.09 | Đối trừ tấm đã đáp ứng Phần còn lại làm đề nghị nhập vật tư | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.10 | Tấm dành riêng cho lệnh sản xuất Lệnh khác không lấy được | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.11 | Xuất vật tư ra sản xuất Trừ đúng số tấm, sinh phiếu xuất theo khối lượng cấp ra | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.12 | Tấm cắt xong còn thừa Ghi rõ kích thước mảnh còn lại, nhập lại kho để tận dụng. Theo dõi được lịch sử tấm thừa này được cắt từ tấm nguyên ban đầu là tấm nào để kiểm soát 1 tấm ban đầu làm được bao nhiêu chi tiết, tấm tàn, phế | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.13 | Phần còn thừa làm phế Ghi nhận phế và tỷ lệ phế | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.14 | Cân đối khối lượng cấp ra Cấp ra = khối lượng sản phẩm + tấm tàn dùng tiếp + phế | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.15 | TAB 3 — Khai báo nhà cung cấp Mã, tên, mã số thuế, địa chỉ, người liên hệ, điện thoại | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.16 | Bảng của nhà cung cấp Danh sách vật tư kèm đơn giá mua, thời gian giao | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.17 | Thêm / sửa / xoá nhà cung cấp | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 13.18 | Lịch sử mua theo nhà cung cấp Đã mua gì, bao nhiêu, giá nào | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 14.01 | Danh sách phiếu nhập / xuất Lọc theo loại phiếu, kho, thời gian | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 14.02 | Lập phiếu nhập thủ công | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 14.03 | Lập phiếu xuất thủ công | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 14.04 | Tổng hợp tồn theo kho Số mã vật tư, giá trị tồn, số mã dưới định mức | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 14.05 | Giá trị nhập – xuất – tồn | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 14.06 | Truy vết chứng từ Phiếu gắn với lệnh sản xuất hay yêu cầu mua nào | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 14.07 | Xuất Excel | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 15.01 | Danh sách yêu cầu mua Lọc theo trạng thái, nhà cung cấp, thời gian | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 15.02 | Quy trình 6 bước Tạo → duyệt → đặt nhà cung cấp → đang giao → nhận hàng → nhập kho | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 15.03 | Tạo yêu cầu mua từ lệnh sản xuất Tự tính đúng số lượng thiếu cộng dự phòng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 15.04 | Phê duyệt / từ chối Ghi nhận người duyệt | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 15.05 | Nhận hàng và cộng tồn kho thật Sinh phiếu nhập tương ứng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 15.06 | In yêu cầu mua và đơn đặt hàng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 15.07 | Xuất Excel | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 15.08 | Lấy giá từ bảng nhà cung cấp Tạo yêu cầu mua tự đề xuất nhà cung cấp và đơn giá | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | 15.09 | Sinh phiếu chi tương ứng Khoản mua đẩy sang sổ chi, gắn vào lệnh sản xuất hoặc đơn hàng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
+| [x] | BS08 | Phần dư nối kho: tấm nguyên, mảnh dư, giữ riêng cho lệnh, phế; truy nguồn và cân đối khối lượng | Đã triển khai, tự kiểm đợt 2; xem tài liệu đối chiếu |
 
 ### GĐ2-C (53)
 
