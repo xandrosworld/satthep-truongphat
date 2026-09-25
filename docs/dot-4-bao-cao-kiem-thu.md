@@ -69,3 +69,11 @@ Chưa có chứng từ phù hợp sẽ hiển thị chưa có dữ liệu, khôn
 - D.06: chưa coi là nghiệm thu cuối hoặc ký bàn giao. Các tài liệu build/deploy và mã nguồn hiện có được duy trì; biên bản khách cần xác nhận riêng.
 
 Không đánh dấu toàn bộ GĐ2 hoàn thành dựa trên số lượng test. Các mục ngoài nhóm 18–21 giữ trạng thái và bằng chứng riêng.
+
+## Triển khai và kiểm tra web thật
+
+- Runtime `acfe643` đã triển khai ngày 25/09/2026; có sao lưu SQLite trước khi thay ứng dụng. Mã nguồn đã đẩy lên Git.
+- Bộ hồi quy cuối sau sửa quyền: 732/732 đạt, không bỏ qua test. Build thành công.
+- Kiểm tra HTTPS trực tiếp: cả bốn loại báo cáo, 1440 px và 390 px, nút Excel hiện theo quyền Admin, không lỗi JavaScript, không tràn trang. Không tạo/sửa chứng từ kinh doanh khi kiểm tra live.
+- Dữ liệu thật thời điểm kiểm tra: một dòng tiến độ sản xuất; chưa có doanh thu giao hàng, QC hoặc giao dịch kho phù hợp trong kỳ. Hiển thị trống đúng thực tế, không dùng dữ liệu mẫu để làm đầy báo cáo.
+- Phiên kiểm tra tạm đã thu hồi và xóa tệp token; `/healthz` trả OK.

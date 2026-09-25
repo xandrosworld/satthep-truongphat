@@ -153,6 +153,7 @@ Quyền nền tảng, bảo vệ dữ liệu/giá, trạng thái và duyệt the
 | `2ffe6e8` — trước đợt lên khung | Bổ sung nhân sự, rà soát quyền và lịch sử | 675 test; browser nhân sự/tài khoản; HTTPS desktop/mobile | Đã triển khai | Chưa ghi nhận xác nhận riêng cho đợt này | Rà từng mã; liên kết các phân hệ còn lại |
 | Đợt 1 — `341acaa` + `420a5b7` | 02, 06, 07, 08; khung điều hướng | 679 test; 5 browser suites; bản sao dữ liệu thật; [chi tiết](docs/dot-1-kinh-doanh.md) | Đã triển khai 25/09; healthy; live 1440/390 px; hash dữ liệu cũ giữ nguyên | Chưa ghi nhận | Nối dữ liệu các đợt sau, kiểm tra mẫu in với khách |
 | Đợt 3 — `e5aecb4` | 16, 17, 22, 25, 26 | 722/722 hồi quy; 18/18 kiểm tra liên quan sau cập nhật; UI tài chính/công/lương/giao việc, nhân sự và kho; [chi tiết](docs/dot-3-tai-chinh-luong-dieu-hanh.md) | Đã triển khai 25/09; sao lưu trước deploy; health OK; live Admin 1440/390 px và tài khoản hạn chế; phiên kiểm tra đã thu hồi | Chưa ghi nhận nghiệm thu | Cấu hình quyền/nguyên tắc lương, nhập chứng từ thực tế; báo cáo tổng hợp và nghiệm thu toàn hệ thống theo đợt 4 |
+| Đợt 4 — `acfe643` | 18–21 | 732/732 hồi quy; 5/5 báo cáo/liên thông/SQLite phục hồi; UI bốn loại, Excel số, kỳ báo cáo, quyền và mobile; [chi tiết](docs/dot-4-bao-cao-kiem-thu.md) | Đã triển khai 25/09; sao lưu trước deploy; HTTPS 1440/390 px, health OK; phiên kiểm tra đã thu hồi | Chưa ghi nhận nghiệm thu | Đối chiếu chứng từ thực tế, cấu hình quyền; D.01–D.06 chưa tự coi hoàn tất |
 
 ## 8. Danh mục kiểm tra 162 mã GĐ2
 
