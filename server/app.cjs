@@ -107,7 +107,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const organization=require('./organization.cjs').createOrganization({sql,fail,readBody,transaction,audit,accounts,formulaAccess,addUser});accounts.setOrganization(organization);
   const accessReview=require('./access-review.cjs').createAccessReview({sql,fail,organization,dataAccess});
   const operationsERP=require('./operations-erp.cjs').createOperationsERP({sql,fail,readBody,transaction,audit});
-  const enterprise=require('./enterprise.cjs').createEnterprise({sql,fail,readBody,transaction,audit,organization});
+  const enterprise=require('./enterprise.cjs').createEnterprise({sql,fail,readBody,transaction,audit,organization,quoteSummary:notifications.summary});
   const reports=require('./reports.cjs').createReports({sql,fail,audit});
   const production=require('./production.cjs').createProduction({sql,fail,readBody,transaction,audit,operationsERP});
   const business=require('./business.cjs').createBusiness({sql,fail,readBody,transaction,audit,shipOrder:production.shipOrder,financeContext:enterprise.contractFinancials});
