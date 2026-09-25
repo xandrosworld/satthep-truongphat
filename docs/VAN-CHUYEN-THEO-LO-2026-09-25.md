@@ -1,5 +1,7 @@
 # Vận chuyển theo lô và tách lắp đặt
 
+Phát hành ngày 25/09/2026: `0e08850`. Đã sao lưu và triển khai lên máy chủ. 741/741 kiểm thử tự động đạt; hai bộ kiểm thử trình duyệt logistics đạt. Kiểm tra HTTPS thực tế xác nhận giao diện tạo lô/tuyến, tab lắp đặt riêng và phương thức mét dài sản phẩm, không ghi dữ liệu nghiệp vụ. Phiên kiểm tra tạm đã thu hồi; healthcheck đạt.
+
 - Giá & hệ số có hai tab Vận chuyển và Lắp đặt, cùng quyền logistics; chuyển tab không đổi số liệu. Khoản chi và phân bổ lọc theo tab, các khoản tổng nhập trước vẫn được ghi chú để đối chiếu.
 - Vận chuyển nhập phôi hiển thị từng mã: chọn nhiều mã → Tạo lô từ vật tư đã chọn → chọn đơn giá, đặt tên lô, cự ly/số chuyến và cách phân bổ → lưu một khoản chi chung. Không tạo một phí tối thiểu cho mỗi mã. Có thể sửa lại phạm vi trong khoản chi.
 - Bảng thuê ngoài hiển thị đối tượng, mã vật tư và công đoạn: chọn các công đoạn đi chung nơi gia công → Tạo tuyến → khai điểm đến. Cùng phôi tính một lần trong tuyến, khác phôi cộng khối lượng, tuyến khác được tính riêng.
