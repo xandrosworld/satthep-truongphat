@@ -5,6 +5,7 @@ test('Customer import recognizes template headers, preserves identifiers and rej
  A.match(I.plan([{line:1,data:{name:'A',account:{code:'A'},taxId:'123'}},{line:2,data:{name:'B',account:{code:'B'},taxId:'123'}}],[])[1].error,/lặp/);
 });
 test('Customer import detects name/contact candidates, normalized tax collisions and repeated names with different codes',()=>{
+ A.equal(I.plan([{line:1,data:{name:'đại phát'}}],[{id:'vn',name:'ĐẠI PHÁT'}])[0].candidates[0].id,'vn');
  const old=[{id:'one',name:'Công ty ABC',phone:'0901234567',email:'abc@test.vn',taxId:'0123-456',account:{code:'C01'},version:3}];
  let r=I.plan([{line:2,data:{name:' Công ty ABC ',account:{code:'NEW'}}}],old)[0];A.match(r.error,/chọn hồ sơ/);A.equal(r.candidates[0].id,'one');
  A.equal(I.plan([{line:2,data:{name:'Other',taxId:'0123456'}}],old)[0].customer.id,'one');
