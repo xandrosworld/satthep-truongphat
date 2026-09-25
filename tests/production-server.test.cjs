@@ -19,6 +19,7 @@ test('production: approved snapshot, batches, technical isolation, preparation, 
  const issue={orderId:order.id,productId:pid,quantity:qty/2,code:'LSX-001'};
  A.equal((await call('production','POST',issue,tech)).status,403);A.equal((await call('production','POST',issue,{...admin,csrf:'bad'})).status,403);
  let response=await call('production','POST',issue,admin);A.equal(response.status,201,JSON.stringify(response.data));let j=response.data;A.equal((await call('production','POST',issue,admin)).data.id,j.id);A.equal((await call('production','POST',{...issue,code:'LSX-OVER',quantity:qty},admin)).status,409);
+ const allocation=(await call('production/orders/'+order.id,'GET',undefined,tech)).data;A.deepEqual(allocation.jobs.map(x=>[x.id,x.product_id,x.quantity]),[[j.id,pid,qty/2]]);A.equal(allocation.allocated.find(x=>x.product_id===pid).quantity,qty/2);A.deepEqual(allocation.materials,source.data.materials);A.deepEqual(allocation.products,source.data.products);
  const noMoney=o=>{for(const [k,v]of Object.entries(o||{})){A.ok(!/^(price|cost|rate|profit|baseline|total|offer|unitPrice|unitSell|grand)$/i.test(k),'leaked '+k);if(v&&typeof v==='object')noMoney(v);}};noMoney(source.data);noMoney((await call('production/'+j.id,'GET',undefined,tech)).data);
  A.equal(j.packet.layoutBasis,'batch-recalculated');A.equal(j.packet.product.quantity,qty/2);A.ok(j.packet.cutting.length);A.ok(j.packet.finishing[0].materialId);A.equal(j.packet.finishing[0].unit,'kg');
  const update=async b=>{const res=await call('production/'+j.id,'PUT',{expectedVersion:j.version,...b},tech);if(res.status===200)j=res.data;return res;};
@@ -31,5 +32,6 @@ test('production: approved snapshot, batches, technical isolation, preparation, 
  const backup=(await call('backup','GET',undefined,admin)).data;A.equal(backup.productionJobs.length,1);A.ok(backup.productionEvents.length>4);
  const snapshot=j.packet;await call('quotes/'+q.id+'/reopen','POST',{expectedVersion:3,reason:'new revision'},admin);A.deepEqual((await call('production/'+j.id,'GET',undefined,tech)).data.packet,snapshot);
  A.equal((await call('production','POST',{...issue,code:'LSX-002'},admin)).status,201);A.equal((await call('production','POST',{...issue,code:'LSX-003'},admin)).status,409);
+ const finalAllocation=(await call('production/orders/'+order.id,'GET',undefined,tech)).data;A.equal(finalAllocation.jobs.length,2);A.equal(finalAllocation.allocated.find(x=>x.product_id===pid).quantity,qty);A.deepEqual(finalAllocation.products,source.data.products);
  await new Promise(r=>app.server.close(r));app=createApp({databasePath});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));base='http://127.0.0.1:'+app.server.address().port;const durable=(await call('production/'+j.id,'GET',undefined,tech)).data;A.equal(durable.state,'completed');A.deepEqual(durable.packet,snapshot);A.ok(durable.events.length>4);
 });

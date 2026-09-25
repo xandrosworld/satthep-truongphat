@@ -7,3 +7,17 @@
 @media(max-width:600px){#production-console,#orders-console{width:calc(100vw - 20px);height:calc(100dvh - 20px)}.production-heading{flex-direction:column;align-items:stretch;gap:12px}.production-heading>div{min-width:0}.production-heading h3{overflow-wrap:anywhere}.production-heading>div:last-child{display:flex;flex-wrap:wrap;gap:8px}#production-main,#orders-main{padding:14px}.production-panel{padding:14px}.production-toolbar{padding:10px 14px;flex-wrap:wrap}}
 
 #production-dossier{border-bottom:1px solid #d6e0ea;padding-bottom:24px;margin-bottom:24px}#production-dossier details{margin:16px 0}#production-dossier summary{font-weight:600;cursor:pointer}#dossier-upload,#dossier-prepare{margin-top:18px}#dossier-prepare fieldset fieldset{padding:16px;border:1px solid #d6e0ea;border-radius:8px;margin:16px 0}#dossier-prepare>fieldset>label:has([type=checkbox]){display:flex;align-items:center;gap:10px;margin:16px 0}#dossier-error{color:#9a3412}#production-dossier .table-scroll{max-width:100%;overflow:auto}@media print{#production-dossier .dossier-add{display:none}#production-dossier textarea{height:auto;overflow:visible}}
+
+#production-issue-body .table-scroll{max-width:100%;overflow:auto}
+#production-dossier h4{margin:24px 0 12px;color:#244362}
+#production-dossier .dossier-detail-table table{min-width:780px}
+#production-dossier .dossier-detail-table th:first-child{width:28%}
+#production-dossier .dossier-detail-table th:last-child{width:44%}
+#production-dossier .dossier-operation{padding:12px 0;border-bottom:1px solid #d6e0ea}
+#production-dossier .dossier-operation:first-child{padding-top:0}
+#production-dossier .dossier-operation:last-child{border:0}
+#production-dossier .dossier-operation p,#production-dossier .dossier-detail-name p{margin:6px 0}
+#production-dossier .dossier-operation label{margin-top:10px}
+#dossier-stock .table-scroll{margin-bottom:20px}
+#dossier-stock td div+div{margin-top:12px}
+@media(max-width:600px){#production-console .production-fields,#production-console .production-filters{grid-template-columns:1fr}#production-dossier th,#production-dossier td{padding:12px}#production-dossier .dossier-detail-table table{min-width:710px}}
