@@ -21,3 +21,12 @@
 #dossier-stock .table-scroll{margin-bottom:20px}
 #dossier-stock td div+div{margin-top:12px}
 @media(max-width:600px){#production-console .production-fields,#production-console .production-filters{grid-template-columns:1fr}#production-dossier th,#production-dossier td{padding:12px}#production-dossier .dossier-detail-table table{min-width:710px}}
+
+.production-review-flow{display:flex;flex-wrap:wrap;gap:12px;padding:14px;background:#edf4fa;border-radius:8px;margin-bottom:18px}
+.production-review-sections>details{padding:16px;border:1px solid #d6e0ea;border-radius:8px}
+.production-review-sections>details>summary{color:#244362;font-size:15px}
+.deployment-product{padding:16px;background:#edf4fa;border-radius:8px}
+.deployment-stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.deployment-stages article{padding:16px;border:1px solid #d6e0ea;border-radius:8px}
+.deployment-schedule{margin-top:24px;padding-top:16px;border-top:1px solid #d6e0ea}
+#production-deployment .table-scroll{max-width:100%;overflow:auto}

@@ -20,7 +20,7 @@ test('production dossier isolates prices, stores drawing revisions, enforces rev
 });
 test('split and grouped purchases allocate stock and costs to each job without duplicate demand',async t=>{
  const {app,call,post,job,order,document}=await fixture(t),j2=(await call('production','POST',{orderId:order.id,productId:document.quote.products[0].id,quantity:1,code:'JOB-SECOND'})).data;
- A.ok(j2.id);const plans=(await call('ops/purchase-plan?jobs='+job.id+','+j2.id)).data;A.equal(plans.length,2,JSON.stringify(plans));const ds=plans[0].rows;
+ A.ok(j2.id);await require('./production-review-fixture.cjs').review(call,undefined,job.id);await require('./production-review-fixture.cjs').review(call,undefined,j2.id);const plans=(await call('ops/purchase-plan?jobs='+job.id+','+j2.id)).data;A.equal(plans.length,2,JSON.stringify(plans));const ds=plans[0].rows;
  for(const d of ds)A.equal((await post('master',{kind:'material',expectedVersion:0,document:{id:d.materialId,code:d.materialId,name:d.name||d.materialId,unit:d.unit,form:d.unit==='tấm'?'sheet':'bulk'}})).status,200);
  const supplier=(await post('master',{kind:'supplier',expectedVersion:0,document:{code:'SUP',name:'Supplier',prices:ds.map(d=>({materialId:d.materialId,unitCost:20,leadDays:2}))}})).data;
  const base={supplierId:supplier.id,jobVersions:Object.fromEntries(plans.map(j=>[j.jobId,j.version]))},one=plans[0].rows[0];
@@ -49,4 +49,25 @@ test('equipment review is invalidated by a newly approved route; delegated edito
  const u=(await call('users','POST',{username:'engineer',name:'Engineer',role:'sales',password:'Operations-test-2026!'})).data;app.sql.prepare('UPDATE users SET action_access=? WHERE id=?').run(JSON.stringify({production:['view','edit']}),u.id);const session=await call('login','POST',{username:'engineer',password:'Operations-test-2026!'});
  const r=await call('production/'+job.id+'/dossier','POST',{expectedVersion:job.version,requirements:'Factory detail',noDrawingReason:'Simple parts per dimensions',reviewed:true,equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'Manual',method:'Specification'}))},session);A.equal(r.status,200,JSON.stringify(r.data));A.ok(r.data.reviewed);
  await require('./production-flow-fixture.cjs').approveRoute(call,admin,job.id);const d=(await call('production/'+job.id+'/dossier')).data;A.equal(d.reviewed,undefined);A.equal((await call('production/'+job.id)).data.progress.drawingReady,false);A.equal(app.sql.prepare('SELECT document FROM revisions WHERE id=? AND version=3').get(app.sql.prepare('SELECT quote_id FROM orders WHERE id=?').get(order.id).quote_id).document,revision);
+});
+
+test('technical review gates stock, purchases, assignments and starts; drawing change closes deployment again',async t=>{
+ const {app,call,post,admin,job}=await fixture(t),snapshot=app.sql.prepare('SELECT package FROM orders WHERE id=?').get(job.order_id).package;
+ const d=(await call('ops/job/'+job.id)).data.requirements[0];
+ await post('master',{kind:'material',expectedVersion:0,document:{id:d.materialId,code:d.materialId,name:d.name,unit:d.unit,form:'bulk'}});
+ const lot=(await post('receipt',{materialId:d.materialId,warehouse:'A',quantity:d.quantity,unitWeight:10,unitCost:1,length:d.length,width:d.width,thickness:d.thickness||1,reference:'Review-gate'})).data;
+ const reserve=()=>post('reserve',{jobId:job.id,lotId:lot.id,quantity:d.quantity});
+ A.equal((await reserve()).status,409);
+ A.equal((await post('purchase',{jobId:job.id,code:'NO-REVIEW',supplierId:'none'})).status,409);
+ A.equal((await post('task',{expectedVersion:0,document:{jobId:job.id,assignee:admin.data.user.id,name:'Do not deploy'}})).status,409);
+ const body={expectedVersion:job.version,requirements:'',noDrawingReason:'Specification',reviewed:true,reviewChecks:{input:true},equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'Manual',method:'Specification'}))};
+ A.equal((await call('production/'+job.id+'/dossier','POST',body)).status,400);
+ let current=await require('./production-review-fixture.cjs').review(call,admin,job.id);
+ A.equal((await reserve()).status,200);
+ A.equal(app.sql.prepare('SELECT package FROM orders WHERE id=?').get(job.order_id).package,snapshot);
+ const upload=await call('production/'+job.id+'/files','POST',{expectedVersion:current.version,name:'updated.pdf',size:4,data:Buffer.from('%PDF').toString('base64')});
+ A.equal(upload.status,200);A.equal(upload.data.reviewed,undefined);
+ A.equal((await reserve()).status,409);
+ current=(await call('production/'+job.id)).data;
+ A.equal((await call('production/'+job.id,'PUT',{expectedVersion:current.version,action:'operation',operationId:current.packet.operations[0].id,status:'running',assignee:admin.data.user.id,machine:'Manual',output:0,note:''})).status,409);
 });

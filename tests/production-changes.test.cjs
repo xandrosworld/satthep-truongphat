@@ -8,7 +8,7 @@ test('engineering proposal requires technical confirmation then admin, recompute
  const login=async username=>{const s=await call('login','POST',{username,password});s.csrf=s.data.csrf;return s;};const tech=await login('tech'),sales=await login('sales'),worker=await login('worker');
  const d=P.demoSeed(),p=d.quote.products[0],q=(await call('quotes','POST',{document:d},admin)).data;await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1},admin);await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2},admin);
  const order=(await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'DH-CHANGE'},admin)).data;await call('orders/'+order.id+'/confirm','POST',{quoteVersion:3},admin);
- let j=(await call('production','POST',{orderId:order.id,productId:p.id,quantity:1,code:'LSX-CHANGE'},admin)).data;A.ok(j.id);
+ let j=(await call('production','POST',{orderId:order.id,productId:p.id,quantity:1,code:'LSX-CHANGE'},admin)).data;j=await require('./production-review-fixture.cjs').review(call,admin,j.id);A.ok(j.id);
  const route='production/'+j.id+'/changes',get=async()=>{const r=await call(route,'GET',undefined,tech);A.equal(r.status,200);return r.data;};
  A.equal((await call(route,'GET',undefined,sales)).status,403);
  const source=await get(),row=source.rows.find(r=>r.dims.L);A.ok(row);A.ok(!JSON.stringify(source).includes('unitPrice'));A.ok(!JSON.stringify(source).includes('document'));
@@ -29,7 +29,7 @@ test('engineering proposal requires technical confirmation then admin, recompute
  // A later job edit invalidates previously reviewed changes, even before production starts.
  c=(await call(route,'POST',{...body,expectedVersion:j.version,dims:{L:row.dims.L+20}},tech)).data;
  A.equal((await step('confirm',tech)).status,200);
- j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'prepare',workshop:'Xưởng',deadline:'',drawingReady:true,materialsReady:true,note:''},tech)).data;
+ j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'prepare',workshop:'Xưởng',deadline:'',drawingReady:false,materialsReady:true,note:''},tech)).data;
  A.equal((await step('approve')).status,409);
  A.equal((await step('reject',admin,{reason:'Thông số đã thay đổi'})).status,200);
  // Switching to an approved catalog material and stock size changes the job only.
@@ -40,7 +40,7 @@ test('engineering proposal requires technical confirmation then admin, recompute
  const current=await get(),rr=current.rows.find(r=>r.id===row.id);r=await call(route,'POST',{expectedVersion:j.version,rowId:rr.id,materialId:rr.material.id,props:{T:rr.properties.T+1},reason:'Đổi chiều dày'},tech);A.equal(r.status,200,JSON.stringify(r.data));c=r.data;
  A.equal((await step('confirm',tech)).status,200);A.equal((await step('approve')).status,200);j=(await call('production/'+j.id,'GET',undefined,tech)).data;
  A.equal(j.packet.materials.find(r=>r.id===row.id).properties.T,rr.properties.T+1);
- await require('./ops-fixture.cjs').seedStock(call,admin,j.id);
+ j=await require('./production-review-fixture.cjs').review(call,admin,j.id);await require('./ops-fixture.cjs').seedStock(call,admin,j.id);
  j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'prepare',workshop:'Xưởng',deadline:'',drawingReady:true,materialsReady:true,note:''},tech)).data;
  const op=j.progress.operations[0];j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'operation',operationId:op.id,assignee:'',status:'running',output:0,note:''},tech)).data;
  A.equal((await call(route,'POST',{...body,expectedVersion:j.version},tech)).status,409);
