@@ -9,7 +9,7 @@ function fingerprints(document){const q=Technical.project(document).quote;for(co
  return {intake:hash({customer:q.customer,project:q.project,customerInfo:q.customerInfo,request:q.request}),technical:hash(q),materials:hash(Tax.canonicalCostSignature(Tax.costSignature(document.quote)))};}
 const canIntake=r=>r.edit&&r.sections.includes('customer');
 const canTechnical=r=>r.edit&&r.sections.some(s=>['bom','operations'].includes(s)),canMaterials=r=>r.edit&&r.costs&&r.sections.includes('materials');
-const receives=(r,stage)=>stage==='assigned-technical'?canTechnical(r):stage==='assigned-materials'?canMaterials(r):stage==='intake'?(r.users||r.customers||canIntake(r)||canTechnical(r)||canMaterials(r)): ['created','intake'].includes(stage)?canTechnical(r):stage==='technical'?(canMaterials(r)||r.approve):r.approve;
+const receives=(r,stage)=>stage==='price-review'?canMaterials(r):stage==='assigned-technical'?canTechnical(r):stage==='assigned-materials'?canMaterials(r):stage==='intake'?(r.users||r.customers||canIntake(r)||canTechnical(r)||canMaterials(r)): ['created','intake'].includes(stage)?canTechnical(r):stage==='technical'?(canMaterials(r)||r.approve):r.approve;
 function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
  sql.exec(`CREATE TABLE IF NOT EXISTS quote_handoffs(quote_id TEXT PRIMARY KEY REFERENCES quotes(id),document TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS handoff_events(id TEXT PRIMARY KEY,quote_id TEXT NOT NULL REFERENCES quotes(id),stage TEXT NOT NULL,quote_version INTEGER NOT NULL,actor TEXT NOT NULL,at TEXT NOT NULL,note TEXT NOT NULL);
@@ -36,6 +36,21 @@ function createNotifications({sql,fail,readBody,transaction,audit,getQuote}){
   for(const target of targets)sql.prepare('INSERT INTO notifications VALUES(?,?,?,NULL)').run(randomUUID(),target.id,id);
   audit(user,'handoff:created',q.id,'v'+q.version);return targets.length;
  },async handle({req,route,user,rights,send}){
+  const priceReview=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/price-review$/);
+  if(priceReview&&req.method==='POST'){
+   if(!canTechnical(rights)&&!canMaterials(rights))fail(403,'Không có quyền đề nghị cập nhật giá');
+   const body=await readBody(req,2000),response=transaction(()=>{
+    const q=getQuote(priceReview[1]);if(q.version!==body.expectedVersion)fail(409,'Báo giá đã đổi; lưu và tải lại trước khi đề nghị');if(q.status!=='draft')fail(409,'Chỉ đề nghị trên bản nháp');
+    const calculated=P.calculate(JSON.parse(q.document)),issues=[...new Set(Object.values(calculated.nodes).flatMap(n=>(n.ownOps||[]).filter(o=>o.error?.startsWith('Chưa có giá để tính theo lựa chọn này:')).map(o=>o.error)))];
+    if(!issues.length)fail(422,'Bản đã lưu không còn lệch đơn vị công đoạn và đơn giá');
+    const note=('Cập nhật phương án tính giá: '+issues.join('; ')).slice(0,2000),old=sql.prepare("SELECT id FROM handoff_events WHERE quote_id=? AND stage='price-review' AND quote_version=? AND note=?").get(q.id,q.version,note);
+    if(old)return {duplicate:true,recipients:0};
+    const targets=targetsFor(q,'technical').filter(u=>canMaterials(permissions(u)));if(!targets.length)fail(422,'Chưa có người phụ trách giá đủ quyền; kiểm tra giao việc và phân quyền');
+    const id=randomUUID();sql.prepare('INSERT INTO handoff_events VALUES(?,?,?,?,?,?,?)').run(id,q.id,'price-review',q.version,user.id,new Date().toISOString(),note);
+    for(const target of targets)sql.prepare('INSERT INTO notifications VALUES(?,?,?,NULL)').run(randomUUID(),target.id,id);
+    audit(user,'quote:price-review',q.id);return {duplicate:false,recipients:targets.length};
+   });send(200,response);return true;
+  }
   if(await teams.handle({req,route,user,send}))return true;
   if(route==='/api/notifications'&&req.method==='GET'){const rows=sql.prepare('SELECT n.id,n.read_at AS readAt,e.quote_id AS quoteId,e.quote_version AS quoteVersion,e.stage,e.at,e.note,q.code,u.name AS actor FROM notifications n JOIN handoff_events e ON e.id=n.event_id JOIN quotes q ON q.id=e.quote_id JOIN users u ON u.id=e.actor WHERE n.user_id=? ORDER BY e.at DESC,n.rowid DESC').all(user.id).filter(n=>receives(rights,n.stage));send(200,{unread:rows.filter(n=>!n.readAt).length,items:rows.slice(0,200)});return true;}
   const read=route.match(/^\/api\/notifications\/([a-f0-9-]+)\/read$/);if(read&&req.method==='POST'){const n=sql.prepare('SELECT n.id,e.stage FROM notifications n JOIN handoff_events e ON e.id=n.event_id WHERE n.id=? AND n.user_id=?').get(read[1],user.id);if(!n||!receives(rights,n.stage))fail(404,'Không tìm thấy thông báo');sql.prepare('UPDATE notifications SET read_at=COALESCE(read_at,?) WHERE id=?').run(new Date().toISOString(),n.id);send(200,{ok:true});return true;}

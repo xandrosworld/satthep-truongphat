@@ -62,6 +62,7 @@ function operation(rate,op,ctx,r,tier){
   r={...r,weight:r.workWeight??r.weight,area:r.workArea??r.area};
   const method=op.pricingMethod||'factors';
   const unit=method==='fixed'?'gói':method==='direct'?op.priceUnit:(rate[op.mode+'Unit']||rate.unit);
+  if(op.quantityUnit&&op.quantityUnit!==unit)throw Error('Chưa có giá để tính theo lựa chọn này: '+rate.name+' khai '+op.quantityUnit+', đơn giá đang theo '+unit+'. Cần bổ sung giá hoặc thay đổi đơn vị tính.');
   if(!['kg','tấn','m²','m³','m','lần','bộ','cái','gói'].includes(unit)&&(!String(unit||'').trim()||!['manual_total','manual_unit'].includes(op.basisMode)))throw Error('Đơn vị riêng cần nhập lượng công việc rõ ràng, không quy đổi ngầm');
   if(r.node?.spec?.shape==='piece'&&r.node.pieceMass?.mode==='skip'&&['kg','tấn'].includes(unit)&&(!op.basisMode||op.basisMode==='auto'))return {unit,basis:0,cost:0,rate:0,value:0,factors:[],skipped:true,reason:'Bỏ qua khối lượng: '+r.node.pieceMass.reason};
   let basis;
