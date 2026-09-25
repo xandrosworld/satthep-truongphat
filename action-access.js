@@ -16,7 +16,7 @@ const modules={
  payments:['Thu tiền hợp đồng',['view','create','delete']],
  costs:['Chi phí thực tế',['view','create','delete','approve']],
  profile:['Hồ sơ năng lực',['view','create','edit','delete','export']],
- production:['Lệnh sản xuất',['view','issue','edit','qc','complete','export']],
+ production:['Lệnh sản xuất',['view','issue','edit','confirm','qc','complete','export']],
  personnel:['Hồ sơ nhân sự',['view','create','edit','review','activate','export']],
  chat:['Chat nội bộ',['view','send']]
 };
@@ -33,7 +33,7 @@ function legacy(r){
  if(view('customer'))grant('customers','export',...(edit('customer')?['create','edit','import']:[]));
  for(const k of Object.keys(catalogs))if(view(k))grant(k,...(m[k]==='configure'?['create','edit','delete']:[]));
  if(['sales','estimator','approver'].includes(r.role)&&view('commercial')&&view('customer')){grant('contracts','export',...(edit('commercial')&&r.role!=='approver'?['create','edit']:[]));grant('profile','export');grant('payments');if(r.canViewCosts)grant('costs');grant('orders','export',...(edit('commercial')&&r.role!=='approver'?['edit','confirm']:[]));if(r.role==='sales'&&edit('commercial'))out.orders.push('create');}
- if(['technical','estimator','approver'].includes(r.role))grant('production','export',...(r.role==='estimator'&&edit('manage')?['issue','edit','qc','complete']:r.role==='technical'&&edit('operations')?['edit','qc','complete']:[]));
+ if(['technical','estimator','approver'].includes(r.role))grant('production','export',...(r.role==='estimator'&&edit('manage')?['issue','edit','qc','complete']:r.role==='technical'&&edit('operations')?['edit','confirm','qc','complete']:[]));
  if(r.role==='admin')for(const [k,v]of Object.entries(schema))out[k]=[...v[1]];return out;
 }
 function combine(roles){if(!roles.some(explicit))return null;const result={};for(const r of roles){const rights=explicit(r)?parse(r.actionAccess??r.action_access):legacy(r);for(const [key,list]of Object.entries(rights))result[key]=schema[key][1].filter(a=>list.includes(a)||(result[key]||[]).includes(a));}return result;}

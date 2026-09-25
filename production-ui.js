@@ -1,4 +1,42 @@
 const Production={data:null,job:null,people:[],epoch:0};
+const installProductionBase=installProductionUI;
+installProductionUI=function(){
+ installProductionBase();const previous=render;render=function(){previous();const link=teamCurrent();if(page!=='quote'||!Team.loaded||link?.status!=='approved')return;
+  const create=actionCan('orders','create',Team.user?.role==='admin'||Team.user?.role==='sales'&&Team.permissions?.commercial),issue=actionCan('production','issue',Team.user?.role==='admin'||Team.user?.role==='estimator'&&Team.permissions?.manage);
+  if(!create&&!issue)return;document.querySelector('#content').insertAdjacentHTML('afterbegin','<section class="panel" data-production-handoff><h3>Chuyển giao báo giá đã duyệt</h3><div class="actions">'+(create?teamButton('Tạo / mở đơn hàng','order','','primary'):'')+(issue?'<button type="button" id="quote-production-issue">Tạo lệnh sản xuất</button>':'')+'</div><p>Chốt đơn hàng trước khi phát hành lệnh. Dữ liệu kỹ thuật lấy theo phiên bản báo giá đã duyệt.</p></section>');document.querySelector('#quote-production-issue')?.addEventListener('click',()=>productionFromQuote().catch(inError));
+ };
+ const detail=productionDetail;productionDetail=function(){detail();const b=document.createElement('button');b.type='button';b.textContent='Đề nghị thay đổi kỹ thuật';b.id='production-changes';b.onclick=()=>productionChanges().catch(inError);document.querySelector('#production-main .production-heading').append(b);};
+};
+async function productionFromQuote(){
+ const link=teamCurrent();if(!link||link.status!=='approved')throw Error('Mở báo giá đã duyệt');
+ const data=await teamApi('production'),orders=data.orders.filter(o=>o.quote_id===link.id&&o.quote_version===link.version);
+ // The production endpoint returns the source quote id without exposing commercial prices.
+ if(!orders.length){toast('Cần tạo và chốt đơn hàng từ báo giá này trước khi phát hành lệnh.');return;}
+ productionShell().showModal();Production.people=await teamApi('production/people');Production.data=data;await productionIssue();
+ const picker=document.querySelector('#production-order');picker.innerHTML=orders.map(o=>'<option value="'+pe(o.id)+'">'+pe(o.code)+'</option>').join('');await productionSource(orders[0].id);
+}
+document.addEventListener('click',e=>{
+ if(!e.target.closest('#sidebar [data-page="quote"]')||!Team.user)return;
+ e.preventDefault();e.stopImmediatePropagation();document.querySelector('#sidebar')?.classList.remove('open');
+ // Opening the list does not discard an unsaved quotation.
+ teamList().catch(inError);
+},true);
+// Changes are proposals until technical confirmation and explicit Admin approval.
+async function productionChanges(){
+ const id=Production.job.id,epoch=Production.epoch,generation=Team.sessionGeneration;
+ const d=await teamApi('production/'+id+'/changes');if(epoch!==Production.epoch||generation!==Team.sessionGeneration)return;
+ const main=document.querySelector('#production-main'),labels={pending:'Chờ kỹ thuật xác nhận',confirmed:'Chờ Admin duyệt',approved:'Đã áp dụng',rejected:'Đã trả lại'};
+ const values=r=>[r.material.id,...Object.entries(r.params||{}).map(([k,v])=>k+'='+v),...Object.entries(r.properties||{}).map(([k,v])=>k+'='+v),'Khổ '+r.material.stockL+' × '+(r.material.stockW||0),'Phôi '+r.dimensions.length+' × '+r.dimensions.width].join(' · ');
+ main.innerHTML='<h3>Đề nghị thay đổi kỹ thuật</h3><p>Ghi lý do → kỹ thuật xác nhận → Admin duyệt áp dụng. Hệ thống tính lại vật tư, công đoạn và phương án cắt; cần kiểm tra lại chuẩn bị và giữ kho. Báo giá và đơn hàng gốc được giữ nguyên.</p><button type="button" id="pc-back">← Về lệnh</button>'+(d.canPropose&&Production.job.state==='ready'?'<button type="button" id="pc-new">+ Đề nghị thay đổi</button>':'')+'<div id="pc-form"></div>'+d.changes.slice().reverse().map(c=>'<section class="production-panel"><h4>'+pe(labels[c.state])+'</h4><p>'+pe(c.reason)+' · '+pe(c.actor)+'</p>'+(c.technical?'<p>Kỹ thuật: '+pe(c.technical.name)+'</p>':'')+(c.rejection?'<p>Lý do trả lại: '+pe(c.rejection)+'</p>':'')+'<div class="production-table"><table><thead><tr><th>Trước thay đổi</th><th>Đề nghị</th></tr></thead><tbody>'+c.before.materials.filter(r=>r.id===c.rowId).map(r=>'<tr><td>'+pe(values(r))+'</td><td>'+pe(values(c.after.materials.find(x=>x.id===r.id)))+'</td></tr>').join('')+'</tbody></table></div>'+((c.state==='pending'&&d.canConfirm)?'<button data-pc="confirm" data-id="'+c.id+'">Xác nhận kỹ thuật</button>':'')+((c.state==='confirmed'&&d.canApprove)?'<button class="primary" data-pc="approve" data-id="'+c.id+'">Duyệt và áp dụng</button>':'')+(['pending','confirmed'].includes(c.state)&&(d.canConfirm||d.canApprove)?'<button data-pc="reject" data-id="'+c.id+'">Trả lại</button>':'')+'</section>').join('');
+ main.querySelector('#pc-back').onclick=()=>productionLoad(id).catch(inError);
+ const start=main.querySelector('#pc-new');if(start)start.onclick=()=>{
+  const host=main.querySelector('#pc-form');host.innerHTML='<form id="pc-proposal"><label>Dòng vật tư<select name="rowId">'+d.rows.map(r=>'<option value="'+pe(r.id)+'">'+pe(r.name)+' · '+pe(r.material.id)+'</option>').join('')+'</select></label><div id="pc-fields"></div><label>Lý do thay đổi<textarea name="reason" required maxlength="2000"></textarea></label><button type="submit">Gửi đề nghị</button></form>';
+  const f=host.querySelector('form'),draw=()=>{const r=d.rows.find(r=>r.id===f.elements.rowId.value);if(!r)return;host.querySelector('#pc-fields').innerHTML='<label>Mã vật tư đề nghị<select name="materialId">'+d.materials.filter(m=>m.shape===r.material.shape).map(m=>'<option value="'+pe(m.id)+'" '+(m.id===r.material.id?'selected':'')+'>'+pe(m.id+' · '+m.name)+'</option>').join('')+'</select></label><div id="pc-spec"></div>';
+   const spec=()=>{const m=d.materials.find(m=>m.id===f.elements.materialId.value),same=m.id===r.material.id;host.querySelector('#pc-spec').innerHTML='<div class="production-fields">'+[['dims',r.dims],['params',r.params],['props',same?r.properties:m.props]].flatMap(([k,v])=>Object.entries(v||{}).filter(([,n])=>typeof n==='number').map(([key,n])=>field(({dims:'Kích thước ',params:'Thông số ',props:'Quy cách '})[k]+key,k+'-'+key,n,'number','min="0" step="any"'))).join('')+['stockL','stockW'].filter(k=>(same?r.material:m)[k]!==undefined).map(k=>field(k==='stockL'?'Dài khổ mua (mm)':'Rộng khổ mua (mm)',k,(same?r.material:m)[k],'number','min="0" step="any"')).join('')+'</div>';};f.elements.materialId.onchange=spec;spec();};f.elements.rowId.onchange=draw;draw();
+  f.onsubmit=async e=>{e.preventDefault();e.stopImmediatePropagation();const button=f.querySelector('[type=submit]');button.disabled=true;try{const body={expectedVersion:d.jobVersion,dims:{},params:{},props:{}};for(const [k,v]of new FormData(f)){const match=k.match(/^(dims|params|props)-(.+)$/);if(match)body[match[1]][match[2]]=Number(v);else body[k]=['stockL','stockW'].includes(k)?Number(v):v;}await teamApi('production/'+id+'/changes','POST',body);await productionChanges();}catch(err){document.querySelector('#production-message').textContent=err.message;}finally{button.disabled=false;}};
+ };
+ main.querySelectorAll('[data-pc]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{let reason='';if(b.dataset.pc==='reject'){reason=prompt('Lý do trả lại');if(!reason)return;}await teamApi('production/'+id+'/changes/'+b.dataset.id+'/'+b.dataset.pc,'POST',{expectedVersion:d.jobVersion,reason});await productionLoad(id);await productionChanges();}catch(err){document.querySelector('#production-message').textContent=err.message;}finally{b.disabled=false;}});
+}
 const productionStatus={ready:'Chờ sản xuất',running:'Đang sản xuất',qc:'Chờ QC',completed:'Hoàn thành',pending:'Chưa bắt đầu',done:'Hoàn thành'};
 const pe=x=>esc(String(x??''));
 function productionShell(){let d=document.querySelector('#production-console');if(d)return d;d=document.createElement('dialog');d.id='production-console';d.innerHTML='<header><div><small>ĐIỀU HÀNH XƯỞNG</small><h2>Lệnh sản xuất</h2></div><button type="button" data-production="close">Đóng</button></header><div class="production-toolbar"><button data-production="home">Danh sách lệnh</button><button data-production="refresh">Tải lại</button><span id="production-message" role="alert"></span></div><main id="production-main"></main>';document.body.append(d);d.onclose=()=>{Production.epoch++;};return d;}

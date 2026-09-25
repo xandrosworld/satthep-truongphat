@@ -21,11 +21,13 @@ function createProduction({sql,fail,readBody,transaction,audit,operationsERP}){
  const read=j=>({...pick(j,['id','code','order_id','product_id','quantity','version','state','created','updated']),packet:JSON.parse(j.packet),progress:JSON.parse(j.progress)});
  const str=(v,max=1000)=>{if(typeof v!=='string'||v.length>max)fail(400,'Nội dung không hợp lệ');return v.trim();};
  const num=(v,max)=>{if(typeof v!=='number'||!Number.isFinite(v)||v<0||v>max)fail(400,'Số lượng không hợp lệ');return v;};
+ const changes=require('./production-changes.cjs').createProductionChanges({sql,fail,readBody,transaction,audit,packet,canWork});
  async function handle({req,route,user,send}){
   if(!route.startsWith('/api/production'))return false;
   if(!canRead(user))fail(403,'Chưa có quyền xem sản xuất');
+  if(await changes.handle({req,route,user,send}))return true;
   if(req.method==='GET'&&route==='/api/production'){
-   send(200,{canIssue:canIssue(user),canWork:canWork(user),orders:all('SELECT id,code,quote_version,package FROM orders ORDER BY at DESC').filter(o=>JSON.parse(o.package).status==='awaiting-production').map(({package:raw,...o})=>o),jobs:all('SELECT * FROM production_jobs ORDER BY created DESC').map(j=>{const v=read(j);return {...pick(v,['id','code','order_id','quantity','version','state','updated']),product:v.packet.product.name,deadline:v.progress.deadline,workshop:v.progress.workshop};})});return true;
+   send(200,{canIssue:canIssue(user),canWork:canWork(user),orders:all('SELECT id,code,quote_id,quote_version,package FROM orders ORDER BY at DESC').filter(o=>JSON.parse(o.package).status==='awaiting-production').map(({package:raw,...o})=>o),jobs:all('SELECT * FROM production_jobs ORDER BY created DESC').map(j=>{const v=read(j);return {...pick(v,['id','code','order_id','quantity','version','state','updated']),product:v.packet.product.name,deadline:v.progress.deadline,workshop:v.progress.workshop};})});return true;
   }
   if(req.method==='GET'&&route==='/api/production/people'){send(200,all("SELECT id,name FROM users WHERE active=1 AND role IN ('admin','technical','estimator')"));return true;}
   const source=route.match(/^\/api\/production\/orders\/([a-f0-9-]+)$/);
@@ -41,6 +43,7 @@ function createProduction({sql,fail,readBody,transaction,audit,operationsERP}){
     const at=new Date().toISOString(),id=randomUUID(),progress={deadline:'',workshop:'',materialsReady:false,drawingReady:false,preparationNote:'',operations:data.operations.map(x=>({id:x.id,assignee:'',status:'pending',output:0,note:''})),qc:{passed:0,rejected:0,note:''}};
     const snapshot={stockManaged:true,orderCode:o.code,quoteVersion:o.quote_version,quoteCode:data.quoteCode,product:data.products[0],materials:data.materials,operations:data.operations,cutting:data.cutting,finishing:data.finishing,kerf:data.kerf,layoutBasis:qty===p.qty&&JSON.parse(revision.document).quote.products.length===1?'approved':'batch-recalculated'};
     sql.prepare('INSERT INTO production_jobs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id,code,o.id,p.id,qty,1,'ready',JSON.stringify(snapshot),JSON.stringify(progress),at,at,user.id);
+    sql.prepare('INSERT INTO ops_records VALUES(?,?,?,?)').run('production-source',id,1,JSON.stringify(d));
     operationsERP.captureBaseline(id,d);audit(user,'production-issued',id,code);sql.prepare('INSERT INTO production_events(job_id,at,actor,detail) VALUES(?,?,?,?)').run(id,at,user.name,'Phát hành lệnh '+code);return read(one('SELECT * FROM production_jobs WHERE id=?',id));
    });send(201,job);return true;
   }
