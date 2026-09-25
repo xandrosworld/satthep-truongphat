@@ -30,3 +30,30 @@
 .deployment-stages article{padding:16px;border:1px solid #d6e0ea;border-radius:8px}
 .deployment-schedule{margin-top:24px;padding-top:16px;border-top:1px solid #d6e0ea}
 #production-deployment .table-scroll{max-width:100%;overflow:auto}
+
+/* Desktop production consoles: one content scroller, stable header and controls. */
+@media screen and (min-width:1000px){
+ #production-console[open],#orders-console[open]{display:flex;flex-direction:column;overflow:hidden}
+ #production-console>header,#orders-console>header{flex:none;padding:16px 24px;gap:24px}
+ #production-console>header>div,#orders-console>header>div{min-width:0}
+ #production-console>header h2,#orders-console>header h2{overflow-wrap:anywhere;margin-bottom:0}
+ #production-console>header button,#orders-console>header button{flex:none}
+ #production-console>.production-toolbar,#orders-console>.production-toolbar{flex:none;padding:10px 24px;min-height:58px;flex-wrap:wrap}
+ #production-main,#orders-main{flex:1;min-height:0;height:auto;padding:20px 24px;scrollbar-gutter:stable}
+ #production-console .production-heading{flex-wrap:wrap;gap:12px}
+ #production-console .production-heading>div:first-child{flex:1;min-width:280px}
+ #production-console .production-tabs{gap:8px;margin-bottom:16px}
+ #production-console th,#production-console td{padding:12px 14px}
+ #production-console .table-scroll{border:1px solid #dce4ed;border-radius:8px;margin:12px 0 20px}
+ #production-console td{font-variant-numeric:tabular-nums}
+ #production-console tbody tr:hover{background:#f5f8fc}
+ #production-console .production-review-sections>details{padding:16px 18px}
+ #production-console .production-review-sections>details>summary{line-height:1.6}
+ #production-console .dossier-operation summary p{font-weight:400}
+ #production-console .deployment-stages article{background:#f8fafc}
+ #production-console .deployment-stages article button{margin-top:8px}
+ #dialog:has(.production-purchase-allocations){width:960px;max-width:calc(100vw - 64px)}
+ #dialog:has(.production-purchase-allocations) .table-scroll{overflow:auto;border:1px solid #dce4ed;border-radius:8px}
+ #dialog:has(.production-purchase-allocations) h3{margin:24px 0 12px}
+ #dialog:has(.production-purchase-allocations) td:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+}

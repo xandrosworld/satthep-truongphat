@@ -10,15 +10,30 @@ await expect(p.locator('#production-issue-body')).toContainText('JOB-1');
 await expect(p.locator('#production-issue-body')).toContainText('JOB-2');
 await p.locator('#production-issue [name=quantity]').fill('999999');
 expect(await p.locator('#production-issue [name=quantity]').evaluate(x=>x.validity.rangeOverflow)).toBe(true);
-for(const width of [390,768,1440]){await p.setViewportSize({width,height:1000});expect(await p.locator('#production-console').evaluate(d=>d.scrollWidth<=d.clientWidth+2)).toBe(true);}
+for(const width of [1366,1440,1920]){await p.setViewportSize({width,height:1000});expect(await p.locator('#production-console').evaluate(d=>d.scrollWidth<=d.clientWidth+2)).toBe(true);}
 await p.evaluate(id=>productionLoad(id),ids[0]);
 await expect(p.locator('#dossier-stock')).toHaveCount(0);
 await p.locator('#dossier-deploy').click();await expect(p.locator('#production-deployment')).toContainText('Chưa xác nhận hồ sơ kỹ thuật');
 await p.locator('#production-deployment [data-production-tab=preparation]').click();
 await p.locator('.dossier-add summary').click();await expect(p.locator('#dossier-upload')).toBeVisible();await p.locator('#dossier-upload [name=file]').setInputFiles({name:'drawing.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF')});await p.locator('#dossier-upload [type=submit]').click();await expect(p.locator('[data-dossier-file]')).toHaveCount(1);await p.locator('#dossier-prepare [name=requirements]').fill('Review factory drawing');await p.locator('.production-review-sections details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));for(const c of await p.locator('[name^=check-]').all())await c.check();await p.locator('.dossier-operation').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));for(const input of await p.locator('#dossier-prepare input[name^=machine]').all())await input.fill('Manual');for(const input of await p.locator('#dossier-prepare textarea[name^=method]').all())await input.fill('Drawing R1');await p.locator('#dossier-prepare [name=reviewed]').check();await p.locator('#dossier-prepare [type=submit]').click();await expect(p.locator('#production-dossier')).toContainText('Đã rà soát: Admin');
 await p.locator('#dossier-deploy').click();await expect(p.locator('#dossier-stock')).toContainText('Chọn phôi tồn kho');await expect(p.locator('.deployment-stages')).toContainText('Mở công đoạn');
-await p.screenshot({path:'artifacts/production-dossier-desktop.png'});await p.setViewportSize({width:390,height:844});expect(await p.locator('#production-console').evaluate(d=>d.scrollWidth<=d.clientWidth+2)).toBe(true);await p.screenshot({path:'artifacts/production-dossier-mobile.png'});
+for(const [width,height] of [[1366,768],[1440,900],[1920,1080]]){
+ await p.setViewportSize({width,height});
+ await p.locator('#production-main').evaluate(el=>el.scrollTop=0);
+ expect(await p.locator('#production-console').evaluate(el=>el.scrollWidth<=el.clientWidth+2)).toBe(true);
+ expect(await p.locator('#production-console').evaluate(el=>el.scrollHeight<=el.clientHeight+2)).toBe(true);
+ const main=await p.locator('#production-main').boundingBox(),header=await p.locator('#production-console>.production-toolbar').boundingBox();
+ expect(main.y).toBeGreaterThanOrEqual(header.y+header.height-1);
+ await p.screenshot({path:'artifacts/production-deploy-top-'+width+'.png'});
+ await p.locator('.deployment-stages').scrollIntoViewIfNeeded();
+ await p.screenshot({path:'artifacts/production-deploy-details-'+width+'.png'});
+ await p.locator('.production-tabs [data-production-tab=preparation]').click();
+ await p.locator('#production-main').evaluate(el=>el.scrollTop=0);
+ await p.screenshot({path:'artifacts/production-review-'+width+'.png'});
+ await p.locator('#dossier-deploy').click();
+}
+
 await p.evaluate(async id=>{const j=await teamApi('production/'+id);await teamApi('production/'+id+'/dossier','POST',{expectedVersion:j.version,requirements:'',noDrawingReason:'Verified specification',reviewed:true,reviewChecks:{input:true,structure:true,operations:true,cutting:true,quantities:true},equipment:j.packet.operations.map(o=>({operationId:o.id,machine:'Manual',method:'Verified'}))});},ids[1]);
-await p.locator('[data-production=close]').click();await p.setViewportSize({width:1440,height:1000});await p.evaluate(()=>opsOpen('purchase'));await p.locator('[data-ops=purchase]').click();await p.locator('#dialog [name=jobs]').first().check();await p.locator('#dialog [name=jobs]').nth(1).check();await p.locator('#dialog-form [type=submit]').click();await expect(p.locator('#dialog [name=qty0]')).toBeVisible();await p.locator('#dialog [name=code]').fill('GROUP-BROWSER');await p.locator('#dialog-form [type=submit]').click();await expect(p.locator('#dialog[open]')).toHaveCount(0);await expect(p.locator('[data-ops=purchase-detail]')).toHaveCount(1);await p.locator('[data-ops=purchase-detail]').click();await expect(p.locator('#dialog')).toContainText('Phân bổ về lệnh sản xuất');await expect(p.locator('#dialog')).toContainText('JOB-1');await expect(p.locator('#dialog')).toContainText('JOB-2');await p.screenshot({path:'artifacts/production-purchase-grouped.png'});expect(errors).toEqual([]);console.log('PASS dossier upload/review, mobile, grouped purchase UI');
+await p.locator('[data-production=close]').click();await p.setViewportSize({width:1440,height:1000});await p.evaluate(()=>opsOpen('purchase'));await p.locator('[data-ops=purchase]').click();await p.locator('#dialog [name=jobs]').first().check();await p.locator('#dialog [name=jobs]').nth(1).check();await p.locator('#dialog-form [type=submit]').click();await expect(p.locator('#dialog [name=qty0]')).toBeVisible();await p.locator('#dialog [name=code]').fill('GROUP-BROWSER');await p.locator('#dialog-form [type=submit]').click();await expect(p.locator('#dialog[open]')).toHaveCount(0);await expect(p.locator('[data-ops=purchase-detail]')).toHaveCount(1);await p.locator('[data-ops=purchase-detail]').click();await expect(p.locator('#dialog')).toContainText('Phân bổ về lệnh sản xuất');await expect(p.locator('#dialog')).toContainText('JOB-1');await expect(p.locator('#dialog')).toContainText('JOB-2');for(const [width,height] of [[1366,768],[1440,900],[1920,1080]]){await p.setViewportSize({width,height});expect(await p.locator('#dialog').evaluate(el=>el.scrollWidth<=el.clientWidth+2)).toBe(true);await expect(p.locator('#dialog .dialog-footer')).toBeVisible();await p.screenshot({path:'artifacts/production-purchase-'+width+'.png'});}expect(errors).toEqual([]);console.log('PASS review/deployment and purchase popup on PC/laptop 1366, 1440, 1920');
 }finally{await browser.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
 

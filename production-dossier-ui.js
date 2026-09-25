@@ -56,7 +56,7 @@ function productionPreparationStock(host,j,stock){
  host.innerHTML=opsTable(['Mã / quy cách vật tư','Khổ khai triển (mm)','Tổng chi tiết','Nguồn cấp'],groups.map(g=>{const m=g.material;return [e(m.material.id)+' · '+e(m.material.name||m.name)+'<p>'+e([m.material.substance,m.material.grade,...Object.entries(m.properties||{}).map(([k,v])=>k+' '+v)].filter(Boolean).join(' · '))+'</p>',e([m.dimensions.length,m.dimensions.width].filter(v=>v>0).join(' × ')||'Theo quy cách'),e(g.count),m.externallySupplied?'Nhà gia công cấp':'Đối chiếu kho bên dưới'];}))+
  '<h4>Chọn phôi tồn kho và xử lý phần thiếu</h4><p>Tồn khả dụng đã trừ phần được giữ cho các lệnh khác. Khổ phôi phải đáp ứng phương án cắt của lô; giữ kho trước khi bắt đầu sản xuất.</p>'+
  opsTable(['Vật tư / khổ cần dùng','Nhu cầu','Đã giữ / cấp','Phôi tồn phù hợp','Chưa được giữ','Thiếu so với kho'],stock.requirements.map(r=>[
- e(r.materialId)+' · '+e(r.name)+'<p>'+e([r.length,r.width,r.thickness].filter(v=>v>0).join(' × '))+' mm</p>',
+ e(r.materialId)+' · '+e(r.name)+'<p>'+( [r.length,r.width,r.thickness].some(v=>v>0)?e([r.length,r.width,r.thickness].filter(v=>v>0).join(' × '))+' mm':'Không theo khổ')+'</p>',
  e(r.quantity)+' '+e(r.unit),e(r.assigned)+' '+e(r.unit),
  (r.lots||[]).map(l=>'<div><strong>'+e(l.id)+'</strong> · '+e(l.warehouse)+'<br>'+e([l.length,l.width,l.thickness].filter(v=>v>0).join(' × '))+' mm · '+e(l.available)+' '+e(r.unit)+'</div>').join('')||'Không có phôi khả dụng phù hợp',
  e(r.unassigned)+' '+e(r.unit),'<strong>'+e(r.missing)+' '+e(r.unit)+'</strong>'
