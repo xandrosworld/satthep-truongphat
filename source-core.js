@@ -33,7 +33,7 @@ function summary(result){
  const sale=[['profitMarkup','Hệ số lợi nhuận'],['processing','Hệ số xử lý'],['order','Hệ số đơn hàng'],['customer','Hệ số khách hàng'],['reserve','Dự phòng giảm giá']];
  for(const [id,name]of sale)factor(name,p=>(p.saleSteps||[]).find(f=>f.id===id)?.value,p=>(p.saleSteps||[]).find(f=>f.id===id)?.percent||0);
  for(const [field,label]of [['productionSteps','SX bổ sung'],['saleSteps','Bán bổ sung']]){const ids=new Map();for(const a of methods)for(const p of a.products)for(const f of p[field]||[])if(field==='productionSteps'||!sale.some(([id])=>id===f.id))ids.set(f.id,f.name||f.id);for(const [id,name]of ids)factor(label+' · '+name,p=>(p[field]||[]).find(f=>f.id===id)?.value,p=>(p[field]||[]).find(f=>f.id===id)?.percent||0);}
- add('Phân loại khách hàng','',()=>null,()=>result.pricing.policySelections?.customer?.name||'Chưa khai');
+ add('Phân loại khách hàng','',()=>null,()=>result.pricing.classificationLabel||result.pricing.policySelections?.customer?.name||'Chưa khai');
  add('Cấp độ đặc thù sản xuất','',()=>null,a=>[...new Set(a.products.map(p=>p.node.productionLevelChoice||result.pricing.policySelections?.['product:'+p.node.id]?.name||'Chưa khai'))].join(' / '));
  section='Khối lượng và diện tích';
  add('Khối lượng vật tư mua','kg',()=>result.rows.reduce((s,r)=>s+(r.purchasedWeight||0),0));

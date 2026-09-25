@@ -9,8 +9,25 @@ function installSourceUI(){const old=renderQuickBOM;renderQuickBOM=()=>`<div cla
 document.addEventListener('click',event=>{
  const button=event.target.closest('[data-source-jump]');if(!button)return;
  const row=TPSource.visibleSummary(result)[Number(button.dataset.sourceJump)],target=row&&TPSource.destination(row);if(!target)return;
+ if(row.name==='Phân loại khách hàng'&&Team.user&&teamCurrent()?.id){sourceCustomerClassification().catch(error=>toast(error.message));return;}
  page='quote';tab=target.tab;if(target.group)Intake.priceTab=target.group;render();
  const anchor=target.focus&&document.querySelector(target.focus)||document.querySelector('[data-quote-price-selector]')||document.querySelector('#content');
  anchor?.scrollIntoView({block:'center',behavior:'smooth'});anchor?.focus?.({preventScroll:true});
  if(['submitted','approved'].includes(db.quote.status))toast('Bản đã trình/duyệt đang khóa. Cần người có quyền mở bản sửa trước khi bổ sung.');
 });
+
+async function sourceCustomerClassification(){
+ const link=teamCurrent(),id=link?.id,generation=Team.sessionGeneration;
+ if(!id)return;
+ const data=await teamApi('quotes/'+id+'/customer-classification');
+ if(teamCurrent()?.id!==id||Team.sessionGeneration!==generation)return;
+ const writable=data.canDeclare&&!link.readOnly;
+ teamDialog('Phân loại khách hàng',`<p>Chọn loại khách từ danh mục đã phát hành. Hệ thống áp dụng hệ số tương ứng cho báo giá này.</p><p>Đang áp dụng: <strong>${esc(data.selection||'Chưa khai')}</strong></p>${select('Loại khách hàng','classification',[['','Chọn loại khách hàng'],...data.choices.map(x=>[x.name,x.name+(x.description?' · '+x.description:'')])],data.selection,`required ${writable?'':'disabled'}`)}${!data.choices.length?'<p class="notice">Chưa có loại khách trong danh mục đã phát hành. Người quản lý danh mục cần khai và phát hành trước.</p>':''}${!writable?'<p class="notice">Chỉ xem. Cần quyền khai báo và bản nháp được mở sửa để cập nhật.</p>':''}`,'Lưu phân loại',async f=>{
+  if(!writable)throw Error('Không có quyền khai báo hoặc báo giá đang khóa');
+  if(teamCurrent()?.id!==id||Team.sessionGeneration!==generation)throw Error('Báo giá hoặc phiên đăng nhập đã thay đổi; mở lại khai báo');
+  if(Team.dirty)throw Error('Báo giá có thay đổi chưa lưu. Đóng cửa sổ, lưu báo giá rồi chọn lại phân loại.');
+  await teamApi('quotes/'+id+'/customer-classification','POST',{name:String(f.get('classification')),expectedVersion:link.version});
+  closeDialog();await teamLoad(id);tab='pricing';render();toast('Đã lưu phân loại khách hàng và tính lại báo giá');
+ });
+ if(!writable||!data.choices.length)$('#dialog-form button[type="submit"]')?.setAttribute('disabled','');
+}

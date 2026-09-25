@@ -1,0 +1,21 @@
+'use strict';
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs'),SA=require('../section-access.js');
+(async()=>{const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({channel:'msedge',headless:true}),page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+try{
+ await page.goto('http://127.0.0.1:'+app.server.address().port);await expect(page.locator('#team-entry')).toBeVisible();
+ const id=await page.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'QA admin',password:'Classification-only-42!'}));return (await teamApi('quotes','POST',{document:TPPrice.demoSeed()})).id;});
+ const cat=JSON.parse(app.sql.prepare('SELECT document FROM catalog WHERE id=1').get().document);cat.pricingDefaults.policyTypes={customer:[{name:'VIP',description:'Khách hàng thường xuyên',multiplier:0.95}]};app.sql.prepare('UPDATE catalog SET document=? WHERE id=1').run(JSON.stringify(cat));
+ const modes=Object.fromEntries(SA.keys.map(k=>[k,'view']));modes.customer='use';modes.factors='use';
+ await page.evaluate(async modes=>{await teamApi('users','POST',{username:'declarer',name:'QA declarer',password:'Classification-only-42!',role:'estimator',sectionModes:modes,canEditFactors:false});teamSession(await teamApi('login','POST',{username:'declarer',password:'Classification-only-42!'}));},modes);
+ app.sql.prepare('INSERT INTO formula_locks VALUES(?,?,?,?,?)').run('calculationFactors:all',1,1,'qa',new Date().toISOString());
+ await page.evaluate(async id=>{teamSession(await teamApi('me'));await teamLoad(id);tab='pricing';render();},id);
+ expect(await page.evaluate(()=>Team.permissions.factorsHidden)).toBe(true);
+ const jump=()=>page.getByRole('button',{name:'Nơi khai báo: Phân loại khách hàng',exact:true});await jump().click();await expect(page.locator('[name=classification]')).toBeVisible();await page.locator('[name=classification]').selectOption('VIP');
+ await page.evaluate(()=>{Team.dirty=true;});await page.getByRole('button',{name:'Lưu phân loại',exact:true}).click();await expect(page.locator('#dialog-error')).toContainText('chưa lưu');await page.evaluate(()=>{Team.dirty=false;});
+ await page.getByRole('button',{name:'Lưu phân loại',exact:true}).click();await expect(page.locator('#dialog')).not.toBeVisible();await expect(page.locator('[data-overall-analysis]')).toContainText('VIP');
+ const saved=JSON.parse(app.sql.prepare('SELECT document FROM quotes WHERE id=?').get(id).document);expect(saved.quote.pricing.customer).toBe(-5);
+ await page.reload();await page.waitForFunction(()=>Team.user?.username==='declarer');await page.evaluate(async id=>{await teamLoad(id);tab='pricing';render();},id);await expect(page.locator('[data-overall-analysis]')).toContainText('VIP');
+ await page.setViewportSize({width:390,height:844});await jump().click();await expect(page.locator('[name=classification]')).toHaveValue('VIP');await page.screenshot({path:'artifacts/customer-classification-mobile.png'});await page.evaluate(()=>closeDialog());
+ app.sql.prepare("UPDATE quotes SET status='approved' WHERE id=?").run(id);await jump().click();await expect(page.locator('[name=classification]')).toBeDisabled();await expect(page.getByRole('button',{name:'Lưu phân loại',exact:true})).toBeDisabled();expect(errors).toEqual([]);
+ console.log('PASS delegated classification: hidden factors, dirty guard, persistence, recalculation, approved lock, mobile');
+}finally{await browser.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
