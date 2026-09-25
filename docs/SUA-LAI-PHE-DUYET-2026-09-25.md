@@ -13,3 +13,5 @@ Luồng báo giá có hai thao tác cạnh nhau: **Sửa lại / Duyệt**. Sử
 Các yêu cầu được lưu trong dữ liệu bàn giao, nằm trong sao lưu hiện có. Mở khóa, tạo revision và thông báo cùng một giao dịch; lỗi sẽ rollback. Không thay đổi gói đơn hàng/lệnh sản xuất đã phát hành.
 
 Kiểm thử API bao gồm quyền người lập/người duyệt, vùng sửa, bàn giao lại, lịch sử bất biến, bước sau đã nhập giá, yêu cầu lỗi thời. Kiểm thử trình duyệt bao gồm nút cạnh nhau, chọn vùng/lý do, liên kết điều hướng, chặn sửa ngoài phạm vi, lưu và màn hình điện thoại; luồng công tắc bàn giao cũ tiếp tục hoạt động.
+
+Đã triển khai `f8e522f` ngày 25/09/2026 sau sao lưu. Toàn bộ 751 kiểm thử đạt; hai bài kiểm thử trình duyệt sửa lại và công tắc bàn giao đạt. Kiểm tra HTTPS thực tế thấy đủ tám vùng chọn, lý do bắt buộc và giao diện điện thoại; chỉ đọc dữ liệu nghiệp vụ. Phiên kiểm tra đã thu hồi, healthcheck đạt.
