@@ -112,6 +112,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const reports=require('./reports.cjs').createReports({sql,fail,audit});
   const production=require('./production.cjs').createProduction({sql,fail,readBody,transaction,audit,operationsERP});
   const business=require('./business.cjs').createBusiness({sql,fail,readBody,transaction,audit,shipOrder:production.shipOrder,financeContext:enterprise.contractFinancials});
+  const dashboard=require('./dashboard.cjs').createDashboard({sql,fail,business});
   function publishCatalog(body,user,rights,proposal=null){return transaction(()=>{const old=one('SELECT * FROM catalog WHERE id=1');
     if(proposal){const latest=one('SELECT * FROM catalog_proposals WHERE id=?',proposal.id);if(!latest||latest.status!=='pending')fail(409,'Khai báo đã được xử lý');const author=one('SELECT * FROM users WHERE id=? AND active=1 AND deleted_at IS NULL',proposal.actor);if(!author||!permissions(author).catalog)fail(403,'Người khai báo không còn quyền danh mục');const proposed=JSON.parse(proposal.document),master=old?JSON.parse(old.document):catalogSeed();formulaAccess.guard(master,proposed,permissions(author),true);guardSections(author,master,proposed,true);require('./action-access.cjs').guardCatalog(master,proposed,author,fail);}if((old?.version||0)!==body.expectedVersion)fail(409,'Danh mục đã đổi. Tải lại trước khi phát hành.');let value=formulaAccess.hydrate(body.catalog,user);if(rights.technical){try{value=require('../technical-core.js').mergeCatalog(old?JSON.parse(old.document):catalogSeed(),value);}catch(e){fail(403,e.message);}}require('./extra-factor-access.cjs').guard(old?JSON.parse(old.document).pricingDefaults:catalogSeed().pricingDefaults,value.pricingDefaults,user,fail);formulaAccess.guard(old?JSON.parse(old.document):catalogSeed(),value,rights,true);guardSections(user,old?JSON.parse(old.document):catalogSeed(),value,true);require('./action-access.cjs').guardCatalog(old?JSON.parse(old.document):catalogSeed(),value,user,fail);if(!value||typeof value!=='object')fail(400,'Thiếu danh mục');
           const trial=require('../pricing-core.js').demoSeed();Object.assign(trial,{pricingDefaults:value.pricingDefaults||catalogSeed().pricingDefaults,shapeDefinitions:value.shapeDefinitions||[],stockSizes:value.stockSizes||[],conventions:value.conventions||{},materialPrices:value.materialPrices||[],materials:value.materials,rates:value.rates,rules:value.rules,library:value.library});const safe=cleanDocument(trial).data;require('./formula-sync.cjs').normalizeNames(safe);
@@ -157,6 +158,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       if(await aiPdf.handle({req,route,user,send}))return;
       if(await operationsERP.handle({req,route,user,send}))return;
       if(await enterprise.handle({req,route,user,send}))return;
+      if(dashboard.handle({req,route,user,send}))return;
       if(await reports.handle({req,route,user,send}))return;
       if(await production.handle({req,route,user,send}))return;
       if(await chat.handle({req,route,user,send,res}))return;

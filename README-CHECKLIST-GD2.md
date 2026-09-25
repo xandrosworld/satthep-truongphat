@@ -1,5 +1,7 @@
 # Checklist triển khai GĐ2 — Trường Phát
 
+Rà soát cuối ngày 25/09: [Kiểm tra bốn đợt GĐ2, responsive và các mục còn mở](docs/RA-SOAT-GD2-2026-09-25.md).
+
 Bổ sung bảng giao việc 25/09: [Giao việc phân cấp và liên thông](docs/GIAO-VIEC-PHAN-CAP-2026-09-25.md). Giới hạn theo cây phòng ban, nhận việc/chốt việc cha–con, cập nhật từ nguồn, vướng mắc và tổng hợp khối lượng–tiến độ.
 
 Bổ sung điều hành xưởng 25/09: [Tiến trình công nghệ, đối soát vật tư và nhập kho công đoạn](docs/DIEU-HANH-CONG-DOAN-2026-09-25.md). Có kỹ thuật xác nhận/Admin duyệt, cân bằng vật tư và phiếu phôi–bán thành phẩm–thành phẩm. Chưa thay thế nghiệm thu vận hành với khách.
@@ -167,13 +169,13 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 
 | Kiểm đạt | Mã | Nội dung | Bằng chứng / còn thiếu |
 |---|---|---|---|
-| [ ] | 01.01 | 6 chỉ số điều hành Doanh thu, số đơn hàng, lệnh sản xuất, đang sản xuất, giá trị tồn kho, công nợ phải thu | Chờ rà soát |
-| [ ] | 01.02 | Biểu đồ doanh thu 12 tháng | Chờ rà soát |
-| [ ] | 01.03 | Biểu đồ cơ cấu đơn hàng Tỷ trọng theo trạng thái | Chờ rà soát |
-| [ ] | 01.04 | Tiến độ sản xuất tổng Số lệnh theo từng công đoạn | Chờ rà soát |
-| [ ] | 01.05 | Cảnh báo điều hành Lệnh trễ hạn, vật tư dưới định mức, hợp đồng sắp hết hạn, yêu cầu mua chờ duyệt | Chờ rà soát |
-| [ ] | 01.06 | Nhật ký hoạt động 10 thao tác gần nhất của toàn hệ thống | Chờ rà soát |
-| [ ] | 01.07 | Kịch bản hướng dẫn thao tác Danh sách các bước thao tác; chọn một bước để chuyển đến đúng màn hình tương ứng. | Chờ rà soát |
+| [x] | 01.01 | 6 chỉ số điều hành Doanh thu, số đơn hàng, lệnh sản xuất, đang sản xuất, giá trị tồn kho, công nợ phải thu | Tự kiểm dashboard.test.cjs, dashboard-browser.cjs; xem báo cáo rà soát 25/09 |
+| [x] | 01.02 | Biểu đồ doanh thu 12 tháng | Tự kiểm dashboard.test.cjs, dashboard-browser.cjs; xem báo cáo rà soát 25/09 |
+| [x] | 01.03 | Biểu đồ cơ cấu đơn hàng Tỷ trọng theo trạng thái | Tự kiểm dashboard.test.cjs, dashboard-browser.cjs; xem báo cáo rà soát 25/09 |
+| [x] | 01.04 | Tiến độ sản xuất tổng Số lệnh theo từng công đoạn | Tự kiểm dashboard.test.cjs, dashboard-browser.cjs; xem báo cáo rà soát 25/09 |
+| [x] | 01.05 | Cảnh báo điều hành Lệnh trễ hạn, vật tư dưới định mức, hợp đồng sắp hết hạn, yêu cầu mua chờ duyệt | Tự kiểm dashboard.test.cjs, dashboard-browser.cjs; xem báo cáo rà soát 25/09 |
+| [x] | 01.06 | Nhật ký hoạt động 10 thao tác gần nhất của toàn hệ thống | Tự kiểm dashboard.test.cjs, dashboard-browser.cjs; xem báo cáo rà soát 25/09 |
+| [x] | 01.07 | Kịch bản hướng dẫn thao tác Danh sách các bước thao tác; chọn một bước để chuyển đến đúng màn hình tương ứng. | Tự kiểm dashboard.test.cjs, dashboard-browser.cjs; xem báo cáo rà soát 25/09 |
 | [x] | 02.01 | Danh sách khách hàng Tìm kiếm, lọc theo nhóm, phân trang. Bao gồm thời gian nhập, người nhập, người sở hữu Loại khách: có khách lẻ, khách công ty Theo dõi và kiểm soát thời gian tương tác với khách đã bao lâu. Khống chế thời gian để thông báo khách chưa được tương tác  Lịch sử tương tác với khách, nội dung tương tác Có tổng quan để phân loại mức độ khách hàng VIP, mới, thường xuyên…… để áp dụng hệ số khách hàng Có chức năng chuyển đổi sở hữu khách hàng khi  nhân viên kinh doanh nghỉ, không chăm sóc khách trong 1 thời gian quy định | Đợt 1: xem docs/dot-1-kinh-doanh.md; tự kiểm, chưa nghiệm thu |
 | [x] | 02.02 | Thêm / sửa / xoá khách hàng Tên, mã số thuế, địa chỉ, người liên hệ, điện thoại, email | Đợt 1: xem docs/dot-1-kinh-doanh.md; tự kiểm, chưa nghiệm thu |
 | [x] | 02.03 | Phân loại khách hàng Ảnh hưởng dự phòng giảm giá khi báo giá | Đợt 1: xem docs/dot-1-kinh-doanh.md; tự kiểm, chưa nghiệm thu |
@@ -315,24 +317,24 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 | [x] | 22.02 | Tồn tại vướng mắc | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 22.03 | Kiến nghị đề xuất | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 22.04 | Công việc ngày tiếp theo | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
-| [ ] | 23.01 | Danh sách tài khoản | Chờ rà soát |
-| [ ] | 23.02 | Thêm / sửa / khoá tài khoản | Chờ rà soát |
-| [ ] | 23.03 | Vai trò người dùng | Chờ rà soát |
-| [ ] | 23.04 | Phân quyền theo phân hệ Vai trò nào vào được menu nào; dữ liệu nào (ví dụ thông tin giá thì kỹ thuật sản xuất không được tiếp cận; kinh doanh chỉ biết giá cuối…) | Chờ rà soát |
-| [ ] | 23.05 | Nhật ký thao tác Ai làm gì, lúc nào | Chờ rà soát |
-| [ ] | 24.01 | Thông tin doanh nghiệp Tên, mã số thuế, địa chỉ, logo dùng in chứng từ | Chờ rà soát |
-| [ ] | 24.02 | Tham số vận hành Bật tắt các quy tắc nghiệp vụ | Chờ rà soát |
-| [ ] | 24.03 | Định dạng số, tiền tệ, ngày | Chờ rà soát |
-| [ ] | 24.04 | Giao diện sáng / tối | Chờ rà soát |
+| [x] | 23.01 | Danh sách tài khoản | Tự kiểm access-review/action-access/server và trình duyệt tài khoản, bộ quyền; xem báo cáo rà soát 25/09 |
+| [x] | 23.02 | Thêm / sửa / khoá tài khoản | Tự kiểm access-review/action-access/server và trình duyệt tài khoản, bộ quyền; xem báo cáo rà soát 25/09 |
+| [x] | 23.03 | Vai trò người dùng | Tự kiểm access-review/action-access/server và trình duyệt tài khoản, bộ quyền; xem báo cáo rà soát 25/09 |
+| [x] | 23.04 | Phân quyền theo phân hệ Vai trò nào vào được menu nào; dữ liệu nào (ví dụ thông tin giá thì kỹ thuật sản xuất không được tiếp cận; kinh doanh chỉ biết giá cuối…) | Tự kiểm access-review/action-access/server và trình duyệt tài khoản, bộ quyền; xem báo cáo rà soát 25/09 |
+| [x] | 23.05 | Nhật ký thao tác Ai làm gì, lúc nào | Tự kiểm access-review/action-access/server và trình duyệt tài khoản, bộ quyền; xem báo cáo rà soát 25/09 |
+| [x] | 24.01 | Thông tin doanh nghiệp Tên, mã số thuế, địa chỉ, logo dùng in chứng từ | Thông tin đơn vị phát hành và hồ sơ năng lực; kiểm tra business/offer-templates, xuất hồ sơ |
+| [ ] | 24.02 | Tham số vận hành Bật tắt các quy tắc nghiệp vụ | Có cấu hình theo phân hệ; chưa đối chiếu đầy đủ danh sách tham số bàn giao |
+| [ ] | 24.03 | Định dạng số, tiền tệ, ngày | Đã dùng định dạng vi-VN; ô ngày theo trình duyệt, chưa có cấu hình tùy ý |
+| [ ] | 24.04 | Giao diện sáng / tối | Chưa có chế độ tối; giữ mở — không đánh dấu hoàn thành |
 | [x] | 25.01 | Thông tin đầu vào nhân sự Có dữ liệu đầu vào các nhân sự  - Ngày vào làm: tính thâm niên  - Lương cơ bản để tính bảo hiểm - Lương thực tế | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 25.02 | Bảng nguyên tắc tính lương Thể hiện nguyên tắc tính lương cho từng đối tượng - Sản xuât - văn phòng  - Kinh doanh  - các loại hệ số: Hệ số tăng ca, làm ngày nghỉ, ngày lễ, làm công trường, khác  - Phụ cấp…. | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 25.03 | Thông tin ngày công Thể hiện được số ngày công, tăng ca, nghỉ, lễ, công trường | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 25.04 | Bảng lương Lương theo BHXH, lương thực nhận | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [x] | 26.01 | Bảng thông tin giao việc Có các nội dung nội dung công việc, các trường đã nhận đã làm đã hoàn thành  Thời gian tiến độ công việc thực hiện  Các cá nhân tự giao việc, phụ trách giao việc Lãnh đạo xác nhận Có thông báo về chuyển bước công việc, phê duyệt chuyển bước | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
-| [ ] | 27.01 | Bảng thông tin chat, trao đổi công việc Chat với từng cá nhân; Tạo nhóm chat; chụp cắt ảnh gửi trong ô Chat | Chờ rà soát |
-| [ ] | BS07 | AI đọc ảnh/PDF cấu kiện đơn giản, đối chiếu danh mục và xác nhận trước khi điền báo giá | Chờ rà soát |
-| [ ] | BS09 | Bảo vệ dữ liệu giá theo vai trò; phiên bản, lịch sử và bảo toàn số liệu chứng từ đã duyệt | Chờ rà soát |
-| [ ] | BS10 | Liên thông toàn bộ: báo giá → đơn hàng/hợp đồng → sản xuất/kho/mua → QC/giao hàng → thu chi/công nợ/báo cáo; nhân sự/lương/giao việc/chat | Chờ rà soát |
+| [x] | 27.01 | Bảng thông tin chat, trao đổi công việc Chat với từng cá nhân; Tạo nhóm chat; chụp cắt ảnh gửi trong ô Chat | chat-browser và chat-interactions-browser: hai tài khoản, nhóm, ảnh/cắt ảnh, tải lại |
+| [x] | BS07 | AI đọc ảnh/PDF cấu kiện đơn giản, đối chiếu danh mục và xác nhận trước khi điền báo giá | ai-pdf.test và ai-pdf-browser: xác nhận, đối chiếu, chống trùng; AI giả lập trong kiểm thử |
+| [x] | BS09 | Bảo vệ dữ liệu giá theo vai trò; phiên bản, lịch sử và bảo toàn số liệu chứng từ đã duyệt | server/action-access/quote-corrections: quyền nguồn, phiên bản bất biến và lịch sử |
+| [x] | BS10 | Liên thông toàn bộ: báo giá → đơn hàng/hợp đồng → sản xuất/kho/mua → QC/giao hàng → thu chi/công nợ/báo cáo; nhân sự/lương/giao việc/chat | reports-flow và các bài liên thông bốn đợt đạt trên dữ liệu mẫu; chưa thay chạy thử thực tế |
 
 ### GĐ2-D (6)
 
