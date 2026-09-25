@@ -10,6 +10,18 @@ function analysis(result){const values=Object.values(result.alternatives);return
  ].map(([name,get,unit='đ'])=>({name,unit,values:values.map(a=>{const amount=a.ready?get(a):null;return {amount,perKg:unit==='đ'&&amount!==null&&a.total.weight>0?amount/a.total.weight:null};})}));}
 function visibleMethods(result){const ids=new Set([result.pricing.selected,...result.comparisonIds||[result.pricing.selected]]);return Object.values(result.alternatives).filter(a=>ids.has(a.id));}
 function visibleSummary(result){const all=Object.values(result.alternatives),ids=new Set(visibleMethods(result).map(a=>a.id));return summary(result).map(r=>({...r,values:r.values.filter((_,i)=>ids.has(all[i].id))}));}
+// Destinations refer to existing quote forms; totals are derived, not editable inputs.
+function destination(row){
+ const name=row.name;
+ if(name==='Phân loại khách hàng')return {tab:'prices',group:'factors',focus:'[data-policy-target="customer"]'};
+ if(row.section==='Hệ số áp dụng'||['Chi phí chung','Chi phí quản lý','Đặc thù sản xuất','Sản xuất bổ sung','Chi phí xử lý'].includes(name))return {tab:'prices',group:'factors'};
+ if(row.section==='Khối lượng và diện tích')return {tab:'bom'};
+ if(name==='Vật tư chính + phụ + hoàn thiện')return {tab:'prices',group:'materials'};
+ if(['Sản xuất tại xưởng','Sản xuất thuê ngoài','Chi phí chung riêng TMC'].includes(name))return {tab:'prices',group:'operations'};
+ if(name.startsWith('Vận chuyển')||name==='Lắp đặt')return {tab:'prices',group:'logistics'};
+ if(name==='Thuế đầu ra')return {tab:'pricing',focus:'[data-tax-panel]'};
+ return null;
+}
 function summary(result){
  const methods=Object.values(result.alternatives),out=[],sum=(a,get)=>a.products.reduce((s,p)=>s+(get(p)||0),0),bundled=a=>['kg','competitor'].includes(a.id)||a.products.some(p=>p.groupCalculation),final=a=>a.id===result.pricing.selected?result.total:a.total;
  let section='Hệ số áp dụng';
@@ -36,5 +48,5 @@ function summary(result){
  ])add(name,'đ',get);
  return out;
 }
-const api={FIELDS,rows,analysis,summary,visibleMethods,visibleSummary};if(typeof module!=='undefined')module.exports=api;else root.TPSource=api;
+const api={destination,FIELDS,rows,analysis,summary,visibleMethods,visibleSummary};if(typeof module!=='undefined')module.exports=api;else root.TPSource=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -54,6 +54,26 @@ test('approved quote requires explicit reopen right; scopes, versions and revoca
  await grant(u,{canReopen:true});A.equal((await call('quotes/'+id+'/restore','POST',{expectedVersion:4,sourceVersion:3,reason:'Tạo bản sửa'},u.session)).status,200);
  await grant(u,{canReopen:false});A.equal((await call('quotes/'+id+'/restore','POST',{expectedVersion:5,sourceVersion:3,reason:'Đã thu hồi'},u.session)).status,403);
 });
+test('reopened quote accepts logistics edits with stale masked history and preserves approved revision',async t=>{
+ const {call,admin,create}=await harness(t),u=await create('logistics',{sections:['logistics'],canEditFactors:false,canReopen:true});
+ const id=(await call('quotes','POST',{document:P.demoSeed()},admin)).data.id;
+ A.equal((await call('quotes/'+id+'/submit','POST',{expectedVersion:1},admin)).status,200);
+ A.equal((await call('quotes/'+id+'/approve','POST',{expectedVersion:2},admin)).status,200);
+ const original=(await call('quotes/'+id+'/revision/3','GET',undefined,admin)).data;
+ A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:true,reason:'Test protected factors',expectedVersion:0},admin)).status,200);
+ A.equal((await call('quotes/'+id+'/reopen','POST',{expectedVersion:3,reason:'Update delivery'},u.session)).status,200);
+ const view=(await call('quotes/'+id,'GET',undefined,u.session)).data;
+ view.document.quote.pricing.delivery+=1234;
+ view.document.quote.changeHistory.push({actor:'old browser',kind:'local pricing history',after:{delivery:1234}});
+ const saved=await call('quotes/'+id,'PUT',{document:view.document,expectedVersion:view.version},u.session);
+ A.equal(saved.status,200,JSON.stringify(saved.data));
+ const full=(await call('quotes/'+id,'GET',undefined,admin)).data;
+ A.equal(full.document.quote.pricing.delivery,view.document.quote.pricing.delivery);
+ A.equal(full.document.quote.changeHistory.some(x=>x.actor==='old browser'),false);
+ A.equal(full.document.quote.changeHistory.at(-1).actor,'logistics');
+ A.deepEqual((await call('quotes/'+id+'/revision/3','GET',undefined,admin)).data.document,original.document);
+});
+
 test('invalid permission update is atomic; role templates carry separate grants',async t=>{
  const {call,admin,create}=await harness(t),u=await create('roles');
  A.equal((await call('users/'+u.id+'/access','POST',{...u.body,role:'invalid',canReopen:true},admin)).status,400);
