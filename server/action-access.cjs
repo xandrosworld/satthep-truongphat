@@ -12,6 +12,7 @@ function guardRoute(route,method,user,fail){
   const action=/\/approve$/.test(route)?'approve':/\/submit$/.test(route)?'submit':/\/(reopen|restore)$/.test(route)?'reopen':/\/handoff\//.test(route)?'confirm':/\/work$/.test(route)?'assign':method==='DELETE'?'delete':/^\/api\/(quotes|quote-intakes)$/.test(route)?'create':'edit';return need('quotes',action);
  }
  if(/^\/api\/orders(\/|$)/.test(route))return need('orders',read?'view':/\/confirm$/.test(route)?'confirm':'edit');
+ if(/^\/api\/production\/[^/]+\/(dossier|files)(\/|$)/.test(route))return need('production',read?'view':'edit');
  if(/^\/api\/production\/[^/]+\/changes(?:\/[^/]+\/(?:confirm|approve|reject))?$/.test(route))return need('production',read?'view':/\/(confirm|reject)$/.test(route)?'confirm':/\/approve$/.test(route)?'view':'edit');
  if(/^\/api\/production\/[^/]+\/flow(?:\/[^/]+)?$/.test(route))return need('production','view');
  if(/^\/api\/production(\/|$)/.test(route))return need('production',read?'view':method==='POST'?'issue':'view');
