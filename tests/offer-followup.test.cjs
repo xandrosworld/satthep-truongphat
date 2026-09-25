@@ -25,6 +25,24 @@ test('approval creates send task; only assigned sender confirms; care unlocks wi
  assert.equal((await post('followup/care',{kind:'reopen',content:'Follow up again'},carer)).status,200);assert.equal((await call('offer-work','GET',undefined,carer)).data.length,1);
  await post('followup/care',{kind:'close',content:'Close again'},carer);assert.equal((await post('workflow',{...sent,resend:true},sender)).status,200);assert.equal((await read()).entry.careClosed,false);assert.equal((await call('offer-work','GET',undefined,carer)).data.length,1);
 });
+test('sales owns care by default and only sales leadership may reassign; sender cannot override at confirmation',async t=>{
+ const {app,call,sender,carer,other,id,read,post}=await setup(t);
+ assert.equal((await post('followup/assign',{senderId:sender.id})).status,200);
+ assert.equal((await read()).entry.careOwnerId,sender.id);
+ assert.equal((await post('followup/assign',{senderId:sender.id,careOwnerId:carer.id},other)).status,403);
+ app.sql.prepare('UPDATE users SET work_roles=?,action_access=? WHERE id=?').run(JSON.stringify({technical:'manager'}),JSON.stringify({quotes:['view','edit','assign']}),other.id);
+ assert.equal((await post('followup/assign',{senderId:sender.id,careOwnerId:carer.id},other)).status,403);
+ app.sql.prepare('UPDATE users SET work_roles=? WHERE id=?').run(JSON.stringify({sales:'manager'}),other.id);
+ assert.equal((await post('followup/assign',{senderId:sender.id,careOwnerId:carer.id},other)).status,200);
+ const sent={status:'sent',confirmedSent:true,recipient:'Customer',channel:'Email',reason:'Sent'};
+ assert.equal((await post('workflow',{...sent,careOwnerId:sender.id},sender)).status,403);
+ assert.equal((await post('workflow',sent,sender)).status,200);
+ assert.equal((await read()).entry.careOwnerId,carer.id);
+ assert.equal((await post('followup/assign',{senderId:sender.id,careOwnerId:sender.id},other)).status,200);
+ assert.equal((await post('followup/care',{kind:'care',content:'Old assignee'},carer)).status,403);
+ assert.equal((await post('followup/care',{kind:'care',content:'New assignee'},sender)).status,200);
+ assert.ok((await call('notifications','GET',undefined,sender)).data.items.some(n=>n.stage==='offer-care'));
+});
 test('new approved revision requires new send confirmation while prior care remains; revoked sender is blocked',async t=>{
  const {call,admin,sender,carer,id,read,post}=await setup(t);await post('followup/assign',{senderId:sender.id,careOwnerId:carer.id});await post('workflow',{status:'sent',confirmedSent:true,recipient:'Customer',channel:'Email',reason:'Sent',careOwnerId:carer.id},sender);
  assert.equal((await call('quotes/'+id+'/reopen','POST',{expectedVersion:3,reason:'New price'})).status,200);await call('quotes/'+id+'/submit','POST',{expectedVersion:4});await call('quotes/'+id+'/approve','POST',{expectedVersion:5});const current=await read();assert.equal(current.offerVersion,6);assert.equal(current.workflow.status,'draft');assert.equal(current.entry.sentAt,undefined);assert.ok((await read(3)).entry.sentAt);
