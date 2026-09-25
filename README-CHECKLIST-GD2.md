@@ -1,5 +1,7 @@
 # Checklist triển khai GĐ2 — Trường Phát
 
+Cập nhật đợt 3: [Tài chính, chấm công, lương và điều hành](docs/dot-3-tai-chinh-luong-dieu-hanh.md). Nhóm 16, 17, 22, 25, 26 đã tự kiểm chức năng; cần cấu hình nguyên tắc lương, quyền và nhập chứng từ thực tế. Báo cáo tổng hợp/kiểm thử nghiệm thu toàn hệ thống vẫn theo đợt tiếp theo.
+
 **Mốc chốt hướng triển khai: trao đổi ngày 24/09/2026, 23:31–23:34.**
 
 Tài liệu làm việc cho các đợt tiếp theo: bám luồng demo, triển khai trên web hiện tại, giữ phần báo giá và dữ liệu đã có, hoàn thiện theo hợp đồng. Checklist không tự thay đổi phạm vi, phí, tiến độ hoặc điều kiện nghiệm thu đã ký.
@@ -270,20 +272,20 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 
 | Kiểm đạt | Mã | Nội dung | Bằng chứng / còn thiếu |
 |---|---|---|---|
-| [ ] | 16.01 | Chi hằng ngày Ngày, nội dung, số tiền, người chi, chứng từ | Chờ rà soát |
-| [ ] | 16.02 | Phân loại khoản chi Mua vật tư, dụng cụ, máy móc, chi phí xưởng và các khoản khác | Chờ rà soát |
-| [ ] | 16.03 | Gắn khoản chi vào đối tượng Chi cho lệnh sản xuất nào, đơn hàng nào, hay chi phí xưởng chung | Chờ rà soát |
-| [ ] | 16.04 | Phân bổ chi phí vào đơn hàng Kê hết các khoản chi rồi phân bổ để tính được giá thành đơn hàng | Chờ rà soát |
-| [ ] | 16.05 | Đánh giá đơn hàng lỗ hay lãi Doanh thu trừ toàn bộ chi phí thực tế, kèm tỷ suất | Chờ rà soát |
-| [ ] | 16.06 | Thu theo hợp đồng từ báo giá Ghi thu theo tiến độ hợp đồng, đối chiếu ngược về báo giá gốc | Chờ rà soát |
-| [ ] | 16.07 | So sánh dự toán và thực tế Vật tư, vận chuyển, nhân công: báo giá bao nhiêu, thực tế bao nhiêu, chênh lệch | Chờ rà soát |
-| [ ] | 16.08 | Căn cứ điều chỉnh giá đầu vào Từ chênh lệch, biết phải sửa đơn giá nào cho lần báo giá sau | Chờ rà soát |
-| [ ] | 16.09 | Xuất Excel sổ thu chi | Chờ rà soát |
-| [ ] | 17.01 | Danh sách nhân sự Lọc theo phòng ban, chức vụ, trạng thái | Chờ rà soát |
-| [ ] | 17.02 | Thêm / sửa / xoá nhân sự Mã nhân viên, họ tên, phòng ban, chức vụ, ngày vào, liên hệ | Chờ rà soát |
-| [ ] | 17.03 | Hồ sơ nhân sự Thông tin và công đoạn đang phụ trách | Chờ rà soát |
-| [ ] | 17.04 | Thống kê theo phòng ban | Chờ rà soát |
-| [ ] | 17.05 | Xuất Excel | Chờ rà soát |
+| [x] | 16.01 | Chi hằng ngày Ngày, nội dung, số tiền, người chi, chứng từ | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 16.02 | Phân loại khoản chi Mua vật tư, dụng cụ, máy móc, chi phí xưởng và các khoản khác | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 16.03 | Gắn khoản chi vào đối tượng Chi cho lệnh sản xuất nào, đơn hàng nào, hay chi phí xưởng chung | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 16.04 | Phân bổ chi phí vào đơn hàng Kê hết các khoản chi rồi phân bổ để tính được giá thành đơn hàng | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 16.05 | Đánh giá đơn hàng lỗ hay lãi Doanh thu trừ toàn bộ chi phí thực tế, kèm tỷ suất | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 16.06 | Thu theo hợp đồng từ báo giá Ghi thu theo tiến độ hợp đồng, đối chiếu ngược về báo giá gốc | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 16.07 | So sánh dự toán và thực tế Vật tư, vận chuyển, nhân công: báo giá bao nhiêu, thực tế bao nhiêu, chênh lệch | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 16.08 | Căn cứ điều chỉnh giá đầu vào Từ chênh lệch, biết phải sửa đơn giá nào cho lần báo giá sau | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 16.09 | Xuất Excel sổ thu chi | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 17.01 | Danh sách nhân sự Lọc theo phòng ban, chức vụ, trạng thái | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 17.02 | Thêm / sửa / xoá nhân sự Mã nhân viên, họ tên, phòng ban, chức vụ, ngày vào, liên hệ | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 17.03 | Hồ sơ nhân sự Thông tin và công đoạn đang phụ trách | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 17.04 | Thống kê theo phòng ban | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 17.05 | Xuất Excel | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [ ] | 18.01 | Trung tâm báo cáo Danh mục toàn bộ báo cáo, bấm là mở | Chờ rà soát |
 | [ ] | 18.02 | Chỉ số tổng quan Kinh doanh, sản xuất, kho, tài chính trên một màn hình | Chờ rà soát |
 | [ ] | 18.03 | Chọn kỳ báo cáo Tháng, quý, năm, khoảng ngày tuỳ chọn | Chờ rà soát |
@@ -301,10 +303,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 | [ ] | 21.02 | Giá trị tồn kho | Chờ rà soát |
 | [ ] | 21.03 | Vật tư sắp hết | Chờ rà soát |
 | [ ] | 21.04 | Xuất Excel | Chờ rà soát |
-| [ ] | 22.01 | Công việc thực hiện trong ngày Xác định được khối lượng công việc thực hiện; thời gian thực hiện khối lượng đạt được. Mục tiêu đánh giá được khối lượng công việc của nhân sự cụ thể như thế nào Các bộ phận | Chờ rà soát |
-| [ ] | 22.02 | Tồn tại vướng mắc | Chờ rà soát |
-| [ ] | 22.03 | Kiến nghị đề xuất | Chờ rà soát |
-| [ ] | 22.04 | Công việc ngày tiếp theo | Chờ rà soát |
+| [x] | 22.01 | Công việc thực hiện trong ngày Xác định được khối lượng công việc thực hiện; thời gian thực hiện khối lượng đạt được. Mục tiêu đánh giá được khối lượng công việc của nhân sự cụ thể như thế nào Các bộ phận | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 22.02 | Tồn tại vướng mắc | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 22.03 | Kiến nghị đề xuất | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 22.04 | Công việc ngày tiếp theo | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [ ] | 23.01 | Danh sách tài khoản | Chờ rà soát |
 | [ ] | 23.02 | Thêm / sửa / khoá tài khoản | Chờ rà soát |
 | [ ] | 23.03 | Vai trò người dùng | Chờ rà soát |
@@ -314,11 +316,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 | [ ] | 24.02 | Tham số vận hành Bật tắt các quy tắc nghiệp vụ | Chờ rà soát |
 | [ ] | 24.03 | Định dạng số, tiền tệ, ngày | Chờ rà soát |
 | [ ] | 24.04 | Giao diện sáng / tối | Chờ rà soát |
-| [ ] | 25.01 | Thông tin đầu vào nhân sự Có dữ liệu đầu vào các nhân sự  - Ngày vào làm: tính thâm niên  - Lương cơ bản để tính bảo hiểm - Lương thực tế | Chờ rà soát |
-| [ ] | 25.02 | Bảng nguyên tắc tính lương Thể hiện nguyên tắc tính lương cho từng đối tượng - Sản xuât - văn phòng  - Kinh doanh  - các loại hệ số: Hệ số tăng ca, làm ngày nghỉ, ngày lễ, làm công trường, khác  - Phụ cấp…. | Chờ rà soát |
-| [ ] | 25.03 | Thông tin ngày công Thể hiện được số ngày công, tăng ca, nghỉ, lễ, công trường | Chờ rà soát |
-| [ ] | 25.04 | Bảng lương Lương theo BHXH, lương thực nhận | Chờ rà soát |
-| [ ] | 26.01 | Bảng thông tin giao việc Có các nội dung nội dung công việc, các trường đã nhận đã làm đã hoàn thành  Thời gian tiến độ công việc thực hiện  Các cá nhân tự giao việc, phụ trách giao việc Lãnh đạo xác nhận Có thông báo về chuyển bước công việc, phê duyệt chuyển bước | Chờ rà soát |
+| [x] | 25.01 | Thông tin đầu vào nhân sự Có dữ liệu đầu vào các nhân sự  - Ngày vào làm: tính thâm niên  - Lương cơ bản để tính bảo hiểm - Lương thực tế | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 25.02 | Bảng nguyên tắc tính lương Thể hiện nguyên tắc tính lương cho từng đối tượng - Sản xuât - văn phòng  - Kinh doanh  - các loại hệ số: Hệ số tăng ca, làm ngày nghỉ, ngày lễ, làm công trường, khác  - Phụ cấp…. | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 25.03 | Thông tin ngày công Thể hiện được số ngày công, tăng ca, nghỉ, lễ, công trường | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 25.04 | Bảng lương Lương theo BHXH, lương thực nhận | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
+| [x] | 26.01 | Bảng thông tin giao việc Có các nội dung nội dung công việc, các trường đã nhận đã làm đã hoàn thành  Thời gian tiến độ công việc thực hiện  Các cá nhân tự giao việc, phụ trách giao việc Lãnh đạo xác nhận Có thông báo về chuyển bước công việc, phê duyệt chuyển bước | Đã triển khai, tự kiểm đợt 3; xem tài liệu đối chiếu |
 | [ ] | 27.01 | Bảng thông tin chat, trao đổi công việc Chat với từng cá nhân; Tạo nhóm chat; chụp cắt ảnh gửi trong ô Chat | Chờ rà soát |
 | [ ] | BS07 | AI đọc ảnh/PDF cấu kiện đơn giản, đối chiếu danh mục và xác nhận trước khi điền báo giá | Chờ rà soát |
 | [ ] | BS09 | Bảo vệ dữ liệu giá theo vai trò; phiên bản, lịch sử và bảo toàn số liệu chứng từ đã duyệt | Chờ rà soát |
