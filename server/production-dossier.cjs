@@ -4,13 +4,23 @@ const text=(v,max=20000)=>typeof v==='string'?v.slice(0,max):'';
 const pick=(v,keys)=>Object.fromEntries(keys.filter(k=>v?.[k]!==undefined).map(k=>[k,v[k]]));
 function technicalInput(q){
  const numeric=v=>Object.fromEntries(Object.entries(v||{}).filter(([,n])=>typeof n==='number'&&Number.isFinite(n)));
- const tree=nodes=>(nodes||[]).map(n=>({id:n.id,kind:n.kind,name:n.name,qty:n.qty,unit:n.unit||'',materialId:n.materialId||'',specification:text(n.requestSpecification),notes:text(n.notes),dims:numeric(n.dims),params:numeric(n.params),children:tree(n.children)}));
- return {customer:text(q.customer,500),project:text(q.project,1000),recipient:text(q.request?.recipient,200),location:text(q.request?.location,500),schedule:text(q.request?.schedule,2000),requirements:text(q.request?.notes),specification:text(q.requestSpecification),items:(q.request?.items||[]).map(x=>pick(x,['id','name','specification','qty','unit'])),files:(q.request?.files||[]).filter(f=>/\.(pdf|png|jpe?g|webp|dwg|dxf|step|stp)$/i.test(f.name)).map(f=>pick(f,['id','name','size','storage'])),links:(q.request?.links||[]).filter(x=>/^https?:\/\//i.test(x.url||'')).map(x=>pick(x,['id','name','url','title'])),tree:tree(q.products)};
+ const tree=nodes=>(nodes||[]).map(n=>({id:n.id,kind:n.kind,name:n.name,qty:n.qty,unit:n.unit||'',materialId:n.materialId||'',specification:text(n.requestSpecification),notes:text(n.notes),lineNote:text(n.lineNote),dims:numeric(n.dims),params:numeric(n.params),children:tree(n.children)}));
+ return {schemaVersion:2,notes:text(q.notes),customer:text(q.customer,500),project:text(q.project,1000),recipient:text(q.request?.recipient,200),location:text(q.request?.location,500),schedule:text(q.request?.schedule,2000),requirements:text(q.request?.notes),specification:text(q.requestSpecification),items:(q.request?.items||[]).map(x=>pick(x,['id','name','specification','qty','unit','notes','note'])),files:(q.request?.files||[]).filter(f=>/\.(pdf|png|jpe?g|webp|dwg|dxf|step|stp)$/i.test(f.name)).map(f=>pick(f,['id','name','size','storage','note','revision'])),links:(q.request?.links||[]).filter(x=>/^https?:\/\//i.test(x.url||'')).map(x=>pick(x,['id','name','url','title'])),tree:tree(q.products)};
 }
 function create({sql,fail,transaction,readBody,audit,canWork}){
  const one=(s,...a)=>sql.prepare(s).get(...a),get=(k,id)=>{const r=one('SELECT document FROM ops_records WHERE kind=? AND id=?',k,id);return r?JSON.parse(r.document):null;};
  const store=(k,id,d)=>sql.prepare('INSERT INTO ops_records VALUES(?,?,1,?) ON CONFLICT(kind,id) DO UPDATE SET version=version+1,document=excluded.document').run(k,id,JSON.stringify(d));
- function source(j){const packet=JSON.parse(j.packet);if(packet.technicalInput)return packet.technicalInput;let d=get('production-source',j.id);if(!d){const o=one('SELECT * FROM orders WHERE id=?',j.order_id);d=JSON.parse(one('SELECT document FROM revisions WHERE id=? AND version=?',o.quote_id,o.quote_version).document);d.quote.products=d.quote.products.filter(p=>p.id===j.product_id);if(d.quote.products[0])d.quote.products[0].qty=j.quantity;}return technicalInput(d.quote);}
+ function source(j){
+  const packet=JSON.parse(j.packet),saved=packet.technicalInput;
+  if(saved?.schemaVersion>=2)return saved;
+  let d=get('production-source',j.id);
+  if(!d){const o=one('SELECT * FROM orders WHERE id=?',j.order_id),r=o&&one('SELECT document FROM revisions WHERE id=? AND version=?',o.quote_id,o.quote_version);if(!r)return saved||{files:[],links:[],tree:[],items:[]};d=JSON.parse(r.document);d.quote.products=d.quote.products.filter(p=>p.id===j.product_id);if(d.quote.products[0])d.quote.products[0].qty=j.quantity;}
+  const full=technicalInput(d.quote);if(!saved)return full;
+  // Enrich legacy notes only; never replace frozen dimensions, quantities or approved changes.
+  const nodes=new Map();const walk=xs=>{for(const n of xs||[]){nodes.set(n.id,n);walk(n.children);}};walk(full.tree);
+  const merge=xs=>(xs||[]).map(n=>{const source=nodes.get(n.id)||{};return {...n,lineNote:n.lineNote??source.lineNote??'',notes:n.notes??source.notes??'',children:merge(n.children)};});
+  return {...saved,notes:saved.notes??full.notes,tree:merge(saved.tree),schemaVersion:2};
+ }
  function view(j){const d=get('production-dossier',j.id)||{files:[],requirements:'',equipment:[],history:[]};return {jobVersion:j.version,source:source(j),...d,machines:sql.prepare("SELECT id,document FROM ops_records WHERE kind='machine'").all().map(r=>({id:r.id,...pick(JSON.parse(r.document),['name','code','workshop','active'])})).filter(m=>m.active!==false)};}
  async function handle({req,route,user,send}){
   const m=route.match(/^\/api\/production\/([a-f0-9-]+)\/(dossier|files)(?:\/([a-zA-Z0-9_-]{1,100}))?$/);if(!m)return false;const j=one('SELECT * FROM production_jobs WHERE id=?',m[1]);if(!j)fail(404,'Không tìm thấy lệnh');

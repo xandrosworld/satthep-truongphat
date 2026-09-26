@@ -1,6 +1,6 @@
 'use strict';
 const {test}=require('node:test'),A=require('node:assert/strict'),{randomUUID}=require('node:crypto'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js');
-async function fixture(t){const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));let admin;const call=async(path,method='GET',body,s=admin)=>{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api/'+path,{method,headers:{'Content-Type':'application/json',Cookie:s?.cookie||'','X-CSRF-Token':s?.csrf||''},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};admin=await call('setup','POST',{username:'admin',name:'Admin',password:'Operations-test-2026!'},null);const d=P.demoSeed();const q=(await call('quotes','POST',{document:d})).data;await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1});await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2});const o=(await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'ORDER-OPS'})).data;await call('orders/'+o.id+'/confirm','POST',{quoteVersion:3});const j=await call('production','POST',{orderId:o.id,productId:d.quote.products[0].id,quantity:1,code:'JOB-OPS'});A.equal(j.status,201,JSON.stringify(j.data));const post=(p,b,s)=>call('ops/'+p,'POST',{requestId:randomUUID(),...b},s);return {app,call,post,admin,job:j.data,order:o,document:d};}
+async function fixture(t){const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));let admin;const call=async(path,method='GET',body,s=admin)=>{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api/'+path,{method,headers:{'Content-Type':'application/json',Cookie:s?.cookie||'','X-CSRF-Token':s?.csrf||''},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};admin=await call('setup','POST',{username:'admin',name:'Admin',password:'Operations-test-2026!'},null);const d=P.demoSeed();d.quote.notes='Handle carefully\nKeep dry';d.quote.products[0].lineNote='Mark product A';d.quote.products[0].requestSpecification='Technical specification';d.quote.products[0].children[0].lineNote='Deburr all edges';const q=(await call('quotes','POST',{document:d})).data;await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1});await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2});const o=(await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'ORDER-OPS'})).data;await call('orders/'+o.id+'/confirm','POST',{quoteVersion:3});const j=await call('production','POST',{orderId:o.id,productId:d.quote.products[0].id,quantity:1,code:'JOB-OPS'});A.equal(j.status,201,JSON.stringify(j.data));const post=(p,b,s)=>call('ops/'+p,'POST',{requestId:randomUUID(),...b},s);return {app,call,post,admin,job:j.data,order:o,document:d};}
 test('production dossier isolates prices, stores drawing revisions, enforces review, version and access',async t=>{
  const {app,call,job}=await fixture(t);let d=(await call('production/'+job.id+'/dossier')).data;
  A.ok(d.source.tree.length);A.equal(JSON.stringify(d.source).includes('ratesSnapshot'),false);A.equal(d.source.tree[0].qty,1);
@@ -72,4 +72,19 @@ test('technical review gates stock, purchases, assignments and starts; drawing c
  A.equal((await reserve()).status,409);
  current=(await call('production/'+job.id)).data;
  A.equal((await call('production/'+job.id,'PUT',{expectedVersion:current.version,action:'operation',operationId:current.packet.operations[0].id,status:'running',assignee:admin.data.user.id,machine:'Manual',output:0,note:''})).status,409);
+});
+
+test('new and legacy jobs keep order source notes without replacing frozen technical data',async t=>{
+ const {app,call,job}=await fixture(t);const path='production/'+job.id+'/dossier';
+ let source=(await call(path)).data.source;
+ A.equal(source.notes,'Handle carefully\nKeep dry');A.equal(source.tree[0].lineNote,'Mark product A');A.equal(source.tree[0].specification,'Technical specification');A.equal(source.tree[0].children[0].lineNote,'Deburr all edges');
+ const packet=JSON.parse(app.sql.prepare('SELECT packet FROM production_jobs WHERE id=?').get(job.id).packet);
+ delete packet.technicalInput.schemaVersion;delete packet.technicalInput.notes;
+ const strip=xs=>xs.forEach(n=>{delete n.lineNote;strip(n.children||[]);});strip(packet.technicalInput.tree);
+ packet.technicalInput.tree[0].dims={L:9876};
+ const before=JSON.stringify(packet);app.sql.prepare('UPDATE production_jobs SET packet=? WHERE id=?').run(before,job.id);
+ source=(await call(path)).data.source;
+ A.equal(source.notes,'Handle carefully\nKeep dry');A.equal(source.tree[0].lineNote,'Mark product A');A.equal(source.tree[0].children[0].lineNote,'Deburr all edges');A.equal(source.tree[0].dims.L,9876);A.equal(source.tree[0].qty,1);
+ A.equal(app.sql.prepare('SELECT packet FROM production_jobs WHERE id=?').get(job.id).packet,before);
+ A.equal(source.tree[0].price,undefined);A.equal(source.ratesSnapshot,undefined);
 });
