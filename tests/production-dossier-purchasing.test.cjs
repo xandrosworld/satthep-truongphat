@@ -138,3 +138,11 @@ test('approved operation changes replace stale preparation equipment and methods
  let j=(await call(path)).data;const operations=j.packet.operations.map(o=>({...o,machine:'Approved machine',instructions:'Approved shop method',lossPercent:0}));let p=await call(path+'/flow/plan','POST',{expectedVersion:j.version,reason:'Updated route',operations});A.equal(p.status,200,JSON.stringify(p.data));A.equal((await call(path+'/flow/confirm','POST',{expectedVersion:j.version,id:p.data.id})).status,200);A.equal((await call(path+'/flow/approve','POST',{expectedVersion:j.version,id:p.data.id})).status,200);
  d=(await call(path+'/dossier')).data;A.ok(d.equipment.every(e=>e.machine==='Approved machine'&&e.method==='Approved shop method'));A.equal(d.reviewed,undefined);j=(await call(path)).data;A.ok(j.progress.operations.every(o=>o.machine==='Approved machine'&&o.preparationMethod==='Approved shop method'));
 });
+test('production issuance persists sheet metadata and rejects invalid dates and conflicting duplicate codes',async t=>{
+ const {call,order,document}=await fixture(t),body={orderId:order.id,productId:document.quote.products[0].id,quantity:1,code:'ISSUE-FIELDS',deadline:'2026-10-30',schedule:'30 days',workshop:'Workshop A',designReference:'Approved drawing R2',technicalNotes:'Tolerance 0.5 mm',note:'Protect finish'};
+ A.equal((await call('production','POST',{...body,deadline:'2026-02-30'})).status,400);
+ const made=await call('production','POST',body);A.equal(made.status,201,JSON.stringify(made.data));
+ const job=(await call('production/'+made.data.id)).data;for(const k of ['deadline','schedule','workshop','designReference','technicalNotes'])A.equal(job.progress[k],body[k]);A.equal(job.progress.preparationNote,body.note);A.ok(job.packet.technicalInput.notes.includes('Keep dry'));A.ok(job.packet.issuedBy.name);
+ A.equal((await call('production','POST',body)).data.id,job.id);A.equal((await call('production','POST',{...body,note:'Different requirement'})).status,409);
+ const stock=(await call('ops/job/'+job.id)).data;A.ok(Array.isArray(stock.stageStockCandidates));A.ok(stock.requirements.every(r=>r.onOrder===0&&r.remaining>=0&&r.suggested>=0));
+});
