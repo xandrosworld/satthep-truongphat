@@ -118,7 +118,7 @@ function productionContentPanel(main,j,d){
  panel.querySelector('.order-sheet-brand img').src=document.querySelector('.brand-logo').src;
  panel.querySelectorAll('[data-sheet-file]').forEach(b=>b.onclick=()=>document.querySelector('#production-dossier [data-dossier-file="'+CSS.escape(b.dataset.sheetFile)+'"]').click());
  main.append(panel);const tab=document.createElement('button');tab.type='button';tab.dataset.productionTab='content';tab.textContent='Nội dung lệnh sản xuất';document.querySelector('.production-tabs').prepend(tab);
- productionTab(Production.dossierReturnTab||'content');delete Production.dossierReturnTab;
+ productionTab(Production.dossierReturnTab||document.querySelector('.production-tabs button.active:not(:disabled)')?.dataset.productionTab||'content');delete Production.dossierReturnTab;
 }
 function productionHorizontalReview(host,locked){
  const form=host.querySelector('#dossier-prepare'),original=[...host.querySelectorAll('.production-review-sections>details')];

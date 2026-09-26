@@ -30,3 +30,12 @@ test('partial batches retain allocation and independently enforce review, stock 
  A.equal((await call('production/'+part+'/parts','POST',{expectedVersion:2,code:'NO',quantity:.5},session)).status,403);
 });
 
+test('splitting retains issuance instructions in both lots while clearing review and readiness',async t=>{
+ const {app,call,job,order,document}=await fixture(t);
+ const fields={deadline:'2026-10-30',workshop:'Workshop A',schedule:'30 days',assignee:'owner-id',assigneeName:'Owner',designReference:'SHOP-R2',technicalNotes:'Tolerance 0.5 mm',preparationNote:'Keep coating intact'};
+ app.sql.prepare('UPDATE production_jobs SET progress=? WHERE id=?').run(JSON.stringify({...job.progress,...fields,materialsReady:true,drawingReady:true}),job.id);
+ const r=await call('production/'+job.id+'/parts','POST',{expectedVersion:job.version,code:'KEEP-FIELDS',quantity:1});A.equal(r.status,201,JSON.stringify(r.data));
+ for(const id of [job.id,r.data.id]){const j=(await call('production/'+id)).data;for(const [k,v]of Object.entries(fields))A.equal(j.progress[k],v,k);A.equal(j.progress.materialsReady,false);A.equal(j.progress.drawingReady,false);A.ok(j.packet.issuedBy.name);}
+ A.equal((await call('production','POST',{orderId:order.id,productId:document.quote.products[0].id,quantity:0.5,code:'FRACTIONAL'})).status,400);
+ const current=(await call('production/'+job.id)).data;A.equal((await call('production/'+job.id,'PUT',{expectedVersion:current.version,action:'prepare',deadline:'2026-02-30',workshop:'A',note:'',materialsReady:false,drawingReady:false})).status,400);
+});
