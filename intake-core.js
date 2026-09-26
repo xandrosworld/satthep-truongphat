@@ -34,8 +34,25 @@ for(const n of C.flatten(db.quote.products))if(n.kind==='material')put(n.spec,n.
 for(const r of db.quote.ratesSnapshot||[]){const recipes=r.consumptions?.length?r.consumptions:r.consumption?[r.consumption]:[];for(const x of recipes)put(x.spec,x.spec,'Định mức '+r.name);}
 return [...rows.values()].map(r=>({...r,prices:[...new Set(r.targets.map(x=>x.price))]}));}
 function applyMaterialPrices(db,updates,at=new Date().toISOString()){const rows=priceRows(db),seen=new Set(),pending=[];for(const u of updates){const r=rows.find(x=>x.key===u.key);if(!r||seen.has(u.key))throw Error('Dòng giá không hợp lệ hoặc bị trùng');seen.add(u.key);if(u.value===''||u.value==null||!Number.isFinite(Number(u.value))||Number(u.value)<0)throw Error('Đơn giá phải là số không âm');pending.push({r,u});}if(db.quote.status==='approved')throw Error('Không sửa giá bản đã duyệt');db.quote.priceHistory??=[];for(const {r,u}of pending){const source=u.source==='catalog'&&r.reference!=null&&Number(r.reference)===Number(u.value)?'catalog':'manual';db.quote.priceHistory.push({key:r.key,id:r.id,unit:r.unit,brand:r.brand,before:C.copy(r.prices),after:Number(u.value),source,at,owners:C.copy(r.owners)});for(const target of r.targets){target.price=Number(u.value);target.priceSelection={source,at};}}return pending.length;}
+// Refresh only base prices whose catalogue unit matches every declared job in that mode.
+function operationUnitUpdates(db){
+ const rows=new Map(),q=db.quote;
+ for(const n of C.flatten(q.products))for(const op of n.ops||[]){
+  const method=q.operationMethods?.[op.id]||op.pricingMethod||'factors';
+  if(!['catalog','factors'].includes(method)||(q.operationPriceOptions?.[op.id]??op.priceOptionId)||!op.quantityUnit||!['inside','outside'].includes(op.mode))continue;
+  const key=op.id+'|'+op.mode;if(!rows.has(key))rows.set(key,{key,id:op.id,mode:op.mode,units:new Set()});rows.get(key).units.add(op.quantityUnit);
+ }
+ return [...rows.values()].flatMap(x=>{const old=q.ratesSnapshot?.find(r=>r.id===x.id),ref=db.rates?.find(r=>r.id===x.id);if(!old||!ref||x.units.size!==1)return [];const wanted=[...x.units][0],beforeUnit=old[x.mode+'Unit']||old.unit,unit=ref[x.mode+'Unit']||ref.unit,value=ref[x.mode];if(beforeUnit===wanted||unit!==wanted||value==null||value===''||!Number.isFinite(Number(value))||Number(value)<0)return [];return [{key:x.key,id:x.id,mode:x.mode,name:old.name,beforeUnit,before:old[x.mode],unit,value:Number(value)}];});
+}
+function applyOperationUnitUpdates(db,updates){
+ if(db.quote.status==='approved')throw Error('Không sửa giá bản đã duyệt');
+ const available=operationUnitUpdates(db),seen=new Set();
+ const pending=updates.map(x=>{const current=available.find(r=>r.key===x.key);if(!current||seen.has(x.key)||JSON.stringify(current)!==JSON.stringify(x))throw Error('Bảng giá đã thay đổi. Mở lại để kiểm tra giá mới.');seen.add(x.key);return current;});
+ for(const x of pending){const rate=db.quote.ratesSnapshot.find(r=>r.id===x.id);rate[x.mode]=x.value;rate[x.mode+'Unit']=x.unit;}
+ return pending.length;
+}
 function legacyPreview(db){const trial=C.copy(db),before=C.calculate(db).total.grand;P.enable(trial);const after=C.calculate(trial);return {before,after:after.total.grand,errors:after.errors};}
 function convertLegacy(db){if(db.quote.pricing)return false;const before=C.copy(db.quote),price=C.calculate(db).total.grand;db.legacyArchives??=[];db.legacyArchives.push({at:new Date().toISOString(),quote:before,total:price});if(before.status==='approved'){db.quote=C.copy(before);db.quote.id=before.id+'-MOI';db.quote.workspaceKey=C.uid();db.quote.commercial={status:'draft',version:0,events:[]};}P.enable(db);db.quote.pricing.overrides={};db.quote.legacySource={id:before.id,total:price};return true;}
 function customerSnapshot(c){return Object.fromEntries(['id','name','contact','phone','email','address','taxId'].map(k=>[k,c[k]||'']));}
-const api={documentLink,customer,customerSnapshot,requestLine,addRequestProducts,validateRequest,materialChoices,materialName,validateMaterial,priceRows,applyMaterialPrices,legacyPreview,convertLegacy};if(typeof module!=='undefined')module.exports=api;else root.TPIntake=api;
+const api={operationUnitUpdates,applyOperationUnitUpdates,documentLink,customer,customerSnapshot,requestLine,addRequestProducts,validateRequest,materialChoices,materialName,validateMaterial,priceRows,applyMaterialPrices,legacyPreview,convertLegacy};if(typeof module!=='undefined')module.exports=api;else root.TPIntake=api;
 })(typeof window!=='undefined'?window:globalThis);
