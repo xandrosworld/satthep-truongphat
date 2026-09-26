@@ -49,3 +49,13 @@ test('downstream edits alone require authorization; stale request can be rejecte
  assert.equal((await call(path+'/corrections')).data.items[0].status,'pending');
  assert.equal((await call(path+'/corrections','POST',{action:'reject',id:item.id,expectedVersion:3,reason:'Bản đã thay đổi, lập đề nghị mới'})).status,200);
 });
+test('extend an open scope only after authorized approval and retain its original sections',async t=>{
+ const f=await fixture(t),{call}=f,d=P.demoSeed();d.quote.remnantMode='all';const q=(await call('quotes','POST',{document:d})).data,path='quotes/'+q.id;
+ assert.equal((await call(path+'/corrections','POST',{action:'request',expectedVersion:1,sections:['materials'],reason:'Materials'})).status,200);
+ f.set(f.worker);let r=await call(path+'/corrections','POST',{action:'request',expectedVersion:1,sections:['factors','logistics'],reason:'Cost factors'});assert.equal(r.status,200,JSON.stringify(r.data));assert.equal(r.data.status,'pending');
+ let items=(await call(path+'/corrections')).data.items;const pending=items.find(x=>x.status==='pending');assert.deepEqual(items.find(x=>x.status==='open').sections,['materials']);
+ assert.equal((await call(path+'/corrections','POST',{action:'approve',id:pending.id,expectedVersion:1})).status,403);
+ f.set(f.admin);assert.equal((await call(path+'/corrections','POST',{action:'approve',id:pending.id,expectedVersion:1})).status,200);
+ items=(await call(path+'/corrections')).data.items;assert.equal(items.filter(x=>x.status==='open').length,1);assert.deepEqual(items.find(x=>x.status==='open').sections,['materials','factors','logistics']);assert.equal(items[0].status,'extended');
+ const document=(await call(path)).data.document;document.quote.pricing.overhead=18;document.quote.pricing.incoming=1234;r=await call(path,'PUT',{expectedVersion:1,document});assert.equal(r.status,200,JSON.stringify(r.data));assert.equal((await call(path)).data.document.quote.pricing.overhead,18);
+});
