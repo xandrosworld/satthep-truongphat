@@ -73,3 +73,11 @@
 .production-status.done{background:#e0f1e9;color:#236446}
 .production-status.pending{background:#edf0f4;color:#4c5b70}
 .production-tracking progress{appearance:none;border:0;border-radius:8px;overflow:hidden;background:#dbe5ef}.production-tracking progress::-webkit-progress-bar{background:#dbe5ef;border-radius:8px}.production-tracking progress::-webkit-progress-value{background:#2671ad;border-radius:8px}
+
+/* Keep the review form in the same reading order as the quotation declaration. */
+.production-review-sections{display:grid;gap:12px;margin:18px 0}
+#production-dossier [data-review-input]{padding-top:12px}
+#production-dossier [data-review-input]>p{margin:8px 0}
+#production-dossier .dossier-detail-table th:first-child{width:38%}
+#production-dossier .dossier-detail-table th:last-child{width:48%}
+.deployment-cutting{margin:20px 0;padding:16px 20px;border:1px solid #d6e0ea;border-radius:8px}

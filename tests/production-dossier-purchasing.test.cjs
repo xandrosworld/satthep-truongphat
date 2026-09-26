@@ -62,7 +62,9 @@ test('technical review gates stock, purchases, assignments and starts; drawing c
  A.equal((await post('task',{expectedVersion:0,document:{jobId:job.id,assignee:admin.data.user.id,name:'Do not deploy'}})).status,409);
  const body={expectedVersion:job.version,requirements:'',noDrawingReason:'Specification',reviewed:true,reviewChecks:{input:true},equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'Manual',method:'Specification'}))};
  A.equal((await call('production/'+job.id+'/dossier','POST',body)).status,400);
- let current=await require('./production-review-fixture.cjs').review(call,admin,job.id);
+ const confirmed=await call('production/'+job.id+'/dossier','POST',{...body,reviewChecks:{input:true,structure:true,operations:true,quantities:true}});
+ A.equal(confirmed.status,200);
+ let current=(await call('production/'+job.id)).data;
  A.equal((await reserve()).status,200);
  A.equal(app.sql.prepare('SELECT package FROM orders WHERE id=?').get(job.order_id).package,snapshot);
  const upload=await call('production/'+job.id+'/files','POST',{expectedVersion:current.version,name:'updated.pdf',size:4,data:Buffer.from('%PDF').toString('base64')});
