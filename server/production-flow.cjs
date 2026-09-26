@@ -13,7 +13,7 @@ function createProductionFlow({sql,fail,readBody,transaction,audit,operationsERP
  const job=id=>{const j=one('SELECT * FROM production_jobs WHERE id=?',id);if(!j)fail(404,'Không tìm thấy lệnh');return {...j,packet:JSON.parse(j.packet),progress:JSON.parse(j.progress)};};
  const save=(j,u,detail)=>{const at=now();sql.prepare('UPDATE production_jobs SET packet=?,progress=?,state=?,version=version+1,updated=?,actor=? WHERE id=?').run(JSON.stringify(j.packet),JSON.stringify(j.progress),j.state,at,u.id,j.id);sql.prepare('INSERT INTO production_events(job_id,at,actor,detail) VALUES(?,?,?,?)').run(j.id,at,u.name,detail);audit(u,'production-flow',j.id,detail);return job(j.id);};
  const stageId=(j,op)=>j.id+':'+op,stage=(j,op)=>get('stage-stock',stageId(j,op));
- const frozen=j=>j.progress.operations.filter(o=>o.status!=='pending').map(o=>o.id);
+ const frozen=j=>j.progress.operations.filter(o=>o.status!=='pending'||o.output>0).map(o=>o.id);
  function proposals(j){return list('route-proposal').filter(p=>p.jobId===j.id);}
  function inputRows(j,index){
   if(index>0){const prev=stage(j,j.packet.operations[index-1].id);if(!prev)fail(409,'Nhập kho phôi / bán thành phẩm công đoạn trước trước khi chuyển bước');return prev.materials.map(m=>({holdId:m.holdId,materialId:m.materialId,name:m.name,inputWeight:m.productWeight,external:m.external}));}

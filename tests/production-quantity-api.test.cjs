@@ -1,0 +1,23 @@
+'use strict';
+const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js'),{approveRoute,settleStage}=require('./production-flow-fixture.cjs');
+test('quantity acknowledgement persists while completion and warehouse controls remain enforced',async t=>{
+ const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));let admin;const call=async(route,method='GET',body,s=admin)=>{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api/'+route,{method,headers:{'Content-Type':'application/json',Cookie:s?.cookie||'','X-CSRF-Token':s?.csrf||''},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};admin=await call('setup','POST',{username:'admin',name:'Admin',password:'Production-flow-2026!'});const uid=admin.data.user.id;
+ await call('users','POST',{username:'tech',name:'Technical',role:'technical',password:'Production-flow-2026!',actionAccess:{production:['view','edit','confirm']}});const tech=await call('login','POST',{username:'tech',password:'Production-flow-2026!'});
+ const d=P.demoSeed();d.quote.products=[d.quote.products[0]];d.quote.products[0].qty=1;d.quote.remnantMode='all';d.quote.remnantSelections={};const q=(await call('quotes','POST',{document:d})).data;await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1});await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2});const o=(await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'FLOW'})).data;await call('orders/'+o.id+'/confirm','POST',{quoteVersion:3});let j=(await call('production','POST',{orderId:o.id,productId:d.quote.products[0].id,quantity:1,code:'FLOW-01',deadline:'2026-10-30'})).data;
+ const update=async b=>{const r=await call('production/'+j.id,'PUT',{expectedVersion:j.version,...b});if(r.status===200)j=r.data;return r;};await update({action:'prepare',deadline:'2026-10-30',workshop:'A',materialsReady:true,drawingReady:true,note:''});A.ok(j.packet,JSON.stringify(j));const first=j.packet.operations[0];A.equal((await update({action:'operation',operationId:first.id,status:'running',assignee:uid,machine:'M',output:0,note:''})).status,409);
+ const proposal=(await call('production/'+j.id+'/flow/plan','POST',{expectedVersion:j.version,reason:'Reviewed technology',operations:j.packet.operations.map(x=>({...x,lossPercent:0,machine:'M',workQuantity:x.workQuantity||1,unit:x.unit||'hour'}))},tech)).data;
+ A.equal((await call('production/'+j.id+'/flow/approve','POST',{expectedVersion:j.version,id:proposal.id})).status,409);A.equal((await call('production/'+j.id+'/flow/confirm','POST',{expectedVersion:j.version,id:proposal.id},tech)).status,200);A.equal((await call('production/'+j.id+'/flow/approve','POST',{expectedVersion:j.version,id:proposal.id},tech)).status,403);A.equal((await call('production/'+j.id+'/flow/approve','POST',{expectedVersion:j.version,id:proposal.id})).status,200);j=(await call('production/'+j.id)).data;
+ j=await require('./production-review-fixture.cjs').review(call,admin,j.id);await require('./ops-fixture.cjs').seedStock(call,admin,j.id);
+ const target=j.packet.operations.at(-1);
+ A.equal((await update({action:'quantity',operationId:target.id,output:target.quantity/2})).status,400);
+ A.equal((await update({action:'operation',operationId:target.id,status:'pending',assignee:uid,machine:'M',output:0,note:''})).status,200);
+ const version=j.version;
+ A.equal((await update({action:'quantity',operationId:target.id,output:target.quantity/2,hours:1,note:'Báo nhanh'})).status,200);
+ A.equal(j.progress.operations.find(x=>x.id===target.id).output,target.quantity/2);
+ A.equal(j.progress.operations.find(x=>x.id===target.id).status,'pending');A.equal(j.progress.qc.passed,0);
+ A.equal((await call('production/'+j.id,'PUT',{expectedVersion:version,action:'quantity',operationId:target.id,output:target.quantity})).status,409);
+ A.equal((await update({action:'qc',passed:1,rejected:0,note:''})).status,409);
+ const reloaded=(await call('production/'+j.id)).data;A.equal(reloaded.progress.operations.find(x=>x.id===target.id).output,target.quantity/2);
+ A.equal(reloaded.progress.operationReports.at(-1).quantityOnly,true);
+ A.equal((await call('production/'+j.id+'/flow')).data.stocks.length,0);
+});
