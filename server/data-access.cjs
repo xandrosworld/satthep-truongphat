@@ -24,7 +24,7 @@ function createDataAccess({sql,fail}){
     if(scoped&&modes.commercial==='none'&&k==='total'&&typeof o[k]==='number'){hide(k);continue;}
     if(scoped&&modes.commercial==='none'&&['sell','unitSell','suggestedUnit','profitMarkup','beforeTax','vat','grand','totals','offer','offerTerms','notes','competitorPrice','marketPrice','pricePerKg','approvedOffer','approvedBaseline'].includes(k)){hide(k);continue;}
 
-    if(hiddenFactors&&(sensitive.has(k)||(k==='multiplier'&&(o.name||o.label)||k==='factorMultiplier')||(coefficients.has(k)&&typeof o[k]==='number')||k==='productionSpecialPercent')){hide(k);continue;}
+    if(hiddenFactors&&!(parent==='pricing'&&['overhead','management','special','profit','processing','order','reserve','customer'].includes(k)&&require('./access.cjs').permissions(user).factors)&&(sensitive.has(k)||(k==='multiplier'&&(o.name||o.label)||k==='factorMultiplier')||(coefficients.has(k)&&typeof o[k]==='number')||k==='productionSpecialPercent')){hide(k);continue;}
     if(scoped&&parent==='quote'){
      const section=['customer','customerInfo','request','project','attachments','sourceFiles'].includes(k)?'customer':k==='products'?'bom':['ratesSnapshot','operationColumns','operationMethods','operationPriceOptions'].includes(k)?'operations':['expenses','deviceInstallations'].includes(k)?'logistics':null;
      if(section&&modes[section]==='none'){hide(k);continue;}

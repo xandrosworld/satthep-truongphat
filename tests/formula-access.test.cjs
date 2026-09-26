@@ -125,3 +125,13 @@ test('locked factor snapshots allow only authoritative rate additions, never com
   const bad=structuredClone(after);mutate(bad);A.throws(()=>guard(before,bad,rights),e=>e.status===403);
  }
 });
+test('authorized quote coefficients remain editable under shared formula lock; master and unauthorized values stay protected',async t=>{
+ const {call,admin,create}=await harness(t),u=await create('quote-factors',{canEditFactors:true,sections:require('../section-access.js').keys}),v=await create('no-factors',{canEditFactors:false,sections:['materials']});
+ const made=await call('quotes','POST',{document:P.demoSeed()},admin),id=made.data.id;
+ A.equal((await call('formulas/locks','POST',{key:'calculationFactors:all',locked:true,expectedVersion:0,reason:'Protect master'},admin)).status,200);
+ const doc=(await call('quotes/'+id,'GET',undefined,u.session)).data.document;doc.quote.pricing.overhead=2;doc.quote.pricing.management=3;doc.quote.pricing.profit=10;doc.quote.pricing.processing=3;doc.quote.pricing.incoming=450000;
+ const saved=await call('quotes/'+id,'PUT',{document:doc,expectedVersion:1},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const actual=(await call('quotes/'+id,'GET',undefined,admin)).data.document;A.equal(actual.quote.pricing.overhead,2);A.equal(actual.quote.pricing.incoming,450000);
+ const forbidden=(await call('quotes/'+id,'GET',undefined,v.session)).data.document;forbidden.quote.pricing.overhead=9;A.equal((await call('quotes/'+id,'PUT',{document:forbidden,expectedVersion:2},v.session)).status,403);
+ const master=(await call('catalog','GET',undefined,u.session)).data;master.catalog.pricingDefaults.overhead=9;A.equal((await call('catalog','PUT',{catalog:master.catalog,expectedVersion:master.version},u.session)).status,403);
+});
