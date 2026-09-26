@@ -44,3 +44,26 @@ html[data-theme=dark] #sidebar .has-nav-icon.active>.nav-symbol{background:#91c6
 #sidebar .demo-status{padding-bottom:10px}
 #sidebar nav{scrollbar-gutter:stable;overflow-x:hidden}
 #sidebar nav{grid-template-columns:minmax(0,1fr)}
+
+/* Screen workspace follows the available width, including browser zoom. */
+@media screen{
+ #content{width:100%;max-width:none;margin-inline:0}
+ #sidebar nav button{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
+ #sidebar nav .button{justify-content:flex-start}
+ #sidebar .brand{flex-shrink:0}
+ #sidebar .account>div{min-width:0;overflow-wrap:anywhere}
+ .catalog-layout>.panel{min-width:0}
+ .catalog-layout .table-scroll{max-width:100%;overflow-x:auto}
+}
+@media screen and (min-width:701px){
+ #sidebar{width:240px;padding-inline:12px}
+ .main{margin-left:240px}
+ #sidebar nav>button{font-size:var(--ui-font-12,12px)}
+}
+@media screen and (max-height:650px){
+ #sidebar{padding-top:12px;padding-bottom:8px}
+ #sidebar .brand{padding-bottom:10px}
+ #sidebar .brand-logo{max-height:80px;width:auto;max-width:100%;object-fit:contain}
+ #sidebar .side-bottom{padding-top:4px}
+ #sidebar .account{padding-block:6px}
+}
