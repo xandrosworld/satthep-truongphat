@@ -101,9 +101,9 @@ test('section confirmations ignore other sections, validate prerequisites and re
  r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'input',confirm:true,requirements:'No drawing',noDrawingReason:''});A.equal(r.status,400);
  r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'operations',confirm:true,equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'',method:''}))});A.equal(r.status,400);
  r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'input',confirm:true,requirements:'Factory note',noDrawingReason:'Approved specification'});A.equal(r.status,200);d=r.data;
- r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'operations',confirm:true,equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'Manual',method:'Per drawing'}))});A.equal(r.status,200);d=r.data;
+ r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'technical',confirm:true,equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'Manual',method:'Per drawing'}))});A.equal(r.status,200);d=r.data;
  r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'quantities',confirm:true});A.equal(r.status,200);d=r.data;A.ok(d.reviewed);A.equal(d.requirements,'Factory note');
- r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'structure',confirm:false});A.equal(r.status,200);A.equal(r.data.reviewed,undefined);A.equal(r.data.reviewChecks.input,true);
+ r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'technical',confirm:false});A.equal(r.status,200);A.equal(r.data.reviewed,undefined);A.equal(r.data.reviewChecks.input,true);A.equal(r.data.reviewChecks.structure,false);A.equal(r.data.reviewChecks.operations,false);
 });
 test('bulk engineering proposal changes selected rows atomically and invalidates review',async t=>{
  const {call,document}=await fixture(t);document.quote.id='BG-BULK-TEST';const product=document.quote.products[0],first=product.children.find(n=>n.kind==='material');const second=JSON.parse(JSON.stringify(first));second.id=randomUUID();second.name+=' second';product.children.push(second);
