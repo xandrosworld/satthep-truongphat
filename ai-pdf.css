@@ -1,3 +1,11 @@
 .ai-entry{display:flex;align-items:center;justify-content:space-between;gap:24px;border-left:4px solid #246a8c}.ai-entry p{margin-bottom:0}.ai-intro{background:#eaf4fa;border:1px solid #c6dfe9;padding:18px;border-radius:10px;margin-bottom:18px;color:#204f66}.ai-intro p{margin:8px 0}.ai-history{display:grid;gap:8px;margin-top:12px}.ai-history button{display:flex;justify-content:space-between;text-align:left;gap:20px}.ai-review-list{display:grid;gap:18px;margin:18px 0}.ai-review-row{padding:18px;border:1px solid #cddce5;border-radius:10px;background:#fff}.ai-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.ai-check{display:flex;align-items:flex-start;gap:10px;margin:10px 0;font-weight:600}.ai-check input{margin-top:4px;width:18px;height:18px;flex-shrink:0}.ai-evidence{color:#3e5c70;font-size:13px}.ai-warning{background:#fff5df;color:#805510;border-left:3px solid #db9d32;padding:10px}.ai-dialog .dialog-body{background:#f6f9fb}.ai-dialog input,.ai-dialog select,.ai-dialog textarea{min-width:0;width:100%}.ai-dialog .ai-check input{width:18px}.ai-dialog .field{min-width:0}@media(max-width:800px){.ai-fields{grid-template-columns:1fr 1fr}.ai-entry{flex-wrap:wrap}}
 
 .ai-fields>.field:first-child{grid-column:span 2}
+
+/* A compact supporting tool, aligned with the quotation workspace. */
+#content .ai-entry{padding:18px 22px;margin:0 0 18px;border:1px solid var(--line);border-radius:10px;background:var(--surface);gap:24px}
+.ai-entry-copy{display:flex;align-items:center;gap:14px;min-width:0}
+.ai-entry-mark{display:grid;place-items:center;flex:0 0 42px;height:46px;border:1px solid var(--line);border-radius:8px;background:var(--canvas);color:var(--blue-deep);font-size:11px;font-weight:750;letter-spacing:.06em}
+#content .ai-entry h2{margin:0 0 4px;font-size:15px;line-height:1.5}
+#content .ai-entry p{line-height:1.6;font-size:13px}
+#content .ai-entry>.button{flex-shrink:0;min-height:38px;padding:9px 16px}
