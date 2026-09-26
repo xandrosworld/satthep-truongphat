@@ -23,12 +23,12 @@ function split({sql,fail,packet,captureBaseline,audit,user,id,body}){
  for(const [key,n,partCode]of [[id,row.quantity-qty,row.code],[partId,qty,code]]){
   const doc=structuredClone(source);doc.quote.products=doc.quote.products.filter(p=>p.id===row.product_id);if(doc.quote.products.length!==1)fail(409,'Hồ sơ nguồn không khớp sản phẩm');doc.quote.products[0].qty=n;doc.quote.nestingPlans=[];doc.quote.remnantSelections={};
   const data=packet(doc);if(data.issues.length||data.cutting.some(g=>g.error))fail(409,'Cần kiểm tra phương án cắt của phần/lô');
-  const snapshot={...old,technicalInput:data.technicalInput,product:data.products[0],materials:data.materials,operations:data.operations,cutting:data.cutting,finishing:data.finishing,layoutBasis:'batch-recalculated',partFamily:family};
+  const snapshot={...old,...(key!==id?{issuedBy:{id:user.id,name:user.name,at}}:{}),technicalInput:data.technicalInput,product:data.products[0],materials:data.materials,operations:data.operations,cutting:data.cutting,finishing:data.finishing,layoutBasis:'batch-recalculated',partFamily:family};
   const p={deadline:progress.deadline,workshop:progress.workshop,materialsReady:false,drawingReady:false,preparationNote:'',operations:data.operations.map(o=>({id:o.id,assignee:progress.operations.find(x=>x.id===o.id)?.assignee||'',status:'pending',output:0,note:''})),qc:{passed:0,rejected:0,note:''}};
   if(key===id)sql.prepare('UPDATE production_jobs SET quantity=?,packet=?,progress=?,version=version+1,updated=?,actor=? WHERE id=?').run(n,JSON.stringify(snapshot),JSON.stringify(p),at,user.id,key);
   else sql.prepare('INSERT INTO production_jobs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(key,partCode,row.order_id,row.product_id,n,1,'ready',JSON.stringify(snapshot),JSON.stringify(p),at,at,user.id);
   store('production-source',key,doc);captureBaseline(key,doc);
-  const dossier=records.find(r=>r.kind==='production-dossier'&&r.id===id);if(dossier){const d=JSON.parse(dossier.document);delete d.reviewed;delete d.reviewChecks;d.history.push({at,actor:user.name,detail:'Chia phần/lô: cần rà soát lại số lượng và phương án cắt'});store('production-dossier',key,d);}
+  const dossier=records.find(r=>r.kind==='production-dossier'&&r.id===id);if(dossier){const d=JSON.parse(dossier.document);delete d.reviewed;delete d.reviewChecks;delete d.confirmations;d.history.push({at,actor:user.name,detail:'Chia phần/lô: cần rà soát lại số lượng và phương án cắt'});store('production-dossier',key,d);}
   sql.prepare('INSERT INTO production_events(job_id,at,actor,detail) VALUES(?,?,?,?)').run(key,at,user.name,'Chia phần '+partCode+' · '+n+' '+old.product.unit+' từ '+family.code);audit(user,'production-part',key,partCode);
  }
  return {id:partId,parentId:id,family};

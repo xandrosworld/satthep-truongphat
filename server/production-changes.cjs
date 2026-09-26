@@ -15,7 +15,7 @@ function createProductionChanges({sql,fail,readBody,transaction,audit,packet,can
  async function handle({req,route,user,send}){
   const m=route.match(/^\/api\/production\/([a-f0-9-]+)\/changes(?:\/([a-f0-9-]+)\/(confirm|approve|reject))?$/);if(!m)return false;
   const j=one('SELECT * FROM production_jobs WHERE id=?',m[1]);if(!j)fail(404,'Không tìm thấy lệnh');
-  if(req.method==='GET'&&!m[2]){const d=source(j),nodes=C.flatten(d.quote.products);send(200,{canPropose:proposeable(user),canConfirm:confirmable(user),canApprove:user.role==='admin',jobVersion:j.version,materials:materials(d).map(safeMaterial),rows:packet(d).materials.map(r=>{const n=nodes.find(n=>n.id===r.id),numeric=v=>Object.fromEntries(Object.entries(v||{}).filter(([,x])=>typeof x==='number'));return {...r,dims:numeric(n.dims),params:numeric(n.params)};}),changes:all("SELECT document FROM ops_records WHERE kind='production-change'").map(r=>JSON.parse(r.document)).filter(c=>c.jobId===j.id).map(clean)});return true;}
+  if(req.method==='GET'&&!m[2]){const d=source(j),nodes=C.flatten(d.quote.products);send(200,{canPropose:proposeable(user),canConfirm:confirmable(user),canApprove:user.role==='admin',jobVersion:j.version,products:nodes.filter(n=>n.kind==='product'||n.kind==='component').map(n=>({id:n.id,name:n.name,kind:n.kind,dims:n.dims||{},params:n.params||{}})),materials:materials(d).map(safeMaterial),rows:packet(d).materials.map(r=>{const n=nodes.find(n=>n.id===r.id),numeric=v=>Object.fromEntries(Object.entries(v||{}).filter(([,x])=>typeof x==='number'));return {...r,dims:numeric(n.dims),params:numeric(n.params)};}),changes:all("SELECT document FROM ops_records WHERE kind='production-change'").map(r=>JSON.parse(r.document)).filter(c=>c.jobId===j.id).map(clean)});return true;}
   if(req.method!=='POST')fail(405,'Thao tác không hợp lệ');const b=await readBody(req);
   const out=transaction(()=>{const current=one('SELECT * FROM production_jobs WHERE id=?',j.id);if(current.version!==b.expectedVersion)fail(409,'Lệnh đã thay đổi; tải lại trước khi xử lý');
    if(!m[2]){
@@ -24,15 +24,17 @@ function createProductionChanges({sql,fail,readBody,transaction,audit,packet,can
     const d=source(current),before=packet(d),rows=b.rowIds===undefined?[b.rowId]:b.rowIds;
     if(!Array.isArray(rows)||!rows.length||rows.length>500||new Set(rows).size!==rows.length)fail(400,'Chọn từ 1 đến 500 dòng khác nhau');
     let changed=false;
-    for(const rowId of rows){const n=C.flatten(d.quote.products).find(n=>n.id===rowId&&n.kind==='material');if(!n)fail(400,'Dòng vật tư không thuộc lệnh');const original=JSON.stringify(n);
+    for(const rowId of rows){const n=C.flatten(d.quote.products).find(n=>n.id===rowId&&['material','product','component'].includes(n.kind));if(!n)fail(400,'Dòng vật tư không thuộc lệnh');const original=JSON.stringify(n);
+    if(n.kind!=='material'&&(b.materialId!==undefined||b.props&&Object.keys(b.props).length||b.stockL!==undefined||b.stockW!==undefined||b.blank!==undefined))fail(400,'Chỉ áp dụng thông số phôi cho dòng vật tư');
     if(b.materialId!==undefined&&b.materialId!==n.materialId){const s=materials(d).find(x=>x.id===b.materialId);if(!s||s.shape!==n.spec.shape)fail(400,'Chọn vật tư cùng hình dạng để giữ đúng quy tắc khai triển');n.materialId=s.id;n.spec=C.copy(s);n.name=s.name;}
     const numeric=(v)=>{if(typeof v!=='number'||!Number.isFinite(v)||v<0||v>1e7)fail(400,'Thông số kích thước không hợp lệ');return v;};
-    for(const [field,allowed]of [['dims',Object.keys(n.dims||{})],['params',Object.keys(n.params||{})],['props',Object.keys(n.spec.props||{})]]){const values=b[field]||{};if(typeof values!=='object'||Array.isArray(values))fail(400,'Thông số không hợp lệ');for(const [k,v]of Object.entries(values)){if(!allowed.includes(k))fail(400,'Thông số không được hỗ trợ: '+k);(field==='props'?n.spec.props:n[field])[k]=numeric(v);}}
+    for(const [field,allowed]of [['dims',Object.keys(n.dims||{})],['params',Object.keys(n.params||{})],['props',Object.keys(n.spec?.props||{})]]){const values=b[field]||{};if(typeof values!=='object'||Array.isArray(values))fail(400,'Thông số không hợp lệ');for(const [k,v]of Object.entries(values)){if(!allowed.includes(k))fail(400,'Thông số không được hỗ trợ: '+k);(field==='props'?n.spec.props:n[field])[k]=numeric(v);}}
     for(const k of ['stockL','stockW'])if(b[k]!==undefined)n.spec[k]=numeric(b[k]);
+    if(b.blank!==undefined){if(b.blank===null)delete n.productionBlank;else{if(!b.blank||typeof b.blank!=='object'||Array.isArray(b.blank)||n.spec.shape==='piece')fail(400,'Chọn vật tư có kích thước khai triển');const length=numeric(b.blank.length),width=n.spec.shape==='sheet'?numeric(b.blank.width):0;if(!length||n.spec.shape==='sheet'&&!width)fail(400,'Kích thước khai triển phải lớn hơn 0');n.productionBlank={length,width};}}
     if(JSON.stringify(n)!==original)changed=true;
     }
     if(!changed)fail(400,'Chưa có thông số thay đổi');d.quote.nestingPlans=[];d.quote.remnantSelections={};const after=packet(d);if(after.issues.length||after.cutting.some(g=>g.error))fail(400,'Thông số đề nghị không tạo được phương án sản xuất hợp lệ');
-    const c={id:randomUUID(),jobId:j.id,baseVersion:j.version,rowId:rows[0],rowIds:rows,reason,state:'pending',at:new Date().toISOString(),actor:user.name,before,after,document:d};put('production-change',c.id,c);audit(user,'production-change-proposed',j.id,reason);return clean(c);
+    const c={id:randomUUID(),jobId:j.id,baseVersion:j.version,rowId:rows[0],rowIds:rows,reason,state:'pending',at:new Date().toISOString(),actor:user.name,actorId:user.id,reference:typeof b.reference==='string'?b.reference.trim().slice(0,2000):'',before,after,document:d};put('production-change',c.id,c);audit(user,'production-change-proposed',j.id,reason);return clean(c);
    }
    const c=get('production-change',m[2]);if(!c||c.jobId!==j.id)fail(404,'Không tìm thấy đề nghị');
    if(!['pending','confirmed'].includes(c.state))fail(409,'Đề nghị đã được xử lý');
@@ -49,7 +51,7 @@ function createProductionChanges({sql,fail,readBody,transaction,audit,packet,can
      sql.prepare('INSERT INTO production_events(job_id,at,actor,detail) VALUES(?,?,?,?)').run(j.id,at,user.name,'Duyệt thay đổi kỹ thuật: '+c.reason+' · xác nhận bởi '+c.technical.name);
     }
    }
-   c.reviewedBy=user.name;c.reviewedAt=new Date().toISOString();put('production-change',c.id,c);audit(user,'production-change-'+action,j.id,c.reason);return clean(c);
+   c.reviewedById=user.id;c.reviewedBy=user.name;c.reviewedAt=new Date().toISOString();put('production-change',c.id,c);audit(user,'production-change-'+action,j.id,c.reason);return clean(c);
   });send(200,out);return true;
  }
  return {handle};

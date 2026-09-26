@@ -71,6 +71,12 @@ function shapeInfo(m){return m.shapeDefinition?definitions().info(m):shapes[m.sh
 function geometry(n,count){
   if(n.draftMaterial&&!n.materialId)throw Error('Vật tư chưa chọn mã; mở Chọn / hoàn tất vật tư để khai báo');
   if(n.draftMaterial)throw Error('Vật tư chưa được xác nhận trong danh mục chung; mở Chọn / hoàn tất vật tư để xác nhận khai báo vật tư');
+  if(n.productionBlank){
+    const b=n.productionBlank,g=geometry({...n,productionBlank:null},count),sheet=n.spec.shape==='sheet';
+    if(!Number.isFinite(b.length)||b.length<=0||b.length>1e7||sheet&&(!Number.isFinite(b.width)||b.width<=0||b.width>1e7)||!g.length)throw Error('Kích thước khai triển nhập tay không hợp lệ');
+    const sx=b.length/g.length,sy=sheet?b.width/g.width:1,ratio=sx*sy;
+    return {...g,length:b.length,width:sheet?b.width:0,...Object.fromEntries(['weight','area','volume','blankArea','measure'].filter(k=>g[k]!==undefined).map(k=>[k,g[k]*ratio])),...(g.polygon?{polygon:g.polygon.map(([x,y])=>[x*sx,y*sy])}: {})};
+  }
   if(n.spec?.shapeDefinition)return definitions().geometry(n,count);
   const m=n.spec,vars={...n.dims,...m.props},rule=n.ruleSpec;
   if(!(count>0)&&count!==0)throw Error('Số lượng không hợp lệ');
