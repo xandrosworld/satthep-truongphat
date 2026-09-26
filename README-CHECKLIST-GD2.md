@@ -17,6 +17,16 @@ Cập nhật đợt 2: [Sản xuất, kho và mua hàng](docs/dot-2-san-xuat-kho
 Cập nhật đợt 4: [Báo cáo và kiểm thử liên thông](docs/dot-4-bao-cao-kiem-thu.md). Nhóm 18–21 đã tự kiểm; gồm chọn kỳ, Excel, quyền nguồn và đối chiếu luồng đơn mẫu/SQLite phục hồi. Các bước chạy thử, đào tạo, diễn tập khôi phục toàn máy chủ và nghiệm thu cuối chưa tự đánh dấu hoàn thành.
 
 
+## Quy tắc khách xác nhận — giao việc và chuyển tồn 26/09/2026
+
+- Giao việc: người giao/admin duyệt hoàn thành; thông báo người nhận và cấp trên khi giao trực tiếp. Người được chọn trong danh sách trách nhiệm mới tự nhận việc bộ phận. Đổi người thực hiện cần lý do, lưu lịch sử.
+- Việc kế tiếp được thông báo khi báo hoàn thành; duyệt hoàn thành vẫn là bước riêng. Tiến độ/chuyển việc liên bộ phận cần admin hoặc quyền `dailyWork.approveSchedule`; đổi lịch/người/phụ thuộc làm mất xác nhận cũ. Luồng này dùng phê duyệt từng trường hợp, chưa phải công cụ thiết kế quy trình tùy ý.
+- Khoảng chờ vật tư/phê duyệt có thời điểm máy chủ, lý do, dẫn chiếu, người kết thúc và người duyệt. Áp dụng việc giao riêng và công đoạn trên bảng giao việc; chỉ khoảng đã xác nhận được trừ khỏi trễ cá nhân. Ngày duyệt hoàn thành chậm không quy thành trễ của người thực hiện.
+- Chuyển phần giữ kho: đề xuất → người có quyền `inventory.approve` duyệt/từ chối; chỉ vật tư chưa cấp. Kiểm tra lại nhu cầu/kích thước/phiên bản trong giao dịch, không cấp trùng, không duyệt lặp. Bỏ giữ cũng cần quyền duyệt kho. Chưa phải chuyển bán thành phẩm/thành phẩm đã sản xuất.
+- Báo cáo kỳ bổ sung sản lượng/giờ tăng thêm từ lịch sử công đoạn; giá trị quy đổi chỉ hiện theo quyền chi phí, khi khớp căn cứ định mức/đơn giá của lệnh. Dữ liệu lịch sử thiếu căn cứ không tự bù, không coi giá trị này là lương.
+- Chưa triển khai bộ chấm điểm KPI, trọng số/xếp hạng hoặc module Cơ hội bán hàng riêng; các phần này để giai đoạn sau.
+- Tự kiểm: 30 kiểm thử máy chủ đạt; giao diện thời gian chờ, chuyển tồn, bảng giao việc và luồng công đoạn được kiểm tra trên dữ liệu thử. Không thay thế nghiệm thu khách hàng.
+
 ## Kiểm tra hồi quy trong phạm vi — 26/09/2026
 
 - 28 kiểm thử nghiệp vụ đạt: hệ số/phân quyền, đồng bộ đơn vị nguyên công, xác nhận từng mục kỹ thuật, chia lô và giữ ghi chú, mua hàng/giữ kho, sản xuất/QC/giao hàng, báo cáo và phục hồi SQLite; giao việc/phụ trách/thông báo.

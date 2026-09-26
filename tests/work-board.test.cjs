@@ -6,7 +6,7 @@ test('work hierarchy scopes assignments, department claims, approvals, exports d
  const f=await fixture(t),m=await f.user('manager',{dailyWork:['view','assign','approve','edit']}),w=await f.user('worker',{dailyWork:['view','edit']}),w2=await f.user('worker2',{dailyWork:['view','edit']}),other=await f.user('other',{dailyWork:['view','assign','approve','edit']});
  const org={departments:[{id:'parent',name:'Parent',active:true},{id:'child',name:'Child',parentId:'parent',active:true},{id:'other',name:'Other',active:true}],positions:[{id:'manager',departmentId:'parent',manager:true,active:true},{id:'worker',departmentId:'child',manager:false,active:true},{id:'other',departmentId:'other',manager:true,active:true}],employees:[{id:m.id,userId:m.id,active:true,positionIds:['manager']},{id:w.id,userId:w.id,active:true,positionIds:['worker']},{id:w2.id,userId:w2.id,active:true,positionIds:['worker']},{id:other.id,userId:other.id,active:true,positionIds:['other']}]};f.app.sql.prepare('INSERT INTO organization VALUES(1,1,?)').run(JSON.stringify(org));
  A.equal((await f.post('task',task(other.id),m)).status,403);let x=await f.ok('task',task(w.id,{departmentId:'child'}),m);A.equal((await f.call('enterprise/work','GET',undefined,other)).data.tasks.length,0);A.equal((await f.call('ops/state','GET',undefined,other)).data.tasks.length,0);A.equal((await f.post('task',{...x,expectedVersion:x.version,name:'Steal',assignee:other.id},other)).status,403);
- let dept=await f.ok('task',task('',{name:'Department task',departmentId:'child'}),m);const b={id:dept.id,expectedVersion:dept.version,state:'accepted'},claims=await Promise.all([f.post('transition',b,w),f.post('transition',b,w2)]);A.equal(claims.filter(r=>r.status===200).length,1);A.ok(claims.some(r=>[404,409].includes(r.status)));dept=claims.find(r=>r.status===200).data;A.ok([w.id,w2.id].includes(dept.assignee));
+ let dept=await f.ok('task',task('',{name:'Department task',departmentId:'child',eligibleIds:[w.id,w2.id]}),m);const b={id:dept.id,expectedVersion:dept.version,state:'accepted'},claims=await Promise.all([f.post('transition',b,w),f.post('transition',b,w2)]);A.equal(claims.filter(r=>r.status===200).length,1);A.ok(claims.some(r=>[404,409].includes(r.status)));dept=claims.find(r=>r.status===200).data;A.ok([w.id,w2.id].includes(dept.assignee));
  for(const state of ['accepted','running'])x=await f.ok('transition',{id:x.id,expectedVersion:x.version,state},w);
  const report=await f.ok('report',{taskId:x.id,expectedVersion:x.version,date:'2026-09-25',hours:2,output:3,content:'Measured',issue:'Missing part',proposal:'Purchase'},w);
  A.equal((await f.call('ops/resolve','POST',{requestId:randomUUID(),id:report.id,resolution:'Bypass'},other)).status,403);A.equal((await f.post('transition',{id:x.id,expectedVersion:x.version,state:'done'},w)).status,409);
@@ -20,21 +20,60 @@ test('production tasks follow actual workflow without duplicate task writes or s
  j=(await f.call('production/'+j.id,'PUT',{action:'operation',expectedVersion:j.version,operationId:op.id,status:'running',assignee:f.admin.id,machine:'Manual',hours:2,output:0,note:'Started',issue:'Blade check',proposal:'Inspect blade'})).data;
  let s=(await f.call('enterprise/work')).data;const source=s.tasks.find(t=>t.source?.operationId===op.id);A.ok(s.notices.some(n=>n.taskId===source.id&&n.title.startsWith('Giao công đoạn:')));A.equal(source.state,'running');A.equal(source.hours,2);A.equal(source.issue,'Blade check');A.equal((await f.post('transition',{id:source.id,expectedVersion:source.version,state:'done'})).status,409);
  A.equal((await f.call('enterprise/work')).data.tasks.filter(t=>t.id===source.id).length,1);A.equal(f.app.sql.prepare("SELECT COUNT(*) n FROM ops_records WHERE kind='task'").get().n,0);
+ let wait=await f.ok('wait',{id:source.id,expectedVersion:source.version,waitVersion:0,action:'start',kind:'approval',reason:'Await decision',reference:'REF-OP'});
+ A.equal((await f.post('wait',{id:source.id,expectedVersion:source.version,waitVersion:0,action:'end',waitId:wait.waits[0].id})).status,409);
+ wait=await f.ok('wait',{id:source.id,expectedVersion:source.version,waitVersion:wait.version,action:'end',waitId:wait.waits[0].id});
+ await f.ok('wait',{id:source.id,expectedVersion:source.version,waitVersion:wait.version,action:'approve',waitId:wait.waits[0].id});
+ A.ok((await f.call('enterprise/work')).data.tasks.find(t=>t.id===source.id).waits[0].approvedAt);
+
  j=await require('./production-flow-fixture.cjs').settleStage(f.call,f.admin,j.id);s=(await f.call('enterprise/work')).data;A.equal(s.tasks.find(t=>t.id===source.id).state,'confirmed');A.equal(s.tasks.find(t=>t.id===source.id).output,op.quantity);
  const limited=await f.user('limited',{dailyWork:['view','assign','approve']});A.equal((await f.call('enterprise/work','GET',undefined,limited)).data.tasks.filter(t=>t.sourceManaged).length,0);
 });
 test('offer and purchasing projections track source transitions and never expose commercial amounts',async t=>{const f=await fixture(t),q=(await f.call('quotes','POST',{document:P.demoSeed()})).data;await f.call('quotes/'+q.id+'/submit','POST',{expectedVersion:1});await f.call('quotes/'+q.id+'/approve','POST',{expectedVersion:2});const row=f.app.sql.prepare('SELECT * FROM commercial WHERE id=?').get(q.id),doc=JSON.parse(row.document);doc.dispatches[3]={senderId:f.admin.id,careOwnerId:f.admin.id,sentAt:new Date().toISOString(),dueDate:'2026-09-26',careClosed:true,entries:[{kind:'close',content:'Done'},{kind:'assignment',content:'Keep owner'}]};doc.dispatches[1]={senderId:f.admin.id,entries:[]};f.app.sql.prepare('UPDATE commercial SET document=? WHERE id=?').run(JSON.stringify(doc),q.id);f.app.sql.prepare('INSERT INTO ops_records VALUES(?,?,?,?)').run('purchase','test-purchase',1,JSON.stringify({code:'PURCHASE',actor:f.admin.id,created:new Date().toISOString(),state:'ordered',lines:[{unitCost:999999}]}));let tasks=(await f.call('enterprise/work')).data.tasks;A.equal(tasks.find(t=>t.id==='source:offer:'+q.id+':3:care').state,'confirmed');A.equal(tasks.some(t=>t.id==='source:offer:'+q.id+':1:send'),false);const purchase=tasks.find(t=>t.id==='source:purchase:test-purchase');A.equal(purchase.state,'running');A.equal(JSON.stringify(purchase).includes('999999'),false);f.app.sql.prepare('UPDATE ops_records SET document=?,version=2 WHERE kind=? AND id=?').run(JSON.stringify({code:'PURCHASE',actor:f.admin.id,created:new Date().toISOString(),state:'stocked'}),'purchase','test-purchase');tasks=(await f.call('enterprise/work')).data.tasks;A.equal(tasks.find(t=>t.id===purchase.id).state,'confirmed');});
-test('successor waits for confirmed predecessor, not save or completion; notification and dependency cycles',async t=>{
+test('successor notified at completion, creator approval remains separate; dependency cycles',async t=>{
  const f=await fixture(t);let a=await f.ok('task',task(f.admin.id,{name:'First'})),b=await f.ok('task',task(f.admin.id,{name:'Next',predecessorId:a.id}));
  A.equal((await f.post('task',{...a,predecessorId:b.id,expectedVersion:a.version})).status,400);
  b=await f.ok('transition',{id:b.id,state:'accepted',expectedVersion:b.version});
  A.equal((await f.post('transition',{id:b.id,state:'running',expectedVersion:b.version})).status,409);
  for(const state of ['accepted','running','done'])a=await f.ok('transition',{id:a.id,state,expectedVersion:a.version});
- A.equal((await f.post('transition',{id:b.id,state:'running',expectedVersion:b.version})).status,409);
+ A.equal((await f.call('enterprise/work')).data.tasks.find(t=>t.id===b.id).blocked,false);
  a=await f.ok('transition',{id:a.id,state:'confirmed',expectedVersion:a.version});
  const view=(await f.call('enterprise/work')).data;A.ok(view.notices.some(n=>n.taskId===b.id&&n.title.includes('Sẵn sàng')));A.equal(view.tasks.find(t=>t.id===b.id).blocked,false);
  b=await f.ok('transition',{id:b.id,state:'running',expectedVersion:b.version});
  const report=await f.ok('report',{taskId:b.id,expectedVersion:b.version,date:'2026-09-26',hours:1,output:1,content:'Working',issue:'Waiting'});
  await f.ok('resolve',{taskId:b.id,expectedVersion:b.version,reportId:report.id,resolution:'Ready'});
  A.ok((await f.call('enterprise/work')).data.notices.some(n=>n.taskId===b.id&&n.title.includes('Đã xử lý')));
+});
+
+test('creator approval, eligible department receivers, supervisor notices and approved waits',async t=>{
+ const f=await fixture(t),manager=await f.user('manager',{dailyWork:['view','assign','edit','approve']}),worker=await f.user('worker',{dailyWork:['view','edit']}),other=await f.user('other',{dailyWork:['view','assign','edit','approve']});
+ f.app.sql.prepare('INSERT INTO organization VALUES(1,1,?)').run(JSON.stringify({departments:[{id:'d',name:'D',active:true}],positions:[{id:'m',departmentId:'d',manager:true,active:true},{id:'w',departmentId:'d',manager:false,active:true}],employees:[{id:manager.id,userId:manager.id,active:true,positionIds:['m']},{id:worker.id,userId:worker.id,active:true,positionIds:['w']},{id:other.id,userId:other.id,active:true,positionIds:['m']}]}));
+ let x=await f.ok('task',task('',{departmentId:'d',eligibleIds:[worker.id]}),manager);
+ A.equal((await f.post('transition',{id:x.id,expectedVersion:x.version,state:'accepted'},other)).status,403);
+ x=await f.ok('transition',{id:x.id,expectedVersion:x.version,state:'accepted'},worker);
+ x=await f.ok('transition',{id:x.id,expectedVersion:x.version,state:'running'},worker);
+ x=await f.ok('wait',{id:x.id,expectedVersion:x.version,action:'start',kind:'materials',reason:'Await stock',reference:'PO-01'},worker);
+ A.equal((await f.post('transition',{id:x.id,expectedVersion:x.version,state:'done'},worker)).status,409);
+ x=await f.ok('wait',{id:x.id,expectedVersion:x.version,action:'end',waitId:x.waits[0].id},worker);
+ A.equal((await f.post('wait',{id:x.id,expectedVersion:x.version,action:'approve',waitId:x.waits[0].id},other)).status,403);
+ x=await f.ok('wait',{id:x.id,expectedVersion:x.version,action:'approve',waitId:x.waits[0].id},manager);
+ A.equal(x.waits[0].approvedBy,manager.id);
+ x=await f.ok('transition',{id:x.id,expectedVersion:x.version,state:'done'},worker);
+ A.equal((await f.post('transition',{id:x.id,expectedVersion:x.version,state:'confirmed'},other)).status,403);
+ x=await f.ok('transition',{id:x.id,expectedVersion:x.version,state:'confirmed'},manager);
+ const direct=await f.ok('task',task(worker.id,{departmentId:'d'}));
+ A.ok((await f.call('enterprise/work','GET',undefined,manager)).data.notices.some(n=>n.taskId===direct.id));
+ A.equal((await f.post('task',task(worker.id,{dueDate:''}))).status,400);
+});
+
+test('cross-department scheduling requires delegated approval and is reset by changed dates',async t=>{
+ const f=await fixture(t),manager=await f.user('manager',{dailyWork:['view','assign','edit','approve']}),worker=await f.user('worker',{dailyWork:['view','edit']}),reviewer=await f.user('reviewer',{dailyWork:['view','approveSchedule']});
+ f.app.sql.prepare('INSERT INTO organization VALUES(1,1,?)').run(JSON.stringify({departments:[{id:'root',name:'Root',active:true},{id:'a',name:'A',parentId:'root',active:true},{id:'b',name:'B',parentId:'root',active:true}],positions:[{id:'m',departmentId:'root',manager:true,active:true},{id:'w',departmentId:'b',active:true}],employees:[{id:manager.id,userId:manager.id,active:true,positionIds:['m']},{id:worker.id,userId:worker.id,active:true,positionIds:['w']}]}));
+ const a=await f.ok('task',task('',{departmentId:'a'}),manager);
+ let b=await f.ok('task',task(worker.id,{departmentId:'b',predecessorId:a.id}),manager);
+ A.equal(b.scheduleApprovalRequired,true);A.equal(b.scheduleApprovedAt,null);
+ A.equal((await f.post('schedule',{id:b.id,expectedVersion:b.version,reason:'Plan'},manager)).status,403);
+ b=await f.ok('schedule',{id:b.id,expectedVersion:b.version,reason:'Approved schedule'},reviewer);
+ A.equal(b.scheduleApprovedBy,reviewer.id);
+ b=await f.ok('task',{...b,expectedVersion:b.version,dueDate:'2026-09-27'},manager);A.equal(b.scheduleApprovedAt,null);
 });

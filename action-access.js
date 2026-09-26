@@ -1,15 +1,15 @@
 (function(root){
 'use strict';
-const labels={view:'Xem',create:'Thêm',edit:'Sửa',delete:'Xóa / hủy',submit:'Trình duyệt',approve:'Duyệt',reopen:'Mở sửa',confirm:'Xác nhận / bàn giao',assign:'Giao việc',export:'Xuất / in',import:'Nhập Excel',activate:'Yêu cầu tài khoản',review:'Duyệt hồ sơ',issue:'Phát hành lệnh',qc:'Kiểm tra chất lượng',complete:'Hoàn thành',send:'Gửi tin'};
+const labels={approveSchedule:'Duyệt tiến độ phối hợp',view:'Xem',create:'Thêm',edit:'Sửa',delete:'Xóa / hủy',submit:'Trình duyệt',approve:'Duyệt',reopen:'Mở sửa',confirm:'Xác nhận / bàn giao',assign:'Giao việc',export:'Xuất / in',import:'Nhập Excel',activate:'Yêu cầu tài khoản',review:'Duyệt hồ sơ',issue:'Phát hành lệnh',qc:'Kiểm tra chất lượng',complete:'Hoàn thành',send:'Gửi tin'};
 const modules={
  reports:['Trung tâm báo cáo',['view','export']],
  finance:['Thu chi, công nợ và giá thành',['view','create','delete','approve','export']],
  attendance:['Chấm công',['view','edit','approve','reopen','export']],
  payroll:['Hồ sơ và bảng lương',['view','edit','approve','reopen','export']],
- inventory:['Kho và vật tư',['view','create','edit','delete','export']],
+ inventory:['Kho và vật tư',['view','create','edit','delete','approve','export']],
  purchasing:['Mua hàng',['view','create','edit','approve','delete','export']],
  workshop:['Điều hành xưởng',['view','create','edit','delete','export']],
- dailyWork:['Công việc và báo cáo ngày',['view','assign','edit','approve','export']],
+ dailyWork:['Công việc và báo cáo ngày',['view','assign','edit','approve','approveSchedule','export']],
  quotes:['Báo giá',['view','create','edit','delete','submit','approve','reopen','confirm','assign','export']],
  customers:['Khách hàng',['view','create','edit','delete','import','export']],
  orders:['Đơn hàng',['view','create','edit','delete','confirm','export']],

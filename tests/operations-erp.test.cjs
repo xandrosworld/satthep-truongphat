@@ -32,3 +32,25 @@ test('catalog operation and split batches persist and lock after completion',asy
  A.equal((await update({action:'operation',operationId:op.id,status:'running',assignee:admin.data.user.id,machine:'M',output:0,note:''})).status,409);
  const costs=(await call('ops/job/'+j.id)).data;A.ok(Array.isArray(costs.baseline));
 });
+
+test('reserved stock transfer is approved atomically, scoped and cannot be replayed or use stale holds',async t=>{
+ const {app,call,post,admin,job}=await fixture(t);
+ const raw=app.sql.prepare('SELECT * FROM production_jobs WHERE id=?').get(job.id);
+ let target=(await call('production','POST',{orderId:raw.order_id,productId:job.packet.product.id,quantity:1,code:'TRANSFER-TARGET'}));A.equal(target.status,201,JSON.stringify(target.data));target.data=await require('./production-review-fixture.cjs').review(call,admin,target.data.id);
+ const d=(await call('ops/job/'+job.id)).data.requirements.find(d=>d.unit==='tấm');
+ await post('master',{kind:'material',expectedVersion:0,document:{id:d.materialId,code:d.materialId,name:d.name,unit:d.unit,form:'sheet'}});
+ const lot=(await post('receipt',{materialId:d.materialId,warehouse:'A',quantity:1,unitWeight:10,unitCost:100,length:d.length,width:d.width,thickness:d.thickness,reference:'TRANSFER-STOCK'})).data;
+ const hold=(await post('reserve',{jobId:job.id,lotId:lot.id,quantity:1})).data;
+ const u=(await call('users','POST',{username:'store',name:'Store',role:'sales',password:'Operations-test-2026!'})).data;
+ app.sql.prepare('UPDATE users SET action_access=? WHERE id=?').run(JSON.stringify({inventory:['view','edit']}),u.id);const store=await call('login','POST',{username:'store',password:'Operations-test-2026!'});
+ A.equal((await post('reserve',{jobId:target.data.id,lotId:lot.id,quantity:1},store)).status,409);
+ const request=await post('transfer',{action:'request',holdId:hold.id,jobId:target.data.id,quantity:1,reason:'Priority change'},store);A.equal(request.status,200,JSON.stringify(request.data));
+ const b={id:request.data.id,expectedVersion:1,action:'approve',reason:'Confirmed priorities'};
+ A.equal((await post('transfer',b,store)).status,403);A.equal((await post('release',{id:hold.id},store)).status,403);
+ const results=await Promise.all([post('transfer',b),post('transfer',b)]);A.deepEqual(results.map(r=>r.status).sort(),[200,409]);
+ const state=(await call('ops/state')).data;A.equal(state.lots.find(l=>l.id===lot.id).available,0);A.equal(state.holds.filter(h=>h.state==='reserved'&&h.lotId===lot.id).length,1);A.equal(state.holds.find(h=>h.state==='reserved'&&h.lotId===lot.id).jobId,target.data.id);
+ const targetHold=state.holds.find(h=>h.state==='reserved'&&h.lotId===lot.id);
+ const stale=(await post('transfer',{action:'request',holdId:targetHold.id,jobId:job.id,quantity:1,reason:'Return'})).data;
+ await post('release',{id:targetHold.id});
+ A.equal((await post('transfer',{id:stale.id,expectedVersion:1,action:'approve',reason:'Stale approval'})).status,409);
+});

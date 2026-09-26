@@ -12,6 +12,6 @@ function context(sql,u){
  const personDepartments=id=>positions(id).map(p=>p.departmentId);
  return {d,legacy,departments,manages,managesDepartment,member,personDepartments};
 }
-function canManage(sql,u,t,action='assign'){const c=context(sql,u);return AA.allows(u,'dailyWork',action,false)&&(t.assignee?c.manages(t.assignee):!!t.departmentId&&c.managesDepartment(t.departmentId)||u.role==='admin');}
+function canManage(sql,u,t,action='assign'){const c=context(sql,u);if(action==='approve')return u.role==='admin'||t.creator===u.id&&AA.allows(u,'dailyWork','approve',false);return AA.allows(u,'dailyWork',action,false)&&(t.assignee?c.manages(t.assignee):!!t.departmentId&&c.managesDepartment(t.departmentId)||u.role==='admin');}
 function visible(sql,u,t){const c=context(sql,u);return u.role==='admin'||t.assignee===u.id||t.creator===u.id||(t.relatedIds||[]).includes(u.id)||!t.assignee&&t.departmentId&&c.member(t.departmentId)||canManage(sql,u,t,'assign')||canManage(sql,u,t,'approve');}
 module.exports={context,canManage,visible};
