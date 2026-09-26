@@ -88,3 +88,9 @@ test('new and legacy jobs keep order source notes without replacing frozen techn
  A.equal(app.sql.prepare('SELECT packet FROM production_jobs WHERE id=?').get(job.id).packet,before);
  A.equal(source.tree[0].price,undefined);A.equal(source.ratesSnapshot,undefined);
 });
+
+test('partial review persists without opening deployment and drawing replacement resets input',async t=>{
+ const {call,job}=await fixture(t);const path='production/'+job.id+'/dossier';let d=(await call(path)).data;
+ const r=await call(path,'POST',{expectedVersion:d.jobVersion,requirements:'Partial review',reviewed:false,reviewChecks:{structure:true},equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'',method:''}))});A.equal(r.status,200);d=(await call(path)).data;A.equal(d.reviewChecks.structure,true);A.equal(d.reviewChecks.input,false);A.equal(d.reviewed,undefined);
+ A.equal((await call('production/'+job.id,'PUT',{action:'prepare',expectedVersion:d.jobVersion,drawingReady:true,materialsReady:false,workshop:'A',deadline:'',note:''})).status,409);
+});

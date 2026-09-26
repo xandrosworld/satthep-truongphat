@@ -64,7 +64,7 @@
 #production-console .production-tracking th{padding:12px;font-weight:700;white-space:nowrap}
 #production-console .production-tracking small{display:block;letter-spacing:0;line-height:1.6;margin-top:5px;color:var(--muted)}
 .production-tracking td:first-child{min-width:200px;max-width:280px}
-.production-tracking td:nth-child(3){min-width:300px}
+.production-tracking td:nth-child(4){min-width:260px}
 .production-stage-line{display:grid;grid-template-columns:70px minmax(90px,1fr) auto;gap:8px;align-items:center;margin-bottom:8px;font-size:12px}
 .production-stage-line .production-status{padding:3px 6px;font-size:11px}
 .production-tracking progress{display:block;width:100%;height:7px;margin-top:12px;accent-color:#2671ad}
@@ -81,3 +81,9 @@
 #production-dossier .dossier-detail-table th:first-child{width:38%}
 #production-dossier .dossier-detail-table th:last-child{width:48%}
 .deployment-cutting{margin:20px 0;padding:16px 20px;border:1px solid #d6e0ea;border-radius:8px}
+
+.production-review-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:20px 0}
+#production-console .production-review-nav button{padding:16px 12px;font-weight:600;min-height:58px}
+.production-review-sections>details[hidden]{display:none}
+.production-progress-cell{min-width:145px}.production-progress-cell progress{width:100%;height:10px;accent-color:#247e9c}.production-progress-cell small{display:block;margin-top:8px}
+.production-content-sections summary{font-weight:600}.production-content-sections .production-review-sections{gap:18px}
