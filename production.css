@@ -89,3 +89,19 @@
 .production-content-sections summary{font-weight:600}.production-content-sections .production-review-sections{gap:18px}
 
 .production-content-nav{display:flex;gap:8px;margin:20px 0;flex-wrap:wrap}.production-content-nav button{font-weight:600}.production-content-sections details[hidden]{display:none}.flow-bulk,#pc-bulk{padding:16px;border:1px solid #cbd5e1;border-radius:8px;margin:16px 0}#pc-bulk label{margin:10px 0}
+
+#production-content{background:#eef2f6;padding:24px}.production-order-sheet{max-width:1000px;margin:auto;background:white;padding:36px 40px;color:#243747;border:1px solid #d8e0e7;box-shadow:0 4px 20px #17324d0a}.order-sheet-brand{display:flex;align-items:center;gap:16px;border-bottom:1px solid #375568;padding-bottom:20px}.order-sheet-brand img{width:72px;height:72px;object-fit:contain}.order-sheet-brand p{font-size:10px;letter-spacing:1px;margin:6px 0}.order-sheet-code{margin-left:auto;text-align:right;font-size:12px;line-height:1.8}.production-order-sheet h2{text-align:center;margin:24px 0 8px!important;letter-spacing:1px}.order-sheet-project{text-align:center;margin-bottom:24px}.order-sheet-info{display:grid;grid-template-columns:170px 1fr;gap:10px 16px;background:#f4f8fc;padding:20px;margin:20px 0}.order-sheet-info dt{font-weight:600}.order-sheet-info dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.sheet-spec{font-size:12px;line-height:1.6;margin-top:6px}.sheet-notes{white-space:pre-wrap}.order-sheet-products th:first-child{width:44px}.order-sheet-products th:nth-child(3){width:60px}.order-sheet-products th:nth-child(4){width:72px}.sheet-product{background:#f8fafc}.production-order-sheet td{overflow-wrap:anywhere}.order-sheet-footer{border-top:1px solid #d7e0e8;margin-top:24px;padding-top:12px;font-size:11px;color:#5b7083}.order-sheet-actions{display:flex;justify-content:flex-end;gap:12px;max-width:1000px;margin:20px auto 0}
+@media print{
+ @page{size:A4;margin:12mm}
+ #production-console>header,#production-console>.production-toolbar,#production-main>*:not(#production-content){display:none!important}
+ #production-console #production-content{display:block!important;border:0;padding:0;background:white}
+ #production-console .production-order-sheet{max-width:none;border:0;box-shadow:none;padding:0;font-size:10pt}
+ #production-console .order-sheet-actions{display:none!important}
+ #production-console .production-order-sheet .production-table{overflow:visible;border:0}
+ #production-console .production-order-sheet table{min-width:0!important;table-layout:auto}
+ #production-console .production-order-sheet th,#production-console .production-order-sheet td{padding:8px 6px}
+ .production-order-sheet thead{display:table-header-group}.production-order-sheet tr{break-inside:avoid}
+ .production-order-sheet h3{break-after:avoid}.order-sheet-brand,.order-sheet-info{break-inside:avoid}
+}
+
+@media print{#production-console[open]{display:block!important}body:has(#production-console[open]) #print-area{display:none!important}}
