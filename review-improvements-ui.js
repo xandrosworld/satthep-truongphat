@@ -122,7 +122,7 @@ function reviewPaint(){
  if(Team.loaded)document.querySelectorAll('[data-action=approve]').forEach(b=>b.textContent=teamCurrent()?.status==='submitted'&&Team.permissions?.approve?'Duyệt báo giá':'Gửi duyệt');
  document.querySelectorAll('[data-team=submit]').forEach(b=>b.textContent='Gửi duyệt');
  document.querySelectorAll('[data-team=save]').forEach(b=>b.textContent='Lưu báo giá lên máy chủ');
- document.querySelectorAll('[data-catalog-draft=save]').forEach(b=>b.textContent='Lưu danh mục chung');
+
 }
 function reviewShape(){
  const form=$('#dialog-form'),table=form?.querySelector('#definition-fields');if(!table||form.dataset.reviewShape)return;form.dataset.reviewShape='yes';form.classList.add('review-shape-simple','review-shape-flow');
