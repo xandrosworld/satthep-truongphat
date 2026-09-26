@@ -1,6 +1,8 @@
 'use strict';
 const {combine}=require('../role-access.js'),SA=require('../section-access.js'),{FIELDS}=require('./formula-access.cjs');
 function stored(sql){if(!sql.prepare("SELECT 1 FROM sqlite_master WHERE name='organization'").get())return null;const r=sql.prepare('SELECT * FROM organization WHERE id=1').get();return r?{version:r.version,...JSON.parse(r.document)}:null;}
+// Losing a business position must not revoke existing internal communication rights.
+function retainedChatAccess(user,employeeActive){const A=require('../action-access.js');return employeeActive&&user?.active?{chat:['view','send'].filter(a=>A.allows(user,'chat',a,true))}:{};}
 function managed(sql,id){return stored(sql)?.employees.some(e=>e.userId===id&&e.managed);}
 function ancestry(d,id){const out=[],seen=new Set();while(id){if(seen.has(id))return [];seen.add(id);const a=d.departments.find(a=>a.id===id);if(!a)return [];out.push(a);id=a.parentId;}return out;}
 function activeDepartment(d,id){const chain=ancestry(d,id);return chain.length>0&&chain.every(a=>a.active);}
@@ -29,7 +31,7 @@ function createOrganization({sql,fail,readBody,transaction,audit,accounts,formul
   return d;
  }
  function effective(d,e){const positions=e.active?d.positions.filter(p=>p.active&&e.positionIds.includes(p.id)&&activeDepartment(d,p.departmentId)):[],ids=[...new Set(positions.flatMap(p=>p.roleIds))],roles=ids.map(id=>JSON.parse(sql.prepare('SELECT document FROM role_templates WHERE id=?').get(id).document));
-  const r=combine(roles)||{actionAccess:{},role:'sales',sectionModes:Object.fromEntries(SA.keys.map(k=>[k,'none'])),sections:[]};for(const k of require('../role-access.js').flags)r[k]=!!r[k];r.workRoles={sales:'',technical:'',materials:''};for(const p of positions){const stage=d.departments.find(a=>a.id===p.departmentId).stage;if(stage!=='other'&&(p.manager||!r.workRoles[stage]))r.workRoles[stage]=p.manager?'manager':'member';}return {...r,roleTemplateIds:ids,roleTemplateId:ids[0]||null,technicalDelegation:true};
+  const r=combine(roles)||{actionAccess:retainedChatAccess(e.userId?sql.prepare('SELECT role,active,action_access FROM users WHERE id=? AND deleted_at IS NULL').get(e.userId):null,e.active),role:'sales',sectionModes:Object.fromEntries(SA.keys.map(k=>[k,'none'])),sections:[]};for(const k of require('../role-access.js').flags)r[k]=!!r[k];r.workRoles={sales:'',technical:'',materials:''};for(const p of positions){const stage=d.departments.find(a=>a.id===p.departmentId).stage;if(stage!=='other'&&(p.manager||!r.workRoles[stage]))r.workRoles[stage]=p.manager?'manager':'member';}return {...r,roleTemplateIds:ids,roleTemplateId:ids[0]||null,technicalDelegation:true};
  }
  function apply(d,actor){const previous=stored(sql)?.employees||[];for(const e of d.employees){if(!e.userId)continue;const u=sql.prepare('SELECT * FROM users WHERE id=? AND deleted_at IS NULL').get(e.userId);if(!u)continue;if(!e.managed){if(u.name!==e.name)sql.prepare('UPDATE users SET name=? WHERE id=?').run(e.name,u.id);continue;}const b=effective(d,e);accounts.validateDelegation(b);formulaAccess.validateRights(b);if(u.id===actor.id&&actor.role==='admin'&&(!e.active||b.role!=='admin'))fail(409,'Không tự thu hồi quyền quản trị hoặc ngừng tài khoản đang dùng');
    const values={action_access:b.actionAccess==null?null:JSON.stringify(b.actionAccess),name:e.name,role:b.role,section_access:JSON.stringify(b.sectionModes),technical_delegated:1,can_factors:Number(b.canEditFactors),can_below_cost:Number(b.canApproveBelowCost),can_view_costs:Number(b.canViewCosts),can_approve:Number(b.canApprove),role_template_id:b.roleTemplateId,role_template_ids:JSON.stringify(b.roleTemplateIds),work_roles:JSON.stringify(b.workRoles),...Object.fromEntries(Object.entries(FIELDS).map(([k,col])=>[col,Number(b[k])]))};if(!e.active)values.active=0;else if(previous.some(x=>x.id===e.id&&!x.active))values.active=1;
@@ -46,4 +48,4 @@ function createOrganization({sql,fail,readBody,transaction,audit,accounts,formul
  }
  return {handle,roleUsed,roleChanged,accountChanged,get};
 }
-module.exports={createOrganization,stored,managed,scope};
+module.exports={createOrganization,stored,managed,scope,retainedChatAccess};
