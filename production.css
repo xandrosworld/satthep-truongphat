@@ -107,3 +107,42 @@
 @media print{#production-console[open]{display:block!important}body:has(#production-console[open]) #print-area{display:none!important}}
 
 #production-console .review-blank{display:grid;gap:8px;min-width:160px;max-width:250px}#production-console .review-blank label{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:8px}#production-console .review-blank input{width:100%;min-width:0}#production-console [data-review-feedback] button{margin:6px}#production-console .dossier-operation[open]{padding-bottom:12px}
+
+/* Phone reading support for production only; retain desktop forms and print layout. */
+@media screen and (max-width:700px){
+ #production-console[open]{display:flex;flex-direction:column;width:calc(100vw - 12px);height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);margin:auto;overflow:hidden;box-sizing:border-box;font-size:14px;line-height:1.55}
+ #production-console>header{flex:none;padding:12px;gap:12px;align-items:flex-start}
+ #production-console>header>div{min-width:0;overflow-wrap:anywhere}
+ #production-console>header h2{font-size:17px;line-height:1.4;margin:4px 0}
+ #production-console>header>button{flex:none}
+ #production-console>.production-toolbar{flex:none;padding:8px 12px;gap:8px;flex-wrap:wrap}
+ #production-main{flex:1;min-height:0;height:auto;padding:10px;overflow-y:auto;overflow-x:hidden}
+ #production-console .production-heading>div:first-child{min-width:0}
+ #production-console .production-panel{padding:12px;min-width:0}
+ #production-console .production-fields,#production-console .production-filters{grid-template-columns:minmax(0,1fr);gap:12px}
+ #production-console .production-tabs{flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:10px 0;max-width:100%}
+ #production-console .production-tabs button{flex:0 0 auto;white-space:nowrap}
+ #production-console .production-review-nav{grid-template-columns:minmax(0,1fr);gap:8px}
+ #production-console .production-review-nav button{min-height:0;padding:12px;text-align:left}
+ #production-console .production-review-sections>details{padding:12px;min-width:0}
+ #production-console :is(p,summary,h3,h4,label,a){overflow-wrap:anywhere}
+ #production-console :is(.production-table,.table-scroll){max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+ #production-console table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+ #production-console :is(th,td){min-width:100px;padding:10px 12px;line-height:1.55;word-break:normal;overflow-wrap:normal}
+ #production-console td:first-child{min-width:170px}
+ #production-content{padding:8px}
+ #production-console .production-order-sheet{padding:14px 12px;min-width:0;box-shadow:none}
+ #production-console .order-sheet-brand{flex-wrap:wrap;gap:10px;padding-bottom:12px}
+ #production-console .order-sheet-brand img{width:48px;height:48px}
+ #production-console .order-sheet-brand>div{min-width:0;overflow-wrap:anywhere}
+ #production-console .order-sheet-code{width:100%;margin:0;text-align:left}
+ #production-console .order-sheet-info{grid-template-columns:minmax(0,1fr);padding:12px;gap:4px;margin:16px 0}
+ #production-console .order-sheet-info dd{min-width:0;margin-bottom:10px}
+ #production-console .order-sheet-products :is(th,td):first-child{min-width:36px}
+ #production-console .order-sheet-products :is(th,td):nth-child(2){min-width:240px}
+ #production-console .order-sheet-actions{flex-wrap:wrap;justify-content:flex-start;gap:8px}
+ #production-console .order-sheet-drawings p{line-height:1.7}
+ #production-console .order-sheet-drawings button{display:block;margin-top:6px}
+ #production-console [data-production-quick] table :is(input,select){min-width:120px}
+ #production-console [data-production-quick] input[type=checkbox]{min-width:0}
+}
