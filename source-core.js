@@ -25,7 +25,7 @@ function destination(row){
 function summary(result){
  const methods=Object.values(result.alternatives),out=[],sum=(a,get)=>a.products.reduce((s,p)=>s+(get(p)||0),0),bundled=a=>['kg','competitor'].includes(a.id)||a.products.some(p=>p.groupCalculation),final=a=>a.id===result.pricing.selected?result.total:a.total;
  let section='Hệ số áp dụng';
- const add=(name,unit,get,rate)=>out.push({name,unit,section,values:methods.map(a=>{const amount=a.ready?get(a):null;return {amount:Number.isFinite(amount)?amount:null,perKg:unit==='đ'&&Number.isFinite(amount)&&a.total.weight>0?amount/a.total.weight:null,rate:rate&&a.ready?rate(a):null};})});
+ const add=(name,unit,get,rate)=>out.push({name,unit,section,values:methods.map(a=>{const amount=a.ready?get(a):null;return {amount:Number.isFinite(amount)?amount:null,perKg:unit==='đ'&&Number.isFinite(amount)&&a.total.weight>0?amount/a.total.weight:null,rate:rate?rate(a):null};})});
  const factor=(name,get,values)=>add(name,'%',a=>bundled(a)?null:sum(a,get),a=>bundled(a)?'Trong giá trọn gói':[...new Set(a.products.map(values))].map(v=>v+'%').join(' / '));
  factor('Hệ số chi phí chung',p=>p.overhead,p=>p.policyRates.overhead);
  factor('Hệ số quản lý',p=>p.management,p=>p.policyRates.management);

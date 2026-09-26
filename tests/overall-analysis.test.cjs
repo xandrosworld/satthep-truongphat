@@ -19,3 +19,11 @@ test('visible analysis follows chosen comparison methods and retains selected pr
  A.deepEqual([...new Set(rows.map(x=>x.section))],['Hệ số áp dụng','Khối lượng và diện tích','Cơ cấu chi phí và giá chào']);
  A.equal(rows.find(x=>x.name==='Tổng chi phí đã tính (giá gốc + xử lý)').values[0].amount,r.total.cost+r.total.processing);
 });
+test('missing operation price does not hide declared factors or imply calculated amounts',()=>{
+ const d=F.seed();d.quote.pricing.overhead=2;d.quote.pricing.management=3;d.quote.pricing.profit=10;d.quote.pricing.processing=3;
+ d.quote.products[0].ops.push({id:'missing-price-operation',mode:'inside',quantityUnit:'kg',basisMode:'auto',amount:1});
+ const r=P.calculate(d);A.equal(r.alternatives.detail.ready,false);
+ const rows=S.summary(r),index=Object.keys(r.alternatives).indexOf('detail');
+ for(const [name,value] of [['Hệ số chi phí chung','2%'],['Hệ số quản lý','3%'],['Hệ số lợi nhuận','10%'],['Hệ số xử lý','3%']]){const cell=rows.find(x=>x.name===name).values[index];A.equal(cell.rate,value);A.equal(cell.amount,null);}
+ A.equal(rows.find(x=>x.name==='Giá gốc').values[index].amount,null);
+});
