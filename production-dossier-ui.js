@@ -1,3 +1,4 @@
+function productionDimensionLabel(key){return ({L:'Dài',W:'Rộng',H:'Cao',T:'Dày',D:'Đường kính',F:'Mép',B:'Bề rộng'})[key.replace(/^PRODUCT_/, '')]||key;}
 function productionDetailNotes(n){return [['Quy cách / yêu cầu',n.specification],['Ghi chú',n.notes],['Ghi chú chi tiết',n.lineNote]].filter(([,v])=>v).map(([label,v])=>'<div style="white-space:pre-wrap"><strong>'+pe(label)+':</strong> '+pe(v)+'</div>').join('');}
 'use strict';
 function installProductionDossier(){
@@ -31,7 +32,7 @@ function productionDossierRender(host,j,d){
  const run=async(form,fn)=>{const button=form.querySelector('button[type=submit]');form.dataset.saving='true';button.disabled=true;try{await fn();Production.dossierReturnTab='preparation';await productionLoad(j.id);}catch(err){host.querySelector('#dossier-error').textContent=err.message;button.disabled=false;}finally{delete form.dataset.saving;}};
  host.querySelectorAll('[data-dossier-file]').forEach(b=>b.onclick=async()=>{try{const f=await teamApi('production/'+j.id+'/files/'+b.dataset.dossierFile);download(f.name,Uint8Array.from(atob(f.data),c=>c.charCodeAt(0)),'application/octet-stream');}catch(err){host.querySelector('#dossier-error').textContent=err.message;}});
  host.querySelector('#dossier-upload').onsubmit=ev=>{ev.preventDefault();ev.stopPropagation();const form=ev.currentTarget;if(form.dataset.saving)return;run(form,async()=>{const f=new FormData(form),file=f.get('file');if(!file.size||file.size>10*1024*1024)throw Error('Chọn tệp từ 1 byte đến 10 MB');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));await teamApi('production/'+j.id+'/files','POST',{expectedVersion:d.jobVersion,name:file.name,size:file.size,data:btoa(binary),revision:f.get('revision'),note:f.get('note'),supersedes:f.get('supersedes')||null});});};
- host.querySelector('#dossier-prepare').onsubmit=ev=>{ev.preventDefault();ev.stopPropagation();const form=ev.currentTarget;if(form.dataset.saving)return;run(form,async()=>{const f=new FormData(form);await teamApi('production/'+j.id+'/dossier','POST',{expectedVersion:d.jobVersion,requirements:f.get('requirements'),noDrawingReason:f.get('noDrawingReason'),reviewed:f.has('reviewed'),reviewChecks:Object.fromEntries(['input','structure','operations','quantities'].map(k=>[k,f.has('check-'+k)])),equipment:j.packet.operations.map((o,i)=>({operationId:o.id,machineId:f.get('machineId'+i),machine:f.get('machine'+i),method:f.get('method'+i)}))});});};
+ host.querySelector('#dossier-prepare').onsubmit=ev=>{ev.preventDefault();ev.stopPropagation();const form=ev.currentTarget,section=ev.submitter?.dataset.reviewSection;if(form.dataset.saving)return;run(form,async()=>{const f=new FormData(form);await teamApi('production/'+j.id+'/dossier','POST',{expectedVersion:d.jobVersion,...(section?{section,confirm:f.has('check-'+section)}:{}),requirements:f.get('requirements'),noDrawingReason:f.get('noDrawingReason'),reviewed:f.has('reviewed'),reviewChecks:Object.fromEntries(['input','structure','operations','quantities'].map(k=>[k,f.has('check-'+k)])),equipment:j.packet.operations.map((o,i)=>({operationId:o.id,machineId:f.get('machineId'+i),machine:f.get('machine'+i),method:f.get('method'+i)}))});});};
 }
 
 // Technical-only presentation: all quantities come from the frozen job packet.
@@ -72,12 +73,12 @@ function productionPreparationStock(host,j,stock){
 }
 
 function productionReviewSections(j,d){
- const e=pe,rows=productionPreparationRows(j,d.source),check=(key,label)=>'<label class="production-check"><input type="checkbox" name="check-'+key+'" '+(d.reviewChecks?.[key]?'checked':'')+'> '+label+'</label>';
- const structure=opsTable(['Sản phẩm / cấu kiện / vật tư','Số lượng lô','Kích thước khai báo (mm)','Quy cách / yêu cầu'],rows.map(r=>{const n=r.node,m=r.material;return ['<span style="padding-left:'+Math.min(r.level,4)*12+'px">'+e(n.name)+'<br>'+e(m?.material.id||n.materialId||'')+'</span>',e(r.quantity)+' '+e(n.unit||(n.kind==='product'?j.packet.product.unit:'chi tiết')),e(Object.entries({...n.dims,...n.params,...m?.properties}).map(([k,v])=>k+' '+v).join(' · ')),productionDetailNotes(n)||e(m?.material.name||'')];}));
+ const e=pe,rows=productionPreparationRows(j,d.source),check=(key,label)=>'<label class="production-check"><input type="checkbox" name="check-'+key+'" '+(d.reviewChecks?.[key]?'checked':'')+'> '+label+'</label>'+(d.confirmations?.[key]?'<p class="muted">Đã xác nhận bởi '+e(d.confirmations[key].actor)+' · '+e(TPDisplay.date(d.confirmations[key].at,true))+'</p>':'');
+ const structure=opsTable(['Sản phẩm / cấu kiện / vật tư','Số lượng lô','Kích thước khai báo (mm)','Quy cách / yêu cầu'],rows.map(r=>{const n=r.node,m=r.material;return ['<span style="padding-left:'+Math.min(r.level,4)*12+'px">'+e(n.name)+'<br>'+e(m?.material.id||n.materialId||'')+'</span>',e(r.quantity)+' '+e(n.unit||(n.kind==='product'?j.packet.product.unit:'chi tiết')),e(Object.entries({...n.dims,...n.params,...m?.properties}).map(([k,v])=>productionDimensionLabel(k)+' '+v).join(' · ')),productionDetailNotes(n)||e(m?.material.name||'')];}));
  return '<div class="production-review-sections"><details open><summary>1. Đầu vào, yêu cầu và bản vẽ</summary><p>Đối chiếu thông tin đầu vào và bản vẽ ở trên với đơn hàng đã duyệt.</p>'+check('input','Đã kiểm tra đầu vào và bản vẽ')+'</details>'+
  '<details open><summary>2. Cấu thành sản phẩm</summary>'+structure+check('structure','Đã kiểm tra cấu kiện, vật tư, kích thước và số lượng')+'</details>'+
  '<details><summary>3. Công đoạn và định mức</summary>'+productionPreparationTable(j,d)+check('operations','Đã kiểm tra công đoạn, định mức, thiết bị và phương pháp')+'</details>'+
- '<details><summary>4. Khối lượng và số lượng</summary>'+opsTable(['Vật tư','Số lượng','Khối lượng chi tiết (kg)','Diện tích chi tiết (m²)'],j.packet.materials.map(m=>[e(m.name),e(m.count),e(m.dimensions.weight??'—'),e(m.dimensions.area??'—')]))+check('quantities','Đã kiểm tra khối lượng và số lượng cho lô')+'</details></div>';
+ '<details><summary>4. Khối lượng và số lượng</summary>'+opsTable(['Mã / tên vật tư','Quy cách (mm)','Số lượng','Khối lượng chi tiết (kg)','Diện tích chi tiết (m²)'],j.packet.materials.map(m=>[e(m.material.id)+'<br>'+e(m.name),e(Object.entries(m.properties||{}).map(([k,v])=>productionDimensionLabel(k)+' '+v).join(' · ')),e(m.count),e(m.dimensions.weight??'—'),e(m.dimensions.area??'—')]))+check('quantities','Đã kiểm tra khối lượng và số lượng cho lô')+'</details></div>';
 }
 function productionDeploymentRender(host,j,d){
  const e=pe;
@@ -103,6 +104,12 @@ function productionContentPanel(main,j,d){
  sections.querySelectorAll('.production-check').forEach(el=>el.remove());
  sections.querySelectorAll('.dossier-operation').forEach(el=>{const summary=el.querySelector('summary');summary.querySelector('.muted')?.remove();el.replaceWith(summary);});
  sections.querySelectorAll('details').forEach(el=>el.open=true);panel.append(sections);
+ const inputCard=document.createElement('section');inputCard.append(input);panel.insertBefore(inputCard,sections);
+ const cards=[inputCard,...sections.querySelectorAll('.production-review-sections>details')];
+ const nav=document.createElement('nav');nav.className='production-content-nav';nav.setAttribute('aria-label','Nội dung kỹ thuật của lệnh');
+ ['Đầu vào & bản vẽ','Cấu thành sản phẩm','Công đoạn & định mức','Khối lượng & số lượng'].forEach((label,i)=>{const b=document.createElement('button');b.type='button';b.textContent=(i+1)+'. '+label;b.onclick=()=>{cards.forEach((c,k)=>c.hidden=k!==i);[...nav.children].forEach((v,k)=>v.classList.toggle('active',k===i));};nav.append(b);});
+ panel.insertBefore(nav,inputCard);nav.firstChild.click();
+ const next=document.createElement('button');next.type='button';next.className='primary';next.textContent='Rà soát điều kiện sản xuất →';next.onclick=()=>productionTab('preparation');panel.append(next);
  main.append(panel);const tab=document.createElement('button');tab.type='button';tab.dataset.productionTab='content';tab.textContent='Nội dung lệnh sản xuất';document.querySelector('.production-tabs').prepend(tab);
  productionTab(Production.dossierReturnTab||'content');delete Production.dossierReturnTab;
 }
@@ -111,7 +118,7 @@ function productionHorizontalReview(host,locked){
  const nav=document.createElement('div');nav.className='production-review-nav';nav.setAttribute('aria-label','Nội dung cần rà soát');
  const labels=['Bản vẽ & yêu cầu','Thông số sản phẩm','Nguyên công & máy','Vật tư & số lượng'];
  groups.forEach((section,i)=>{const button=document.createElement('button');button.type='button';button.textContent=labels[i]+(section.querySelector('input[type=checkbox]')?.checked?' · Đã xác nhận':' · Chưa xác nhận');button.onclick=()=>{groups.forEach((g,k)=>g.hidden=k!==i);[...nav.children].forEach((b,k)=>b.classList.toggle('active',k===i));};nav.append(button);section.open=true;section.hidden=i!==0;
- const check=section.querySelector('.production-check');const save=document.createElement('button');save.type='submit';save.setAttribute('form','dossier-prepare');save.textContent='Lưu xác nhận mục này';save.disabled=locked;check.after(save);});
+ const check=section.querySelector('.production-check');const save=document.createElement('button');save.type='submit';save.setAttribute('form','dossier-prepare');save.textContent='Lưu xác nhận mục này';save.dataset.reviewSection=['input','structure','operations','quantities'][i];save.disabled=locked;check.after(save);});
  host.querySelector('.production-review-input').before(nav);nav.firstChild.classList.add('active');
  const flow=host.querySelector('.production-review-flow');flow.innerHTML='<strong>1. Nội dung lệnh</strong><span>→</span><strong>2. Rà soát điều kiện</strong><span>→</span><strong>3. Triển khai sản xuất</strong>';
  host.querySelector('h3').textContent='Rà soát điều kiện sản xuất';

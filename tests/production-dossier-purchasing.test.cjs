@@ -94,3 +94,29 @@ test('partial review persists without opening deployment and drawing replacement
  const r=await call(path,'POST',{expectedVersion:d.jobVersion,requirements:'Partial review',reviewed:false,reviewChecks:{structure:true},equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'',method:''}))});A.equal(r.status,200);d=(await call(path)).data;A.equal(d.reviewChecks.structure,true);A.equal(d.reviewChecks.input,false);A.equal(d.reviewed,undefined);
  A.equal((await call('production/'+job.id,'PUT',{action:'prepare',expectedVersion:d.jobVersion,drawingReady:true,materialsReady:false,workshop:'A',deadline:'',note:''})).status,409);
 });
+
+test('section confirmations ignore other sections, validate prerequisites and record the reviewer',async t=>{
+ const {call,job}=await fixture(t),path='production/'+job.id+'/dossier';let d=(await call(path)).data;
+ let r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'structure',confirm:true,requirements:'must not overwrite',equipment:[],reviewChecks:{input:true,operations:true,quantities:true}});A.equal(r.status,200,JSON.stringify(r.data));d=r.data;A.equal(d.requirements,'');A.equal(d.reviewChecks.structure,true);A.notEqual(d.reviewChecks.input,true);A.equal(d.confirmations.structure.actor,'Admin');A.equal(d.reviewed,undefined);
+ r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'input',confirm:true,requirements:'No drawing',noDrawingReason:''});A.equal(r.status,400);
+ r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'operations',confirm:true,equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'',method:''}))});A.equal(r.status,400);
+ r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'input',confirm:true,requirements:'Factory note',noDrawingReason:'Approved specification'});A.equal(r.status,200);d=r.data;
+ r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'operations',confirm:true,equipment:job.packet.operations.map(o=>({operationId:o.id,machine:'Manual',method:'Per drawing'}))});A.equal(r.status,200);d=r.data;
+ r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'quantities',confirm:true});A.equal(r.status,200);d=r.data;A.ok(d.reviewed);A.equal(d.requirements,'Factory note');
+ r=await call(path,'POST',{expectedVersion:d.jobVersion,section:'structure',confirm:false});A.equal(r.status,200);A.equal(r.data.reviewed,undefined);A.equal(r.data.reviewChecks.input,true);
+});
+test('bulk engineering proposal changes selected rows atomically and invalidates review',async t=>{
+ const {call,document}=await fixture(t);document.quote.id='BG-BULK-TEST';const product=document.quote.products[0],first=product.children.find(n=>n.kind==='material');const second=JSON.parse(JSON.stringify(first));second.id=randomUUID();second.name+=' second';product.children.push(second);
+ const q=(await call('quotes','POST',{document})).data;await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1});await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2});const o=(await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'BULK-ORDER'})).data;await call('orders/'+o.id+'/confirm','POST',{quoteVersion:3});let j=(await call('production','POST',{orderId:o.id,productId:product.id,quantity:1,code:'BULK-JOB'})).data;
+ j=await require('./production-review-fixture.cjs').review(call,undefined,j.id);
+ const route='production/'+j.id+'/changes',body={expectedVersion:j.version,rowIds:[first.id,second.id],stockL:3200,reason:'Use common stock'};
+ A.equal((await call(route,'POST',{...body,rowIds:[first.id,first.id]})).status,400);
+ A.equal((await call(route,'POST',{...body,rowIds:[first.id,'missing']})).status,400);
+ A.deepEqual((await call('production/'+j.id)).data.packet,j.packet);
+ const r=await call(route,'POST',body);A.equal(r.status,200,JSON.stringify(r.data));A.equal(r.data.rowIds.length,2);
+ A.equal((await call(route+'/'+r.data.id+'/approve','POST',{expectedVersion:j.version})).status,409);
+ A.equal((await call(route+'/'+r.data.id+'/confirm','POST',{expectedVersion:j.version})).status,200);
+ A.equal((await call(route+'/'+r.data.id+'/approve','POST',{expectedVersion:j.version})).status,200);
+ const next=(await call('production/'+j.id)).data;for(const id of body.rowIds)A.equal(next.packet.materials.find(m=>m.id===id).material.stockL,3200);
+ const ds=(await call('production/'+j.id+'/dossier')).data;A.deepEqual(ds.reviewChecks,{});A.deepEqual(ds.confirmations,{});A.equal(ds.reviewed,undefined);
+});

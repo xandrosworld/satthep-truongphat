@@ -87,3 +87,5 @@
 .production-review-sections>details[hidden]{display:none}
 .production-progress-cell{min-width:145px}.production-progress-cell progress{width:100%;height:10px;accent-color:#247e9c}.production-progress-cell small{display:block;margin-top:8px}
 .production-content-sections summary{font-weight:600}.production-content-sections .production-review-sections{gap:18px}
+
+.production-content-nav{display:flex;gap:8px;margin:20px 0;flex-wrap:wrap}.production-content-nav button{font-weight:600}.production-content-sections details[hidden]{display:none}.flow-bulk,#pc-bulk{padding:16px;border:1px solid #cbd5e1;border-radius:8px;margin:16px 0}#pc-bulk label{margin:10px 0}
