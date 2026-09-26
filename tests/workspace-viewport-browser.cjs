@@ -1,0 +1,51 @@
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs');
+(async()=>{const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const b=await chromium.launch({channel:'msedge',headless:true});try{const p=await b.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://127.0.0.1:'+app.server.address().port);await p.waitForFunction(()=>Team.available);await p.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'QA',password:'Visual-audit-test-42!'}));const q=await teamApi('quotes','POST',{document:TPPrice.demoSeed()});await teamLoad(q.id);page='quote';tab='bom';render();});
+await p.setViewportSize({width:1366,height:900});
+const go=async selector=>{await p.evaluate(s=>document.querySelector(s).click(),selector);await p.waitForTimeout(150);if(selector==='[data-page="quote"]'){await p.locator('#dialog [data-team="open"]').first().click();await p.waitForTimeout(100);}};
+const at=async y=>{await p.evaluate(y=>scrollTo(0,y),y);return p.evaluate(()=>scrollY);};
+const check=async y=>expect(Math.abs(await p.evaluate(()=>scrollY)-y)).toBeLessThan(3);
+const bomY=await at(450);
+await go('[data-tab="operations"]');await check(bomY);
+const opY=await at(650);
+await go('[data-tab="bom"]');await check(bomY);
+await go('[data-tab="operations"]');await check(opY);
+await go('[data-page="materials"]');
+const materialY=await at(380);
+await go('[data-page="quote"]');await check(opY);
+await go('[data-page="materials"]');await check(materialY);
+await go('[data-page="quote"]');
+await go('[data-tab="bom"]');
+const deepY=await at(2000);
+await go('[data-tab="mass"]');
+await go('[data-tab="bom"]');await check(deepY);
+await p.evaluate(()=>render());await check(deepY);
+await p.addStyleTag({content:'#content .table-scroll{max-width:600px!important;overflow:auto!important}#content .table-scroll table{min-width:1800px!important}'});
+await p.evaluate(()=>{const el=document.querySelector('#content .table-scroll');if(el){el.scrollLeft=100;}});
+const horizontal=await p.locator('#content .table-scroll').first().evaluate(e=>e.scrollLeft);
+expect(horizontal).toBeGreaterThan(0);
+await go('[data-tab="mass"]');
+await go('[data-tab="bom"]');
+expect(await p.locator('#content .table-scroll').first().evaluate(e=>e.scrollLeft)).toBe(horizontal);
+for(const width of [1440,1920]){
+ await p.setViewportSize({width,height:900});
+ const y=await at(420);await go('[data-page="library"]');await go('[data-page="quote"]');await check(y);
+}
+
+await p.evaluate(async()=>{
+ const id=teamCurrent().id;
+ await teamApi('users','POST',{username:'tech',name:'Tech',password:'Visual-audit-test-42!',role:'technical',sections:['bom','operations','catalogMaterials','catalogLibrary'],technicalDelegation:true,canViewCosts:false});
+ await teamApi('logout','POST',{});
+ teamSession(await teamApi('login','POST',{username:'tech',password:'Visual-audit-test-42!'}));
+ await teamLoad(id);tab='bom';render();
+});
+await p.setViewportSize({width:1366,height:900});
+const techY=await at(400);
+await go('[data-tab="operations"]');await go('[data-tab="bom"]');await check(techY);
+await p.evaluate(()=>mutation(()=>db.quote.products[0].name+=' edited'));
+const dirtyY=await at(480);
+await go('[data-page="materials"]');await go('[data-page="quote"]');await check(dirtyY);
+expect(await p.evaluate(()=>Team.dirty)).toBe(true);
+await p.screenshot({path:'artifacts/workspace-position-technical.png'});
+expect(errors).toEqual([]);
+console.log('PASS tab/page return positions, short view round trip, rerender and horizontal table scroll');
+}finally{await b.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

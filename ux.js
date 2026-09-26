@@ -183,7 +183,7 @@ function setupUXActions(){
   actions['add-component']=el=>addComponentGuided(el.dataset.parent);
   actions.close=()=>{if(UX.returnPicker){const context=UX.returnPicker;UX.returnPicker=null;UX.picker=context;batchMaterialPicker(context.parentId,true);}else closeDialog();};
   $('#dialog').addEventListener('cancel',e=>{if(UX.returnPicker){e.preventDefault();actions.close();}});
-  actions['ux-undo']=()=>undoUX();actions['ux-redo']=()=>undoUX(true);actions['quick-waste']=()=>{tab=db.quote.pricing?'operations':'waste';render();window.scrollTo(0,0);};actions.variant=el=>variantProduct(el.dataset.id);actions['paste-excel']=el=>pasteExcel(el.dataset.parent);actions['quick-3d']=el=>{const p=C.findNode(db.quote.products,el.dataset.id);openDialog(esc(p.name),`<div class="visual-panel modal-3d">${viewer(p)}</div>`);setup3d();};
+  actions['ux-undo']=()=>undoUX();actions['ux-redo']=()=>undoUX(true);actions['quick-waste']=()=>{tab=db.quote.pricing?'operations':'waste';render();};actions.variant=el=>variantProduct(el.dataset.id);actions['paste-excel']=el=>pasteExcel(el.dataset.parent);actions['quick-3d']=el=>{const p=C.findNode(db.quote.products,el.dataset.id);openDialog(esc(p.name),`<div class="visual-panel modal-3d">${viewer(p)}</div>`);setup3d();};
 }
 function handleUX(action,el){const id=el.dataset.id;
   if(action==='quick-mode'||action==='detail-mode'){UX.mode=action==='quick-mode'?'quick':'detail';try{localStorage.setItem('tp-entry-mode',UX.mode);}catch{}render();}

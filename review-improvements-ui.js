@@ -174,7 +174,7 @@ function installReviewImprovementsUI(){
  document.addEventListener('click',e=>{const b=e.target.closest('[data-review-op-action]');if(!b)return;try{reviewOperationAction(b.dataset.reviewOpAction);}catch(err){toast(err.message);}});
 
  const draw=render;render=()=>{draw();reviewPaint();};const paint=noticePaint;noticePaint=()=>{paint();reviewPaint();};
- document.addEventListener('click',e=>{const b=e.target.closest('[data-review-next]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();document.querySelector('.workspace-tabs [data-tab="'+b.dataset.reviewNext+'"]')?.click();window.scrollTo(0,0);},true);
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-review-next]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();document.querySelector('.workspace-tabs [data-tab="'+b.dataset.reviewNext+'"]')?.click();},true);
  const shape=dfShapeEdit;dfShapeEdit=(...args)=>{const value=shape(...args);if(value?.then)return value.then(result=>{reviewShape();return result;});reviewShape();return value;};
  document.addEventListener('click',e=>{const b=e.target.closest('[data-review-jump]');if(!b)return;const destination=b.dataset.reviewJump;if(destination==='cost'){if(!document.querySelector('[data-cost-sources]')){tab='prices';render();}(document.querySelector('[data-cost-known="false"]')||document.querySelector('[data-cost-sources]'))?.scrollIntoView({behavior:'smooth',block:'start'});(document.querySelector('[data-cost-known="false"] input')||document.querySelector('[data-cost-inline] input'))?.focus({preventScroll:true});return;}tab=destination==='materials'?'prices':destination;if(destination==='materials')Intake.priceTab='materials';render();window.scrollTo(0,0);});
 }

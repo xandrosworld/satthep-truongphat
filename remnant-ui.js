@@ -76,7 +76,7 @@ document.addEventListener('change',e=>{
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-remnant]');if(!el)return;e.preventDefault();const g=result.groups[Number(el.dataset.gi)];
   if(el.dataset.remnant==='compare'){const box=$('.remnant-comparison');box?.scrollIntoView({block:'start'});$('.remnant-option.active input')?.focus({preventScroll:true});}
-  else if(['open-waste','open-pricing','open-mass'].includes(el.dataset.remnant)){tab=el.dataset.remnant==='open-waste'?'waste':el.dataset.remnant==='open-mass'?'mass':'pricing';render();window.scrollTo(0,0);}
+  else if(['open-waste','open-pricing','open-mass'].includes(el.dataset.remnant)){tab=el.dataset.remnant==='open-waste'?'waste':el.dataset.remnant==='open-mass'?'mass':'pricing';render();}
   else if(el.dataset.remnant==='piece'){const part=g.remnants.find(r=>r.id===el.dataset.rid);remnantMutation(()=>setRemnantParts(g,[part.id],!part.selected),'[data-remnant="piece"][data-gi="'+el.dataset.gi+'"][data-rid="'+el.dataset.rid+'"]');}
   else if(el.dataset.remnant==='threshold')remnantThreshold(g);
   else if(el.dataset.remnant==='individual')individualRemnants(g,Number(el.dataset.bi));
