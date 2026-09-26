@@ -24,3 +24,17 @@ test('production tasks follow actual workflow without duplicate task writes or s
  const limited=await f.user('limited',{dailyWork:['view','assign','approve']});A.equal((await f.call('enterprise/work','GET',undefined,limited)).data.tasks.filter(t=>t.sourceManaged).length,0);
 });
 test('offer and purchasing projections track source transitions and never expose commercial amounts',async t=>{const f=await fixture(t),q=(await f.call('quotes','POST',{document:P.demoSeed()})).data;await f.call('quotes/'+q.id+'/submit','POST',{expectedVersion:1});await f.call('quotes/'+q.id+'/approve','POST',{expectedVersion:2});const row=f.app.sql.prepare('SELECT * FROM commercial WHERE id=?').get(q.id),doc=JSON.parse(row.document);doc.dispatches[3]={senderId:f.admin.id,careOwnerId:f.admin.id,sentAt:new Date().toISOString(),dueDate:'2026-09-26',careClosed:true,entries:[{kind:'close',content:'Done'},{kind:'assignment',content:'Keep owner'}]};doc.dispatches[1]={senderId:f.admin.id,entries:[]};f.app.sql.prepare('UPDATE commercial SET document=? WHERE id=?').run(JSON.stringify(doc),q.id);f.app.sql.prepare('INSERT INTO ops_records VALUES(?,?,?,?)').run('purchase','test-purchase',1,JSON.stringify({code:'PURCHASE',actor:f.admin.id,created:new Date().toISOString(),state:'ordered',lines:[{unitCost:999999}]}));let tasks=(await f.call('enterprise/work')).data.tasks;A.equal(tasks.find(t=>t.id==='source:offer:'+q.id+':3:care').state,'confirmed');A.equal(tasks.some(t=>t.id==='source:offer:'+q.id+':1:send'),false);const purchase=tasks.find(t=>t.id==='source:purchase:test-purchase');A.equal(purchase.state,'running');A.equal(JSON.stringify(purchase).includes('999999'),false);f.app.sql.prepare('UPDATE ops_records SET document=?,version=2 WHERE kind=? AND id=?').run(JSON.stringify({code:'PURCHASE',actor:f.admin.id,created:new Date().toISOString(),state:'stocked'}),'purchase','test-purchase');tasks=(await f.call('enterprise/work')).data.tasks;A.equal(tasks.find(t=>t.id===purchase.id).state,'confirmed');});
+test('successor waits for confirmed predecessor, not save or completion; notification and dependency cycles',async t=>{
+ const f=await fixture(t);let a=await f.ok('task',task(f.admin.id,{name:'First'})),b=await f.ok('task',task(f.admin.id,{name:'Next',predecessorId:a.id}));
+ A.equal((await f.post('task',{...a,predecessorId:b.id,expectedVersion:a.version})).status,400);
+ b=await f.ok('transition',{id:b.id,state:'accepted',expectedVersion:b.version});
+ A.equal((await f.post('transition',{id:b.id,state:'running',expectedVersion:b.version})).status,409);
+ for(const state of ['accepted','running','done'])a=await f.ok('transition',{id:a.id,state,expectedVersion:a.version});
+ A.equal((await f.post('transition',{id:b.id,state:'running',expectedVersion:b.version})).status,409);
+ a=await f.ok('transition',{id:a.id,state:'confirmed',expectedVersion:a.version});
+ const view=(await f.call('enterprise/work')).data;A.ok(view.notices.some(n=>n.taskId===b.id&&n.title.includes('Sẵn sàng')));A.equal(view.tasks.find(t=>t.id===b.id).blocked,false);
+ b=await f.ok('transition',{id:b.id,state:'running',expectedVersion:b.version});
+ const report=await f.ok('report',{taskId:b.id,expectedVersion:b.version,date:'2026-09-26',hours:1,output:1,content:'Working',issue:'Waiting'});
+ await f.ok('resolve',{taskId:b.id,expectedVersion:b.version,reportId:report.id,resolution:'Ready'});
+ A.ok((await f.call('enterprise/work')).data.notices.some(n=>n.taskId===b.id&&n.title.includes('Đã xử lý')));
+});
