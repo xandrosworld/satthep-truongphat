@@ -3,7 +3,7 @@ const Core=require('../partial-handoff-core.js'),Technical=require('../technical
 module.exports=function({sql,fail,getQuote,readBody,transaction,audit,targetsFor,canTechnical,canMaterials}){
  const saved=id=>JSON.parse(sql.prepare('SELECT document FROM quote_handoffs WHERE quote_id=?').get(id)?.document||'{}');
  function list(q){const d=JSON.parse(q.document);return (saved(q.id).partial||[]).map(x=>({...x,current:!x.unlocked&&Core.signature(d,x.nodeId,x.stage)===x.signature}));}
- function guard(q,d){for(const x of list(q))if(!x.unlocked&&Core.signature(d,x.nodeId,x.stage)!==x.signature)throw Object.assign(Error('Phần đã bàn giao đang khóa: '+x.name+'. Mở sửa từng phần và ghi lý do trước.'),{status:409,recovery:{kind:'partial-reopen',nodeId:x.nodeId,stage:x.stage,name:x.name}});}
+ function guard(q,d){for(const x of list(q))if(x.current&&!x.unlocked&&Core.signature(d,x.nodeId,x.stage)!==x.signature)throw Object.assign(Error('Phần đã bàn giao đang khóa: '+x.name+'. Mở sửa từng phần và ghi lý do trước.'),{status:409,recovery:{kind:'partial-reopen',nodeId:x.nodeId,stage:x.stage,name:x.name}});}
  async function handle({req,route,user,rights,send}){const m=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/partial-handoff$/);if(!m)return false;
   if(!(rights.costs||rights.technical))fail(403,'Không có quyền bàn giao nội bộ');
   if(req.method==='GET'){send(200,list(getQuote(m[1])).map(({signature,...x})=>{if(rights.technical&&x.stage==='materials'){delete x.note;delete x.reason;}return x;}));return true;}
