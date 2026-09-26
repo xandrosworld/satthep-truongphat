@@ -26,3 +26,21 @@ html[data-theme=dark] #sidebar .has-nav-icon.active>.nav-symbol{background:#91c6
 #sidebar .has-nav-icon.active>.nav-symbol{filter:drop-shadow(0 2px 2px #24588524)}
 #sidebar .side-help.has-nav-icon>.nav-symbol{width:30px;height:30px;flex-basis:30px}
 #sidebar .side-help.has-nav-icon img{width:30px;height:30px}
+
+/* Keep all sidebar destinations on the same icon and label rails. */
+#sidebar nav{align-content:start}
+#sidebar nav .has-nav-icon{min-height:46px;padding:7px 10px;gap:8px;justify-content:flex-start}
+#sidebar .side-bottom{padding:12px 0 0}
+#sidebar .side-help.has-nav-icon{justify-content:flex-start;padding:7px 10px;gap:8px;min-height:46px}
+#sidebar .side-help.has-nav-icon>.nav-symbol{width:36px;height:36px;flex-basis:36px}
+#sidebar .side-help.has-nav-icon>.nav-label-text{flex:1}
+#sidebar .demo-status{padding:10px 10px 0}
+#sidebar .side-bottom>p{padding:0 10px;margin:4px 0 10px}
+#sidebar .account{padding-inline:10px}
+
+#sidebar nav .has-nav-icon{width:100%;min-width:0;max-width:100%}
+#sidebar nav .nav-label-text{flex:1;overflow-wrap:anywhere}
+#sidebar .side-bottom>p{display:none}
+#sidebar .demo-status{padding-bottom:10px}
+#sidebar nav{scrollbar-gutter:stable;overflow-x:hidden}
+#sidebar nav{grid-template-columns:minmax(0,1fr)}
