@@ -20,7 +20,7 @@ async function teamDeleteDraft(id){
  });
 }
 function teamCurrent(){return Team.loaded&&Team.link?.workspaceKey===db.quote.workspaceKey?Team.link:null;}
-async function teamLoad(id,revision){if(Team.loaded&&Team.dirty){openDialog('Bản đang mở chưa lưu lên máy chủ',`<p>Lưu lại hoặc sao lưu bản đang làm trước khi chuyển báo giá.</p>`);return;}
+async function teamLoad(id,revision){if(Team.loaded&&Team.dirty){if(!revision&&teamCurrent()?.id===id){page='quote';closeDialog();render();return;}openDialog('Báo giá đang mở có thay đổi chưa lưu',`<p>Lưu danh mục chỉ lưu vật tư và khai báo dùng chung. Báo giá ${esc(db.quote.id)} vẫn có thay đổi riêng chưa lưu.</p><p>Quay lại báo giá đang làm để kiểm tra và lưu trước khi mở báo giá khác. Dữ liệu đang nhập được giữ nguyên.</p><button type="button" class="button primary" data-return-current-quote>Quay lại báo giá đang làm</button>`);return;}
   const generation=Team.sessionGeneration,request=Team.loadRequest=(Team.loadRequest||0)+1,openingPage=page,openingQuote=db.quote,editSequence=Team.editGeneration;
   const record=await teamApi('quotes/'+id+(revision?'/revision/'+revision:''));
   // A slow background refresh must not discard edits or navigation made while it was loading.
@@ -91,3 +91,5 @@ async function teamRefreshIntake(manual=false){
 document.addEventListener('click',e=>{if(e.target.closest('[data-intake-refresh]')){e.preventDefault();teamRefreshIntake(true);}else if(e.target.closest('[data-tab="intake"],[data-intake="goto"][data-id="intake"]'))setTimeout(()=>teamRefreshIntake(),0);});
 window.addEventListener('focus',()=>teamRefreshIntake());
 setInterval(()=>{if(!document.hidden)teamRefreshIntake();},30000);
+
+document.addEventListener('click',e=>{if(e.target.closest('[data-return-current-quote]')){page='quote';closeDialog();render();}});
