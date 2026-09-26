@@ -1,0 +1,12 @@
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs'),path=require('path');
+(async()=>{const app=createApp({staticRoot:path.resolve('dist')});await new Promise(r=>app.server.listen(0,r));const browser=await chromium.launch({channel:'msedge',headless:true});try{const p=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://localhost:'+app.server.address().port);await p.waitForFunction(()=>Team.available);await p.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password:'Local-Tech-test-42!'}));const d=TPPrice.demoSeed();d.quote.products=[{id:'prod',kind:'product',name:'Test',qty:1,unit:'bo',children:[],ops:[]}];const q=await teamApi('quotes','POST',{document:d});await teamApi('users','POST',{username:'tech',name:'Tech',password:'Local-Tech-test-42!',role:'technical',sections:['bom','operations','catalogMaterials'],technicalDelegation:true,canViewCosts:false});await teamApi('logout','POST',{});teamSession(await teamApi('login','POST',{username:'tech',password:'Local-Tech-test-42!'}));await teamLoad(q.id);const m={...C.copy(db.materials.find(m=>m.shape==='sheet')),id:'VT-NEW',stockL:2500,stockW:1250};mutation(()=>db.materials.push(m),{preserveQuote:true});page='materials';render();});
+await p.evaluate(()=>mutation(()=>{db.rates[0].unit='invalid-draft-unit';},{preserveQuote:true}));
+await p.locator('[data-catalog-draft=save]').click();
+await expect(p.locator('[data-catalog-save-status]')).toContainText('Đã lưu vật tư');
+expect(await p.evaluate(async()=>(await teamApi('catalog')).catalog.materials.some(m=>m.id==='VT-NEW'))).toBe(true);
+expect(await p.evaluate(async()=>(await teamApi('catalog')).catalog.rates[0].unit)).not.toBe('invalid-draft-unit');
+expect(await p.evaluate(()=>db.rates[0].unit)).toBe('invalid-draft-unit');
+expect(await p.evaluate(()=>CatalogDraft.dirty)).toBe(true);
+const error=await p.evaluate(async()=>{page='rules';try{await cdSave();}catch(e){return CatalogDraft.error;}});expect(error).toContain('Chỉ sửa thông tin kỹ thuật của công đoạn');
+expect(errors).toEqual([]);console.log('PASS material-only save preserves unrelated invalid draft and reports actual rejection');
+}finally{await browser.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

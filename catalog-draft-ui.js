@@ -26,11 +26,20 @@ async function cdReviewLatest(){
   cdApply({catalog:merged,version:master.version});CatalogDraft.published=master;CatalogDraft.record={version:master.version,catalog:cdSnapshot(),baseCatalog:C.copy(master.catalog),dirty:!equal(cdSnapshot(),master.catalog)};CatalogDraft.dirty=CatalogDraft.record.dirty;CatalogDraft.error='';cdStash();closeDialog();render();toast(CatalogDraft.dirty?'Đã đối chiếu; bấm nút lưu bên ngoài cửa sổ này để lưu phần đã chọn.':'Đã cập nhật danh mục mới nhất.');
  });$('#dialog').classList.add('wide-dialog');
 }
-async function cdSaveRequest(){if(!Team.permissions?.catalog||!CatalogDraft.record||!Number.isInteger(Team.catalogVersion))throw Error('Mở danh mục máy chủ trước khi lưu');const user=Team.user.id,generation=Team.sessionGeneration,version=Team.catalogVersion,catalog=cdSnapshot(),published=await teamApi('catalog','PUT',{expectedVersion:version,catalog:technicalOnly()?TPTechnical.projectCatalog(catalog):catalog});if(user!==Team.user?.id||generation!==Team.sessionGeneration)return;if(published.pending){CatalogDraft.error='';CatalogDraft.record={version:published.version,catalog:cdSnapshot(),baseCatalog:CatalogDraft.record?.baseCatalog,dirty:true,...(JSON.stringify(cdSnapshot())===JSON.stringify(catalog)?{pendingId:published.proposalId}:{})};CatalogDraft.dirty=true;cdStash();render();toast('Đã gửi cho người duyệt. Khai báo sẽ được dùng chung sau khi được duyệt.');return;}CatalogDraft.published=published;cdReconcileMaterials();Team.catalogVersion=published.version;const changed=JSON.stringify(cdSnapshot())!==JSON.stringify(catalog);CatalogDraft.record={version:published.version,catalog:changed?cdSnapshot():catalog,baseCatalog:C.copy(catalog),dirty:changed};CatalogDraft.dirty=changed;CatalogDraft.error='';cdStash();render();toast(changed?'Đã lưu; còn thay đổi mới cần lưu tiếp':'Đã lưu danh mục lên hệ thống');}
+function cdSavePayload(){
+ const working=cdSnapshot();
+ if(technicalOnly()&&page==='materials'){
+  const base=CatalogDraft.record?.baseCatalog||CatalogDraft.published?.catalog;
+  if(!base)throw Error('Chưa có danh mục để đối chiếu. Giữ nội dung đang nhập và thử lại sau.');
+  return TPTechnical.projectCatalog({...C.copy(base),materials:working.materials,stockSizes:working.stockSizes});
+ }
+ return technicalOnly()?TPTechnical.projectCatalog(working):working;
+}
+async function cdSaveRequest(){if(!Team.permissions?.catalog||!CatalogDraft.record||!Number.isInteger(Team.catalogVersion))throw Error('Mở danh mục máy chủ trước khi lưu');const user=Team.user.id,generation=Team.sessionGeneration,version=Team.catalogVersion,catalog=cdSavePayload(),published=await teamApi('catalog','PUT',{expectedVersion:version,catalog:catalog});if(user!==Team.user?.id||generation!==Team.sessionGeneration)return;if(published.pending){CatalogDraft.error='';CatalogDraft.record={version:published.version,catalog:cdSnapshot(),baseCatalog:CatalogDraft.record?.baseCatalog,dirty:true,...(JSON.stringify(technicalOnly()?TPTechnical.projectCatalog(cdSnapshot()):cdSnapshot())===JSON.stringify(catalog)?{pendingId:published.proposalId}:{})};CatalogDraft.dirty=true;cdStash();render();toast('Đã gửi cho người duyệt. Khai báo sẽ được dùng chung sau khi được duyệt.');return;}CatalogDraft.published=published;cdReconcileMaterials();Team.catalogVersion=published.version;const changed=JSON.stringify(technicalOnly()?TPTechnical.projectCatalog(cdSnapshot()):cdSnapshot())!==JSON.stringify(catalog);CatalogDraft.record={version:published.version,catalog:changed?cdSnapshot():catalog,baseCatalog:C.copy(catalog),dirty:changed};CatalogDraft.dirty=changed;CatalogDraft.error='';cdStash();render();toast(changed?'Đã lưu; còn thay đổi mới cần lưu tiếp':'Đã lưu danh mục lên hệ thống');}
 function cdFriendlyError(error){
  const message=String(error?.message||'');
  if(error?.status===401)return 'Bạn cần đăng nhập lại để lưu tiếp. Nội dung đang nhập vẫn còn trên trang này.';
- if(error?.status===403)return 'Tài khoản của bạn chưa được phép lưu phần này. Hãy nhờ người quản lý kiểm tra quyền giúp bạn.';
+ if(error?.status===403)return 'Chưa lưu được: '+(message||'Tài khoản chưa được phép thực hiện thao tác này.')+' Nội dung đang nhập vẫn được giữ.';
  if(/phiên bản|đối chiếu|conflict/i.test(message))return 'Danh mục vừa có thay đổi trên hệ thống. Chọn “Xem thay đổi” để kiểm tra trước khi lưu tiếp. Nội dung bạn đang sửa vẫn được giữ.';
  if(/fetch|network|kết nối|timeout|load failed/i.test(message))return 'Chưa kết nối được với hệ thống. Kiểm tra mạng rồi bấm “Thử lưu lại”. Nội dung đang nhập vẫn còn trên trang này; đừng đóng trang lúc này.';
  return message?'Chưa lưu được: '+message+' Nội dung đang nhập vẫn còn trên trang này.':'Chưa lưu được. Bạn thử lại nhé. Nội dung đang nhập vẫn còn trên trang này.';
@@ -38,7 +47,7 @@ function cdFriendlyError(error){
 async function cdSave(){
  if(CatalogDraft.saving)return;
  CatalogDraft.saving=true;CatalogDraft.saveMessage='';CatalogDraft.error='';cdPaint();
- try{await cdSaveRequest();CatalogDraft.saveMessage=CatalogDraft.record?.pendingId?'Đã gửi cho người duyệt. Bạn không cần gửi lại.':CatalogDraft.dirty?'Đã lưu. Bạn vừa sửa thêm nội dung mới, hãy bấm lưu thêm lần nữa.':'Đã lưu danh mục lên hệ thống. Bạn có thể tiếp tục làm việc.';}
+ try{await cdSaveRequest();CatalogDraft.saveMessage=CatalogDraft.record?.pendingId?'Đã gửi cho người duyệt. Bạn không cần gửi lại.':CatalogDraft.dirty?technicalOnly()&&page==='materials'?'Đã lưu vật tư. Các khai báo khác còn đang soạn; mở Danh mục quy ước để kiểm tra và gửi duyệt.':'Đã lưu. Bạn vừa sửa thêm nội dung mới, hãy bấm lưu thêm lần nữa.':'Đã lưu danh mục lên hệ thống. Bạn có thể tiếp tục làm việc.';}
  catch(error){CatalogDraft.error=cdFriendlyError(error);CatalogDraft.saveMessage='Chưa lưu được thay đổi.';toast(CatalogDraft.error);throw error;}
  finally{CatalogDraft.saving=false;cdPaint();document.querySelector('[data-catalog-save-status]')?.scrollIntoView({block:'nearest'});}
 }
