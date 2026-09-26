@@ -184,7 +184,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       }
       if(rights.technical){
         const Technical=require('../technical-core.js');
-        if(route==='/api/quotes'&&req.method==='GET')return send(200,all('SELECT id,code,customer,project,version,status,updated,document FROM quotes WHERE id NOT IN (SELECT id FROM quote_deletions) ORDER BY updated DESC').map(({document,...row})=>({...row,trackingStatus:workflow.describe(row.id,JSON.parse(document).quote).storedStatus,progress:notifications.summary({...row,document})})));
+        if(route==='/api/quotes'&&req.method==='GET')return send(200,all('SELECT id,code,customer,project,version,status,updated,document FROM quotes WHERE id NOT IN (SELECT id FROM quote_deletions) ORDER BY updated DESC').map(({document,...row})=>({...row,date:JSON.parse(document).quote.date,trackingStatus:workflow.describe(row.id,JSON.parse(document).quote).storedStatus,progress:notifications.summary({...row,document})})));
         const technicalQuote=route.match(/^\/api\/quotes\/([a-f0-9-]+)$/);
         if(technicalQuote){const q=getQuote(technicalQuote[1]),catalogRow=one('SELECT document FROM catalog WHERE id=1'),complexityCatalog=catalogRow?JSON.parse(catalogRow.document):undefined;
           if(req.method==='GET')return send(200,{id:q.id,version:q.version,status:q.status,document:Technical.project(JSON.parse(q.document),complexityCatalog)});

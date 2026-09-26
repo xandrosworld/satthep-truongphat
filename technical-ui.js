@@ -112,7 +112,29 @@ function installTechnicalUI(){
   openDialog('Báo giá · dữ liệu kỹ thuật',`<div class="actions">${teamButton('Đổi mật khẩu','own-password')}${teamButton('Đăng xuất','logout')}</div><label class="field"><span>Tìm báo giá</span><input id="technical-quote-search" type="search" placeholder="Mã báo giá, tên dự án, đơn vị đặt hàng…" autocomplete="off"></label><p id="technical-quote-count" role="status"></p><div class="table-scroll"><table class="quotes-list"><thead><tr><th>Mã báo giá</th><th>Dự án / công trình</th><th>Đơn vị đặt hàng</th><th>Trạng thái</th><th>Phiên bản</th><th></th></tr></thead><tbody id="technical-quote-results"></tbody></table></div>`);
   document.querySelector('#dialog').classList.add('wide-dialog');
   const input=document.querySelector('#technical-quote-search'),body=document.querySelector('#technical-quote-results'),count=document.querySelector('#technical-quote-count'),fold=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLocaleLowerCase('vi');
-  const paint=()=>{const query=fold(input.value.trim()),rows=list.filter(q=>fold([q.code,q.project,q.customer].join(' ')).includes(query));count.textContent=rows.length+' / '+list.length+' báo giá';body.innerHTML=rows.map(q=>`<tr><td><strong>${esc(q.code)}</strong></td><td>${esc(q.project||'Chưa khai dự án')}</td><td>${esc(q.customer||'Chưa khai đơn vị đặt hàng')}</td><td>${esc({draft:'Nháp',submitted:'Chờ duyệt',approved:'Đã duyệt'}[q.status]||q.status)}</td><td>${esc(q.version)}</td><td>${teamButton('Mở','open',`data-id="${esc(q.id)}"`)}</td></tr>`).join('')||'<tr><td colspan="6">'+(list.length?'Không tìm thấy báo giá phù hợp.':'Chưa có báo giá.')+'</td></tr>';};input.addEventListener('input',paint);paint();input.focus();
+  input.closest('label').insertAdjacentHTML('afterend',`<div class="form-grid three technical-list-filters">
+${select('Tìm trong','tq-field',[['','Tất cả thông tin'],['code','Mã báo giá'],['project','Dự án / công trình'],['customer','Đơn vị đặt hàng']],'')}
+${select('Trạng thái báo giá','tq-status',[['','Tất cả'],['draft','Nháp'],['submitted','Chờ duyệt'],['approved','Đã duyệt']],'')}
+${select('Đơn vị đặt hàng','tq-customer',[['','Tất cả'],...[...new Set(list.map(q=>q.customer).filter(Boolean))].sort().map(v=>[v,v])],'')}
+${field('Từ ngày báo giá','tq-from','','date')}${field('Đến ngày báo giá','tq-to','','date')}
+<div class="actions"><button type="button" class="button" id="tq-reset">Xóa bộ lọc</button></div></div><p id="tq-error" class="form-error" role="alert" hidden></p>`);
+  body.innerHTML=list.map(q=>`<tr><td><strong>${esc(q.code)}</strong></td><td>${esc(q.project||'Chưa khai dự án')}</td><td>${esc(q.customer||'Chưa khai đơn vị đặt hàng')}</td><td>${esc({draft:'Nháp',submitted:'Chờ duyệt',approved:'Đã duyệt'}[q.status]||q.status)}</td><td>${esc(q.version)}</td><td>${teamButton('Mở','open',`data-id="${esc(q.id)}"`)}</td></tr>`).join('')||'<tr><td colspan="6">'+(list.length?'Không tìm thấy báo giá phù hợp.':'Chưa có báo giá.')+'</td></tr>';
+  const originals=[...body.rows],controls=document.querySelector('.technical-list-filters'),get=n=>controls.querySelector('[name="tq-'+n+'"]').value;
+  const empty=document.createElement('tr');empty.innerHTML='<td colspan="20">Không tìm thấy báo giá phù hợp. Thử đổi từ khóa hoặc xóa bộ lọc.</td>';body.append(empty);
+  const paint=()=>{
+   const query=fold(input.value.trim()),from=get('from'),to=get('to'),invalid=from&&to&&from>to;
+   const error=document.querySelector('#tq-error');error.hidden=!invalid;error.textContent=invalid?'Ngày kết thúc cần bằng hoặc sau ngày bắt đầu.':'';
+   let shown=0;
+   originals.forEach((row,i)=>{const q=list[i];if(!q){row.hidden=true;return;}
+    const text=get('field')?q[get('field')]:[q.code,q.project,q.customer].join(' ');
+    const visible=!invalid&&fold(text).includes(query)&&(!get('status')||q.status===get('status'))&&(!get('customer')||q.customer===get('customer'))&&(!from||q.date&&q.date>=from)&&(!to||q.date&&q.date<=to);
+    row.hidden=!visible;if(visible)shown++;
+   });
+   empty.hidden=shown>0;count.textContent=shown+' / '+list.length+' báo giá';
+  };
+  input.addEventListener('input',paint);controls.addEventListener('input',paint);controls.addEventListener('change',paint);
+  document.querySelector('#tq-reset').onclick=()=>{input.value='';controls.querySelectorAll('input,select').forEach(el=>{el.value='';if(el.type==='date')el.dispatchEvent(new Event('change',{bubbles:true}));});paint();input.focus();};
+  paint();input.focus();
  };
  const oldSession=teamSession;teamSession=value=>{if(value.permissions?.technical){db=TPTechnical.project(TPPrice.demoSeed());result=C.calculate(db);Team.local=null;Team.loaded=false;Team.link=null;Team.dirty=false;UX.undo=[];UX.redo=[];}oldSession(value);};
  const oldRender=render;render=()=>{
