@@ -1,0 +1,22 @@
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs'),path=require('path');
+(async()=>{const app=createApp({staticRoot:path.resolve('dist')});await new Promise(r=>app.server.listen(0,r));const browser=await chromium.launch({channel:'msedge',headless:true});try{const p=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://localhost:'+app.server.address().port);await p.waitForFunction(()=>Team.available);await p.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password:'Local-Tech-test-42!'}));const d=TPPrice.demoSeed();d.quote.products=[{id:'prod',kind:'product',name:'Test',qty:1,unit:'bo',children:[],ops:[]}];const q=await teamApi('quotes','POST',{document:d});await teamApi('users','POST',{username:'tech',name:'Tech',password:'Local-Tech-test-42!',role:'technical',sections:['bom','operations','catalogMaterials'],technicalDelegation:true,canViewCosts:false});await teamApi('logout','POST',{});teamSession(await teamApi('login','POST',{username:'tech',password:'Local-Tech-test-42!'}));await teamLoad(q.id);const m={...C.copy(db.materials.find(m=>m.shape==='sheet')),id:'VT-NEW',stockL:2500,stockW:1250};mutation(()=>db.materials.push(m),{preserveQuote:true});mutation(()=>db.quote.products[0].children.push(createMaterialNode(m,1,{L:300,W:200})));});
+
+ await p.evaluate(()=>cdSave());
+ await p.route('**/api/quotes/*',route=>route.request().method()==='PUT'?route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({error:'Vật tư cần kiểm tra lại quy cách'})}):route.continue());
+ const version=await p.evaluate(()=>teamCurrent().version);
+ await p.locator('[data-team=save]').first().click();
+ await expect(p.locator('[data-quote-save-feedback]')).toContainText('Vật tư cần kiểm tra lại quy cách');
+ expect(await p.evaluate(()=>Team.dirty)).toBe(true);expect(await p.evaluate(()=>teamCurrent().version)).toBe(version);
+ await p.evaluate(()=>render());await expect(p.locator('[data-quote-save-feedback]')).toContainText('Chưa lưu được báo giá');
+ await p.evaluate(()=>noticeConfirm('technical'));
+ await expect(p.locator('#dialog')).toContainText('Lưu báo giá trước khi bàn giao');
+ await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog-error')).toContainText('Vật tư cần kiểm tra lại quy cách');
+ expect(await p.evaluate(()=>Notices.state?.technical?.current||false)).toBe(false);
+ await p.unroute('**/api/quotes/*');await p.locator('#dialog button[type=submit]').click();
+ await expect(p.locator('#dialog')).toContainText('Xác nhận hoàn tất kỹ thuật');
+ expect(await p.evaluate(()=>Team.dirty)).toBe(false);expect(await p.evaluate(()=>teamCurrent().version)).toBe(version+1);
+ expect(await p.evaluate(()=>Notices.state?.technical?.current||false)).toBe(false);
+ await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();
+ await expect.poll(()=>p.evaluate(()=>Notices.state?.technical?.current)).toBe(true);
+ expect(errors).toEqual([]);console.log('PASS save error remains visible; retry saves before explicit handoff confirmation; technical data retained');
+ }finally{await browser.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
