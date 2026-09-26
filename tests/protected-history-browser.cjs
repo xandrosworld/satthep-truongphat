@@ -14,11 +14,16 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
   const after=JSON.stringify(db.quote.changeHistory),document=teamDocument();
   const calculated=await teamApi('access/calculate','POST',{document});
   const saved=await teamApi('quotes/'+quote.id,'PUT',{document,expectedVersion:quote.version});
-  const forged=C.copy(document);forged.quote.changeHistory=[{actor:'forged'}];let forbidden;
-  try{await teamApi('access/calculate','POST',{document:forged});}catch(e){forbidden=e.status;}
+  const latest=await teamApi('quotes/'+quote.id);const forged=C.copy(latest.document);forged.quote.changeHistory=[{actor:'forged'}];
+  await teamApi('access/calculate','POST',{document:forged});
+  await teamApi('quotes/'+quote.id,'PUT',{document:forged,expectedVersion:latest.version});
+  const altered=C.copy(forged);altered.quote.pricing.overhead=99;let forbidden;
+  try{await teamApi('access/calculate','POST',{document:altered});}catch(e){forbidden=e.status;}
+  const history=await teamApi('quotes/'+quote.id);
+  try{await teamApi('quotes/'+quote.id,'PUT',{document:altered,expectedVersion:history.version});throw new Error('Unauthorized coefficient save succeeded');}catch(e){if(e.status!==403)throw e;}
   await teamApi('logout','POST',{});teamSession(await teamApi('login','POST',{username:'admin',password}));
   const full=await teamApi('quotes/'+quote.id);
-  return {before,after,forbidden,saved:!!saved,calculated:!!calculated,overhead:full.document.quote.pricing.overhead,lastActor:full.document.quote.changeHistory.at(-1)?.actor};
+  return {before,after,forbidden,saved:!!saved,calculated:!!calculated,overhead:full.document.quote.pricing.overhead,forgedPersisted:full.document.quote.changeHistory.some(x=>x.actor==='forged'),lastActor:full.document.quote.changeHistory.at(-1)?.actor};
  });
- expect(result.after).toBe(result.before);expect(result.saved).toBe(true);expect(result.calculated).toBe(true);expect(result.forbidden).toBe(403);expect(result.overhead).toBe(12.34567);expect(result.lastActor).toBe('Editor');console.log('PASS protected history unchanged by authorized pricing edit; calculate/save succeed; server audit recorded; forgery denied');
+ expect(result.after).toBe(result.before);expect(result.saved).toBe(true);expect(result.calculated).toBe(true);expect(result.forbidden).toBe(403);expect(result.overhead).toBe(12.34567);expect(result.lastActor).toBe('Editor');expect(result.forgedPersisted).toBe(false);console.log('PASS protected history unchanged by authorized pricing edit; calculate/save succeed; server audit recorded; forged history discarded; unauthorized coefficient edit denied');
  }finally{await b.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

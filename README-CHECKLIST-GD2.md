@@ -16,6 +16,17 @@ Cập nhật đợt 2: [Sản xuất, kho và mua hàng](docs/dot-2-san-xuat-kho
 
 Cập nhật đợt 4: [Báo cáo và kiểm thử liên thông](docs/dot-4-bao-cao-kiem-thu.md). Nhóm 18–21 đã tự kiểm; gồm chọn kỳ, Excel, quyền nguồn và đối chiếu luồng đơn mẫu/SQLite phục hồi. Các bước chạy thử, đào tạo, diễn tập khôi phục toàn máy chủ và nghiệm thu cuối chưa tự đánh dấu hoàn thành.
 
+
+## Kiểm tra hồi quy trong phạm vi — 26/09/2026
+
+- 28 kiểm thử nghiệp vụ đạt: hệ số/phân quyền, đồng bộ đơn vị nguyên công, xác nhận từng mục kỹ thuật, chia lô và giữ ghi chú, mua hàng/giữ kho, sản xuất/QC/giao hàng, báo cáo và phục hồi SQLite; giao việc/phụ trách/thông báo.
+- 8 kịch bản trình duyệt đạt: `production-parts-browser`, `customer-followup-browser`, `operation-unit-refresh-server-browser`, `policy-save-scope-browser`, `customer-email-import-browser`, `production-flow-browser`, `protected-history-browser`, `work-board-browser`.
+- Kiểm tra hệ số bằng tài khoản estimator thực có quyền giới hạn, không chỉ giả lập quyền giao diện; mở đúng phần sửa rồi lưu/tải lại giữ giá trị. Người không có quyền không sửa được hệ số; lịch sử giả từ client không được lưu.
+- File CRM_DANH BA (1).xlsx: nhập 17 khách trên cơ sở dữ liệu thử độc lập, tải lại/sửa/nhập lại không nhân đôi; chưa nhập file vào dữ liệu vận hành của khách.
+- Web vận hành trả healthz OK. Các kiểm thử ghi dữ liệu chạy ở môi trường thử, không thay thế kiểm chứng từng hồ sơ thực tế hay nghiệm thu khách hàng.
+- Đợt này cải thiện kiểm thử, không thay mã chạy của ứng dụng và không triển khai lại. Module Cơ hội bán hàng đầy đủ theo Excel để giai đoạn sau, chờ chốt phạm vi/phí.
+- Còn mở: rà toàn bộ mã hợp đồng; các trường hợp sản xuất theo tài liệu khách chưa có bằng chứng kiểm thử; quy tắc chuyển tồn đã phân bổ giữa các lệnh và cách chấm KPI chờ khách xác nhận. Không đánh dấu toàn GĐ2 hoàn thành.
+
 ## 1. Căn cứ và thứ tự áp dụng
 
 Cập nhật 25/09/2026: hoàn thiện [luồng gửi báo giá và chăm sóc sau gửi](docs/GUI-BAO-GIA-VA-CHAM-SOC.md), gồm phân công/thông báo sau duyệt, xác nhận gửi theo phiên bản và theo dõi phản hồi/vướng mắc/ngày chăm sóc. Đã tự kiểm thử; chưa đồng nghĩa khách nghiệm thu toàn bộ GĐ2.
