@@ -10,6 +10,7 @@ document.addEventListener('click',event=>{
  const button=event.target.closest('[data-source-jump]');if(!button)return;
  const row=TPSource.visibleSummary(result)[Number(button.dataset.sourceJump)],target=row&&TPSource.destination(row);if(!target)return;
  if(row.name==='Phân loại khách hàng'&&Team.user&&teamCurrent()?.id){sourceCustomerClassification().catch(error=>toast(error.message));return;}
+ if(target.group==='factors'&&Team.user&&Team.permissions?.factors){paPolicy();return;}
  page='quote';tab=target.tab;if(target.group)Intake.priceTab=target.group;render();
  const anchor=target.focus&&document.querySelector(target.focus)||document.querySelector('[data-quote-price-selector]')||document.querySelector('#content');
  anchor?.scrollIntoView({block:'center',behavior:'smooth'});anchor?.focus?.({preventScroll:true});

@@ -35,7 +35,15 @@ function createDataAccess({sql,fail}){
     if(!['permissions','user','sectionModes'].includes(k))walk(o[k],k);
    }
    if(preserve&&Object.keys(saved).length){const raw=JSON.stringify({saved,mask}),digest=createHash('sha256').update(raw).digest('hex');let row=sql.prepare('SELECT token FROM access_refs WHERE user_id=? AND digest=?').get(user.id,digest);if(!row){row={token:randomUUID()};sql.prepare('INSERT INTO access_refs VALUES(?,?,?,?)').run(row.token,user.id,digest,raw);}o.__accessRef=row.token;}
-  }walk(out);return out;
+  }walk(out);
+  // A formula lock protects catalog definitions, not quote coefficients this user may edit.
+  // Restore only basic calculated coefficients; custom factors and formulas stay masked.
+  if(!preserve&&hiddenFactors&&require('./access.cjs').permissions(user).factors&&value.alternatives){
+   const restore=(from,to)=>{if(!from||!to)return;for(const key of ['overhead','management','special','processing','order','reserve'])if(typeof from[key]==='number')to[key]=from[key];if(modes.customer!=='none'&&typeof from.customer==='number')to.customer=from.customer;};
+   for(const [id,a]of Object.entries(value.alternatives)){const target=out.alternatives?.[id];if(!target)continue;restore(a.total,target.total);for(let i=0;i<a.products.length;i++){const original=a.products[i],product=target.products?.[i];if(!product||modes.bom==='none')continue;restore(original,product);product.policyRates=copy(original.policyRates);product.saleSteps=(modes.commercial==='none'?[]:original.saleSteps||[]).filter(x=>['profitMarkup','processing','order','reserve',...(modes.customer!=='none'?['customer']:[])].includes(x.id)).map(({id,percent,value})=>({id,percent,value}));}}
+   restore(value.total,out.total);
+  }
+  return out;
  }
  // Quote history is server-owned: discard stale client appends and restore the
  // protected value. saveQuote then records actual changes from the stored revision.
