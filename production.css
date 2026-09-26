@@ -57,3 +57,19 @@
  #dialog:has(.production-purchase-allocations) h3{margin:24px 0 12px}
  #dialog:has(.production-purchase-allocations) td:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
 }
+
+.production-summary-chips{display:flex;gap:8px;margin:16px 0}
+.production-tracking table{min-width:1120px}
+#production-console .production-tracking td{padding:16px 12px}
+#production-console .production-tracking th{padding:12px;font-weight:700;white-space:nowrap}
+#production-console .production-tracking small{display:block;letter-spacing:0;line-height:1.6;margin-top:5px;color:var(--muted)}
+.production-tracking td:first-child{min-width:200px;max-width:280px}
+.production-tracking td:nth-child(3){min-width:300px}
+.production-stage-line{display:grid;grid-template-columns:70px minmax(90px,1fr) auto;gap:8px;align-items:center;margin-bottom:8px;font-size:12px}
+.production-stage-line .production-status{padding:3px 6px;font-size:11px}
+.production-tracking progress{display:block;width:100%;height:7px;margin-top:12px;accent-color:#2671ad}
+.production-tracking td:last-child button{display:block;margin-bottom:8px;white-space:nowrap}
+.production-part-reference{font-size:12px;color:var(--muted);margin-top:6px}
+.production-status.done{background:#e0f1e9;color:#236446}
+.production-status.pending{background:#edf0f4;color:#4c5b70}
+.production-tracking progress{appearance:none;border:0;border-radius:8px;overflow:hidden;background:#dbe5ef}.production-tracking progress::-webkit-progress-bar{background:#dbe5ef;border-radius:8px}.production-tracking progress::-webkit-progress-value{background:#2671ad;border-radius:8px}

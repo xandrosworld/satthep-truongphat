@@ -31,7 +31,8 @@ function createProduction({sql,fail,readBody,transaction,audit,operationsERP}){
   if(await changes.handle({req,route,user,send}))return true;
   if(await flow.handle({req,route,user,send}))return true;
   if(req.method==='GET'&&route==='/api/production'){
-   send(200,{canIssue:canIssue(user),canWork:canWork(user),orders:all('SELECT id,code,quote_id,quote_version,package FROM orders ORDER BY at DESC').filter(o=>JSON.parse(o.package).status==='awaiting-production').map(({package:raw,...o})=>o),jobs:all('SELECT * FROM production_jobs ORDER BY created DESC').map(j=>{const v=read(j);return {...pick(v,['id','code','order_id','quantity','version','state','updated']),product:v.packet.product.name,deadline:v.progress.deadline,workshop:v.progress.workshop};})});return true;
+   const records=all("SELECT kind,document,id FROM ops_records WHERE kind IN ('production-dossier','hold')"),dossiers=new Map(records.filter(r=>r.kind==='production-dossier').map(r=>[r.id,JSON.parse(r.document)])),holds=new Map(records.filter(r=>r.kind==='hold').map(r=>JSON.parse(r.document)).filter(h=>['reserved','issued'].includes(h.state)).map(h=>[h.jobId,h])),people=new Map(all('SELECT id,name FROM users').map(u=>[u.id,u.name]));
+   send(200,{canIssue:canIssue(user),canWork:canWork(user),orders:all('SELECT id,code,quote_id,quote_version,package FROM orders ORDER BY at DESC').filter(o=>JSON.parse(o.package).status==='awaiting-production').map(({package:raw,...o})=>o),jobs:all('SELECT * FROM production_jobs ORDER BY created DESC').map(j=>require('./production-parts.cjs').summary(read(j),{dossier:dossiers.get(j.id),actor:people.get(j.actor)||'',materialState:holds.has(j.id)?people.get(holds.get(j.id).actor)||'Đã giữ kho':''}))});return true;
   }
   if(req.method==='GET'&&route==='/api/production/people'){send(200,all("SELECT id,name FROM users WHERE active=1 AND deleted_at IS NULL"));return true;}
   const source=route.match(/^\/api\/production\/orders\/([a-f0-9-]+)$/);
@@ -51,6 +52,8 @@ function createProduction({sql,fail,readBody,transaction,audit,operationsERP}){
     operationsERP.captureBaseline(id,d);audit(user,'production-issued',id,code);sql.prepare('INSERT INTO production_events(job_id,at,actor,detail) VALUES(?,?,?,?)').run(id,at,user.name,'Phát hành lệnh '+code);return read(one('SELECT * FROM production_jobs WHERE id=?',id));
    });send(201,job);return true;
   }
+  const part=route.match(/^\/api\/production\/([a-f0-9-]+)\/parts$/);
+  if(part&&req.method==='POST'){if(!canIssue(user))fail(403,'Chưa có quyền chia phần sản xuất');const body=await readBody(req);send(201,transaction(()=>require('./production-parts.cjs').split({sql,fail,packet,captureBaseline:operationsERP.captureBaseline,audit,user,id:part[1],body})));return true;}
   const m=route.match(/^\/api\/production\/([a-f0-9-]+)$/);
   if(m&&req.method==='GET'){const j=one('SELECT * FROM production_jobs WHERE id=?',m[1]);if(!j)fail(404,'Không tìm thấy lệnh');send(200,{...read(j),events:all('SELECT at,actor,detail FROM production_events WHERE job_id=? ORDER BY seq DESC',j.id)});return true;}
   if(m&&req.method==='PUT'){
