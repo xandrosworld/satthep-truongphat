@@ -7,7 +7,7 @@ function crmFieldInput(f,c,settings){
  if(f.type==='yesno')return select(label,f.key,[['','Chưa khai'],['yes','Có'],['no','Không']],v,required);
  if(f.type==='textarea')return `<label class="field"><span>${esc(label)}</span><textarea name="${esc(f.key)}" rows="3" maxlength="${f.key==='notes'?10000:f.key==='address'?500:2000}" ${required}>${esc(v)}</textarea></label>`;
  const list=f.suggestions?`list="crm-suggestions-${f.key}"`:'';
- return field(label,f.key,v,f.type,`${required} maxlength="${f.key.startsWith('account.')||f.key==='ratingReason'?2000:200}" ${f.type==='number'?'min="0" step="'+(f.key==='account.paymentDays'?'1':'any')+'"':''} ${list}`)+(f.suggestions?`<datalist id="crm-suggestions-${f.key}">${f.suggestions.map(v=>`<option value="${esc(v)}"></option>`).join('')}</datalist>`:'');
+ return field(label,f.key,v,f.type,`${required} ${f.type==='email'?'multiple':''} maxlength="${f.key.startsWith('account.')||f.key==='ratingReason'?2000:200}" ${f.type==='number'?'min="0" step="'+(f.key==='account.paymentDays'?'1':'any')+'"':''} ${list}`)+(f.suggestions?`<datalist id="crm-suggestions-${f.key}">${f.suggestions.map(v=>`<option value="${esc(v)}"></option>`).join('')}</datalist>`:'');
 }
 function crmConfiguredForm(c){
  const settings=TPCustomerFields.settings(Crm.policy.fields),groups=new Map();

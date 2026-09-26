@@ -29,5 +29,6 @@ function account(raw={}){
 function missing(c,raw){const conf=settings(raw);return FIELDS.filter(f=>{if(!conf[f.key].required)return false;const v=value(c,f.key);return v===undefined||v===null||String(v).trim()===''||f.key==='type'&&v==='unknown'||f.key==='rating'&&v==='unrated';});}
 function validate(c,raw){const absent=missing(c,raw);if(absent.length)throw Error('Cần bổ sung thông tin bắt buộc: '+absent.map(f=>f.label).join(', '));return c;}
 function formValue(c,entries){const out={...c,account:{...(c.account||{})}};for(const [k,v] of entries){const f=FIELDS.find(f=>f.key===k);if(!f)continue;if(k.startsWith('account.'))out.account[k.slice(8)]=v;else out[k]=v;}return out;}
-const api={FIELDS,settings,account,value,missing,validate,formValue};if(typeof module!=='undefined')module.exports=api;else root.TPCustomerFields=api;
+function emails(raw){const text=String(raw??'').trim();if(!text)return [];if(text.length>200)throw Error('Email khách hàng quá dài (tối đa 200 ký tự)');const values=text.split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);if(!values.length||values.some(x=>!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(x)))throw Error('Email khách hàng chưa đúng; ngăn cách các địa chỉ bằng dấu phẩy');return [...new Map(values.map(x=>[x.toLowerCase(),x])).values()];}
+const api={emails,FIELDS,settings,account,value,missing,validate,formValue};if(typeof module!=='undefined')module.exports=api;else root.TPCustomerFields=api;
 })(typeof window!=='undefined'?window:globalThis);
