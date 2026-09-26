@@ -35,6 +35,7 @@ function teamSaveFeedback(){
  const banner=document.querySelector('.team-banner');if(!banner)return;
  let box=banner.querySelector('[data-quote-save-feedback]');if(!box){box=document.createElement('p');box.dataset.quoteSaveFeedback='';box.setAttribute('role','status');banner.append(box);}
  box.textContent=state.message;box.classList.toggle('cell-error',state.error===true);
+ if(state.partialLocked){const button=document.createElement('button');button.type='button';button.className='button';button.textContent='Mở phần đã bàn giao / ghi lý do';button.onclick=()=>partialHandoffDialog().catch(e=>toast(e.message));box.append(document.createElement('br'),button);}
  banner.querySelectorAll('[data-team=save]').forEach(b=>{b.disabled=state.pending;b.textContent=state.pending?'Đang lưu báo giá…':state.error?'Thử lưu lại báo giá':'Lưu báo giá lên máy chủ';});
 }
 async function teamSave(){
@@ -42,7 +43,7 @@ async function teamSave(){
  const state={quote:db.quote,generation:Team.sessionGeneration,pending:true,message:'Đang lưu báo giá của bạn…'};Team.saveFeedback=state;teamSaveFeedback();
  const pending=teamSaveOnce();Team.savePending=pending;
  try{await pending;state.message=Team.dirty?'Đã lưu phần trước đó. Bạn vừa sửa thêm nội dung mới, hãy lưu thêm lần nữa trước khi bàn giao.':'Đã lưu báo giá. Bạn có thể xác nhận bàn giao.';}
- catch(e){state.error=true;const message=String(e.message||'');state.message=/fetch|network|timeout|load failed/i.test(message)?'Chưa kết nối được với hệ thống. Nội dung đang nhập vẫn còn trên trang này. Kiểm tra mạng rồi bấm “Thử lưu lại báo giá”.':('Chưa lưu được báo giá: '+message+' Nội dung đang nhập vẫn được giữ; chưa xác nhận bàn giao.');throw e;}
+ catch(e){state.error=true;const message=String(e.message||'');state.partialLocked=message.includes('Phần đã bàn giao đang khóa');state.message=/fetch|network|timeout|load failed/i.test(message)?'Chưa kết nối được với hệ thống. Nội dung đang nhập vẫn còn trên trang này. Kiểm tra mạng rồi bấm “Thử lưu lại báo giá”.':('Chưa lưu được báo giá: '+message+' Nội dung đang nhập vẫn được giữ; chưa xác nhận bàn giao.');throw e;}
  finally{state.pending=false;if(Team.savePending===pending)Team.savePending=null;teamSaveFeedback();}
 }
 async function teamSaveOnce(){if(!Team.user)return teamLogin();if(!Team.permissions.edit)throw Error('Tài khoản không có quyền lập/sửa');const link=teamCurrent();if(link&&(link.status!=='draft'||link.readOnly))throw Error('Bản này đang khóa. Tạo bản sửa trước.');

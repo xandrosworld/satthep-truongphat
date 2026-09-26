@@ -1,0 +1,17 @@
+'use strict';
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs');
+(async()=>{const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const b=await chromium.launch({channel:'msedge',headless:true});try{const p=await b.newPage({viewport:{width:1440,height:1000}}),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://127.0.0.1:'+app.server.address().port);await p.waitForFunction(()=>Team.available);const node=await p.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password:'Partial-browser-2026!'}));const d=TPPrice.demoSeed();d.quote.remnantMode='all';const q=await teamApi('quotes','POST',{document:d});await teamLoad(q.id);page='quote';tab='bom';render();return C.flatten(db.quote.products).find(n=>n.kind==='material').id;});
+ await p.locator('[data-partial-open]').click();await expect(p.locator('[data-partial-node="'+node+'"][data-stage=technical]')).toHaveAttribute('role','switch');await expect(p.locator('[data-partial-node="'+node+'"][data-stage=technical]')).toHaveAttribute('aria-checked','false');await p.locator('[data-partial-node="'+node+'"][data-stage=technical]').click();await p.locator('#dialog button[type=submit]').click();await expect(p.locator('[data-partial-node="'+node+'"][data-stage=technical]')).toHaveAttribute('data-mode','reopen');await expect(p.locator('[data-partial-node="'+node+'"][data-stage=technical]')).toHaveAttribute('aria-checked','true');await p.evaluate(id=>{closeDialog();mutation(()=>C.findNode(db.quote.products,id).qty+=1);},node);
+ await p.locator('[data-team=save]').first().click();await expect(p.locator('[data-quote-save-feedback]')).toContainText('Phần đã bàn giao đang khóa');
+ const edited=await p.evaluate(id=>C.findNode(db.quote.products,id).qty,node);
+ await p.locator('[data-quote-save-feedback] button').click();
+ await expect(p.locator('[data-partial-node][data-mode=confirm]').first()).toBeDisabled();
+ await p.locator('[data-partial-node="'+node+'"][data-stage=technical]').click();
+ await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog-error')).toContainText('lý do');
+ await p.locator('#dialog [name=note]').fill('Correct quantity');await p.locator('#dialog button[type=submit]').click();
+ await expect(p.locator('[data-partial-node="'+node+'"][data-stage=technical]')).toHaveAttribute('data-mode','confirm');
+ expect(await p.evaluate(()=>Team.dirty)).toBe(true);expect(await p.evaluate(id=>C.findNode(db.quote.products,id).qty,node)).toBe(edited);
+ await p.evaluate(()=>closeDialog());await p.locator('[data-team=save]').first().click();
+ await expect.poll(()=>p.evaluate(()=>Team.dirty)).toBe(false);
+ expect(await p.evaluate(async id=>C.findNode((await teamApi('quotes/'+teamCurrent().id)).document.quote.products,id).qty,node)).toBe(edited);
+ await p.setViewportSize({width:390,height:844});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await p.screenshot({path:'artifacts/partial-mobile.png'});await p.evaluate(()=>{closeDialog();page='materials';render();});await expect(p.locator('#content')).toContainText('Rộng 40');await expect(p.locator('#content')).toContainText('Dày 2');expect(errors).toEqual([]);console.log('PASS dirty locked quote opens reason form, preserves edits, rejects empty reason, saves after authorized reopen');}finally{await b.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
