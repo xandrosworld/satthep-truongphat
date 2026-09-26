@@ -5,13 +5,11 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
  await p.locator('[data-team=save]').first().click();await expect(p.locator('[data-quote-save-feedback]')).toContainText('Phần đã bàn giao đang khóa');
  const edited=await p.evaluate(id=>C.findNode(db.quote.products,id).qty,node);
  await p.locator('[data-quote-save-feedback] button').click();
- await expect(p.locator('[data-partial-node][data-mode=confirm]').first()).toBeDisabled();
- await p.locator('[data-partial-node="'+node+'"][data-stage=technical]').click();
+ await expect(p.locator('#dialog-title')).toContainText('Mở sửa:');
+ await expect(p.locator('#dialog button[type=submit]')).toHaveText('Mở sửa và lưu báo giá');
  await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog-error')).toContainText('lý do');
  await p.locator('#dialog [name=note]').fill('Correct quantity');await p.locator('#dialog button[type=submit]').click();
- await expect(p.locator('[data-partial-node="'+node+'"][data-stage=technical]')).toHaveAttribute('data-mode','confirm');
- expect(await p.evaluate(()=>Team.dirty)).toBe(true);expect(await p.evaluate(id=>C.findNode(db.quote.products,id).qty,node)).toBe(edited);
- await p.evaluate(()=>closeDialog());await p.locator('[data-team=save]').first().click();
+ expect(await p.evaluate(id=>C.findNode(db.quote.products,id).qty,node)).toBe(edited);
  await expect.poll(()=>p.evaluate(()=>Team.dirty)).toBe(false);
  expect(await p.evaluate(async id=>C.findNode((await teamApi('quotes/'+teamCurrent().id)).document.quote.products,id).qty,node)).toBe(edited);
  await p.setViewportSize({width:390,height:844});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await p.screenshot({path:'artifacts/partial-mobile.png'});await p.evaluate(()=>{closeDialog();page='materials';render();});await expect(p.locator('#content')).toContainText('Rộng 40');await expect(p.locator('#content')).toContainText('Dày 2');expect(errors).toEqual([]);console.log('PASS dirty locked quote opens reason form, preserves edits, rejects empty reason, saves after authorized reopen');}finally{await b.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
