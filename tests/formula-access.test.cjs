@@ -135,3 +135,17 @@ test('authorized quote coefficients remain editable under shared formula lock; m
  const forbidden=(await call('quotes/'+id,'GET',undefined,v.session)).data.document;forbidden.quote.pricing.overhead=9;A.equal((await call('quotes/'+id,'PUT',{document:forbidden,expectedVersion:2},v.session)).status,403);
  const master=(await call('catalog','GET',undefined,u.session)).data;master.catalog.pricingDefaults.overhead=9;A.equal((await call('catalog','PUT',{catalog:master.catalog,expectedVersion:master.version},u.session)).status,403);
 });
+test('legacy masked quote coefficients save with current authority while unchanged secrets and denied fields remain protected',async t=>{
+ const {call,admin,create,sql}=await harness(t),u=await create('legacy-factors',{canEditFactors:true,sections:require('../section-access.js').keys});
+ const source=P.demoSeed();source.quote.pricing.management=7;
+ const made=await call('quotes','POST',{document:source},admin);await call('formulas/locks','POST',{key:'calculationFactors:all',locked:true,expectedVersion:0,reason:'Lock master'},admin);
+ const doc=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data.document,pricing=doc.quote.pricing;
+ const token=pricing.__accessRef,ref=JSON.parse(sql.prepare('SELECT value FROM access_refs WHERE token=?').get(token).value);
+ for(const k of ['overhead','management']){ref.saved[k]=source.quote.pricing[k];ref.mask[k]=0;pricing[k]=0;}
+ sql.prepare('UPDATE access_refs SET value=? WHERE token=?').run(JSON.stringify(ref),token);
+ pricing.overhead=2;pricing.incoming=450000;
+ const saved=await call('quotes/'+made.data.id,'PUT',{document:doc,expectedVersion:1},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const loaded=(await call('quotes/'+made.data.id,'GET',undefined,admin)).data.document;A.equal(loaded.quote.pricing.overhead,2);A.equal(loaded.quote.pricing.management,7);A.equal(loaded.quote.pricing.incoming,450000);
+ const forbidden=structuredClone(doc);forbidden.quote.pricing.tmcLoss=97;A.equal((await call('quotes/'+made.data.id,'PUT',{document:forbidden,expectedVersion:2},u.session)).status,403);
+ sql.prepare('UPDATE users SET can_factors=0 WHERE id=?').run(u.id);A.equal((await call('quotes/'+made.data.id,'PUT',{document:doc,expectedVersion:2},u.session)).status,403);
+});
