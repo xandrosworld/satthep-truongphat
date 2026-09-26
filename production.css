@@ -105,3 +105,5 @@
 }
 
 @media print{#production-console[open]{display:block!important}body:has(#production-console[open]) #print-area{display:none!important}}
+
+#production-console .review-blank{display:grid;gap:8px;min-width:160px;max-width:250px}#production-console .review-blank label{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:8px}#production-console .review-blank input{width:100%;min-width:0}#production-console [data-review-feedback] button{margin:6px}#production-console .dossier-operation[open]{padding-bottom:12px}
