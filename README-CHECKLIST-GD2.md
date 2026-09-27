@@ -369,7 +369,7 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 | [ ] | D.06 | Nghiệm thu cuối; bàn giao mã nguồn, cấu trúc dữ liệu/migration, cấu hình/build/deploy và tài liệu | Chờ rà soát |
 
 
-## Rà soát yêu cầu điều chỉnh sản xuất — 27/09/2026 (đang triển khai)
+## Rà soát yêu cầu điều chỉnh sản xuất — 27/09/2026
 
 - Đã triển khai và kiểm thử local: gom nhiều dòng thành bảng kiến nghị; kỹ thuật, kinh doanh và giá xác nhận đúng cùng phạm vi; chỉ các dòng được duyệt cập nhật vào lệnh. Đổi giá yêu cầu kinh doanh xác nhận lại; giá và tác động chi phí chỉ trả về cho người có quyền.
 - Có so sánh chi phí toàn đề nghị và tính tác động riêng các mục được chọn; lưu tác động của phần thực tế áp dụng. Đơn hàng/báo giá gốc giữ nguyên.
@@ -379,6 +379,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Đã đọc PDF phân luồng của khách và mã demo. Tám bước ví dụ là Cắt, Tiện, Phay, Hàn, Sơn, Lắp ráp, QC, Hoàn thành; chưa dùng việc đổi tên tab để tuyên bố đạt đầy đủ quy trình.
 - Đã bổ sung và kiểm thử local: bốn mục rà soát độc lập (đầu vào/bản vẽ, cấu thành, công đoạn/định mức, khai triển/hao hụt); xem phương án cắt ngay trong mục 4; lưu và tải lại từng xác nhận. Bảng kiến nghị sửa được số lượng chi tiết, ghi chú, chọn công thức hoặc khai công thức riêng, nơi thực hiện, tổng lượng/định mức nguyên công.
 - Đường đề nghị công nghệ đã duyệt từng phần khi giữ nguyên danh sách và thứ tự công đoạn; ba bộ phận phải xác nhận cùng các mục được chọn. Thay danh sách/thứ tự yêu cầu duyệt toàn quy trình để tránh tạo chuỗi công việc không hợp lệ.
-- Còn thiếu để đạt toàn bộ yêu cầu: form rà soát tương đương đầy đủ tính năng các mục 1–4 báo giá; hợp nhất hoàn toàn đề nghị công nghệ và bảng kiến nghị; cập nhật giá nguyên công trong bước đánh giá giá; kiểm soát và trình bày đầy đủ quy trình công đoạn theo mẫu. Chưa đánh dấu 100%.
+- Đã bổ sung các phần còn thiếu: mở riêng không gian rà soát dùng lại form đầu vào, cấu thành, nguyên công và khai triển của báo giá; giữ bản vẽ sản xuất riêng; lưu nháp kiến nghị theo người/lệnh; gửi toàn bộ thay đổi cấu thành, liên kết, thông số và khai triển vào bảng kiến nghị. Số lượng sản phẩm gốc giữ theo lệnh; thay đổi phạm vi dùng chia lô. Thêm/bỏ/di chuyển cấu thành cần duyệt cùng các mục liên quan.
+- Bảng kiến nghị chung hiển thị và xử lý cả thay đổi kỹ thuật lẫn quy trình công nghệ; giữ lịch sử đề nghị cũ. Bộ phận giá cập nhật được đơn giá vật tư và nguyên công cho phần được chọn, thay giá phải xác nhận kinh doanh lại. Đồng bộ thay đổi kỹ thuật giữ máy, phương pháp, định mức, thứ tự và công đoạn bổ sung đã được duyệt; không tự khôi phục công đoạn đã bỏ.
+- Quy trình hiển thị từng bước thực tế của lệnh, nhân sự, máy, sản lượng, tiến độ, vướng mắc; QC và hoàn thành riêng. Có chuỗi 8 bước tham khảo; không tự chèn công đoạn không dùng vào mọi sản phẩm.
 - Kiểm thử: 30 ca API liên quan đã qua; browser bốn mục xác nhận độc lập và browser phát hành → kho → công đoạn → QC → hoàn thành → tải lại đã qua; browser bảng kiến nghị nhiều dòng / ba bộ phận / tải lại / gửi sửa trực tiếp từ rà soát và browser máy mặc định / giữ giá / tải lại đã qua. Các bài browser cũ được cập nhật bước ngày hoàn thành và chọn tab; chưa lấy fixture nhập kho cũ làm bằng chứng đạt toàn hệ thống.
-- Các thay đổi trên đang ở mã nguồn local, chưa triển khai máy chủ, chưa nghiệm thu.
+- Kiểm thử bổ sung 27/09: 60 ca API/core liên quan đạt; 6 kịch bản browser đạt (form kỹ thuật đầy đủ + bản vẽ + khai triển tay + nháp/tải lại; bảng kiến nghị chung + ba bộ phận; 4 xác nhận độc lập; máy mặc định; phát hành đến hoàn thành; quy trình đến đối soát kho/QC/thành phẩm). Chưa thay thế nghiệm thu vận hành của khách.
+- Trạng thái triển khai: bản đã kiểm thử đang được chuẩn bị đưa lên máy chủ; cập nhật kết quả xác minh sau khi triển khai.

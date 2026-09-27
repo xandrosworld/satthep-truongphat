@@ -1,7 +1,8 @@
 'use strict';
+const productionEditorMode=new URLSearchParams(location.search).has('production-editor');
 const C=TP, STORE='truongphat-quotation-v2';
 let db=TPPrice.demoSeed(),page='quote',tab='bom',selected='',catalogGroup='',search='',libraryFilter='all',rateTab='materials',restored=false;
-try{const saved=JSON.parse(localStorage.getItem(STORE));if(saved?.version===2&&saved.quote?.products&&saved.materials){db=saved;restored=true;}}catch{}
+try{const saved=productionEditorMode?null:JSON.parse(localStorage.getItem(STORE));if(saved?.version===2&&saved.quote?.products&&saved.materials){db=saved;restored=true;}}catch{}
 selected=db.quote.products[0]?.id;
 let result=C.calculate(db),undoState=null,rotation={x:-20,y:-30},modalReturn=null;
 const $=s=>document.querySelector(s), esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -197,6 +198,9 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){
 const legacyPaper=paper,legacyRatebook=renderRates;
 paper=()=>db.quote.pricing?renderAdvancedPaper():legacyPaper();
 renderRates=()=>db.quote.pricing&&rateTab==='operations'?renderRatebookAdvanced():legacyRatebook();
+if(productionEditorMode){installProductionEditorOnly();}else{
 initUX();setupUXActions();installPricingUI();installWorkUI();installManufacturingUI();installQuotesUI();installExportUI();installTeamUI();installTeamAccessUI();installQuoteOutputUI();installRateLabUI();installCompletionUI();installSourceUI();installCatalogSyncUI();installConventionsUI();installIntakeUI();installQuotePrices();installBatchOneUI();installDefinitionUI();installBatchTwoUI();installBatchThreeUI();installDeviceUI();installTaxUI();installBatchSixUI();installRulesCatalogUI();installDeclarationReviewUI();installInputPricesUI();installFactorMatrixUI();installPricingDeclarationsUI();installQuoteOperationChoiceUI();installMaterialEstimateUI();installQuoteLogisticsUI();installProductScopeUI();installSectionAccessUI();installTechnicalUI();installQuoteWorkspaceUI();installCrmUI();installNotificationsUI();installAccountReviewUI();installCatalogAuditUI();installTmcLaborUI();installPackageOperationUI();installOperationTableUI();installCustomerFeedbackUI();installCustomerImportUI();installCatalogDraftUI();installWorkflowStatusUI();installFormulaAccessUI();installLegacyDeclarationUI();installExpensePreviewUI();installCalculationReportUI();installReviewImprovementsUI();installChatUI();installProductionUI();installOrdersUI();installAiPdfUI();installOperationViewport();installQuotePresenceUI();installOrganizationUI();installAccessReviewUI();installBusinessUI();installBusinessOrdersUI();installBusinessCustomersUI();installErpShellUI();installBusinessCommissionUI();installPersonnelUI();installActionAccessUI();installOfferFollowupUI();installOperationsERP();installPartialHandoff();installEnterprise();installWorkBoard();installReports();installProductionFlow();installQuoteCorrections();installProductionDossier();installDashboard();installSettings();TPSidebarIcons.install();installWorkspaceViewport();render();persist();
 
 function companyLogo(){return `<img class="company-logo" src="${esc(document.querySelector('.brand-logo').src)}" alt="Trường Phát Group" width="2560" height="2413">`;}
+
+}

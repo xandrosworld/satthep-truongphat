@@ -84,6 +84,29 @@ test('engineering proposal requires technical confirmation then admin, recompute
  A.equal(j.packet.materials.find(r=>r.id===er.id).dimensions.length,er.dims.L+25);
  const saved=(await get()).nodeDetails.find(n=>n.id===er.id);A.equal(saved.qty,ed.qty+1);A.equal(saved.lineNote,extendedBody.lineNote);
  if(eo){const appliedOp=j.packet.operations.find(o=>o.id===eo.id);A.equal(appliedOp.mode,'outside');A.equal(appliedOp.workQuantity,7);}
+
+ // Full editor supports added structure and rejects root changes / commercial injection.
+ const editor=(await call(route+'/editor','GET',undefined,tech));A.equal(editor.status,200,JSON.stringify(editor.data));
+ const full=structuredClone(editor.data.document),root=full.quote.products[0],C=require('../core.js');
+ const child=C.flatten(root.children).find(n=>n.kind==='material'&&n.dims.L),extra=structuredClone(child);extra.id='new-production-detail';extra.name='Chi tiết bổ sung';extra.children=[];extra.ops=structuredClone(C.flatten(full.quote.products).find(n=>n.ops.length).ops);root.children.push(extra);
+ const badRoot=structuredClone(full);badRoot.quote.products[0].qty+=1;A.equal((await call(route,'POST',{expectedVersion:j.version,reason:'Sai phạm vi',technicalDocument:badRoot},tech)).status,400);
+ const badPrice=structuredClone(full);C.flatten(badPrice.quote.products).find(n=>n.kind==='material').spec.price=12345;A.equal((await call(route,'POST',{expectedVersion:j.version,reason:'Giá trái quyền',technicalDocument:badPrice},tech)).status,400);
+ let fullProposal=await call(route,'POST',{expectedVersion:j.version,reason:'Bổ sung cấu thành',technicalDocument:full},tech);A.equal(fullProposal.status,200,JSON.stringify(fullProposal.data));c=fullProposal.data;A.equal(c.structural,true);
+ for(const action of ['confirm','business','pricing'])A.equal((await step(action,admin,{note:'Đồng ý bổ sung cấu thành'})).status,200);
+ const opPrice=(await call(route,'GET',undefined,admin)).data.changes.find(x=>x.id===c.id).impact.operationPrices.find(x=>x.rowId===extra.id);A.ok(opPrice);
+ A.equal((await step('pricing',tech,{note:'Không được sửa giá',operationPrices:[{rowId:extra.id,index:opPrice.index,unitPrice:777}]})).status,403);
+ A.equal((await step('pricing',admin,{note:'Giá nguyên công mới',operationPrices:[{rowId:extra.id,index:opPrice.index,unitPrice:777}]})).status,200);
+ A.equal((await step('approve')).status,409);A.equal((await step('business',admin,{note:'Khách đồng ý giá mới'})).status,200);
+ let appliedFull=await step('approve');A.equal(appliedFull.status,200,JSON.stringify(appliedFull.data));j=(await call('production/'+j.id,'GET',undefined,admin)).data;A.ok(j.packet.materials.some(m=>m.id===extra.id));
+ const priceBackup=(await call('backup','GET',undefined,admin)).data,sourceRecord=priceBackup.opsRecords.find(r=>r.kind==='production-source'&&r.id===j.id),priceSource=JSON.parse(sourceRecord.document);A.equal(C.flatten(priceSource.quote.products).find(n=>n.id===extra.id).ops[opPrice.index].unitPrice,777);
+ // Approved routing must survive later engineering changes, including removed and added stages.
+ const ops=j.packet.operations.slice(1).map(o=>({...o,machineId:'',machine:'Máy đã duyệt',instructions:'Giữ phương pháp đã duyệt',lossPercent:0,workQuantity:o.workQuantity||1,unit:o.unit||'kg'}));ops.push({name:'Kiểm tra bổ sung',machine:'Thủ công',mode:'inside',workQuantity:1,unit:'lần',lossPercent:0});
+ const routePlan=await call('production/'+j.id+'/flow/plan','POST',{expectedVersion:j.version,reason:'Duyệt quy trình riêng',operations:ops},admin);A.equal(routePlan.status,200,JSON.stringify(routePlan.data));
+ for(const action of ['confirm','pricing','business','approve']){const r=await call('production/'+j.id+'/flow/'+action,'POST',{id:routePlan.data.id,expectedVersion:j.version,note:'Đã xem xét',...(action==='pricing'?{operationPrices:routePlan.data.operationPrices.filter(x=>x.unitPrice===null).map(x=>({operationId:x.operationId,unitPrice:500}))}:{})},admin);A.equal(r.status,200,JSON.stringify(r.data));}
+ j=(await call('production/'+j.id,'GET',undefined,admin)).data;const approvedOps=structuredClone(j.packet.operations);
+ const noteRow=(await get()).rows[0];c=(await call(route,'POST',{expectedVersion:j.version,rowId:noteRow.id,lineNote:'Chỉ cập nhật ghi chú',reason:'Bổ sung ghi chú'},tech)).data;
+ for(const action of ['confirm','business','pricing','approve']){const r=await step(action,admin,{note:'Đồng ý ghi chú'});A.equal(r.status,200,JSON.stringify(r.data));}
+ j=(await call('production/'+j.id,'GET',undefined,admin)).data;A.deepEqual(j.packet.operations,approvedOps);
  j=await require('./production-review-fixture.cjs').review(call,admin,j.id);await require('./ops-fixture.cjs').seedStock(call,admin,j.id);
  j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'prepare',workshop:'Xưởng',deadline:'',drawingReady:true,materialsReady:true,note:''},tech)).data;
  const op=j.progress.operations[0];j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'operation',operationId:op.id,assignee:'',status:'running',output:0,note:''},tech)).data;

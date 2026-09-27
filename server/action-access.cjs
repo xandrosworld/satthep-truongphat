@@ -13,7 +13,8 @@ function guardRoute(route,method,user,fail){
  }
  if(/^\/api\/orders(\/|$)/.test(route))return need('orders',read?'view':/\/confirm$/.test(route)?'confirm':'edit');
  if(/^\/api\/production\/[^/]+\/(dossier|files)(\/|$)/.test(route))return need('production',read?'view':'edit');
- if(/^\/api\/production\/[^/]+\/changes(?:\/[^/]+\/(?:confirm|business|pricing|approve|reject|preview))?$/.test(route))return need('production',read?'view':/\/preview$/.test(route)?'reviewPricing':/\/business$/.test(route)?'reviewBusiness':/\/pricing$/.test(route)?'reviewPricing':/\/(confirm|reject)$/.test(route)?'confirm':/\/approve$/.test(route)?'approveChange':'edit');
+ if(/^\/api\/production\/[^/]+\/changes\/editor$/.test(route))return need('production','edit');
+ if(/^\/api\/production\/[^/]+\/changes(?:\/[^/]+\/(?:confirm|business|pricing|approve|reject|preview))?$/.test(route))return need('production',read?'view':/\/preview$/.test(route)?'reviewPricing':/\/business$/.test(route)?'reviewBusiness':/\/pricing$/.test(route)?'reviewPricing':/\/reject$/.test(route)?'view':/\/confirm$/.test(route)?'confirm':/\/approve$/.test(route)?'approveChange':'edit');
  if(/^\/api\/production\/[^/]+\/flow(?:\/[^/]+)?$/.test(route))return need('production','view');
  if(/^\/api\/production(\/|$)/.test(route))return need('production',read?'view':method==='POST'?'issue':'view');
  if(/^\/api\/personnel(\/|$)/.test(route)&&route!=='/api/personnel/access'){need('personnel','view');if(route.endsWith('/activation'))need('personnel','activate');if(route.endsWith('/review'))need('personnel','review');return;}
