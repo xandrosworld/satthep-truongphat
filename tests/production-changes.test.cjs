@@ -72,6 +72,18 @@ test('engineering proposal requires technical confirmation then admin, recompute
  j=(await call('production/'+j.id,'GET',undefined,tech)).data;
  A.deepEqual(j.packet.materials.find(r=>r.id===z.id).dimensions,oldPacket.materials.find(r=>r.id===z.id).dimensions);
  A.notDeepEqual(j.packet.materials.find(r=>r.id===a.id).dimensions,oldPacket.materials.find(r=>r.id===a.id).dimensions);
+ const extended=await get(),er=extended.rows.find(r=>r.material.shape==='sheet'&&r.dims.L&&r.dims.W),ed=extended.nodeDetails.find(n=>n.id===er.id),eo=extended.operations.find(o=>o.nodeId===er.id);
+ A.equal((await call(route,'POST',{expectedVersion:j.version,rowId:er.id,qty:-1,reason:'Invalid quantity'},tech)).status,400);
+ A.equal((await call(route,'POST',{expectedVersion:j.version,rowId:er.id,formula:{length:'invalid(',width:'W'},reason:'Invalid formula'},tech)).status,400);
+ const extendedBody={expectedVersion:j.version,rowId:er.id,qty:ed.qty+1,lineNote:'Bản vẽ shop điều chỉnh',formula:{length:'L+25',width:'W'},reason:'Điều chỉnh cấu thành và công thức'};
+ if(eo)extendedBody.operations=[{index:Number(eo.id.split(':').pop()),mode:'outside',basisMode:'manual_total',workQuantity:7,quantityUnit:'kg'}];
+ const proposed=await call(route,'POST',extendedBody,tech);A.equal(proposed.status,200,JSON.stringify(proposed.data));c=proposed.data;
+ const immutable=(await call('production/'+j.id,'GET',undefined,tech)).data;A.deepEqual(immutable.packet,j.packet);
+ for(const action of ['confirm','business','pricing'])A.equal((await step(action,admin,{note:'Đã kiểm tra cấu thành / công thức / định mức'})).status,200);
+ A.equal((await step('approve')).status,200);j=(await call('production/'+j.id,'GET',undefined,tech)).data;
+ A.equal(j.packet.materials.find(r=>r.id===er.id).dimensions.length,er.dims.L+25);
+ const saved=(await get()).nodeDetails.find(n=>n.id===er.id);A.equal(saved.qty,ed.qty+1);A.equal(saved.lineNote,extendedBody.lineNote);
+ if(eo){const appliedOp=j.packet.operations.find(o=>o.id===eo.id);A.equal(appliedOp.mode,'outside');A.equal(appliedOp.workQuantity,7);}
  j=await require('./production-review-fixture.cjs').review(call,admin,j.id);await require('./ops-fixture.cjs').seedStock(call,admin,j.id);
  j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'prepare',workshop:'Xưởng',deadline:'',drawingReady:true,materialsReady:true,note:''},tech)).data;
  const op=j.progress.operations[0];j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'operation',operationId:op.id,assignee:'',status:'running',output:0,note:''},tech)).data;
