@@ -27,6 +27,7 @@ function createProduction({sql,fail,readBody,transaction,audit,operationsERP}){
  async function handle({req,route,user,send}){
   if(!route.startsWith('/api/production'))return false;
   if(!canRead(user))fail(403,'Chưa có quyền xem sản xuất');
+  if(await require('./production-review-tables.cjs').create({sql,fail}).handle({req,route,user,send}))return true;
   if(await dossier.handle({req,route,user,send}))return true;
   if(await changes.handle({req,route,user,send}))return true;
   if(await flow.handle({req,route,user,send}))return true;

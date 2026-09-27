@@ -146,3 +146,19 @@ test('production issuance persists sheet metadata and rejects invalid dates and 
  A.equal((await call('production','POST',body)).data.id,job.id);A.equal((await call('production','POST',{...body,note:'Different requirement'})).status,409);
  const stock=(await call('ops/job/'+job.id)).data;A.ok(Array.isArray(stock.stageStockCandidates));A.ok(stock.requirements.every(r=>r.onOrder===0&&r.remaining>=0&&r.suggested>=0));
 });
+test('review tables calculate machine hours, protect costs, and persist a changed purchase stock size',async t=>{
+ const {app,call,post,job}=await fixture(t);
+ const machine=await post('master',{kind:'machine',expectedVersion:0,document:{code:'RATE-MACHINE',name:'Máy kiểm thử',workshop:'Xưởng 1',hoursPerDay:8,hourRate:200000}});A.equal(machine.status,200,JSON.stringify(machine.data));
+ const state=(await call('ops/state')).data,m=state.machines.find(x=>x.code==='RATE-MACHINE');A.equal(m.hourRate,200000);
+ const packet=JSON.parse(app.sql.prepare('SELECT packet FROM production_jobs WHERE id=?').get(job.id).packet);packet.operations[0].machineId=m.id;packet.operations[0].standardHours=0.5;app.sql.prepare('UPDATE production_jobs SET packet=? WHERE id=?').run(JSON.stringify(packet),job.id);
+ let view=await call('production/'+job.id+'/review-tables');A.equal(view.status,200);A.equal(view.data.rows[0].hourRate,200000);A.equal(view.data.rows[0].totalStandardHours,0.5*packet.operations[0].quantity);A.equal(view.data.rows[0].standardCost,100000*packet.operations[0].quantity);A.ok(Number.isFinite(view.data.rows[0].quoteCost));A.equal(view.data.rows[0].quoteHours,view.data.rows[0].quoteCost/200000);
+ const user=(await call('users','POST',{username:'floor',name:'Xưởng',role:'sales',password:'Operations-test-2026!'})).data;app.sql.prepare('UPDATE users SET action_access=? WHERE id=?').run(JSON.stringify({production:['view'],workshop:['view','edit']}),user.id);const session=await call('login','POST',{username:'floor',password:'Operations-test-2026!'});
+ view=await call('production/'+job.id+'/review-tables','GET',undefined,session);A.equal(view.status,200);A.equal(view.data.canSeeCosts,false);for(const row of view.data.rows)for(const key of ['hourRate','quoteCost','quoteHours','standardCost'])A.equal(Object.hasOwn(row,key),false);A.equal(view.data.rows[0].totalStandardHours,0.5*packet.operations[0].quantity);
+ A.equal((await post('master',{kind:'machine',expectedVersion:m.version,document:{...m,hourRate:1}},session)).status,403);
+ const material=job.packet.materials.find(x=>x.material.shape==='sheet').material.id;
+ let r=await post('purchase-size',{jobId:job.id,expectedVersion:job.version,materialId:material,length:3000,width:1500});A.equal(r.status,200,JSON.stringify(r.data));
+ let stock=(await call('ops/job/'+job.id)).data.requirements.find(r=>r.materialId===material);A.equal(stock.length,3000);A.equal(stock.width,1500);A.ok(stock.nesting.purchaseQuantity>0);
+ A.equal((await post('purchase-size',{jobId:job.id,expectedVersion:job.version,materialId:material,length:4000,width:1500})).status,409);
+ const current=(await call('production/'+job.id)).data;A.equal((await post('purchase-size',{jobId:job.id,expectedVersion:current.version,materialId:material,length:1,width:1})).status,400);
+ stock=(await call('ops/job/'+job.id)).data.requirements.find(r=>r.materialId===material);A.equal(stock.length,3000);
+});

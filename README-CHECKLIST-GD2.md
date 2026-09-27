@@ -399,3 +399,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Đã deploy bản **86fcc15** lên https://truongphat-group.xyz; sao lưu nguồn + SQLite trước triển khai. HTTPS health và SHA-256 của 24 tệp runtime khớp bản phát hành.
 - Đã dùng trình duyệt trên web thật: mở lệnh LSX-20260926testdulieu; kiểm tra 6 cột, mở/đóng ô chọn máy, mở màn sửa hợp nhất, màn 1600 px và 390 px. Không ghi thay đổi nghiệp vụ vào lệnh khách; kiểm thử lưu/kiến nghị/duyệt chạy trên dữ liệu kiểm thử riêng.
 - Ảnh kiểm chứng: artifacts/production-unified-review-live-desktop.png, artifacts/production-unified-review-live-mobile.png, artifacts/production-unified-editor-live.png. Phiên xác minh tạm đã thu hồi.
+
+### Hai bảng rà soát và quy trình theo mẫu khách — 27/09/2026
+- Bảng vật tư: nhu cầu theo chi tiết/khai triển, kho đáp ứng, thiếu, trạng thái, khổ mua, số lượng mua và nút đề nghị mua theo dòng. Chọn lại khổ để sắp và tính lượng mua; chặn khổ không đủ, phiên bản cũ và đổi khổ khi yêu cầu mua còn xử lý.
+- Bảng định mức: phân xưởng, máy, đơn giá giờ máy, giờ quy đổi từ chi phí công đoạn báo giá nguồn, giờ định mức/đơn vị, tổng giờ và so sánh chi phí. Chưa có căn cứ thì hiển thị Chưa khai. Giá giờ máy theo danh mục hiện tại được ghi rõ trong giải thích.
+- Tài khoản không được xem giá không nhận đơn giá, giờ suy từ giá, chi phí báo giá hay chi phí định mức qua API.
+- Định mức giờ được gửi trong đề nghị tiến trình và chỉ áp dụng sau duyệt. Lịch sử cùng nguyên công/máy hiển thị sản lượng và giờ thực tế để người phụ trách tham khảo; không tự xác định sản phẩm tương tự hoặc tự áp định mức.
+- Quy trình một lệnh trình bày các cột theo công đoạn thực tế, thẻ chi tiết, người phụ trách, sản lượng/tiến độ và vướng mắc; QC/hoàn thành vẫn độc lập.
+- Kiểm thử: 18 ca API/core đạt; browser đổi khổ, tạo yêu cầu mua ngay tại bảng và tải lại; browser gửi/duyệt giờ định mức và luồng sản xuất–đối soát–QC–hoàn thành đạt.
