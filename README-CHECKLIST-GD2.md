@@ -448,3 +448,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - 4 bài browser đạt: vật tư/chọn phôi/sắp lại/giữ/reload/mobile; rà soát các mục; công nghệ–đối soát–QC; sửa trực tiếp và phê duyệt kiến nghị.
 - Deploy **8b4b796** sau sao lưu nguồn/SQLite. Container healthy; HTTPS và 29 hash runtime khớp. Kiểm tra trực tiếp LSX-01: bảng gọn, kích thước 1873 × 210 mm, mở Kho và sơ đồ mua gộp 2 chi tiết trên 1 tấm. Tại thời điểm kiểm tra không có lô kho khả dụng phù hợp, đã kiểm tra trạng thái trống; chọn/giữ lô có hàng thử trên dữ liệu riêng. Không tạo giao dịch thử trên web thật. Phiên xác minh đã thu hồi.
 - Ảnh: artifacts/production-material-table-live.png, artifacts/production-stock-picker-live.png, artifacts/production-purchase-layout-live.png.
+# Cập nhật 28/09/2026 — thao tác trực tiếp trên bảng quy trình
+
+- Bảng công đoạn có chế độ nhân công/bắt đầu, khai khối lượng và QC công đoạn; lưu theo phiên bản lệnh, giữ nội dung khi lưu lỗi, phục hồi đúng chế độ sau tải lại.
+- Kéo thả hoặc nút trái/phải để lập đề nghị đổi trình tự; các bước đã triển khai không đổi vị trí. Chỉ áp dụng qua luồng duyệt công nghệ hiện có. Các công đoạn trùng tên không bị gom vượt thứ tự.
+- QC công đoạn có quyền riêng, số đạt/lỗi không vượt sản lượng, lịch sử và chống ghi đè phiên bản; không thay QC cuối lệnh hoặc duyệt hoàn thành.
+- Ghi thời điểm bàn giao khi chuyển bán thành phẩm sang bước tiếp theo (bước cuối khi nhập thành phẩm). Hiển thị thời gian từ bắt đầu đến bàn giao, trừ các khoảng chờ vật tư/chờ duyệt đã khai, không cộng trùng khoảng chờ.
+- Kiểm thử: 24 ca API/core; trình duyệt kiểm tra bảng trực tiếp, luồng công nghệ đến thành phẩm, rà soát kỹ thuật và bảng vật tư. Kiểm tra web thật được ghi nhận sau triển khai.

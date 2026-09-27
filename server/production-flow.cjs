@@ -24,7 +24,7 @@ function createProductionFlow({sql,fail,readBody,transaction,audit,operationsERP
   const ext=new Map();for(const m of j.packet.materials||[])if(m.externallySupplied){const key=m.material.id;if(!ext.has(key))ext.set(key,{holdId:'external:'+key,materialId:key,name:m.material.name||m.name,external:true,inputWeight:0});ext.get(key).inputWeight+=m.dimensions.weight||0;}return rows.concat([...ext.values()]);
  }
  function move(j,stock,kind,u){const id=randomUUID();put('stage-movement',id,{id,jobId:j.id,orderId:j.order_id,stockId:stock.id,code:j.code,operationId:stock.operationId,kind,quantity:kind==='issue'?-stock.quantity:stock.quantity,weight:kind==='issue'?-stock.weight:stock.weight,unit:stock.unit,warehouse:stock.warehouse,product:stock.name,at:now(),actor:u.name});}
- function consumePrevious(j,index,u){if(index<=0)return;const prev=stage(j,j.packet.operations[index-1].id);if(!prev)fail(409,'Chưa nhập kho công đoạn trước');if(prev.consumedBy&&prev.consumedBy!==j.packet.operations[index].id)fail(409,'Bán thành phẩm đã xuất cho bước khác');if(!prev.consumedBy){prev.consumedBy=j.packet.operations[index].id;prev.consumedAt=now();put('stage-stock',prev.id,prev);move(j,prev,'issue',u);}}
+ function consumePrevious(j,index,u){if(index<=0)return;const prev=stage(j,j.packet.operations[index-1].id);if(!prev)fail(409,'Chưa nhập kho công đoạn trước');if(prev.consumedBy&&prev.consumedBy!==j.packet.operations[index].id)fail(409,'Bán thành phẩm đã xuất cho bước khác');if(!prev.consumedBy){prev.consumedBy=j.packet.operations[index].id;prev.consumedAt=now();const progress=j.progress.operations.find(o=>o.id===prev.operationId);if(progress)progress.handedOverAt=prev.consumedAt;put('stage-stock',prev.id,prev);move(j,prev,'issue',u);}}
  function guard(j,b,u){
   if(!['operation','qc','complete'].includes(b.action))return;
   if(!j.packet.flowApproved)fail(409,'Cần xác nhận kỹ thuật và Admin duyệt tiến trình công nghệ trước khi sản xuất');
@@ -41,7 +41,7 @@ function createProductionFlow({sql,fail,readBody,transaction,audit,operationsERP
  }
  function finish(j,u){
   const last=j.packet.operations.at(-1),s=last&&stage(j,last.id);if(!s)fail(409,'Thiếu nhập kho công đoạn cuối');const id=j.id+':finished';if(get('stage-stock',id))return;
-  if(!s.consumedBy){s.consumedBy='finished';s.consumedAt=now();put('stage-stock',s.id,s);move(j,s,'issue',u);}
+  if(!s.consumedBy){s.consumedBy='finished';s.consumedAt=now();const progress=j.progress.operations.find(o=>o.id===s.operationId);if(progress)progress.handedOverAt=s.consumedAt;put('stage-stock',s.id,s);move(j,s,'issue',u);}
   const d={id,jobId:j.id,operationId:'finished',name:j.packet.product.name,kind:'finished',quantity:j.quantity,unit:j.packet.product.unit||'bộ',weight:s.weight,warehouse:s.warehouse,materials:s.materials,at:now(),actor:u.name};put('stage-stock',id,d);move(j,d,'receipt',u);
  }
  function shipOrder(orderId,u){for(const r of all('SELECT id FROM production_jobs WHERE order_id=?',orderId)){const j=job(r.id);if(!j.packet.flowApproved)continue;const s=get('stage-stock',j.id+':finished');if(!s)fail(409,'Lệnh chưa nhập kho thành phẩm');if(!s.consumedBy){s.consumedBy='delivery';s.consumedAt=now();put('stage-stock',s.id,s);move(j,s,'issue',u);}}}
@@ -62,10 +62,22 @@ function createProductionFlow({sql,fail,readBody,transaction,audit,operationsERP
   progress.status='done';progress.output=op.quantity;progress.finishedAt=now();j.progress.operationReports=j.progress.operationReports||[];j.progress.operationReports.push({operationId:op.id,at:progress.finishedAt,actor:u.name,assignee:progress.assignee,output:progress.output,hours:progress.hours||0,note:reason});const next=j.progress.operations[index+1];if(next){const ids=next.assignee?[next.assignee]:[j.progress.assignee,j.packet.issuedBy?.id,...all("SELECT id FROM users WHERE role='admin' AND active=1 AND deleted_at IS NULL").map(u=>u.id)];require('./work-notifications.cjs').notify(sql,ids,(next.assignee?'Sẵn sàng thực hiện: ':'Cần phân công bước tiếp theo: ')+j.code+' · '+j.packet.operations[index+1].name,'source:production:'+j.id+':'+next.id);}progress.note=(progress.note||'')+'\nĐối soát: '+reason;j.state=j.progress.operations.every(o=>o.status==='done')?'qc':'running';return save(j,u,'Đối soát và nhập kho '+op.name+' · '+reason);
  }
  async function handle({req,route,user,send}){
-  const m=route.match(/^\/api\/production\/([a-f0-9-]+)\/flow(?:\/(plan|confirm|business|pricing|approve|reject|settle))?$/);if(!m)return false;need(user,'view');const j=job(m[1]);
+  const m=route.match(/^\/api\/production\/([a-f0-9-]+)\/flow(?:\/(plan|confirm|business|pricing|approve|reject|settle|stage-qc))?$/);if(!m)return false;need(user,'view');const j=job(m[1]);
   if(req.method==='GET'&&!m[2]){const active=j.packet.operations.find(o=>j.progress.operations.find(p=>p.id===o.id)?.status!=='pending'&&!stage(j,o.id));send(200,{jobVersion:j.version,approved:!!j.packet.flowApproved,operations:j.packet.operations,proposals:proposals(j).map(p=>costing.clean(p,user)),stocks:list('stage-stock').filter(s=>s.jobId===j.id),movements:list('stage-movement').filter(s=>s.jobId===j.id),active:active?.id,inputs:active?inputRows(j,j.packet.operations.findIndex(o=>o.id===active.id)):[],canEdit:AA.allows(user,'production','edit',technical(user)),canConfirm:AA.allows(user,'production','confirm',technical(user)),machines:list('machine').filter(m=>m.active!==false).map(m=>({id:m.id,name:m.name,code:m.code})),canBusiness:AA.allows(user,'production','reviewBusiness',false),canPricing:AA.allows(user,'production','reviewPricing',false),canApprove:AA.allows(user,'production','approveChange',false),canSettle:AA.allows(user,'production','edit',technical(user))&&AA.allows(user,'production','confirm',technical(user))&&AA.allows(user,'inventory','edit',false)});return true;}
   if(req.method!=='POST'||!m[2])fail(405,'Thao tác không hợp lệ');const b=await readBody(req,400000),action=m[2];
   const result=transaction(()=>{const j=job(m[1]);if(j.state==='completed')fail(409,'Lệnh đã hoàn thành');if(b.expectedVersion!==j.version)fail(409,'Lệnh đã đổi; tải lại trước khi lưu');
+   if(action==='stage-qc'){
+    need(user,'qc');require('./production-review.cjs').requireReview(sql,j,fail);
+    const p=j.progress.operations.find(o=>o.id===b.operationId),op=j.packet.operations.find(o=>o.id===b.operationId);
+    if(!p||!op)fail(400,'Không có công đoạn');
+    if(!j.packet.flowApproved||!(p.output>0))fail(409,'Cần quy trình đã duyệt và sản lượng đã ghi nhận trước khi QC');
+    const passed=num(b.passed),rejected=num(b.rejected);
+    if(passed+rejected>Math.min(p.output,op.quantity)||passed+rejected<=0)fail(400,'Tổng QC phải lớn hơn 0 và không vượt sản lượng đã ghi nhận');
+    const note=text(b.note||'',2000);if(p.qc&&JSON.stringify([p.qc.passed,p.qc.rejected,p.qc.note])===JSON.stringify([passed,rejected,note]))return j;
+    const qc={passed,rejected,note,at:now(),actor:user.name,actorId:user.id};
+    p.qc=qc;j.progress.stageQcHistory??=[];j.progress.stageQcHistory.push({operationId:op.id,...qc});
+    return save(j,user,'QC công đoạn '+op.name+': '+passed+' đạt / '+rejected+' không đạt · '+note);
+   }
    if(action==='settle'){need(user,'edit');need(user,'confirm');if(!AA.allows(user,'inventory','edit',user.role==='admin'))fail(403,'Cần quyền cập nhật kho để xác nhận nhập phôi / hoàn dư');return settle(j,b,user);}
    if(action==='plan'){
     need(user,'edit');const reason=text(b.reason,2000,true);if(!Array.isArray(b.operations)||!b.operations.length||b.operations.length>300)fail(400,'Khai từ 1 đến 300 công đoạn');const ids=new Set();
