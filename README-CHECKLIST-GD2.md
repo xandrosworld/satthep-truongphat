@@ -410,3 +410,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Đã triển khai bản **1cae69f** lên https://truongphat-group.xyz; sao lưu nguồn và SQLite trước cập nhật, container healthy. HTTPS health và 27 hash tệp runtime khớp bản phát hành.
 - Kiểm tra trình duyệt trên lệnh thật LSX-20260926testdulieu: bảng vật tư 11 cột, mở hộp chọn khổ, bảng định mức và API, màn hình 390 px không tràn hộp thoại. Bảng quy trình được kiểm tra hiển thị ở chế độ chỉ đọc; lệnh vẫn giữ điều kiện xác nhận hồ sơ trước triển khai. Mọi yêu cầu ghi nghiệp vụ bị chặn trong phiên kiểm tra; không tạo giao dịch thử trên dữ liệu khách.
 - Đã xem ảnh kiểm chứng sau triển khai: artifacts/production-material-review-live.png, artifacts/production-norm-review-live.png, artifacts/production-stage-board-live.png. Phiên xác minh tạm đã thu hồi và tệp xác thực cục bộ đã xóa.
+
+### Sửa kẹt xác nhận mở sửa báo giá — 27/09/2026
+- Đề nghị từ phiên bản cũ không còn buộc từ chối rồi lập lại. Khi người có quyền chọn Cho sửa lại, tải trạng thái mới, hiển thị phạm vi/lý do và phiên bản cũ–hiện tại; xác nhận mở đúng phạm vi trên bản hiện tại. Giữ nguồn đề nghị, lưu phiên bản được xét và giữ lịch sử báo giá đã duyệt.
+- Vẫn chặn sai quyền, đề nghị đã xử lý, mở ngoài phạm vi và thay đổi đồng thời sau khi mở hộp xác nhận. Giữ dữ liệu đang nhập khi làm mới trạng thái mở sửa.
+- 6 ca API và browser tái hiện đề nghị v2 → báo giá được duyệt v3 → xác nhận mở sửa đạt. Build thành công.
+- Deploy **f1675ad**, sao lưu nguồn/SQLite; HTTPS healthy, 29 hash runtime khớp. Kiểm tra đọc trên web thật không tìm thấy đề nghị chờ cũ lệch phiên bản tại thời điểm kiểm tra nên không xác nhận được đúng hồ sơ khách trong ảnh; không tạo hoặc duyệt thử đề nghị trên dữ liệu thật. Phiên kiểm tra tạm đã thu hồi.
