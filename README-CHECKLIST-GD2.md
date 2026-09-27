@@ -396,3 +396,6 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Diện tích phôi dùng blankArea; dữ liệu lệnh cũ dùng kích thước khai triển và số lượng để tính diện tích tấm, không dùng diện tích hai mặt.
 - Kiểm thử: 14 ca API; browser bảng 6 cột, mở ô sửa, xác nhận chỉ chọn máy, tải lại; editor nháp/kiến nghị; luồng ba bộ phận duyệt và áp dụng.
 - Trạng thái triển khai và kiểm tra HTTPS được ghi sau khi chạy trên máy chủ.
+- Đã deploy bản **86fcc15** lên https://truongphat-group.xyz; sao lưu nguồn + SQLite trước triển khai. HTTPS health và SHA-256 của 24 tệp runtime khớp bản phát hành.
+- Đã dùng trình duyệt trên web thật: mở lệnh LSX-20260926testdulieu; kiểm tra 6 cột, mở/đóng ô chọn máy, mở màn sửa hợp nhất, màn 1600 px và 390 px. Không ghi thay đổi nghiệp vụ vào lệnh khách; kiểm thử lưu/kiến nghị/duyệt chạy trên dữ liệu kiểm thử riêng.
+- Ảnh kiểm chứng: artifacts/production-unified-review-live-desktop.png, artifacts/production-unified-review-live-mobile.png, artifacts/production-unified-editor-live.png. Phiên xác minh tạm đã thu hồi.
