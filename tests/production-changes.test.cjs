@@ -55,7 +55,8 @@ test('engineering proposal requires technical confirmation then admin, recompute
  // Mixed-row proposal, selective reviews must match the exact approved selection.
  const rowsNow=(await get()).rows.filter(r=>r.dims.L),a=rowsNow[0],z=rowsNow[1];A.ok(z);
  const oldPacket=(await call('production/'+j.id,'GET',undefined,tech)).data.packet;
- c=(await call(route,'POST',{expectedVersion:j.version,reason:'Bảng kiến nghị hai chi tiết',items:[{rowId:a.id,dims:{L:a.dims.L+5}},{rowId:z.id,dims:{L:z.dims.L+7}}]},tech)).data;A.ok(c.id);
+ c=(await call(route,'POST',{expectedVersion:j.version,reason:'Bảng kiến nghị hai chi tiết',items:[{rowId:a.id,reason:'Theo bản vẽ mới',dims:{L:a.dims.L+5}},{rowId:z.id,reason:'Theo điều kiện xưởng',dims:{L:z.dims.L+7}}]},tech)).data;A.ok(c.id);
+ A.equal(c.rowReasons[a.id],'Theo bản vẽ mới');A.equal(c.rowReasons[z.id],'Theo điều kiện xưởng');A.ok(c.before.reviewRows.some(r=>r.id===a.id));
  A.equal((await step('business',tech,{note:'Không được phép'})).status,403);
  A.equal((await step('confirm',tech)).status,200);
  A.equal((await step('business',admin,{note:'Khách chấp thuận',rowIds:[a.id]})).status,200);

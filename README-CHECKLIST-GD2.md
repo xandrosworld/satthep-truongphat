@@ -456,3 +456,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Ghi thời điểm bàn giao khi chuyển bán thành phẩm sang bước tiếp theo (bước cuối khi nhập thành phẩm). Hiển thị thời gian từ bắt đầu đến bàn giao, trừ các khoảng chờ vật tư/chờ duyệt đã khai, không cộng trùng khoảng chờ.
 - Kiểm thử: 24 ca API/core; trình duyệt kiểm tra bảng trực tiếp, luồng công nghệ đến thành phẩm, rà soát kỹ thuật và bảng vật tư.
 - Đã triển khai bản `7c35232` lên web thật; sao lưu nguồn và SQLite, đối chiếu đủ 31 tệp runtime, healthcheck đạt. LSX-01: mở các chế độ nhân công/khối lượng/QC, sắp lại và hủy, kiểm tra khung điện thoại; không ghi nghiệp vụ giả. Phiên kiểm tra tạm đã thu hồi. Ảnh đối chiếu: `artifacts/production-board-{labor,quantity,qc}-live.png`.
+# Cập nhật 28/09/2026 — bảng tổng hợp điều chỉnh để phê duyệt
+
+- Bảng kiến nghị kỹ thuật và công nghệ trình bày 5 cột: hiện trạng cũ, đề nghị điều chỉnh, lý do, xác nhận kỹ thuật/kinh doanh/giá, duyệt.
+- Chọn toàn bộ hoặc từng mục ngay tại dòng. Trạng thái xác nhận có tên/thời điểm; nút duyệt chỉ sẵn sàng khi ba bộ phận xác nhận cùng phạm vi. Duyệt một phần ghi rõ mục áp dụng và mục giữ nguyên.
+- Lưu lý do từng mục và thông số chi tiết trước/sau cho đề nghị mới. Bảng kiến nghị nháp cũng dùng 5 cột. Chi phí/đơn giá nằm trong phần mở rộng, theo quyền hiện hành.
+- Kiểm thử API bảo toàn báo giá nguồn, lý do từng mục, phân quyền và duyệt một phần; trình duyệt kiểm tra bảng, giữ lựa chọn sau xác nhận, duyệt một mục, công nghệ, tải lại và khung điện thoại.

@@ -46,7 +46,10 @@ function createProductionChanges({sql,fail,readBody,transaction,audit,packet,can
     if(JSON.stringify(n)!==original)changed=true;
     }
     if(!changed)fail(400,'Chưa có thông số thay đổi');if(!b.technicalDocument){d.quote.nestingPlans=[];d.quote.remnantSelections={};}const after=packet(d);if(after.issues.length||after.cutting.some(g=>g.error))fail(400,'Thông số đề nghị không tạo được phương án sản xuất hợp lệ');
-    const c={id:randomUUID(),jobId:j.id,baseVersion:j.version,rowId:rows[0],rowIds:rows,...(documentDiff?{items:documentDiff.rows,structural:documentDiff.structural}:{}),reason,state:'pending',at:new Date().toISOString(),actor:user.name,actorId:user.id,reference:typeof b.reference==='string'?b.reference.trim().slice(0,2000):'',before,after,impact:{before:totals(source(current)),after:totals(d)},document:d};put('production-change',c.id,c);audit(user,'production-change-proposed',j.id,reason);notice(j,['confirm','reviewBusiness','reviewPricing'],'Có bảng kiến nghị cần xem xét');return clean(c,user);
+    const reviewRows=doc=>C.flatten(doc.quote.products).map(n=>({id:n.id,name:n.name,kind:n.kind,qty:n.qty,unit:n.unit,dims:n.dims,params:n.params,lineNote:n.lineNote,notes:n.notes,requestSpecification:n.requestSpecification}));
+    before.reviewRows=reviewRows(originalDocument);after.reviewRows=reviewRows(d);
+    const rowReasons=Object.fromEntries(items.map(x=>{if(x.reason!==undefined&&(typeof x.reason!=='string'||x.reason.length>2000))fail(400,'Lý do từng mục tối đa 2000 ký tự');return [x.rowId,x.reason?.trim()||reason];}));
+    const c={id:randomUUID(),jobId:j.id,baseVersion:j.version,rowId:rows[0],rowIds:rows,rowReasons,...(documentDiff?{items:documentDiff.rows,structural:documentDiff.structural}:{}),reason,state:'pending',at:new Date().toISOString(),actor:user.name,actorId:user.id,reference:typeof b.reference==='string'?b.reference.trim().slice(0,2000):'',before,after,impact:{before:totals(source(current)),after:totals(d)},document:d};put('production-change',c.id,c);audit(user,'production-change-proposed',j.id,reason);notice(j,['confirm','reviewBusiness','reviewPricing'],'Có bảng kiến nghị cần xem xét');return clean(c,user);
    }
    const c=get('production-change',m[2]);if(!c||c.jobId!==j.id)fail(404,'Không tìm thấy đề nghị');
    if(!['pending','confirmed'].includes(c.state))fail(409,'Đề nghị đã được xử lý');
