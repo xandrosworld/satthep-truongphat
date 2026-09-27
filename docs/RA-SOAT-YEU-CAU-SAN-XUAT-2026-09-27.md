@@ -25,3 +25,7 @@
 - 18 ca API/core: kiến nghị, giá, duyệt từng phần, quy trình, hồ sơ/bản vẽ, vật tư và nesting đạt.
 - Browser editor: bốn tab, tải bản vẽ, sửa ô kích thước, nhập khai triển tay, lưu/khôi phục nháp, gửi kiến nghị; số lượng gốc bị khóa; thay đổi từ nhân sự khác khiến gửi bản cũ bị từ chối và không sinh thêm đề nghị. Báo giá đang mở không bị ghi đè.
 - Các giới hạn ở bảng là hành vi hiện có; chưa có căn cứ gọi đó là nghiệm thu 100% hoặc nesting tối ưu cho mọi biên dạng.
+
+## Triển khai
+
+Bản `f026f39` đã lên máy chủ sau sao lưu mã nguồn và SQLite. Container healthy, health HTTPS OK; 23 hash runtime khớp gói phát hành và HTML công khai có sửa đổi. Không tạo dữ liệu thử trong cơ sở dữ liệu khách.
