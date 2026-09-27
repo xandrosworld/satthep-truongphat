@@ -387,3 +387,12 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Đã triển khai máy chủ ngày 27/09/2026: bản `1998797` tại https://truongphat-group.xyz. Sao lưu mã nguồn và SQLite trước cập nhật. Container healthy; `/healthz` trả OK; đối chiếu SHA-256 của đủ 23 tệp runtime trong container khớp bản phát hành; HTML công khai có form rà soát, bảng kiến nghị chung và quy trình mới. Kiểm thử nghiệp vụ dùng dữ liệu riêng ở local; không tạo lệnh thử trong dữ liệu khách.
 
 - Rà soát lại từng yêu cầu: xem `docs/RA-SOAT-YEU-CAU-SAN-XUAT-2026-09-27.md`. Đã sửa bảo vệ phạm vi ở bảng nhanh, khởi tạo viewer 3D và giữ đúng phiên bản giao dịch bổ sung bản vẽ. 18 ca API/core và browser editor mở rộng đạt. Bản `f026f39` đã lên máy chủ, healthy; kiểm tra HTTPS và 23 hash runtime khớp.
+
+### Rà soát sản xuất một trang — yêu cầu ảnh 27/09/2026
+- Gom cấu thành, khai triển và công đoạn vào bảng 6 nhóm cột: thông số/mã vật tư; ĐVT/số lượng; khai triển; nguyên công/máy/nơi làm; khối lượng/diện tích phôi; ghi chú.
+- Thu gọn ô sửa; giữ bảng kiến nghị và duyệt trước khi áp dụng thay đổi. Các xác nhận độc lập cùng nằm trên một trang.
+- Màn sửa kỹ thuật hiển thị cấu thành nối tiếp công đoạn; bản vẽ và khai triển đầy đủ vẫn truy cập được.
+- Chỉ bắt buộc máy hoặc Thủ công; phương pháp/ghi chú tùy chọn. Giữ mã máy kế thừa khi xác nhận các mục khác.
+- Diện tích phôi dùng blankArea; dữ liệu lệnh cũ dùng kích thước khai triển và số lượng để tính diện tích tấm, không dùng diện tích hai mặt.
+- Kiểm thử: 14 ca API; browser bảng 6 cột, mở ô sửa, xác nhận chỉ chọn máy, tải lại; editor nháp/kiến nghị; luồng ba bộ phận duyệt và áp dụng.
+- Trạng thái triển khai và kiểm tra HTTPS được ghi sau khi chạy trên máy chủ.

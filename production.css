@@ -153,3 +153,25 @@
 .document-row-link:hover{text-decoration:underline}
 .document-row-link:focus-visible{outline:2px solid #245885;outline-offset:4px;border-radius:2px}
 @media print{.document-row-link{color:inherit;text-decoration:none}}
+
+/* Compact production review: six column groups, one shared technical page. */
+#production-console .production-review-grid{min-width:1080px;table-layout:fixed;width:100%}
+#production-console .production-review-grid th:nth-child(1){width:24%}
+#production-console .production-review-grid th:nth-child(2){width:8%}
+#production-console .production-review-grid th:nth-child(3){width:16%}
+#production-console .production-review-grid th:nth-child(4){width:27%}
+#production-console .production-review-grid th:nth-child(5){width:13%}
+#production-console .production-review-grid th:nth-child(6){width:12%}
+#production-console .production-review-grid td{vertical-align:top;white-space:normal;overflow-wrap:anywhere;padding:10px}
+#production-console .production-review-grid p{margin:4px 0}
+#production-console .production-review-grid .review-row-product{background:#d5e8f7}
+#production-console .production-review-grid .review-row-component{background:#e8f2fa}
+#production-console .production-review-grid .dossier-operation{margin:0 0 6px;border:1px solid #d6e2eb;border-radius:5px;padding:7px;background:#fff}
+#production-console .production-review-grid summary{cursor:pointer;list-style:none}
+#production-console .production-review-grid summary small{display:block;margin:3px 0;color:#536578}
+#production-console .production-review-grid summary .review-edit-label{display:inline-block;margin-top:5px;padding:3px 9px;border:1px solid #c4d5e3;border-radius:4px;color:#245885;background:#f6fbff;font-size:12px}
+#production-console .production-review-grid :is(input,select,textarea){min-width:0;width:100%;box-sizing:border-box}
+#production-console .production-review-grid .review-cell-editor[open] summary{margin-bottom:8px}
+#production-console .production-review-grid .review-method{margin-top:8px}
+#production-console .production-unified-review .production-review-sections>details{scroll-margin-top:12px}
+.production-editor-only #pe-operations{margin-top:24px;border-top:1px solid #cad7e1;padding-top:16px}
