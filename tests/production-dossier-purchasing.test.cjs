@@ -1,6 +1,24 @@
 'use strict';
 const {test}=require('node:test'),A=require('node:assert/strict'),{randomUUID}=require('node:crypto'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js');
 async function fixture(t){const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));let admin;const call=async(path,method='GET',body,s=admin)=>{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api/'+path,{method,headers:{'Content-Type':'application/json',Cookie:s?.cookie||'','X-CSRF-Token':s?.csrf||''},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};admin=await call('setup','POST',{username:'admin',name:'Admin',password:'Operations-test-2026!'},null);const d=P.demoSeed();d.quote.notes='Handle carefully\nKeep dry';d.quote.products[0].lineNote='Mark product A';d.quote.products[0].requestSpecification='Technical specification';d.quote.products[0].children[0].lineNote='Deburr all edges';const q=(await call('quotes','POST',{document:d})).data;await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1});await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2});const o=(await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'ORDER-OPS'})).data;await call('orders/'+o.id+'/confirm','POST',{quoteVersion:3});const j=await call('production','POST',{orderId:o.id,productId:d.quote.products[0].id,quantity:1,code:'JOB-OPS'});A.equal(j.status,201,JSON.stringify(j.data));const post=(p,b,s)=>call('ops/'+p,'POST',{requestId:randomUUID(),...b},s);return {app,call,post,admin,job:j.data,order:o,document:d};}
+test('selected stock preparation is atomic, idempotent and keeps review and inventory guards',async t=>{
+ const {call,post,job,app}=await fixture(t),id=job.id;
+ let j=(await call('production/'+id)).data;
+ A.equal((await post('reserve-selection',{jobId:id,expectedVersion:j.version,lines:[{lotId:'missing',quantity:1}]})).status,409);
+ await call('production/'+id+'/dossier','POST',{expectedVersion:j.version,requirements:'',noDrawingReason:'Thông số đã duyệt',reviewed:true,reviewChecks:{input:true,structure:true,operations:true,quantities:true},equipment:j.packet.operations.map(o=>({operationId:o.id,machine:'Thủ công',method:'Theo bản vẽ'}))});
+ const r=(await call('ops/job/'+id)).data.requirements[0];
+ await post('master',{kind:'material',expectedVersion:0,document:{id:r.materialId,code:r.materialId,name:r.name,unit:r.unit,form:'bulk'}});
+ const lot=(await post('receipt',{materialId:r.materialId,warehouse:'QA',quantity:r.quantity*2,unitWeight:10,unitCost:10,length:r.length,width:r.width,thickness:r.thickness||1,reference:'QA'})).data;
+ j=(await call('production/'+id)).data;
+ const invalid=await post('reserve-selection',{jobId:id,expectedVersion:j.version,lines:[{lotId:lot.id,quantity:1},{lotId:'missing',quantity:1}]});A.equal(invalid.status,404,JSON.stringify(invalid.data));
+ A.equal((await call('ops/job/'+id)).data.holds.length,0);
+ const quantity=['tấm','thanh','cái','bộ'].includes(r.unit)?1:Math.min(1,r.quantity/2),body={requestId:randomUUID(),jobId:id,expectedVersion:j.version,lines:[{lotId:lot.id,quantity}]};
+ const saved=await post('reserve-selection',body);A.equal(saved.status,200,JSON.stringify(saved.data));A.equal(saved.data.holds.length,1);A.equal(saved.data.holds[0].quantity,quantity);
+ A.deepEqual((await post('reserve-selection',body)).data,saved.data);A.equal((await call('ops/job/'+id)).data.holds.length,1);
+ A.equal((await post('reserve-selection',{...body,requestId:randomUUID(),expectedVersion:j.version-1})).status,409);
+ const user=(await call('users','POST',{username:'stock-viewer',name:'Viewer',role:'sales',password:'Operations-test-2026!'})).data;app.sql.prepare('UPDATE users SET action_access=? WHERE id=?').run(JSON.stringify({inventory:['view']}),user.id);const session=await call('login','POST',{username:'stock-viewer',password:'Operations-test-2026!'});
+ A.equal((await post('reserve-selection',{...body,requestId:randomUUID()},session)).status,403);
+});
 test('production dossier isolates prices, stores drawing revisions, enforces review, version and access',async t=>{
  const {app,call,job}=await fixture(t);let d=(await call('production/'+job.id+'/dossier')).data;
  A.ok(d.source.tree.length);A.equal(JSON.stringify(d.source).includes('ratesSnapshot'),false);A.equal(d.source.tree[0].qty,1);
