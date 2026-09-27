@@ -70,7 +70,7 @@ function createProduction({sql,fail,readBody,transaction,audit,operationsERP}){
      if(!v.packet.flowApproved||!p.materialsReady||!p.drawingReady)fail(409,'Cần duyệt công nghệ, xác nhận hồ sơ và vật tư trước khi ghi nhận sản lượng');
      const op=p.operations.find(x=>x.id===b.operationId),norm=v.packet.operations.find(x=>x.id===b.operationId);if(!op||!norm)fail(400,'Không có công đoạn');
      if(!op.assignee||!one('SELECT id FROM users WHERE id=? AND active=1 AND deleted_at IS NULL',op.assignee)||!p.deadline)fail(400,'Cần phân công người đang hoạt động và hạn hoàn thành trước khi ghi nhận');
-     if(!String(op.machine||norm.machine||'').trim())fail(400,'Khai thiết bị thực hiện; ghi Thủ công nếu không dùng máy');
+     if(norm.mode!=='outside'&&!String(op.machine||norm.machine||'').trim())fail(400,'Khai thiết bị thực hiện; ghi Thủ công nếu không dùng máy');
      if(!v.packet.stockManaged&&(v.packet.materials||[]).some(m=>!m.externallySupplied))fail(409,'Lệnh chưa đối chiếu kho');
      let inferred;try{inferred=require('./production-quantity.cjs')(v,b,user,at);}catch(e){fail(400,e.message);}
      operationsERP.issueReserved(j.id,user);
