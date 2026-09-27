@@ -21,7 +21,7 @@ test('engineering proposal requires technical confirmation then admin, recompute
  A.equal((await step('approve')).status,409);A.equal((await step('confirm',worker)).status,403);
  A.equal((await step('confirm',tech)).status,200);A.equal((await step('approve',tech)).status,403);
  await require('./ops-fixture.cjs').seedStock(call,admin,j.id);
- A.equal((await step('approve')).status,200);const changed=(await call('production/'+j.id,'GET',undefined,tech)).data;
+ A.equal((await step('approve')).status,409);A.equal((await step('business',admin,{note:'Khách chấp thuận theo bản vẽ'})).status,200);A.equal((await step('pricing',admin,{note:'Đã đối chiếu chi phí, chấp thuận'})).status,200);A.equal((await step('approve')).status,200);const changed=(await call('production/'+j.id,'GET',undefined,tech)).data;
  A.equal(changed.version,j.version+1);A.equal(changed.packet.layoutBasis,'engineering-change');A.notDeepEqual(changed.packet.cutting,j.packet.cutting);A.equal(changed.progress.materialsReady,false);A.equal(changed.progress.drawingReady,false);
  A.ok((await call('ops/job/'+j.id,'GET',undefined,admin)).data.holds.every(h=>h.state==='released'));
  const backup=(await call('backup','GET',undefined,admin)).data;A.equal(JSON.parse(backup.revisions.find(r=>r.id===q.id&&r.version===3).document).quote.products[0].qty,p.qty);A.deepEqual(JSON.parse(backup.orders[0].package).quote,order.package.quote);
@@ -34,12 +34,38 @@ test('engineering proposal requires technical confirmation then admin, recompute
  A.equal((await step('reject',admin,{reason:'Thông số đã thay đổi'})).status,200);
  // Switching to an approved catalog material and stock size changes the job only.
  c=(await call(route,'POST',{expectedVersion:j.version,rowId:row.id,materialId:'PH-T20',stockL:3000,stockW:1250,reason:'Đổi mã vật tư và khổ tấm'},tech)).data;
- A.ok(c.id);A.equal((await step('confirm',tech)).status,200);A.equal((await step('approve')).status,200);j=(await call('production/'+j.id,'GET',undefined,tech)).data;
+ A.ok(c.id);A.equal((await step('confirm',tech)).status,200);A.equal((await step('approve')).status,409);A.equal((await step('business',admin,{note:'Khách chấp thuận theo bản vẽ'})).status,200);A.equal((await step('pricing',admin,{note:'Đã đối chiếu chi phí, chấp thuận'})).status,200);A.equal((await step('approve')).status,200);j=(await call('production/'+j.id,'GET',undefined,tech)).data;
  A.equal(j.packet.materials.find(r=>r.id===row.id).material.id,'PH-T20');A.equal(j.packet.cutting.find(g=>g.materialId==='PH-T20').stockL,3000);
  // Stock/thickness modification is separately captured and recalculated.
  const current=await get(),rr=current.rows.find(r=>r.id===row.id);r=await call(route,'POST',{expectedVersion:j.version,rowId:rr.id,materialId:rr.material.id,props:{T:rr.properties.T+1},reason:'Đổi chiều dày'},tech);A.equal(r.status,200,JSON.stringify(r.data));c=r.data;
- A.equal((await step('confirm',tech)).status,200);A.equal((await step('approve')).status,200);j=(await call('production/'+j.id,'GET',undefined,tech)).data;
+ A.equal((await step('confirm',tech)).status,200);A.equal((await step('approve')).status,409);A.equal((await step('business',admin,{note:'Khách chấp thuận theo bản vẽ'})).status,200);A.equal((await step('pricing',admin,{note:'Đã đối chiếu chi phí, chấp thuận'})).status,200);A.equal((await step('approve')).status,200);j=(await call('production/'+j.id,'GET',undefined,tech)).data;
  A.equal(j.packet.materials.find(r=>r.id===row.id).properties.T,rr.properties.T+1);
+
+ // Machine/norm proposal is inert until every review and final approval.
+ const machine=await call('ops/master','POST',{requestId:'change-machine-test',expectedVersion:0,kind:'machine',document:{code:'MC-01',name:'Máy chấn kiểm thử',workshop:'Xưởng',hoursPerDay:8,active:true}},admin);A.equal(machine.status,200,JSON.stringify(machine.data));
+ const operation=(await get()).operations[0],index=Number(operation.id.split(':').pop());
+ const machineBody={expectedVersion:j.version,rowId:operation.nodeId,reason:'Đổi máy và định mức',operations:[{index,amount:operation.norm+1,machineId:machine.data.id,instructions:'Theo bản vẽ đã duyệt'}]};
+ A.equal((await call(route,'POST',{...machineBody,operations:[{index,machineId:'missing'}]},tech)).status,400);
+ c=(await call(route,'POST',machineBody,tech)).data;A.ok(c.id);
+ A.equal((await call('production/'+j.id,'GET',undefined,tech)).data.packet.operations.find(o=>o.id===operation.id).machine,operation.machine);
+ A.equal((await step('confirm',tech)).status,200);
+ for(const action of ['business','pricing'])A.equal((await step(action,admin,{note:'Đã xem tác động và chấp thuận'})).status,200);
+ A.equal((await step('approve')).status,200);j=(await call('production/'+j.id,'GET',undefined,tech)).data;
+ A.equal(j.packet.operations.find(o=>o.id===operation.id).machineId,machine.data.id);A.equal(j.packet.operations.find(o=>o.id===operation.id).norm,operation.norm+1);
+ // Mixed-row proposal, selective reviews must match the exact approved selection.
+ const rowsNow=(await get()).rows.filter(r=>r.dims.L),a=rowsNow[0],z=rowsNow[1];A.ok(z);
+ const oldPacket=(await call('production/'+j.id,'GET',undefined,tech)).data.packet;
+ c=(await call(route,'POST',{expectedVersion:j.version,reason:'Bảng kiến nghị hai chi tiết',items:[{rowId:a.id,dims:{L:a.dims.L+5}},{rowId:z.id,dims:{L:z.dims.L+7}}]},tech)).data;A.ok(c.id);
+ A.equal((await step('business',tech,{note:'Không được phép'})).status,403);
+ A.equal((await step('confirm',tech)).status,200);
+ A.equal((await step('business',admin,{note:'Khách chấp thuận',rowIds:[a.id]})).status,200);
+ A.equal((await step('pricing',admin,{note:'Giá đã kiểm tra',rowIds:[a.id]})).status,200);
+ A.equal((await step('approve',admin,{rowIds:[a.id]})).status,409);
+ A.equal((await step('confirm',tech,{rowIds:[a.id]})).status,200);
+ const partial=await step('approve',admin,{rowIds:[a.id]});A.equal(partial.status,200,JSON.stringify(partial.data));A.deepEqual(partial.data.notAppliedRowIds,[z.id]);
+ j=(await call('production/'+j.id,'GET',undefined,tech)).data;
+ A.deepEqual(j.packet.materials.find(r=>r.id===z.id).dimensions,oldPacket.materials.find(r=>r.id===z.id).dimensions);
+ A.notDeepEqual(j.packet.materials.find(r=>r.id===a.id).dimensions,oldPacket.materials.find(r=>r.id===a.id).dimensions);
  j=await require('./production-review-fixture.cjs').review(call,admin,j.id);await require('./ops-fixture.cjs').seedStock(call,admin,j.id);
  j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'prepare',workshop:'Xưởng',deadline:'',drawingReady:true,materialsReady:true,note:''},tech)).data;
  const op=j.progress.operations[0];j=(await call('production/'+j.id,'PUT',{expectedVersion:j.version,action:'operation',operationId:op.id,assignee:'',status:'running',output:0,note:''},tech)).data;

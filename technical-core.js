@@ -64,7 +64,7 @@ function productionBaseline(before,after){const b=copy(before);b.quote.products?
   b.quote.pricing??={};b.quote.pricing.policySelections??={};b.quote.pricing.policySelections['product:'+n.id]=copy(after.quote.pricing.policySelections['product:'+n.id]);
  }return b;
 }
-function rate(x,source){return {...pick(x,['id','name','enabled','machine','technicalNotes','unit','insideUnit','outsideUnit','finishing','productGroups','operationType','consumptionsEnabled']),...(complexityLevels(source||x).length?{complexityLevels:complexityLevels(source||x)}:{}),inside:0,outside:0,factors:[],...(x.consumption?{consumption:recipe(x.consumption)}:{}),...(x.consumptions?{consumptions:x.consumptions.map(recipe)}:{})};}
+function rate(x,source){return {...pick(x,['id','name','enabled','machine','machineId','technicalNotes','unit','insideUnit','outsideUnit','finishing','productGroups','operationType','consumptionsEnabled']),...(complexityLevels(source||x).length?{complexityLevels:complexityLevels(source||x)}:{}),inside:0,outside:0,factors:[],...(x.consumption?{consumption:recipe(x.consumption)}:{}),...(x.consumptions?{consumptions:x.consumptions.map(recipe)}:{})};}
 function node(x,q={}){return {...pick(x,nodeKeys),...(x.spec?{spec:spec(x.spec)}:{}),...(x.ruleSpec?{ruleSpec:pick(x.ruleSpec,ruleKeys)}:{}),...(x.outsource?{outsource:{...pick(x.outsource,['enabled','supplier','output','materialSupply','unit','quantity']),price:0}}:{}),ops:(x.ops||[]).map(o=>{const r=q.ratesSnapshot?.find(r=>r.id===o.id),option=r?.priceOptions?.find(p=>p.id===(q.operationPriceOptions?.[o.id]||o.priceOptionId)),method=option?.method||q.operationMethods?.[o.id]||o.pricingMethod;
  const unit=method==='fixed'?'gói':method==='direct'&&!option?o.priceUnit:(option||r)?.[o.mode+'Unit']||r?.unit;
  return {...pick(o,opKeys),...(choiceFor(o)?{complexityChoice:copy(choiceFor(o))}:{}),pricingMethod:'direct',unitPrice:0,priceUnit:unit||'kg'};
@@ -146,13 +146,13 @@ function mergeCatalog(original,input){
  const before=projectCatalog(original),result=copy(original);
  for(const k of ['pricingDefaults','materialPrices'])if(!equal(before[k],input[k]))throw Error('Không được thay đổi đơn giá hoặc hệ số');
  // Technical edits never replace commercial fields. New operations start with zero placeholders.
- const technicalKeys=['name','machine','technicalNotes'];
+ const technicalKeys=['name','machine','machineId','technicalNotes'];
  if(original.rates.some(r=>!input.rates.some(x=>x.id===r.id)))throw Error('Không xóa công đoạn qua danh mục kỹ thuật');
  result.rates=input.rates.map(r=>{
   const old=original.rates.find(x=>x.id===r.id),base=old||{id:r.id,unit:'kg',insideUnit:'kg',outsideUnit:'kg',inside:0,outside:0,factors:[],operationType:'detail'};
   const expected=rate(base,old?complexityRate(base,original):base),submitted=copy(r);for(const k of technicalKeys)delete expected[k],delete submitted[k];
   if(!equal(expected,submitted))throw Error('Chỉ sửa thông tin kỹ thuật của công đoạn');
-  if(typeof r.name!=='string'||!r.name.trim()||r.name.length>200||typeof(r.machine??'')!=='string'||(r.machine||'').length>200||typeof(r.technicalNotes??'')!=='string'||(r.technicalNotes||'').length>2000)throw Error('Thông tin công đoạn không hợp lệ');
+  if(typeof(r.machineId??'')!=='string'||(r.machineId||'').length>100||typeof r.name!=='string'||!r.name.trim()||r.name.length>200||typeof(r.machine??'')!=='string'||(r.machine||'').length>200||typeof(r.technicalNotes??'')!=='string'||(r.technicalNotes||'').length>2000)throw Error('Thông tin công đoạn không hợp lệ');
   const out=copy(base);for(const k of technicalKeys){if(r[k]===undefined)delete out[k];else out[k]=copy(r[k]);}return out;
  });
  const assign=(old,item,keys)=>{const out=copy(old||{});for(const k of keys){if(item[k]===undefined)delete out[k];else out[k]=copy(item[k]);}return out;};

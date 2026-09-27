@@ -116,7 +116,7 @@ test('bulk engineering proposal changes selected rows atomically and invalidates
  const r=await call(route,'POST',body);A.equal(r.status,200,JSON.stringify(r.data));A.equal(r.data.rowIds.length,2);
  A.equal((await call(route+'/'+r.data.id+'/approve','POST',{expectedVersion:j.version})).status,409);
  A.equal((await call(route+'/'+r.data.id+'/confirm','POST',{expectedVersion:j.version})).status,200);
- A.equal((await call(route+'/'+r.data.id+'/approve','POST',{expectedVersion:j.version})).status,200);
+ for(const action of ['business','pricing'])A.equal((await call(route+'/'+r.data.id+'/'+action,'POST',{expectedVersion:j.version,note:'Đã đối chiếu chấp thuận'})).status,200);A.equal((await call(route+'/'+r.data.id+'/approve','POST',{expectedVersion:j.version})).status,200);
  const next=(await call('production/'+j.id)).data;for(const id of body.rowIds)A.equal(next.packet.materials.find(m=>m.id===id).material.stockL,3200);
  const ds=(await call('production/'+j.id+'/dossier')).data;A.deepEqual(ds.reviewChecks,{});A.deepEqual(ds.confirmations,{});A.equal(ds.reviewed,undefined);
 });
@@ -124,7 +124,7 @@ test('manual development approval recalculates mass and nesting, records trace, 
  const {call,job,app,document}=await fixture(t),path='production/'+job.id;let j=job;const original=JSON.stringify(document),r=j.packet.materials.find(m=>m.dimensions.length>0&&m.material.shape==='sheet');A.ok(r);
  const draft={expectedVersion:j.version,rowId:r.id,blank:{length:r.dimensions.length*0.8,width:r.dimensions.width*0.9},reason:'Approved shop drawing',reference:'SHOP-R2'};
  let out=await call(path+'/changes','POST',draft);A.equal(out.status,200,JSON.stringify(out.data));const c=out.data;A.ok(Math.abs(c.after.materials.find(x=>x.id===r.id).dimensions.weight-r.dimensions.weight*0.72)<1e-6);A.equal((await call(path)).data.packet.materials.find(x=>x.id===r.id).blankMode,'formula');
- A.equal((await call(path+'/changes/'+c.id+'/approve','POST',{expectedVersion:j.version})).status,409);A.equal((await call(path+'/changes/'+c.id+'/confirm','POST',{expectedVersion:j.version})).status,200);A.equal((await call(path+'/changes/'+c.id+'/approve','POST',{expectedVersion:j.version})).status,200);
+ A.equal((await call(path+'/changes/'+c.id+'/approve','POST',{expectedVersion:j.version})).status,409);A.equal((await call(path+'/changes/'+c.id+'/confirm','POST',{expectedVersion:j.version})).status,200);for(const action of ['business','pricing'])A.equal((await call(path+'/changes/'+c.id+'/'+action,'POST',{expectedVersion:j.version,note:'Đã đối chiếu chấp thuận'})).status,200);A.equal((await call(path+'/changes/'+c.id+'/approve','POST',{expectedVersion:j.version})).status,200);
  j=(await call(path)).data;const m=j.packet.materials.find(x=>x.id===r.id);A.equal(m.blankMode,'manual');A.equal(m.dimensions.length,draft.blank.length);A.ok(j.packet.cutting.some(g=>g.stocks.some(s=>s.placements.some(p=>p.rowId===r.id&&(p.l===draft.blank.length||p.w===draft.blank.length)))));
  let dossier=(await call(path+'/dossier')).data;A.equal(dossier.trace.issuedBy.name,'Admin');A.equal(dossier.trace.changes[0].reference,'SHOP-R2');A.equal(dossier.trace.changes[0].reviewedBy,'Admin');A.equal(dossier.trace.changes[0].appliedVersion,j.version);A.equal(JSON.stringify(document),original);
  out=await call(path+'/changes','POST',{expectedVersion:j.version,rowId:r.id,blank:null,reason:'Return formula'});A.equal(out.status,200,JSON.stringify(out.data));A.equal(out.data.after.materials.find(x=>x.id===r.id).dimensions.length,r.dimensions.length);

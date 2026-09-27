@@ -1,6 +1,6 @@
 (function(root){
 'use strict';
-const labels={approveSchedule:'Duyệt tiến độ phối hợp',view:'Xem',create:'Thêm',edit:'Sửa',delete:'Xóa / hủy',submit:'Trình duyệt',approve:'Duyệt',reopen:'Mở sửa',confirm:'Xác nhận / bàn giao',assign:'Giao việc',export:'Xuất / in',import:'Nhập Excel',activate:'Yêu cầu tài khoản',review:'Duyệt hồ sơ',issue:'Phát hành lệnh',qc:'Kiểm tra chất lượng',complete:'Hoàn thành',send:'Gửi tin'};
+const labels={reviewBusiness:'Xác nhận điều chỉnh với khách',reviewPricing:'Xác nhận giá điều chỉnh',approveChange:'Duyệt điều chỉnh sản xuất',approveSchedule:'Duyệt tiến độ phối hợp',view:'Xem',create:'Thêm',edit:'Sửa',delete:'Xóa / hủy',submit:'Trình duyệt',approve:'Duyệt',reopen:'Mở sửa',confirm:'Xác nhận / bàn giao',assign:'Giao việc',export:'Xuất / in',import:'Nhập Excel',activate:'Yêu cầu tài khoản',review:'Duyệt hồ sơ',issue:'Phát hành lệnh',qc:'Kiểm tra chất lượng',complete:'Hoàn thành',send:'Gửi tin'};
 const modules={
  reports:['Trung tâm báo cáo',['view','export']],
  finance:['Thu chi, công nợ và giá thành',['view','create','delete','approve','export']],
@@ -17,7 +17,7 @@ const modules={
  payments:['Thu tiền hợp đồng',['view','create','delete']],
  costs:['Chi phí thực tế',['view','create','delete','approve']],
  profile:['Hồ sơ năng lực',['view','create','edit','delete','export']],
- production:['Lệnh sản xuất',['view','issue','edit','confirm','qc','complete','export']],
+ production:['Lệnh sản xuất',['view','issue','edit','confirm','reviewBusiness','reviewPricing','approveChange','qc','complete','export']],
  personnel:['Hồ sơ nhân sự',['view','create','edit','review','activate','export']],
  chat:['Chat nội bộ',['view','send']]
 };

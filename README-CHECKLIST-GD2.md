@@ -367,3 +367,13 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 | [ ] | D.04 | Triển khai môi trường vận hành, tài khoản và kế hoạch vận hành toàn hệ thống | Đã kiểm thử tải môi trường riêng; còn xác nhận tài khoản, cấu hình và kế hoạch vận hành thực tế với khách |
 | [x] | D.05 | Kiểm thử sao lưu và khôi phục đầy đủ dữ liệu toàn hệ thống | Đã tự diễn tập snapshot thật trong container không mạng: 47 bảng/1.996 bản ghi, 15 tệp, ảnh ứng dụng và cấu hình; hash khớp, phiên cũ bị xóa. Xem docs/KIEM-TRA-DO-BEN-GD2-2026-09-25.md; chưa phải ký nghiệm thu hoặc diễn tập mất toàn VPS |
 | [ ] | D.06 | Nghiệm thu cuối; bàn giao mã nguồn, cấu trúc dữ liệu/migration, cấu hình/build/deploy và tài liệu | Chờ rà soát |
+
+
+## Rà soát yêu cầu điều chỉnh sản xuất — 27/09/2026 (đang triển khai)
+
+- Đã triển khai và kiểm thử local: gom nhiều dòng thành bảng kiến nghị; kỹ thuật, kinh doanh và giá xác nhận đúng cùng phạm vi; quyền duyệt điều chỉnh riêng; chỉ các dòng được duyệt cập nhật vào lệnh. Mục chưa áp dụng cần lập đề nghị tiếp trên phiên bản mới.
+- Đã triển khai và kiểm thử local: đề nghị thay định mức, máy và phương pháp; đồng bộ hồ sơ thiết bị sau duyệt; không sửa lệnh đã có sản lượng. Danh mục công đoạn chọn được máy mặc định từ danh mục thiết bị, giữ giá nguyên vẹn.
+- Đã mở lại tab vật tư và phương án cắt sau xác nhận chuẩn bị, đổi tên tab thành Quy trình sản xuất. Tồn kho vẫn đối chiếu theo phương án cắt hiện hành; **chưa có xếp lại trên nhiều khổ phôi tồn thực tế**.
+- Chưa hoàn tất: tái sử dụng đầy đủ trình nhập các mục 1–4 báo giá; hợp nhất mọi đường sửa thiết bị/tiến trình vào cùng bảng kiến nghị; tự phân tích tác động giá theo phần duyệt và bàn giao thông báo; đối chiếu quy trình 8 bước với tài liệu mẫu của khách.
+- Kiểm thử: 25 ca API liên quan đã qua; browser bảng kiến nghị nhiều dòng / ba bộ phận / tải lại và browser chọn máy mặc định / giữ giá / tải lại đã qua. Bài browser danh mục cũ đi tiếp sang khai hình dạng bị vướng fixture trường mã đã chuyển thành hidden; không dùng bài này để tuyên bố đạt toàn bộ hệ thống.
+- Chưa triển khai bản thay đổi này lên máy chủ; chưa đánh dấu hoàn thành 100% hay nghiệm thu.
