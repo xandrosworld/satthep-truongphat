@@ -29,3 +29,14 @@
 ## Triển khai
 
 Bản `f026f39` đã lên máy chủ sau sao lưu mã nguồn và SQLite. Container healthy, health HTTPS OK; 23 hash runtime khớp gói phát hành và HTML công khai có sửa đổi. Không tạo dữ liệu thử trong cơ sở dữ liệu khách.
+
+## Kiểm tra hồi quy sau hai bảng mới và bảng quy trình
+
+Bản đang chạy: `1cae69f`. Kiểm tra lại HTTPS và SHA-256 của 27 tệp runtime khớp bản phát hành.
+
+- Chạy lại 27 ca API/core: sửa kỹ thuật và duyệt, hồ sơ/bản vẽ, xác nhận độc lập, quyền xem giá, phiên bản đồng thời, chia lô, giữ phôi, nesting, mua hàng, định mức giờ, ghi nhận khối lượng bước trước, quy trình và QC; tất cả đạt.
+- Build lại từ mã nguồn hiện tại và chạy 6 bài trình duyệt: editor mục 1–4/bản vẽ/nháp/khôi phục; kiến nghị và áp dụng; bảng 6 cột/hai bảng mới/chọn khổ/mua hàng; máy mặc định/giữ giá/tải lại; tiến trình/duyệt định mức/đối soát/nhập kho công đoạn/QC/thành phẩm; phát hành/nhận việc/xung đột lưu/công đoạn/QC/hoàn thành/tải lại. Tất cả đạt.
+- Bài production-browser cũ dùng selector QC không phân biệt tab và nút tắt mới. Đã sửa selector chọn đúng tab và chạy lại đạt; không thay mã nghiệp vụ để né kiểm thử.
+- Hai bảng mới đáp ứng cột vật tư/khổ mua và định mức/giá theo quyền; bảng quy trình tạo cột theo các công đoạn thực tế của lệnh, QC và hoàn thành riêng.
+- Kiểm tra trình duyệt trên web thật ở lần triển khai ngay trước đó là kiểm tra đọc/hiển thị, hộp chọn khổ và bố cục. Luồng ghi–duyệt–mua–QC được chạy trên dữ liệu thử riêng, không phải giao dịch nghiệm thu thực tế của khách.
+- Giới hạn cần giữ rõ: lịch sử giờ chỉ gợi ý từ cùng nguyên công/máy, chưa tự xác định sản phẩm tương tự; nesting biên dạng dùng khung bao bảo thủ; đơn giá giờ theo danh mục hiện tại; máy và định mức còn thiếu phải được người phụ trách khai thực tế. Đây là rà soát nhóm yêu cầu sản xuất liên quan, không phải xác nhận toàn bộ lịch sử yêu cầu CRM/báo giá hay nghiệm thu toàn giai đoạn 2.
