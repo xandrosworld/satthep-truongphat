@@ -49,6 +49,21 @@ test('downstream edits alone require authorization; stale request can be rejecte
  assert.equal((await call(path+'/corrections')).data.items[0].status,'pending');
  assert.equal((await call(path+'/corrections','POST',{action:'reject',id:item.id,expectedVersion:3,reason:'Bản đã thay đổi, lập đề nghị mới'})).status,200);
 });
+test('review current revision opens an older request without losing updates; concurrency and rights stay enforced',async t=>{
+ const f=await fixture(t),{call}=f,d=P.demoSeed();d.quote.remnantMode='all';const q=(await call('quotes','POST',{document:d})).data,path='quotes/'+q.id;
+ await call(path+'/submit','POST',{expectedVersion:1});f.set(f.worker);
+ assert.equal((await call(path+'/corrections','POST',{action:'request',expectedVersion:2,sections:['commercial'],reason:'Update notes'})).data.status,'pending');
+ const item=(await call(path+'/corrections')).data.items[0];f.set(f.admin);
+ const approved=await call(path+'/approve','POST',{expectedVersion:2,acknowledgeBelowCost:true,reason:'Reviewed'});assert.equal(approved.status,200,JSON.stringify(approved.data));
+ const version=approved.data.version,snapshot=(await call(path+'/revision/'+version)).data;
+ assert.equal((await call(path+'/corrections','POST',{action:'approve',id:item.id,expectedVersion:2,reviewedVersion:2})).status,409);
+ assert.equal((await call(path+'/corrections','POST',{action:'approve',id:item.id,expectedVersion:version})).status,409);
+ f.set(f.worker);assert.equal((await call(path+'/corrections','POST',{action:'approve',id:item.id,expectedVersion:version,reviewedVersion:version})).status,403);f.set(f.admin);
+ const out=await call(path+'/corrections','POST',{action:'approve',id:item.id,expectedVersion:version,reviewedVersion:version});assert.equal(out.status,200,JSON.stringify(out.data));
+ const now=(await call(path)).data;assert.equal(now.status,'draft');for(const key of ['products','pricing','notes','project'])assert.deepEqual(now.document.quote[key],snapshot.document.quote[key]);assert.deepEqual((await call(path+'/revision/'+version)).data,snapshot);
+ const opened=(await call(path+'/corrections')).data.items[0];assert.equal(opened.sourceVersion,2);assert.equal(opened.reviewedSourceVersion,version);assert.deepEqual(opened.sections,['commercial']);
+ now.document.quote.project='Outside scope';assert.equal((await call(path,'PUT',{expectedVersion:now.version,document:now.document})).status,403);
+});
 test('extend an open scope only after authorized approval and retain its original sections',async t=>{
  const f=await fixture(t),{call}=f,d=P.demoSeed();d.quote.remnantMode='all';const q=(await call('quotes','POST',{document:d})).data,path='quotes/'+q.id;
  assert.equal((await call(path+'/corrections','POST',{action:'request',expectedVersion:1,sections:['materials'],reason:'Materials'})).status,200);

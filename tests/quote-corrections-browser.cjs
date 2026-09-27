@@ -11,5 +11,12 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
  expect(await p.evaluate(()=>{try{mutation(()=>db.quote.project='outside scope');return false;}catch(e){return e.message.includes('Ngoài vùng');}})).toBe(true);
  await p.evaluate(async()=>{mutation(()=>db.quote.notes='Điều kiện bổ sung');await teamSave();});await expect(p.locator('[data-correction-scope]')).toBeVisible();
  await p.setViewportSize({width:390,height:844});await p.locator('[data-corrections-open]').click();expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await p.screenshot({path:'artifacts/corrections-mobile.png'});
- expect(errors).toEqual([]);console.log('PASS correction UI: adjacent review actions, selected scope, mandatory reason, navigation, save and mobile');
+ await p.evaluate(async()=>{
+  closeDialog();await teamApi('users','POST',{username:'worker',name:'Worker',role:'estimator',canReopen:false,password:'Corrections-browser-2026!'});
+  const d=TPPrice.demoSeed();d.quote.id='BG-CORRECTION-STALE';d.quote.remnantMode='all';const q=await teamApi('quotes','POST',{document:d});await teamApi('quotes/'+q.id+'/submit','POST',{expectedVersion:1});
+  teamSession(await teamApi('login','POST',{username:'worker',password:'Corrections-browser-2026!'}));await teamApi('quotes/'+q.id+'/corrections','POST',{action:'request',expectedVersion:2,sections:['commercial'],reason:'Đề nghị trước khi đổi phiên bản'});
+  teamSession(await teamApi('login','POST',{username:'admin',password:'Corrections-browser-2026!'}));await teamApi('quotes/'+q.id+'/approve','POST',{expectedVersion:2,acknowledgeBelowCost:true,reason:'Reviewed'});await teamLoad(q.id);
+ });
+ await p.locator('[data-corrections-open]').click();await p.locator('[data-correction-review=approve]').click();await expect(p.locator('#dialog')).toContainText('Đề nghị được lập ở phiên bản 2');await expect(p.locator('#dialog')).toContainText('phiên bản 3');await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).toContainText('Đang sửa');expect(await p.evaluate(()=>teamCurrent().status)).toBe('draft');
+ expect(errors).toEqual([]);console.log('PASS correction UI: scope, save, mobile and approving an older request against the reviewed current revision');
  }finally{await browser.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

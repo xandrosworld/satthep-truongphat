@@ -53,7 +53,11 @@ module.exports=function({sql,fail,readBody,transaction,audit,getQuote,saveQuote,
    const x=rows.find(x=>x.id===b.id);if(!x)fail(404,'Không tìm thấy yêu cầu sửa');
    if(!reviewer)fail(403,'Chỉ người có quyền được xét yêu cầu');
    if(b.action==='approve'||b.action==='reject'){
-    if(x.status!=='pending')fail(409,'Yêu cầu đã được xử lý');if(b.action==='approve'&&(q.version!==x.sourceVersion||q.status!==x.sourceStatus))fail(409,'Báo giá đã đổi sau khi đề nghị; từ chối yêu cầu cũ và tạo lại');
+    if(x.status!=='pending')fail(409,'Yêu cầu đã được xử lý');
+    if(b.action==='approve'&&(q.version!==x.sourceVersion||q.status!==x.sourceStatus)){
+     if(b.reviewedVersion!==q.version)fail(409,'Báo giá đã đổi sau khi đề nghị. Mở lại yêu cầu, kiểm tra phiên bản hiện tại và xác nhận mở đúng phạm vi.');
+     x.reviewedSourceVersion=q.version;x.reviewedSourceStatus=q.status;
+    }
     if(b.action==='approve')open(q,s,x,user);else {if(!reason)fail(400,'Nhập lý do từ chối');x.status='rejected';x.reviewNote=reason.slice(0,2000);x.reviewedBy=user.id;x.reviewedAt=new Date().toISOString();put(q.id,s);emit(q,user,x,'rejected');audit(user,'correction:reject',q.id,reason);}
    }else if(b.action==='complete'){
     if(x.status!=='open'||!ready(q,s,x))fail(409,'Cần bàn giao và xác nhận lại đầy đủ trước khi đóng phạm vi sửa');x.status='completed';x.completedBy=user.id;x.completedAt=new Date().toISOString();put(q.id,s);emit(q,user,x,'completed');audit(user,'correction:complete',q.id,x.id);
