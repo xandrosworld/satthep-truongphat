@@ -463,3 +463,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Lưu lý do từng mục và thông số chi tiết trước/sau cho đề nghị mới. Bảng kiến nghị nháp cũng dùng 5 cột. Chi phí/đơn giá nằm trong phần mở rộng, theo quyền hiện hành.
 - Kiểm thử API bảo toàn báo giá nguồn, lý do từng mục, phân quyền và duyệt một phần; trình duyệt kiểm tra bảng, giữ lựa chọn sau xác nhận, duyệt một mục, công nghệ, tải lại và khung điện thoại.
 - Đã triển khai `4efc54b`, sao lưu nguồn/SQLite, đối chiếu 32 tệp runtime và healthcheck đạt. Web thật LSX-01 chưa có kiến nghị đã gửi: kiểm tra bảng 5 cột bằng bản nháp chưa gửi, kiểm tra khung điện thoại; không ghi nghiệp vụ. Phiên kiểm tra đã thu hồi. Ảnh: `artifacts/production-change-table-live.png`, `artifacts/production-change-table-live-mobile.png`.
+# Cập nhật 28/09/2026 — Vật tư SX, chọn chi tiết và đề nghị xuất phôi
+
+- Chọn loại/số lượng chi tiết toàn bộ hoặc một phần còn lại; gộp kích thước cùng mã để sắp trên phôi kho. Phần giữ cho lệnh khác không được sử dụng.
+- Xem phương án và số tấm/thanh cần cấp trước khi gửi. Thiếu phôi thì báo thiếu, không tạo đề nghị xuất vượt kho.
+- Đề nghị giữ phôi và báo kho; người có quyền kho xác nhận xuất hoặc trả lại. Chỉ xác nhận xuất mới giảm tồn và tạo phiếu xuất có dẫn chiếu lệnh/đề nghị.
+- Theo dõi số chi tiết đã đề nghị/đã cấp và phần còn lại; chống yêu cầu trùng, xuất trùng, quá số lượng, sửa phôi đang thuộc đề nghị; thông số kỹ thuật đổi thì phải rà lại trước khi xuất.
+- Bảo toàn các phần giữ kho có sẵn khi chia hoặc trả lại đề nghị. Vật tư đã xuất theo luồng cũ yêu cầu đối chiếu trước khi lập đợt mới để tránh cấp trùng.
+- Kiểm thử 25 ca API/core và trình duyệt: chọn một phần, xem sơ đồ, gửi/duyệt xuất, phần còn lại, luồng vật tư cũ và khung điện thoại.
