@@ -471,3 +471,4 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Theo dõi số chi tiết đã đề nghị/đã cấp và phần còn lại; chống yêu cầu trùng, xuất trùng, quá số lượng, sửa phôi đang thuộc đề nghị; thông số kỹ thuật đổi thì phải rà lại trước khi xuất.
 - Bảo toàn các phần giữ kho có sẵn khi chia hoặc trả lại đề nghị. Vật tư đã xuất theo luồng cũ yêu cầu đối chiếu trước khi lập đợt mới để tránh cấp trùng.
 - Kiểm thử 25 ca API/core và trình duyệt: chọn một phần, xem sơ đồ, gửi/duyệt xuất, phần còn lại, luồng vật tư cũ và khung điện thoại.
+- Đã triển khai `a202f3f`, sao lưu nguồn/SQLite, đối chiếu 34 tệp runtime và healthcheck đạt. Web thật LSX-01: chọn 1/2 chi tiết, tính thử phương án; kho thiếu thì hiện số phôi/sơ đồ bổ sung và không cho gửi đề nghị xuất. Không ghi đề nghị/xuất kho thử; phiên kiểm tra đã thu hồi. Ảnh: `artifacts/production-material-release-live.png`.
