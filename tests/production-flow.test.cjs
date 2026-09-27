@@ -20,11 +20,41 @@ test('production routing, mass balance, remnant return, stage stock and shipping
  const bad=structuredClone(body);bad.materials[0].productWeight+=1;const before=(await call('ops/state')).data;A.equal((await call('production/'+j.id+'/flow/settle','POST',bad)).status,400);A.equal((await call('ops/state')).data.movements.length,before.movements.length);
  const next=j.packet.operations[1];if(next)A.equal((await update({action:'operation',operationId:next.id,status:'running',assignee:uid,machine:'M',output:0,note:''})).status,409);
  const sheet=flow.inputs.find(x=>{const h=before.holds.find(h=>h.id===x.holdId),l=before.lots.find(l=>l.id===h.lotId);return l.length&&l.width;});A.ok(sheet);const hold=before.holds.find(h=>h.id===sheet.holdId),lot=before.lots.find(l=>l.id===hold.lotId),mat=body.materials.find(x=>x.holdId===sheet.holdId),remWeight=lot.unitWeight/4;mat.productWeight-=remWeight+.1;mat.scrapWeight=.1;mat.remnants=[{quantity:1,length:lot.length/4,width:lot.width,thickness:lot.thickness,unitWeight:remWeight}];
- const results=await Promise.all([call('production/'+j.id+'/flow/settle','POST',body),call('production/'+j.id+'/flow/settle','POST',body)]);A.deepEqual(results.map(r=>r.status).sort(),[200,409]);j=results.find(r=>r.status===200).data;const after=(await call('ops/state')).data;A.equal(after.lots.filter(l=>l.sourceLotId===lot.id).length,1);A.equal(after.stageStocks.length,1);A.equal(j.progress.operations[0].status,'done');
+ const beforeReport=(await call('production/'+j.id+'/reconciliation')).data;
+ A.ok(beforeReport.materials.every(m=>m.balance==='pending'&&m.productWeight===null));
+ A.ok(beforeReport.costs.every(c=>c.actualCost===null&&c.variance===null));
+ A.equal((await call('production/'+j.id+'/flow/settle-request','POST',bad,tech)).status,400);
+ const invalidSize=structuredClone(body);invalidSize.materials.find(x=>x.holdId===hold.id).remnants[0].length=lot.length*2;A.equal((await call('production/'+j.id+'/flow/settle-request','POST',invalidSize,tech)).status,400);
+ let requested=await call('production/'+j.id+'/flow/settle-request','POST',body,tech);A.equal(requested.status,200,JSON.stringify(requested.data));
+ A.equal((await call('ops/state')).data.movements.length,before.movements.length);
+ A.equal((await call('production/'+j.id+'/flow/settle-request','POST',body,tech)).status,409);
+ A.equal((await call('production/'+j.id+'/flow/settle','POST',body)).status,409);
+ const changed=structuredClone(j.packet);changed.operations[0].instructions='Changed after request';app.sql.prepare('UPDATE production_jobs SET packet=? WHERE id=?').run(JSON.stringify(changed),j.id);
+ A.equal((await call('production/'+j.id+'/flow/settle-approve','POST',{expectedVersion:j.version,id:requested.data.id})).status,409);
+ app.sql.prepare('UPDATE production_jobs SET packet=? WHERE id=?').run(JSON.stringify(j.packet),j.id);
+ A.equal((await call('production/'+j.id+'/flow/settle-reject','POST',{expectedVersion:j.version,id:requested.data.id,reason:'Correct the request'},tech)).status,200);
+ A.equal((await call('ops/state')).data.movements.length,before.movements.length);
+ requested=await call('production/'+j.id+'/flow/settle-request','POST',body,tech);A.equal(requested.status,200);
+ const approveBody={expectedVersion:j.version,id:requested.data.id};
+ A.equal((await call('production/'+j.id+'/flow/settle-approve','POST',{...approveBody,expectedVersion:j.version-1})).status,409);
+ A.equal((await call('production/'+j.id+'/flow/settle-approve','POST',approveBody,tech)).status,403);
+ const results=await Promise.all([call('production/'+j.id+'/flow/settle-approve','POST',approveBody),call('production/'+j.id+'/flow/settle-approve','POST',approveBody)]);A.deepEqual(results.map(r=>r.status).sort(),[200,409]);j=(await call('production/'+j.id)).data;const after=(await call('ops/state')).data;A.equal(after.lots.filter(l=>l.sourceLotId===lot.id).length,1);A.equal(after.stageStocks.length,1);A.equal(j.progress.operations[0].status,'done');
  A.equal((await call('production/'+j.id+'/flow/plan','POST',{expectedVersion:j.version,reason:'Cannot alter past',operations:j.packet.operations.map(x=>({...x,machine:'Changed'}))})).status,409);
- for(const op of j.packet.operations.slice(1)){A.equal((await update({action:'operation',operationId:op.id,status:'running',assignee:uid,machine:'M',output:0,hours:1,note:''})).status,200);j=await settleStage(call,admin,j.id);}
+ for(const op of j.packet.operations.slice(1)){A.equal((await update({action:'operation',operationId:op.id,status:'running',assignee:uid,machine:'M',output:0,hours:1,note:''})).status,200);if(op.id===next?.id){const input=(await call('production/'+j.id+'/flow')).data.inputs,materials=input.map(x=>({holdId:x.holdId,productWeight:x.inputWeight,scrapWeight:0,remnants:[]})),m=materials.find(x=>x.holdId===hold.id);m.productWeight-=lot.unitWeight/8+.2;m.scrapWeight=.2;m.remnants=[{quantity:1,length:lot.length/8,width:lot.width,thickness:lot.thickness,unitWeight:lot.unitWeight/8}];const r=await call('production/'+j.id+'/flow/settle','POST',{expectedVersion:j.version,operationId:op.id,output:op.quantity,warehouse:'Semi',reason:'Second stage actual loss',materials});A.equal(r.status,200,JSON.stringify(r.data));j=r.data;}else j=await settleStage(call,admin,j.id);}
+ const reconciled=(await call('production/'+j.id+'/reconciliation')).data;
+ A.ok(reconciled.materials.every(m=>m.balance==='balanced'),JSON.stringify(reconciled.materials));
+ const reconciledSheet=reconciled.materials.find(m=>m.materialId===lot.materialId);
+ A.equal(reconciledSheet.returns.length,next?2:1);A.equal(reconciledSheet.returns[0].quantity,1);A.equal(reconciledSheet.returns[0].weight,remWeight);
+ A.ok(Math.abs(reconciledSheet.scrapWeight-(next?.3:.1))<1e-8);A.ok(Math.abs(reconciledSheet.inputWeight-reconciledSheet.productWeight-reconciledSheet.remnantWeight-reconciledSheet.scrapWeight)<.001);
+ const restricted=(await call('production/'+j.id+'/reconciliation','GET',undefined,tech)).data;
+ A.equal(restricted.canSeeCosts,false);A.equal(restricted.costs,undefined);A.equal(restricted.recordedTotal,undefined);A.ok(!JSON.stringify(restricted).includes('unitCost'));
+ const costBody={requestId:require('node:crypto').randomUUID(),jobId:j.id,operationId:first.id,date:'2026-09-28',reference:'RECON-COST-1',category:'Labor',amount:1234,note:'Work actually performed'};
+ A.equal((await call('ops/cost','POST',{...costBody,operationId:'other-job-op'})).status,400);
+ A.equal((await call('ops/cost','POST',costBody,tech)).status,403);
+ A.equal((await call('ops/cost','POST',costBody)).status,200);A.equal((await call('ops/cost','POST',costBody)).status,200);
+ const withCost=(await call('production/'+j.id+'/reconciliation')).data;A.equal(withCost.costs.find(c=>c.id===first.id).actualCost,1234);A.equal(withCost.recordedTotal,1234);
  A.ok(j.progress.operations.slice(0,-1).every(p=>p.handedOverAt));A.ok(!j.progress.operations.at(-1).handedOverAt);
- A.equal((await update({action:'qc',passed:1,rejected:0,note:'Pass'})).status,200);A.equal((await update({action:'complete'})).status,200);A.ok(j.progress.operations.every(p=>p.handedOverAt));const timed=(await call('production/'+j.id)).data;A.ok(timed.progress.operations.every(p=>p.timing&&p.timing.handedOverAt&&p.timing.activeHours>=0));let stocks=(await call('ops/state')).data.stageStocks;A.equal(stocks.filter(s=>!s.consumedBy).length,1);A.equal(stocks.find(s=>!s.consumedBy).kind,'finished');
+ A.equal((await update({action:'qc',passed:1,rejected:0,note:'Pass'})).status,200);A.equal((await update({action:'complete'})).status,200);A.ok(j.progress.operations.every(p=>p.handedOverAt));const finishedReport=(await call('production/'+j.id+'/reconciliation')).data;A.deepEqual(finishedReport.materials,reconciled.materials);const timed=(await call('production/'+j.id)).data;A.ok(timed.progress.operations.every(p=>p.timing&&p.timing.handedOverAt&&p.timing.activeHours>=0));let stocks=(await call('ops/state')).data.stageStocks;A.equal(stocks.filter(s=>!s.consumedBy).length,1);A.equal(stocks.find(s=>!s.consumedBy).kind,'finished');
  const order=(await call('business/orders/'+o.id)).data;A.equal((await call('business/orders/'+o.id+'/deliver','POST',{expectedVersion:order.version,date:'2026-09-25',receiver:'Customer',note:''})).status,200);stocks=(await call('ops/state')).data.stageStocks;A.ok(stocks.every(s=>s.consumedBy));const report=(await call('reports?kind=inventory&from=2026-01-01&to=2026-12-31')).data;A.ok(report.tables.find(t=>t.id==='production-stock').rows.every(r=>r.closing===0));A.deepEqual((await call('orders/'+o.id)).data.quote.products,d.quote.products);
 });
 
