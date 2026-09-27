@@ -175,3 +175,5 @@
 #production-console .production-review-grid .review-method{margin-top:8px}
 #production-console .production-unified-review .production-review-sections>details{scroll-margin-top:12px}
 .production-editor-only #pe-operations{margin-top:24px;border-top:1px solid #cad7e1;padding-top:16px}
+
+#production-console .production-review-grid .review-cell-editor summary strong{display:block}
