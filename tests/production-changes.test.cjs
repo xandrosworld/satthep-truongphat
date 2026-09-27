@@ -62,6 +62,12 @@ test('engineering proposal requires technical confirmation then admin, recompute
  A.equal((await step('pricing',admin,{note:'Giá đã kiểm tra',rowIds:[a.id]})).status,200);
  A.equal((await step('approve',admin,{rowIds:[a.id]})).status,409);
  A.equal((await step('confirm',tech,{rowIds:[a.id]})).status,200);
+ const preview=await step('preview',admin,{rowIds:[a.id]});A.equal(preview.status,200,JSON.stringify(preview.data));A.deepEqual(preview.data.rowIds,[a.id]);A.equal((await step('preview',tech,{rowIds:[a.id]})).status,403);
+ const quoted=(await call(route,'GET',undefined,admin)).data.changes.find(x=>x.id===c.id).impact.materialPrices.find(x=>x.rowId===a.id);
+ A.equal((await step('pricing',admin,{note:'Cập nhật đơn giá',rowIds:[a.id],prices:[{rowId:a.id,unitPrice:quoted.unitPrice+100}]})).status,200);
+ A.equal((await step('approve',admin,{rowIds:[a.id]})).status,409,'price changes require fresh business consent');
+ const hidden=(await get()).changes.find(x=>x.id===c.id);A.equal(hidden.impact,undefined);A.equal(hidden.appliedImpact,undefined);
+ A.equal((await step('business',admin,{note:'Khách chấp thuận giá cập nhật',rowIds:[a.id]})).status,200);
  const partial=await step('approve',admin,{rowIds:[a.id]});A.equal(partial.status,200,JSON.stringify(partial.data));A.deepEqual(partial.data.notAppliedRowIds,[z.id]);
  j=(await call('production/'+j.id,'GET',undefined,tech)).data;
  A.deepEqual(j.packet.materials.find(r=>r.id===z.id).dimensions,oldPacket.materials.find(r=>r.id===z.id).dimensions);

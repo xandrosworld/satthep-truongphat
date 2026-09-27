@@ -371,9 +371,12 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 
 ## Rà soát yêu cầu điều chỉnh sản xuất — 27/09/2026 (đang triển khai)
 
-- Đã triển khai và kiểm thử local: gom nhiều dòng thành bảng kiến nghị; kỹ thuật, kinh doanh và giá xác nhận đúng cùng phạm vi; quyền duyệt điều chỉnh riêng; chỉ các dòng được duyệt cập nhật vào lệnh. Mục chưa áp dụng cần lập đề nghị tiếp trên phiên bản mới.
-- Đã triển khai và kiểm thử local: đề nghị thay định mức, máy và phương pháp; đồng bộ hồ sơ thiết bị sau duyệt; không sửa lệnh đã có sản lượng. Danh mục công đoạn chọn được máy mặc định từ danh mục thiết bị, giữ giá nguyên vẹn.
-- Đã mở lại tab vật tư và phương án cắt sau xác nhận chuẩn bị, đổi tên tab thành Quy trình sản xuất. Tồn kho vẫn đối chiếu theo phương án cắt hiện hành; **chưa có xếp lại trên nhiều khổ phôi tồn thực tế**.
-- Chưa hoàn tất: tái sử dụng đầy đủ trình nhập các mục 1–4 báo giá; hợp nhất mọi đường sửa thiết bị/tiến trình vào cùng bảng kiến nghị; tự phân tích tác động giá theo phần duyệt và bàn giao thông báo; đối chiếu quy trình 8 bước với tài liệu mẫu của khách.
-- Kiểm thử: 25 ca API liên quan đã qua; browser bảng kiến nghị nhiều dòng / ba bộ phận / tải lại và browser chọn máy mặc định / giữ giá / tải lại đã qua. Bài browser danh mục cũ đi tiếp sang khai hình dạng bị vướng fixture trường mã đã chuyển thành hidden; không dùng bài này để tuyên bố đạt toàn bộ hệ thống.
-- Chưa triển khai bản thay đổi này lên máy chủ; chưa đánh dấu hoàn thành 100% hay nghiệm thu.
+- Đã triển khai và kiểm thử local: gom nhiều dòng thành bảng kiến nghị; kỹ thuật, kinh doanh và giá xác nhận đúng cùng phạm vi; chỉ các dòng được duyệt cập nhật vào lệnh. Đổi giá yêu cầu kinh doanh xác nhận lại; giá và tác động chi phí chỉ trả về cho người có quyền.
+- Có so sánh chi phí toàn đề nghị và tính tác động riêng các mục được chọn; lưu tác động của phần thực tế áp dụng. Đơn hàng/báo giá gốc giữ nguyên.
+- Chặn sửa trực tiếp máy/phương pháp đã xác nhận, kể cả bỏ tích xác nhận rồi lưu. Form rà soát có nút gom máy/phương pháp/khai triển thành bảng kiến nghị. Đường đề nghị công nghệ cũ cũng phải qua kỹ thuật, kinh doanh, giá và quyền duyệt riêng; có thông báo nội bộ cho người liên quan.
+- Danh mục nguyên công có máy mặc định; khai báo từng công đoạn báo giá cho chọn máy và phương pháp. Máy được giữ qua kỹ thuật, hồ sơ sản xuất và duyệt công nghệ.
+- Tab vật tư sau xác nhận hiển thị phương án xếp chi tiết khai triển trên nhiều khổ tồn thực tế, ưu tiên phần đã giữ cho lệnh, loại phần đã giữ cho lệnh khác; phần thiếu tính lại theo khổ mua. Tính mạch cắt, chiều dày và hướng cố định; biên dạng dùng khung bao bảo thủ, không cam kết tối ưu cắt. Kế hoạch mua nhiều lệnh không sử dụng trùng phôi. Lưu phương án tại thời điểm xuất kho.
+- Đã đọc PDF phân luồng của khách và mã demo. Tám bước ví dụ là Cắt, Tiện, Phay, Hàn, Sơn, Lắp ráp, QC, Hoàn thành; chưa dùng việc đổi tên tab để tuyên bố đạt đầy đủ quy trình.
+- Còn thiếu để đạt toàn bộ yêu cầu: form rà soát tương đương đầy đủ tính năng các mục 1–4 báo giá; hợp nhất hoàn toàn đề nghị công nghệ và bảng kiến nghị (đường công nghệ còn duyệt toàn đề nghị); cập nhật giá nguyên công trong bước đánh giá giá; kiểm soát và trình bày đầy đủ quy trình công đoạn theo mẫu. Chưa đánh dấu 100%.
+- Kiểm thử: 30 ca API liên quan đã qua; browser bảng kiến nghị nhiều dòng / ba bộ phận / tải lại / gửi sửa trực tiếp từ rà soát và browser máy mặc định / giữ giá / tải lại đã qua. Các bài browser cũ được cập nhật bước ngày hoàn thành và chọn tab; chưa lấy fixture nhập kho cũ làm bằng chứng đạt toàn hệ thống.
+- Các thay đổi trên đang ở mã nguồn local, chưa triển khai máy chủ, chưa nghiệm thu.
