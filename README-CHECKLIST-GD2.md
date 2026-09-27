@@ -419,3 +419,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Rà tiếp tình huống báo giá đổi ngay khi hộp xác nhận đang mở: bổ sung nút “Xem trạng thái mới và tiếp tục” khi xung đột, không F5, không tự duyệt lại. Giữ lý do và vùng đã chọn khi làm mới đề nghị; yêu cầu đã xử lý được đưa về danh sách trạng thái hiện tại.
 - Kiểm thử hồi quy: 11 ca API (corrections/workspace/partial handoff) và 6 bài browser (corrections/switch-save/save-handoff/workspace/locked-factor-summary/cost-save-all) đạt. Browser tạo xung đột thật giữa lúc mở hộp và xác nhận, kiểm tra phục hồi và giữ thông tin form.
 - Deploy tiếp **809a7ff** sau sao lưu. Kiểm tra HTTPS, nội dung công khai có nút phục hồi và 29 hash runtime khớp. Chưa coi đây là xác nhận không còn lỗi trên toàn hệ thống; các giao dịch thử chạy trên dữ liệu riêng.
+
+### Thu gọn rà soát và chuẩn bị vật tư theo ảnh LSX-01 — 27/09/2026
+- Rà soát có ba mục trên một hàng: Đầu vào/bản vẽ; Cấu thành/công đoạn; Vật tư. Chỉ hiện mục được chọn. Gộp công đoạn và bảng định mức vào cấu thành, vẫn lưu độc lập xác nhận cấu thành và công đoạn; trạng thái nhóm chỉ đủ khi cả hai đã xác nhận.
+- Tab Vật tư đứng trước Quy trình sản xuất. Bỏ tab Sắp xếp tấm riêng, đưa phương án cắt vào Vật tư. Giữ các cổng xác nhận và quyền thao tác hiện có.
+- Gọi vật tư toàn bộ/một phần: chọn các lô khả dụng và số lượng để giữ cho lệnh; ghi nhiều dòng trong một giao dịch, chống bấm trùng, kiểm tra phiên bản và loại phần đã giữ cho lệnh khác. Đây là chuẩn bị/giữ vật tư; cấp kho theo luồng bắt đầu sản xuất. Sản xuất trước một phần sản phẩm dùng chia phần/lô hiện có.
+- 19 ca API đạt, gồm giữ vật tư theo lựa chọn, rollback khi một dòng lỗi, chống trùng, quyền và điều kiện rà soát. Browser kiểm tra ba mục/ẩn nội dung, giữ một phần, mua hàng/tải lại; luồng sản xuất–QC–hoàn thành; luồng công nghệ–đối soát; đọc điện thoại đạt.
+- Deploy **bf76c66** sau sao lưu nguồn/SQLite. HTTPS healthy và 29 hash runtime khớp. Trình duyệt web thật kiểm tra đúng LSX-01: ba mục, thứ tự tab, bảng cấu thành, nút gọi vật tư, sắp phôi trong Vật tư và chiều rộng 390 px. Chặn mọi ghi nghiệp vụ trong phiên kiểm tra; không giữ/xuất kho thử của khách. Phiên xác minh đã thu hồi.
+- Ảnh: artifacts/production-compact-input-live.png, artifacts/production-compact-structure-live.png, artifacts/production-compact-materials-live.png.
