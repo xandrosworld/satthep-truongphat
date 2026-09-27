@@ -454,4 +454,5 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Kéo thả hoặc nút trái/phải để lập đề nghị đổi trình tự; các bước đã triển khai không đổi vị trí. Chỉ áp dụng qua luồng duyệt công nghệ hiện có. Các công đoạn trùng tên không bị gom vượt thứ tự.
 - QC công đoạn có quyền riêng, số đạt/lỗi không vượt sản lượng, lịch sử và chống ghi đè phiên bản; không thay QC cuối lệnh hoặc duyệt hoàn thành.
 - Ghi thời điểm bàn giao khi chuyển bán thành phẩm sang bước tiếp theo (bước cuối khi nhập thành phẩm). Hiển thị thời gian từ bắt đầu đến bàn giao, trừ các khoảng chờ vật tư/chờ duyệt đã khai, không cộng trùng khoảng chờ.
-- Kiểm thử: 24 ca API/core; trình duyệt kiểm tra bảng trực tiếp, luồng công nghệ đến thành phẩm, rà soát kỹ thuật và bảng vật tư. Kiểm tra web thật được ghi nhận sau triển khai.
+- Kiểm thử: 24 ca API/core; trình duyệt kiểm tra bảng trực tiếp, luồng công nghệ đến thành phẩm, rà soát kỹ thuật và bảng vật tư.
+- Đã triển khai bản `7c35232` lên web thật; sao lưu nguồn và SQLite, đối chiếu đủ 31 tệp runtime, healthcheck đạt. LSX-01: mở các chế độ nhân công/khối lượng/QC, sắp lại và hủy, kiểm tra khung điện thoại; không ghi nghiệp vụ giả. Phiên kiểm tra tạm đã thu hồi. Ảnh đối chiếu: `artifacts/production-board-{labor,quantity,qc}-live.png`.
