@@ -51,3 +51,5 @@
  .chat-size-controls .button{font-size:11px;padding:4px 7px;min-height:30px}
  .chat-size-controls small{display:none}
 }
+
+.chat-bubble .chat-mention{color:#084c9e;background:#dcecff;font-weight:700;border-radius:4px;padding:1px 3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
