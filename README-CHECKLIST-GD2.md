@@ -676,3 +676,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Lịch sử, thông báo nội bộ, rút/từ chối có lý do, quyền tại máy chủ, phiên bản và giao dịch chống trùng. Bộ phận/nơi sử dụng khai tay; chi tiết quyền và giới hạn: [Cấp vật tư / sửa chữa](docs/CAP-VAT-TU-SUA-CHUA-2026-09-28.md).
 - 11 ca API/core và browser luồng mới, lịch sử máy, đề nghị mua bộ phận đạt; build đạt. Browser mua bộ phận có một lần timeout, chẩn đoán và chạy lại bản gốc đạt. Triển khai và kiểm tra web thật ghi bổ sung sau xác minh.
 - Đã triển khai `8b09147` sau sao lưu nguồn/SQLite; container healthy, HTTPS health và 79 hash runtime khớp. Web thật Admin kiểm tra vị trí ngay dưới Định mức, icon alpha, hai tab/form, thêm dòng và màn 390 px; hiện chưa có đề nghị thực tế. Chặn ghi nghiệp vụ thử, phiên xác minh đã thu hồi. Ảnh: `artifacts/service-requests-live-desktop.png`, `artifacts/service-supply-live.png`, `artifacts/service-repair-live.png`, `artifacts/service-requests-live-mobile.png`.
+
+
+### 2026-09-28 — Giữ vị trí đọc chat và toàn màn hình
+- Sửa ảnh tải chậm kéo người đọc về cuối theo trạng thái cũ; cập nhật tin/cảm xúc giữ các phần tử không đổi và neo theo tin đang đọc. Tải thêm tin cũ, thay trạng thái đã xem giữ vị trí; khi đang ở cuối vẫn tự theo tin mới.
+- Thêm Toàn màn hình / Thu gọn ngay trên đầu khung chat, phủ vùng trình duyệt, giữ hội thoại và bản nháp; kiểm tra desktop và điện thoại. Không cần cấp quyền fullscreen trình duyệt.
+- Sửa mở hội thoại ngay sau tải lại khi danh sách phòng chưa tải xong khiến thiếu ô nhập.
+- Hồi quy ảnh tải chậm thất bại trên mã cũ (đọc tin 36 bị kéo về 65), đạt sau sửa. Năm bài browser đạt: chat-scroll, chat-size, chat, chat-interactions, chat-work; gồm tin mới, ảnh, cảm xúc, tải lịch sử, soạn nháp, chuyển tài khoản, thu hồi, công việc và mobile. Build đạt. Triển khai ghi bổ sung sau xác minh.
