@@ -27,6 +27,8 @@ function createProduction({sql,fail,readBody,transaction,audit,operationsERP}){
  async function handle({req,route,user,send}){
   if(!route.startsWith('/api/production'))return false;
   if(!canRead(user))fail(403,'Chưa có quyền xem sản xuất');
+  const identity=route.match(/^\/api\/production\/([a-f0-9-]+)\/material-identity$/);
+  if(identity&&req.method==='POST'){const body=await readBody(req);send(200,require('./production-material-identity.cjs')({sql,fail,transaction,audit}).resolve(identity[1],body,user));return true;}
   if(await require('./production-reconciliation.cjs').create({sql,fail,packet}).handle({req,route,user,send}))return true;
   if(await require('./production-review-tables.cjs').create({sql,fail}).handle({req,route,user,send}))return true;
   if(await dossier.handle({req,route,user,send}))return true;
@@ -58,7 +60,7 @@ function createProduction({sql,fail,readBody,transaction,audit,operationsERP}){
   const part=route.match(/^\/api\/production\/([a-f0-9-]+)\/parts$/);
   if(part&&req.method==='POST'){if(!canIssue(user))fail(403,'Chưa có quyền chia phần sản xuất');const body=await readBody(req);send(201,transaction(()=>require('./production-parts.cjs').split({sql,fail,packet,captureBaseline:operationsERP.captureBaseline,audit,user,id:part[1],body})));return true;}
   const m=route.match(/^\/api\/production\/([a-f0-9-]+)$/);
-  if(m&&req.method==='GET'){const j=one('SELECT * FROM production_jobs WHERE id=?',m[1]);if(!j)fail(404,'Không tìm thấy lệnh');const view=read(j);for(const p of view.progress.operations){const w=one("SELECT document FROM enterprise_records WHERE kind='work-wait' AND id=?",'source:production:'+j.id+':'+p.id);p.timing=require('./production-stage-time.cjs')(p,w?JSON.parse(w.document).waits:[]);}send(200,{...view,events:all('SELECT at,actor,detail FROM production_events WHERE job_id=? ORDER BY seq DESC',j.id)});return true;}
+  if(m&&req.method==='GET'){const j=one('SELECT * FROM production_jobs WHERE id=?',m[1]);if(!j)fail(404,'Không tìm thấy lệnh');const view=read(j);view.materialIdentity={conflicts:require('./material-identity.cjs').conflicts(sql,view.packet),catalogVersion:one('SELECT version FROM catalog WHERE id=1')?.version,canResolve:user.role==='admin'};for(const p of view.progress.operations){const w=one("SELECT document FROM enterprise_records WHERE kind='work-wait' AND id=?",'source:production:'+j.id+':'+p.id);p.timing=require('./production-stage-time.cjs')(p,w?JSON.parse(w.document).waits:[]);}send(200,{...view,events:all('SELECT at,actor,detail FROM production_events WHERE job_id=? ORDER BY seq DESC',j.id)});return true;}
   if(m&&req.method==='PUT'){
    if(!canWork(user))fail(403,'Chưa được cấp quyền cập nhật công đoạn');const b=await readBody(req);
    const saved=transaction(()=>{const j=one('SELECT * FROM production_jobs WHERE id=?',m[1]);if(!j)fail(404,'Không tìm thấy lệnh');if(j.version!==b.expectedVersion)fail(409,'Lệnh đã được người khác cập nhật. Tải lại trước khi sửa.');if(j.state==='completed')fail(409,'Lệnh đã hoàn thành và được khóa');const v=read(j),p=v.progress;let detail='';const at=new Date().toISOString();

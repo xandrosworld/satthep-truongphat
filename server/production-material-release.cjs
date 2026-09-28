@@ -15,8 +15,8 @@ module.exports=function(h){
    try{nesting=require('./production-stock-nesting.cjs').plan(packet,d,lots,holds);}catch{fail(400,'Khổ phôi không phù hợp kích thước chi tiết; kiểm tra khổ mua');}
    if(nesting){plans.push({materialId,name:d.name,unit:d.unit,...nesting});continue;}
    const selected=packet.materials.filter(r=>r.material.id===materialId),required=selected.reduce((s,r)=>s+(r.material.shape==='piece'?r.count:(r.dimensions.weight||0)*r.count/j.packet.materials.find(x=>x.id===r.id).count),0);let left=required;const allocations=[];
-   for(const hold of holds.filter(x=>x.materialId===materialId)){const l=lots.find(l=>l.id===hold.lotId);if(!l||l.unit!==d.unit)continue;const quantity=Math.min(left,hold.quantity);if(quantity>0)allocations.push({lotId:l.id,warehouse:l.warehouse,quantity,held:true,stocks:[]});left-=quantity;}
-   for(const l of lots.filter(l=>l.materialId===materialId&&l.unit===d.unit)){const quantity=Math.min(left,l.available);if(quantity>0)allocations.push({lotId:l.id,warehouse:l.warehouse,quantity,held:false,stocks:[]});left-=quantity;}
+   for(const hold of holds.filter(x=>x.materialId===materialId)){const l=lots.find(l=>l.id===hold.lotId);if(!l||l.unit!==d.unit||require('./material-identity.cjs').different(l.materialSpec,d.materialSpec))continue;const quantity=Math.min(left,hold.quantity);if(quantity>0)allocations.push({lotId:l.id,warehouse:l.warehouse,quantity,held:true,stocks:[]});left-=quantity;}
+   for(const l of lots.filter(l=>l.materialId===materialId&&l.unit===d.unit&&!require('./material-identity.cjs').different(l.materialSpec,d.materialSpec))){const quantity=Math.min(left,l.available);if(quantity>0)allocations.push({lotId:l.id,warehouse:l.warehouse,quantity,held:false,stocks:[]});left-=quantity;}
    plans.push({materialId,name:d.name,unit:d.unit,requiredParts:required,missingParts:Math.max(0,left),allocations,purchaseStocks:[],remaining:[]});
   }
   return {jobVersion:j.version,rows:selection,plans,complete:plans.every(p=>p.missingParts<1e-6)};
