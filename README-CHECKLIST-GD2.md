@@ -592,3 +592,4 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Bảng giá hiện rõ nguyên nhân và nút Mở thêm phạm vi nhập giá, chọn đúng Giá vật tư qua luồng mở sửa hiện có. Chưa được phép thì khóa ô ngay; các dòng nguồn giá ngoài phạm vi không được đưa vào Lưu toàn bộ.
 - Căn cứ/thuế nguồn giá được kiểm theo đúng nhóm đầu vào (vật tư, nguyên công, vận chuyển, hệ số), không gom tất cả thành Giá chào. Thuế đầu ra, giá chào và các vùng chưa mở vẫn được kiểm độc lập ở UI/API.
 - Kiểm thử: 13 ca API và 3 browser đạt, gồm bổ sung phạm vi, lưu nguồn/giá vật tư, tải lại, lưu toàn bộ và hồi quy mở sửa. Build đạt.
+- Đã triển khai `dff192a` sau sao lưu nguồn/SQLite; HTTPS health và 63 hash runtime đạt. Web thật BG-20260925-005 hiển thị hướng dẫn, khóa ô ngoài phạm vi và mở đúng hộp bổ sung Giá vật tư; kiểm tra desktop/390 px, không ghi nghiệp vụ thử. Phiên tạm đã thu hồi. Ảnh: `artifacts/material-price-scope-live.png`, `artifacts/material-price-scope-live-mobile.png`.
