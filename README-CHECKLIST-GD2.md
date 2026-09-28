@@ -736,3 +736,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Ngày tạo vẫn lấy phiên bản đầu tiên trên máy chủ; sửa/lưu/duyệt báo giá cũ không đổi vị trí theo ngày cập nhật. Khi trùng thời điểm, dùng ID giảm dần để thứ tự ổn định.
 - Kiểm thử API tạo hai báo giá, kiểm tra thứ tự mới nhất và sửa bản cũ giữ vị trí đạt; hai browser danh sách desktop/mobile và kỹ thuật đạt. Build đạt.
 - Đã triển khai `03b7ec6` sau sao lưu nguồn/SQLite; HTTPS health và 82 hash runtime đạt. Web thật kiểm tra 25 báo giá theo ngày tạo giảm dần, BG-20260928-001 ở đầu; desktop/390 px. Không ghi nghiệp vụ; phiên tạm đã thu hồi. Ảnh: `artifacts/quote-newest-live.png`, `artifacts/quote-newest-live-mobile.png`.
+
+
+### 2026-09-28 — Bảng công đoạn rõ trạng thái và mở rộng vùng rà soát
+- Cố định cột công đoạn 156 px, cột tên 240 px (160 px trên điện thoại); bỏ giãn cột theo toàn chiều ngang. Ô đã chọn có nền xanh, viền và chữ Đã chọn; nội dung/điều khiển bị khóa vẫn đọc rõ, giữ khóa sửa.
+- Tăng chiều cao vùng bảng, thêm Mở rộng bảng / Thu gọn màn hình và phím Escape; chế độ xem không làm thay đổi báo giá hoặc trạng thái bàn giao. Nhãn đã xác nhận của các bộ phận dùng màu xanh đậm, vẫn có chữ/ký hiệu.
+- Build và browser kiểm tra độ rộng cột, tương phản trạng thái khóa, mở rộng/thu gọn/Escape, không đánh dấu dữ liệu thay đổi và 390 px đạt; hồi quy lưu/bàn giao kỹ thuật thiếu giá đạt.

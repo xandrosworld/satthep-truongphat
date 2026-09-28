@@ -100,3 +100,7 @@ function qocEditRecipes(id,catalog=false){
  });$('#dialog').classList.add('wide-dialog');
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-recipe-editor]');if(b)try{qocEditRecipes(b.dataset.recipeEditor,b.dataset.catalog==='true');}catch(err){inError(err);}});
+
+// Viewing a larger matrix never changes the quote or its approval state.
+document.addEventListener('click',e=>{if(!e.target.closest('[data-operation-fullscreen]'))return;PA.matrixFullscreen=!PA.matrixFullscreen;render();document.querySelector('[data-operation-fullscreen]')?.focus();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&PA.matrixFullscreen&&!document.querySelector('#dialog[open]')){PA.matrixFullscreen=false;render();document.querySelector('[data-operation-fullscreen]')?.focus();}});

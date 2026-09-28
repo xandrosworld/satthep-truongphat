@@ -469,3 +469,25 @@ th{color:var(--muted)}
 
 .quotes-list .order-not-started{background:#e7ecf2;color:#37485c}
 .quotes-list .order-overdue{background:#ffe4e4;color:#9b1c1c}
+
+/* Approval review: bounded columns and readable locked declarations. */
+.pa-operations table,.pa-operations.pa-compact table{width:max-content;min-width:0;table-layout:fixed}
+.pa-operations th,.pa-operations td,.pa-operations.pa-compact th,.pa-operations.pa-compact td{box-sizing:border-box;width:156px;min-width:156px;max-width:156px;padding:7px 8px;overflow-wrap:anywhere;border-right:1px solid var(--line)}
+.pa-operations th:first-child,.pa-operations.pa-compact th:first-child{width:240px;min-width:240px;max-width:240px}
+.pa-operations .production-level-cell select{width:100%;max-width:100%;white-space:normal}
+.pa-operations td:has([data-pa-op-toggle]:checked){background:#dcefe6!important;box-shadow:inset 0 3px #28734d;color:#183b2a}
+.pa-operations :is(button,input,select):disabled{opacity:1!important;color:#273d50;-webkit-text-fill-color:#273d50;cursor:not-allowed}
+.pa-operations button:disabled{background:#edf2f6;border-color:#8899aa}
+.pa-operations .pa-op-declared{color:#243b50;font-weight:600}
+.pa-operations .pa-op-check{color:#243b50;font-weight:600}
+.pa-operations{max-height:74vh}
+.pa-matrix-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;color:var(--ink)}
+.pa-operation-area.is-fullscreen{position:fixed;inset:8px;z-index:90;background:var(--surface);padding:12px;display:flex;flex-direction:column;box-shadow:0 0 0 12px var(--surface)}
+.pa-operation-area.is-fullscreen .pa-operations{flex:1;min-height:0;max-height:none;margin:0}
+body:has(.pa-operation-area.is-fullscreen){overflow:hidden}
+.workspace-tabs button.step-done{background:#dcefe6;color:#174f33;box-shadow:inset 0 0 0 1px #498c67}
+.workspace-tabs .step-done .step-status{background:#21613e;color:#fff;border-color:#21613e}
+html[data-theme=dark] .pa-operations td:has([data-pa-op-toggle]:checked){background:#203e31!important;color:#d7f4e2}
+html[data-theme=dark] .pa-operations :is(button,input,select):disabled,html[data-theme=dark] .pa-operations :is(.pa-op-declared,.pa-op-check){color:#e2edf5;-webkit-text-fill-color:#e2edf5}
+html[data-theme=dark] .pa-operations button:disabled{background:#243443;border-color:#7b93a6}
+@media(max-width:600px){.pa-operations th:first-child,.pa-operations.pa-compact th:first-child{width:160px;min-width:160px;max-width:160px}.pa-operation-area.is-fullscreen{inset:0;padding:8px}}
