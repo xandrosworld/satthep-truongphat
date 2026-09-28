@@ -74,3 +74,35 @@ test('extend an open scope only after authorized approval and retain its origina
  items=(await call(path+'/corrections')).data.items;assert.equal(items.filter(x=>x.status==='open').length,1);assert.deepEqual(items.find(x=>x.status==='open').sections,['materials','factors','logistics']);assert.equal(items[0].status,'extended');
  const document=(await call(path)).data.document;document.quote.pricing.overhead=18;document.quote.pricing.incoming=1234;r=await call(path,'PUT',{expectedVersion:1,document});assert.equal(r.status,200,JSON.stringify(r.data));assert.equal((await call(path)).data.document.quote.pricing.overhead,18);
 });
+
+test('parallel requesters, explicit reviewers, withdrawal and stale parent scope recover without implicit approval',async t=>{
+ const f=await fixture(t),{call}=f;
+ await call('users','POST',{username:'price',name:'Pricing',role:'estimator',canReopen:false,sections:['materials','factors','commercial','operations','logistics'],password:'Corrections-2026!'});
+ const price=await call('login','POST',{username:'price',password:'Corrections-2026!'});f.set(f.admin);
+ const q=(await call('quotes','POST',{document:P.demoSeed()})).data,path='quotes/'+q.id;
+ for(const stage of ['intake','technical','materials'])assert.equal((await call(path+'/handoff/'+stage,'POST',{expectedVersion:1})).status,200);
+ f.set(price);assert.equal((await call(path+'/corrections','POST',{action:'request',expectedVersion:1,sections:['commercial'],reason:'Old price request'})).status,200);
+ const old=(await call(path+'/corrections')).data.items[0];assert.equal(old.canWithdraw,true);assert.equal(old.reviewers.some(u=>u.name==='Pricing'),false);
+ f.set(f.worker);assert.equal((await call(path+'/corrections','POST',{action:'request',expectedVersion:1,sections:['bom'],reason:'Technical change'})).status,200);
+ let state=(await call(path+'/corrections')).data,tech=state.items[1];assert.equal(tech.reviewers.some(u=>u.name==='Pricing'),true);
+ assert.equal((await call(path+'/corrections','POST',{action:'request',expectedVersion:1,sections:['operations'],reason:'Duplicate pending'})).status,409);
+ assert.equal((await call(path+'/corrections','POST',{action:'withdraw',id:old.id,expectedVersion:1,reason:'Not mine'})).status,403);
+ f.set(price);assert.ok((await call('notifications')).data.items.some(n=>n.stage==='correction'&&n.note.includes('Technical change')&&n.note.includes('Người có quyền xét:')));
+ assert.equal((await call(path+'/corrections','POST',{action:'approve',id:tech.id,expectedVersion:1})).status,200);
+ // Parent was absent when old request was created; require explicit refreshed scope before merging.
+ f.set(f.admin);assert.equal((await call(path+'/corrections','POST',{action:'approve',id:old.id,expectedVersion:1})).status,409);
+ assert.equal((await call(path+'/corrections','POST',{action:'approve',id:old.id,expectedVersion:1,reviewedActiveId:tech.id})).status,200);
+ state=(await call(path+'/corrections')).data;assert.equal(state.items.filter(x=>x.status==='open').length,1);assert.deepEqual(state.items.find(x=>x.id===old.id).sections,['bom','commercial']);
+ f.set(f.worker);assert.equal((await call(path+'/corrections','POST',{action:'request',expectedVersion:1,sections:['operations'],reason:'Later request'})).status,200);
+ const later=(await call(path+'/corrections')).data.items.at(-1);
+ assert.equal((await call(path+'/corrections','POST',{action:'withdraw',id:later.id,expectedVersion:1,reason:''})).status,400);
+ assert.equal((await call(path+'/corrections','POST',{action:'withdraw',id:later.id,expectedVersion:1,reason:'No longer needed'})).status,200);
+ assert.equal((await call(path+'/corrections','POST',{action:'withdraw',id:later.id,expectedVersion:1,reason:'Again'})).status,409);
+ assert.equal((await call(path+'/corrections','POST',{action:'request',expectedVersion:1,sections:['operations'],reason:'New scope'})).status,200);
+ const pending=(await call(path+'/corrections')).data.items.at(-1);f.set(f.admin);
+ for(const stage of ['technical','materials'])assert.equal((await call(path+'/handoff/'+stage,'POST',{expectedVersion:1})).status,200);
+ assert.equal((await call(path+'/corrections','POST',{action:'complete',id:old.id,expectedVersion:1})).status,200);
+ assert.equal((await call(path+'/corrections','POST',{action:'approve',id:pending.id,expectedVersion:1})).status,409);
+ assert.equal((await call(path+'/corrections','POST',{action:'approve',id:pending.id,expectedVersion:1,reviewedActiveId:null})).status,200);
+ assert.deepEqual((await call(path+'/corrections')).data.items.at(-1).sections,['operations']);
+});
