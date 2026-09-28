@@ -58,6 +58,7 @@ function price(rate,op,ctx,tier){
   return {value,base,factors,method,priceOptionId:op.priceOptionId||'',priceOptionName:selected.option?.name||''};
 }
 function operation(rate,op,ctx,r,tier){
+  if(op.complexityPending)throw Error('Ch?a ch?n m?c ?? ph?c t?p cho c?ng ?o?n');
   const selected=resolvePriceOption(rate,op);rate=selected.rate;op=selected.op;
   r={...r,weight:r.workWeight??r.weight,area:r.workArea??r.area};
   const method=op.pricingMethod||'factors';

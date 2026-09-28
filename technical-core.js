@@ -4,7 +4,7 @@
 const copy=x=>JSON.parse(JSON.stringify(x));
 const nodeKeys=['productionLevelChoice','dimensionProfile','aiSourceKey','draftMaterial','lineNote','id','kind','name','manualName','namePattern','qty','unit','materialId','rule','params','dims','paramLinks','model','dimensionLinks','thicknessRequirement','measurementRules','materialEstimate','productGroup','requestSpecification','templateKind','requestLineId','auxiliaryPercent','pieceMass'];
 const specKeys=['id','name','group','unit','shape','substance','grade','characteristic','brand','specification','props','density','stockL','stockW','stockOptions','shapeDefinition','massOverride','areaOverride'];
-const opKeys=['machine','machineId','instructions','quantityUnit','quantityDeclared','complexityChoice','id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
+const opKeys=['complexityPending','machine','machineId','instructions','quantityUnit','quantityDeclared','complexityChoice','id','instanceId','mode','amount','basisMode','workQuantity','measurementConfirmed','afterPackage','suppliesIncluded'];
 const ruleKeys=['id','name','shape','length','width','measurementRules','fields','shapes'];
 const quoteKeys=['operationColumns','customer','project','id','date','kerf','nestingPlans','remnantMode','remnantSelections','request'];
 const pick=(x,keys)=>Object.fromEntries(keys.filter(k=>x?.[k]!==undefined).map(k=>[k,copy(x[k])]));
@@ -30,8 +30,8 @@ function resolveComplexity(rate,choice,group){
   if(matching.length)throw Error('Mức độ phức tạp đã chọn không áp dụng cho nhóm '+group+'. Chọn lại mức theo nhóm sản phẩm hiện tại.');
   throw Error('Mức độ phức tạp đã chọn không còn trong danh mục của nguyên công. Mở lại khai báo để chọn mức hiện có.');
  }
- const f=rate.factors.find(x=>(x.sharedFactorId||x.id)===choice.factorId&&x.param==='complexity'),c=f.categories.find(x=>String(x.key)===choice.label),value=Number(c.percent),multiplier=f.valueMode==='multiplier'?value:1+value/100;
- if(c.percent===null||c.percent===''||!Number.isFinite(multiplier)||multiplier<=0)throw Error('Hệ số trong danh mục chưa hợp lệ; người phụ trách giá cần kiểm tra.');
+ const f=rate.factors.find(x=>(x.sharedFactorId||x.id)===choice.factorId&&x.param==='complexity'),c=f?.categories?.find(x=>String(x.key)===choice.label),value=Number(c?.percent),multiplier=f?.valueMode==='multiplier'?value:1+value/100;
+ if(!c||c.percent===null||c.percent===''||!Number.isFinite(multiplier)||multiplier<=0)throw Error('Hệ số trong danh mục chưa hợp lệ; người phụ trách giá cần kiểm tra.');
  return {label:choice.label,multiplier};
 }
 function resolveDocumentChoices(d,before,catalog,canFactors){

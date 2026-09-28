@@ -14,6 +14,14 @@ function technicalSummary(products,result){
  const tree=treeRows(products),issues=[],rows=new Map(result.rows.map(r=>[r.id,r]));let weight=0,area=0,components=0;
  if(!products.length)issues.push('Chưa có sản phẩm');
  for(const {node:n,count} of tree){
+  for(const op of n.ops||[]){
+   const label=n.name+' · '+op.id;
+   if(op.complexityPending)issues.push(label+': chưa chọn mức độ phức tạp');
+   if(op.quantityDeclared||['manual_total','manual_unit'].includes(op.basisMode)){
+    const value=['manual_total','manual_unit'].includes(op.basisMode)?op.workQuantity:op.amount;
+    if(value==null||value===''||!Number.isFinite(Number(value))||Number(value)<0)issues.push(label+': bổ sung lượng công việc không âm');
+   }
+  }
   if(!Number.isFinite(count)||count<=0)issues.push(n.name+': bổ sung số lượng hợp lệ');
   if(n.kind==='component'&&Number.isFinite(count))components+=count;
   if(n.kind!=='material'){if(!n.children?.length)issues.push(n.name+': chưa có thành phần');continue;}
