@@ -1,0 +1,33 @@
+﻿'use strict';
+const {test}=require('node:test'),A=require('node:assert/strict'),{randomUUID}=require('node:crypto'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js');
+test('workshop material request gets automatic number, technical and pricing gates, no duplicate demand or commercial leakage',async t=>{
+ const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));let admin;
+ const call=async(path,method='GET',body,session=admin)=>{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api/'+path,{method,headers:{'Content-Type':'application/json',Cookie:session?.cookie||'','X-CSRF-Token':session?.csrf||''},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
+ admin=await call('setup','POST',{username:'admin',name:'Admin',password:'Request-test-2026!'});
+ for(const [username,actions]of [['work',['view','edit']],['tech',['view','confirm']],['read',['view']]])await call('users','POST',{username,name:username,role:'technical',password:'Request-test-2026!',actionAccess:{production:actions}});
+ const work=await call('login','POST',{username:'work',password:'Request-test-2026!'}),tech=await call('login','POST',{username:'tech',password:'Request-test-2026!'}),read=await call('login','POST',{username:'read',password:'Request-test-2026!'});
+ const d=P.demoSeed(),q=(await call('quotes','POST',{document:d})).data;await call('quotes/'+q.id+'/submit','POST',{expectedVersion:1});await call('quotes/'+q.id+'/approve','POST',{expectedVersion:2});const o=(await call('quotes/'+q.id+'/order','POST',{expectedVersion:3,code:'MR'})).data;await call('orders/'+o.id+'/confirm','POST',{quoteVersion:3});let j=(await call('production','POST',{orderId:o.id,productId:d.quote.products[0].id,quantity:1,code:'MR-01'})).data;j=await require('./production-review-fixture.cjs').review(call,admin,j.id);
+ const plan=await call('ops/purchase-plan?jobs='+j.id,'GET',undefined,work);A.equal(plan.status,200);const rows=plan.data[0].rows.filter(r=>r.remaining>0),body={requestId:randomUUID(),jobVersions:{[j.id]:j.version},allocations:rows.map(r=>({jobId:j.id,materialId:r.materialId,quantity:r.remaining})),batchNote:'Workshop needs blanks'};
+ A.equal((await call('ops/material-request','POST',body,read)).status,403);
+ const created=await call('ops/material-request','POST',body,work);A.equal(created.status,200,JSON.stringify(created.data));let p=created.data;A.match(p.code,/^DNVT-\d{8}-\d{4}$/);A.equal(p.state,'technical-review');A.equal(p.supplierId,undefined);A.ok(p.lines.every(l=>l.unitCost===undefined));
+ A.equal((await call('ops/material-request','POST',body,work)).data.id,p.id);
+ A.equal((await call('ops/material-request','POST',{...body,requestId:randomUUID()},work)).status,409);
+ A.ok((await call('ops/purchase-plan?jobs='+j.id,'GET',undefined,work)).data[0].rows.every(r=>r.remaining===0));
+ const transition=(action,extra={},u=admin)=>call('ops/material-request-review','POST',{requestId:randomUUID(),id:p.id,expectedVersion:p.version,action,...extra},u);
+ A.equal((await transition('technical',{},work)).status,403);A.equal((await transition('pricing')).status,409);
+ A.equal((await call('ops/transition','POST',{requestId:randomUUID(),id:p.id,expectedVersion:p.version,state:'approved'})).status,409);
+ let r=await transition('technical',{note:'Correct specification'},tech);A.equal(r.status,200,JSON.stringify(r.data));p=r.data;A.equal(p.state,'pricing-review');
+ A.equal((await transition('pricing',{},tech)).status,403);A.equal((await transition('pricing')).status,400);
+ const supplier=await call('ops/master','POST',{requestId:randomUUID(),kind:'supplier',expectedVersion:0,document:{code:'SUP-MR',name:'Supplier',active:true,prices:[]}});A.equal(supplier.status,200,JSON.stringify(supplier.data));const pricing={supplierId:supplier.data.id,prices:p.lines.map(l=>({lineId:l.id,unitCost:12345}))};
+ A.equal((await transition('pricing',{...pricing,prices:pricing.prices.slice(1)})).status,400);
+ A.equal((await transition('pricing',{...pricing,prices:pricing.prices.map(l=>({...l,unitCost:0}))})).status,400);
+ r=await transition('pricing',pricing);A.equal(r.status,200,JSON.stringify(r.data));p=r.data;A.equal(p.state,'pending');A.ok(p.technical);A.ok(p.pricing);A.equal(p.supplierId,supplier.data.id);
+ const visible=await call('ops/material-requests?job='+j.id,'GET',undefined,work);A.ok(visible.data.rows[0].lines.every(l=>l.unitCost===undefined));A.deepEqual(visible.data.suppliers,[]);
+ A.equal((await call('ops/transition','POST',{requestId:randomUUID(),id:p.id,expectedVersion:p.version,state:'approved'})).status,200);
+ A.equal(app.sql.prepare('SELECT COUNT(*) AS n FROM stock_movements').get().n,0);
+ // Rejection frees demand, while stale engineering cannot be confirmed.
+ const stored=JSON.parse(app.sql.prepare("SELECT document FROM ops_records WHERE kind='purchase' AND id=?").get(p.id).document);stored.state='rejected';app.sql.prepare("UPDATE ops_records SET document=? WHERE kind='purchase' AND id=?").run(JSON.stringify(stored),p.id);
+ r=await call('ops/material-request','POST',{...body,requestId:randomUUID()},work);A.equal(r.status,200);const oldCode=p.code;p=r.data;A.notEqual(p.code,oldCode);
+ const packet=JSON.parse(app.sql.prepare('SELECT packet FROM production_jobs WHERE id=?').get(j.id).packet);packet.materials[0].dimensions.length+=1;app.sql.prepare('UPDATE production_jobs SET packet=? WHERE id=?').run(JSON.stringify(packet),j.id);
+ A.equal((await transition('technical',{},tech)).status,409);A.equal((await transition('reject',{note:'Recreate after engineering change'},work)).status,200);
+});

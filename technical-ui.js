@@ -152,7 +152,7 @@ ${field('Từ ngày báo giá','tq-from','','date')}${field('Đến ngày báo g
   if(technicalOnly()){$('#content').querySelectorAll('[data-tab="prices"],[data-tab="pricing"],[data-tab="preview"],[data-action="history"],[data-pa="sample"],[data-team="submit"],[data-team="leave"],[data-batch-one="new-shared"]').forEach(x=>x.remove());const ribbon=$('.quote-ribbon > span');if(ribbon)ribbon.textContent='Ngày '+db.quote.date;}
  };
  const oldQuick=refreshQuickUI;refreshQuickUI=()=>{oldQuick();if(technicalStage())technicalClean($('#content'));};
- const oldDialog=openDialog;openDialog=(...args)=>{const value=oldDialog(...args);if(technicalStage())technicalClean($('#dialog'));if(technicalCatalogPage())technicalCatalogClean($('#dialog'));technicalPermissionFields();return value;};
+ const oldDialog=openDialog;openDialog=(...args)=>{const value=oldDialog(...args);if(!$('#dialog [data-material-request-dialog]')){if(technicalStage())technicalClean($('#dialog'));if(technicalCatalogPage())technicalCatalogClean($('#dialog'));}technicalPermissionFields();return value;};
  document.addEventListener('change',e=>{if(e.target.hasAttribute('data-access-role')){technicalPermissionFields();if(e.target.value==='technical')document.querySelectorAll('#dialog [name=sections]').forEach(x=>x.checked=['customer','bom','operations'].includes(x.value));}});
  // Capture before legacy handlers: cost editors are reached only from step 6.
  document.addEventListener('click',e=>{const el=e.target.closest('[data-pa],[data-mfg],[data-close-gap],[data-ux],[data-action]');if(!el||!technicalStage())return;
