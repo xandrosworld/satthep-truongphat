@@ -1,6 +1,7 @@
 /* Quotation-owned nesting choices. Geometry and catalogue formulas remain unchanged. */
 (function(root){'use strict';
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
+const maxManualPieces=10000;
 const modes=['bounding','bounding-fixed','circle','right-triangle'];
 const ids=rows=>rows.map(r=>r.id).sort();
 function fingerprint(rows,spec,kerf){return JSON.stringify([spec.id,spec.shape,spec.stockL,spec.stockW,Number(kerf),rows.map(r=>[r.id,r.count,r.geometry.length,r.geometry.width,r.geometry.blankArea,...(r.geometry.polygon?[r.geometry.polygon]:[])]).sort((a,b)=>a[0].localeCompare(b[0]))]);}
@@ -14,7 +15,7 @@ function matches(rows,spec,kerf,plan){
  return JSON.stringify(old)===current;
  }catch{return false;}
 }
-function validatePlans(plans){if(plans===undefined)return;if(!Array.isArray(plans)||plans.length>1000)throw Error('Danh sách phương án xếp phôi không hợp lệ');const seen=new Set();for(const p of plans){if(!p||!Array.isArray(p.rowIds)||!p.rowIds.length||p.rowIds.some(id=>typeof id!=='string'||seen.has(id))||new Set(p.rowIds).size!==p.rowIds.length||typeof p.fingerprint!=='string'||p.fingerprint.length>150000||!modes.includes(p.mode)||p.placements!==undefined&&(!Array.isArray(p.placements)||p.placements.length>500))throw Error('Phương án xếp phôi không hợp lệ hoặc trùng dòng');p.rowIds.forEach(id=>seen.add(id));}}
+function validatePlans(plans){if(plans===undefined)return;if(!Array.isArray(plans)||plans.length>1000)throw Error('Danh sách phương án xếp phôi không hợp lệ');const seen=new Set();for(const p of plans){if(!p||!Array.isArray(p.rowIds)||!p.rowIds.length||p.rowIds.some(id=>typeof id!=='string'||seen.has(id))||new Set(p.rowIds).size!==p.rowIds.length||typeof p.fingerprint!=='string'||p.fingerprint.length>150000||!modes.includes(p.mode)||p.placements!==undefined&&(!Array.isArray(p.placements)||p.placements.length>maxManualPieces))throw Error('Phương án xếp phôi không hợp lệ hoặc trùng dòng');p.rowIds.forEach(id=>seen.add(id));}}
 const cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
 function triangles(poly){
  const points=poly.map(p=>[...p]),area=points.reduce((s,a,i)=>{const b=points[(i+1)%points.length];return s+a[0]*b[1]-a[1]*b[0];},0);if(area<0)points.reverse();const out=[];
@@ -46,7 +47,7 @@ function manual(rows,spec,kerf,mode,placements){
  choice(rows,spec,mode);
  const sheet=spec.shape==='sheet',stockL=Number(spec.stockL),stockW=sheet?Number(spec.stockW):0;
  if(!Number.isFinite(kerf)||kerf<0||!Number.isFinite(stockL)||stockL<=0||sheet&&(!Number.isFinite(stockW)||stockW<=0))throw Error('Khổ mua/mạch cắt không hợp lệ');
- const total=rows.reduce((s,r)=>s+r.count,0);if(total>500||!Array.isArray(placements)||placements.length!==total)throw Error('Chỉnh tay cần đủ từng phôi, tối đa 500 phôi');
+ const total=rows.reduce((s,r)=>s+r.count,0);if(total>maxManualPieces||!Array.isArray(placements)||placements.length!==total)throw Error('Chỉnh tay cần đủ từng phôi, tối đa 10.000 phôi');
  const seen=new Set(),stocks=[],byId=new Map(rows.map(r=>[r.id,r]));let netUsed=0,used=0;
  for(const p of placements){const r=byId.get(p.rowId),key=p.rowId+':'+p.index;if(!r||!Number.isInteger(p.index)||p.index<0||p.index>=r.count||seen.has(key)||!Number.isInteger(p.stock)||p.stock<0||p.stock>=total||(p.angle===undefined?typeof p.rotate!=='boolean':!Number.isFinite(p.angle))||![p.x,p.y].every(Number.isFinite)||p.x<0||p.y<0)throw Error('Vị trí, tấm hoặc định danh phôi không hợp lệ');seen.add(key);
   if((p.angle??(p.rotate?90:0))%360!==0&&(!sheet||mode==='bounding-fixed'))throw Error('Phương án này không cho phép xoay');
@@ -64,5 +65,5 @@ function manual(rows,spec,kerf,mode,placements){
 }
 function apply(rows,spec,kerf,plan){if(!matches(rows,spec,kerf,plan)||JSON.stringify([...plan.rowIds].sort())!==JSON.stringify(ids(rows)))throw Error('Phương án xếp phôi đã cũ: kích thước, số lượng, khổ mua hoặc mạch cắt đã đổi. Mở Sắp xếp phôi để lập lại');return plan.placements?manual(rows,spec,kerf,plan.mode,plan.placements):auto(rows,spec,kerf,plan.mode);}
 function make(rows,spec,kerf,mode,placements){const p={rowIds:ids(rows),fingerprint:fingerprint(rows,spec,kerf),mode,...(placements?{placements}: {})};apply(rows,spec,kerf,p);return p;}
-const api={available,outline,rightTriangle,separatedPolygons,modes,ids,fingerprint,matches,validatePlans,auto,draft,manual,apply,make};C.nestingPlans=api;if(typeof module!=='undefined')module.exports=api;else root.TPNestingPlan=api;
+const api={maxManualPieces,available,outline,rightTriangle,separatedPolygons,modes,ids,fingerprint,matches,validatePlans,auto,draft,manual,apply,make};C.nestingPlans=api;if(typeof module!=='undefined')module.exports=api;else root.TPNestingPlan=api;
 })(typeof window!=='undefined'?window:globalThis);

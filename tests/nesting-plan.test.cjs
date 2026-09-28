@@ -30,3 +30,14 @@ test('plans are technical BOM data, enforce unique rows and keep prices private'
  const T=require('../technical-core'),SA=require('../section-access'),after=C.copy(db);after.quote.nestingPlans=[plan];A.deepEqual(SA.denied(db,after,{sections:['bom']}),[]);A.ok(SA.denied(db,after,{sections:[]}).includes('bom'));
  A.deepEqual(T.project(after).quote.nestingPlans,[plan]);A.deepEqual(T.merge(db,T.project(after)).quote.nestingPlans,[plan]);
 });
+
+test('3600 rectangular blanks can be rotated, persisted and reloaded with full collision checks',()=>{
+ const db=fixture('rectangle',3600),node=db.quote.products[0].children[0];node.dims={L:1200,W:750};node.spec.stockL=3000;node.spec.stockW=1250;
+ const g=C.calculate(db).groups[0],p=N.draft(g.rows,g.spec,0,'bounding');A.equal(p.length,3600);
+ // A half turn keeps the envelope and remains a real saved manual rotation.
+ p[0].angle=180;const plan=N.make(g.rows,g.spec,0,'bounding',p);N.validatePlans([plan]);
+ db.quote.nestingPlans=[plan];const reloaded=C.calculate(JSON.parse(JSON.stringify(db)));A.equal(reloaded.groups[0].layout.manual,true);A.equal(reloaded.groups[0].layout.stocks.flatMap(s=>s.placements).length,3600);
+ const bad=structuredClone(p);bad[1]={...bad[1],stock:bad[0].stock,x:bad[0].x,y:bad[0].y};A.throws(()=>N.make(g.rows,g.spec,0,'bounding',bad),/chồng/);
+ bad[0].x=3001;A.throws(()=>N.make(g.rows,g.spec,0,'bounding',bad),/ngoài/);
+ A.throws(()=>N.validatePlans([{...plan,placements:Array(N.maxManualPieces+1).fill(p[0])}]));
+});
