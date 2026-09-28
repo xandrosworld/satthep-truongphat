@@ -714,3 +714,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Bổ sung `tests/technical-missing-operation-price-browser.cjs`: tài khoản kỹ thuật không xem giá sửa lượng công việc, bấm lưu máy chủ, tải lại và xác nhận bàn giao toàn bộ qua hộp thoại; API bàn giao từng phần đạt khi đơn giá nguyên công còn trống. Đọc lại bằng Admin xác nhận giá vẫn trống, không tự điền 0.
 - Kiểm tra đối chứng: cấu kiện thiếu thành phần vẫn lưu nháp được nhưng bàn giao toàn bộ bị từ chối. Cảnh báo được khoanh trong ảnh là thiếu lượng kg, không phải thiếu đơn giá; ảnh đồng thời có hai cấu kiện chưa có thành phần. Không bỏ kiểm tra cấu thành để xử lý yêu cầu về giá.
 - Kiểm thử trình duyệt đạt trên dữ liệu riêng. Đợt này chỉ bổ sung bằng chứng kiểm thử, không thay mã chạy hoặc triển khai lại; chưa xác nhận bàn giao thực tế BG-20260923-003 và không sửa hồ sơ khách.
+
+### 2026-09-28 — Đề nghị công việc và 12 nhóm định mức theo ảnh khách
+- Rà lại 14 loại đề nghị đã triển khai: hai nhóm Tài chính/Phục vụ sản xuất, tạo loại khác, duyệt, phân công, thực hiện, trả lại và xác nhận kết quả; browser hồi quy đạt.
+- Bổ sung đủ 12 nhóm định mức theo ảnh; giữ giá ca máy, dữ liệu cũ và lịch sử. Khai phạm vi, đơn vị, tỷ lệ, thứ tự mã nguyên công, nguyên công/máy và căn cứ phù hợp từng nhóm. Không tạo số chuẩn giả.
+- Bảng đối chiếu theo lệnh có mức chuẩn, số ghi nhận, chênh lệch và nguồn: vật tư/phôi, hao hụt/thu hồi, chuỗi công đoạn, thời gian/năng suất sau bàn giao, QC và chi phí chứng từ. Đúng sản phẩm/đơn vị/khổ/phạm vi; dữ liệu thiếu hoặc dở dang ghi rõ, không coi là 0 hay tiết kiệm.
+- Giờ công tổng từng người, số đo giờ máy/điện/khí chưa có nguồn đầy đủ nên mới khai căn cứ, chưa tự kết luận thực tế. QC là lần cuối đang ghi nhận, chưa lũy kế lỗi/làm lại; giá thành là chứng từ đã gắn lệnh, chưa xác nhận đủ chi phí. Chi tiết: [12 nhóm định mức](docs/DINH-MUC-12-NHOM-2026-09-28.md).
+- 12 ca API/core liên quan và 3 browser đạt; build đạt. Kiểm tra 12 form/lưu/tải lại/lịch sử, chuỗi bước lặp, tỷ lệ 0%, đơn vị/khổ, quyền chi phí, đối chiếu lệnh và 390 px. Triển khai ghi bổ sung sau xác minh.
