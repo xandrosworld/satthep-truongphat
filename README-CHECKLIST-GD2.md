@@ -556,3 +556,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - 9 ca API/core và 3 browser đạt: hồi quy xác nhận cũ không có unlocked, xác nhận bằng estimator, khóa lại, chống thông báo trùng, tải lại; luồng yêu cầu mở sửa và bàn giao từng phần. Build đạt.
 - Sao chép SQLite hiện tại sang môi trường thử: dùng đúng quyền Nguyễn Khắc Phú, xác nhận lại thành công BG-20260923-004, BG-20260925-006, BG-20260925-005. Không ghi xác nhận thử lên hồ sơ vận hành.
 - Đã triển khai 637d001 sau sao lưu nguồn/SQLite; HTTPS health và 55 hash runtime đạt. Trên web thật, quyền anh Phú mở được nút và hộp xác nhận kỹ thuật của BG-20260923-004; chặn ghi nghiệp vụ trong phiên kiểm tra. Phiên tạm đã thu hồi. Ảnh: artifacts/stale-handoff-after.png.
+
+### 2026-09-28 — Bắt đầu / kết thúc ngay trên thẻ công đoạn (f341716)
+- Thẻ công đoạn hiện Bắt đầu; mở khai người phụ trách với trạng thái bắt đầu đã chọn. Sau lưu thành công chuyển sang Kết thúc & bàn giao, đi thẳng đến form đối soát sản lượng/phần dư/phế hiện có. Chưa hoàn tất bước trước thì nút bắt đầu bước sau bị khóa; máy chủ vẫn kiểm tra hồ sơ, công nghệ, kho, phân công và phiên bản.
+- Đối soát trực tiếp từ thẻ thành công đưa về quy trình và mở nhận bàn giao của bước kế tiếp; trường hợp gửi đề nghị phải chờ duyệt. Công đoạn đã đối soát có nút Chuyển công đoạn tiếp; bước cuối dẫn tới QC / bàn giao thành phẩm. Không tự bắt đầu bước sau hoặc bỏ duyệt kho/QC.
+- Thời gian tiếp tục tính trong lúc chờ bàn giao, dừng khi bước sau nhận bán thành phẩm; bước cuối khi nhập thành phẩm. Giữ trừ khoảng chờ đã xác nhận, không cộng trùng. Hiển thị rõ đã đối soát / chờ bàn giao và thời điểm đã bàn giao.
+- Kiểm thử: 3 ca API/core (luồng công đoạn/kho, QC và thời gian); browser bảng có nút bắt đầu/kết thúc/chuyển bước và toàn luồng kết thúc qua đối soát chờ duyệt/trực tiếp, QC, thành phẩm đạt. Build đạt.
+- Đã triển khai f341716, sao lưu nguồn/SQLite, HTTPS health và 55 hash runtime đạt. Web thật LSX-01 kiểm tra nút, form xác nhận bắt đầu và 390 px; không ghi nghiệp vụ thử. Phiên tạm đã thu hồi. Ảnh: artifacts/production-board-actions-live.png và artifacts/production-board-actions-live-mobile.png.
