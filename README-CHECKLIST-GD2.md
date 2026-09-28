@@ -497,3 +497,12 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Đặt lại chế độ hiển thị khi mở danh sách, chi tiết lệnh, bảng kiến nghị, chia phần và phát hành lệnh. CSS chỉ giới hạn vật tư khi còn thanh tab của chi tiết; giới hạn thao tác ẩn panel trong đúng khung lệnh.
 - Kiểm thử hồi quy trước sửa thất bại vì danh sách bị ẩn; sau sửa đạt luồng nhập kho thực trên dữ liệu thử, quay lại danh sách nhiều lần, bảng kiến nghị và đóng/mở lệnh không F5. Kiểm thử toàn luồng công nghệ, đối soát, QC và thành phẩm vẫn đạt.
 - Triển khai `017a71d`, sao lưu nguồn/SQLite, đối chiếu 37 tệp runtime và healthcheck đạt. Web thật LSX-01: Vật tư → kho/form nhập → danh sách lệnh và Vật tư → danh sách đều hiển thị ngay, không tải lại trang. Không ghi kho thử trên dữ liệu thật; phiên kiểm tra đã thu hồi. Ảnh: `artifacts/production-navigation-live.png`.
+
+# Cập nhật 28/09/2026 — đối chiếu mã vật tư lệnh sản xuất với kho
+
+- Xác minh trên dữ liệu thật: VT-00002 trong danh mục là thép mạ kẽm 3 mm, nhưng hồ sơ LSX-01 đã chốt inox SUS304 2 mm bóng. Không đổi tên để che sai quy cách hoặc thay vật liệu đã duyệt.
+- Bổ sung phát hiện xung đột vật liệu/mác/tiết diện cố định; chặn đối chiếu giữ, mua và xuất kho khi mã trùng khác quy cách. Lô nhập mới lưu thêm chất liệu/mác/nhãn hiệu; chọn phôi loại lô có thông số khác dù cùng mã.
+- Admin có thao tác đối chiếu và tách mã ngay trên lệnh; kiểm phiên bản lệnh/danh mục, chặn lệnh đã làm hoặc có chứng từ vật tư liên quan. Ghi lịch sử catalog/lệnh, giữ nguyên báo giá/đơn hàng gốc, thông số kỹ thuật, khối lượng, công đoạn và tiến độ. Khổ mua đã chọn được chuyển theo mã mới.
+- 27 kiểm thử API/core đạt; trình duyệt kiểm tra cảnh báo, tách mã và chọn cùng mã trong form nhập kho đạt.
+- Triển khai 395925f, sao lưu nguồn/SQLite và đối chiếu 39 tệp runtime; healthcheck đạt. Đã xử lý dữ liệu LSX-01 qua giao diện thật: inox dùng VT-00002-SX-95613E5A; VT-00002 thép mạ kẽm giữ nguyên. Xác minh sau tải lại và form nhập kho cùng mã/tên, không đổi thông số/khối lượng/công đoạn, không tạo giao dịch nhập/xuất thử.
+- Rà cả 2 lệnh hiện có: không còn xung đột quy cách với danh mục. Phiên kiểm tra tạm đã thu hồi. Ảnh: artifacts/material-identity-live-production.png và artifacts/material-identity-live-receipt.png.
