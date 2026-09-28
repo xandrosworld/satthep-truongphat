@@ -651,3 +651,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Quy tắc sửa trước trình duyệt đã mở ô nhập theo quyền (32ad808/5c98bae). Bổ sung phân biệt giá chưa khai, không hợp lệ và âm; bảng giá/hộp xác nhận hiện Chưa khai thay vì 0 khi thiếu giá, giải thích giá tham khảo chưa được áp dụng.
 - 17 ca core/API đạt; 2 kịch bản browser đạt. Browser nhập 18.500, lưu máy chủ và tải lại với estimator trên dữ liệu mẫu và bản sao đúng báo giá/danh mục khách: 4 dòng VT-00019 giữ giá, chi phí đều dương, hết lỗi đơn giá. Hồi quy sửa giá/hệ số trong phạm vi mở cấu thành đạt; build đạt.
 - Triển khai c0c247d sau sao lưu nguồn/SQLite; HTTPS health và 71 hash runtime khớp. Web thật bằng tài khoản Thảo: ô VT-00019 nhập được, hiện Chưa khai và thông báo thiếu giá chính xác. Chặn ghi nghiệp vụ thử; phiên tạm đã thu hồi. Ảnh: artifacts/price-video/fixed-live.png.
+
+### 2026-09-28 — Sửa lỗi companyLogo khi lưu hệ số
+- Tái hiện bằng browser: companyLogo không tồn tại ở phạm vi dùng chung vì nằm trong nhánh khởi tạo dưới strict mode. Khi dữ liệu đủ để dựng bản chào, các hàm render ngoài nhánh gọi logo gây ReferenceError, làm gián đoạn thao tác lưu/tính lại.
+- Chuyển hàm logo ra phạm vi dùng chung, áp dụng bản chào thường, nâng cao và bản chào kinh doanh. Không đổi giá hoặc quyền tài khoản.
+- Browser hồi quy thất bại trước sửa và đạt sau sửa; lưu hệ số quản lý bằng 0 rồi lưu máy chủ/tải lại đạt; cả ba hàm dựng bản chào có logo. Browser hồi quy hệ số/giá theo quyền và phạm vi sửa cũ đạt. Build đạt.
+- Triển khai f01f068 sau sao lưu nguồn/SQLite; HTTPS health và 71 hash runtime khớp. Web thật với tài khoản Thảo, BG-20260925-005 v14: dựng bản chào thành công, không lỗi tính toán, mở được form hệ số. Giá VT-00019 lúc kiểm tra đã là 18.700 do hồ sơ được cập nhật; phiên kiểm tra không ghi nghiệp vụ và đã thu hồi. Ảnh: artifacts/company-logo-policy-live.png.
