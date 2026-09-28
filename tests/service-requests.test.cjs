@@ -18,4 +18,54 @@ const [a,b]=await Promise.all([post('service-requests',{...issue,requestId:rando
 let rejected=ok(await post('service-requests',body,req));A.equal((await post('service-requests',{action:'reject',id:rejected.id,expectedVersion:1})).status,400);ok(await post('service-requests',{action:'withdraw',id:rejected.id,expectedVersion:1,note:'No longer needed'},req));
 const machine=ok(await post('master',{kind:'machine',expectedVersion:0,document:{code:'M-SERVICE',name:'Lathe',workshop:'A',hoursPerDay:8}}));let repair=ok(await post('service-requests',{action:'create',type:'repair',department:'Workshop',recipient:'Nam',reason:'Repair',machineId:machine.id,problem:'Motor stopped'},req));A.equal((await post('delete',{kind:'machine',id:machine.id,expectedVersion:1})).status,409);
 A.equal((await post('service-requests',{action:'approve',id:repair.id,expectedVersion:repair.version},req)).status,403);repair=ok(await post('service-requests',{action:'approve',id:repair.id,expectedVersion:repair.version}));repair=ok(await post('service-requests',{action:'start',id:repair.id,expectedVersion:repair.version,provider:'Maintenance'}));const finish={action:'complete',id:repair.id,expectedVersion:repair.version,date:'2026-09-28',note:'Replaced bearing and tested',downtimeHours:2,requestId:randomUUID()};repair=ok(await post('service-requests',finish));ok(await post('service-requests',finish));A.equal(repair.state,'completed');A.equal(ok(await call('ops/state')).machineRepairs.filter(m=>m.serviceRequestId===repair.id).length,1);
+
+// Each additional request has a real lifecycle; approvals do not silently post stock or money.
+const beforeMovements=ok(await call('ops/state')).movements.length;
+const metadata=ok(await call('ops/service-requests'));
+A.equal(metadata.types.length,14);
+const adminId=metadata.people.find(p=>p.name==='Admin').id;
+for(const type of metadata.types.filter(t=>!t.mode&&!t.external)){
+ const details=Object.fromEntries(type.fields.map(f=>[f.key,f.type==='number'?2:f.type==='date'?'2026-10-02':'Documented requirement']));
+ let r=ok(await post('service-requests',{action:'create',type:type.id,department:'Workshop',recipient:'Nam',reason:'Business need',details},req));
+ A.equal((await post('service-requests',{action:'approve',id:r.id,expectedVersion:r.version},req)).status,403);
+ A.equal(ok(await call('ops/service-requests','GET',undefined,other)).rows.some(x=>x.id===r.id),false);
+ A.equal((await post('service-requests',{action:'approve',id:r.id,expectedVersion:r.version,assigneeId:'missing'})).status,400);
+ r=ok(await post('service-requests',{action:'approve',id:r.id,expectedVersion:r.version,assigneeId:adminId}));
+ A.equal((await post('service-requests',{action:'start',id:r.id,expectedVersion:r.version,provider:'Anyone'},req)).status,403);
+ r=ok(await post('service-requests',{action:'start',id:r.id,expectedVersion:r.version,provider:'Responsible department'}));
+ A.equal((await post('service-requests',{action:'complete',id:r.id,expectedVersion:r.version,date:'2026-09-28',note:'Done'})).status,400);
+ const finish=()=>post('service-requests',{action:'complete',id:r.id,expectedVersion:r.version,date:'2026-09-28',note:'Done',resultReference:'RECORD-01'});
+ r=ok(await finish());A.equal(r.state,'review');
+ r=ok(await post('service-requests',{action:'return',id:r.id,expectedVersion:r.version,note:'Attach evidence'}));A.equal(r.state,'working');
+ r=ok(await finish());r=ok(await post('service-requests',{action:'accept',id:r.id,expectedVersion:r.version,note:'Checked against record'}));A.equal(r.state,'completed');
+ A.equal((await post('service-requests',{action:'accept',id:r.id,expectedVersion:r.version,note:'Again'})).status,403);
+}
+A.equal(ok(await call('ops/state')).movements.length,beforeMovements);
+A.equal((await post('service-requests',{action:'save-type',name:'Custom'},req)).status,403);
+let custom=ok(await post('service-requests',{action:'save-type',name:'Custom'}));
+let cr=ok(await post('service-requests',{action:'create',type:custom.id,department:'Office',recipient:'An',reason:'Need',details:{content:'Work',expected:'Done'}}));
+A.equal(cr.typeName,'Custom');
+custom=ok(await post('service-requests',{action:'save-type',id:custom.id,expectedVersion:custom.version,name:'Custom renamed',active:false}));
+A.equal((await post('service-requests',{action:'create',type:custom.id,department:'Office',recipient:'An',reason:'Need',details:{content:'Work',expected:'Done'}})).status,400);
+A.equal(ok(await call('ops/service-requests')).rows.find(x=>x.id===cr.id).typeName,'Custom');
+let upkeep=ok(await post('service-requests',{action:'create',type:'maintenance',department:'Workshop',recipient:'Nam',reason:'Periodic',machineId:machine.id,problem:'Lubrication'}));
+upkeep=ok(await post('service-requests',{action:'approve',id:upkeep.id,expectedVersion:upkeep.version}));
+upkeep=ok(await post('service-requests',{action:'start',id:upkeep.id,expectedVersion:upkeep.version,provider:'Team'}));
+upkeep=ok(await post('service-requests',{action:'complete',id:upkeep.id,expectedVersion:upkeep.version,note:'Lubricated',date:'2026-09-28',downtimeHours:1}));
+A.equal(ok(await call('ops/state')).machineRepairs.filter(x=>x.serviceRequestId===upkeep.id).length,1);
+let extra=ok(await post('service-requests',{...body,type:'supplement',lines:[{materialId:'SUPPLY-M',quantity:1}]}));
+extra=ok(await post('service-requests',{action:'approve',id:extra.id,expectedVersion:extra.version}));
+extra=ok(await post('service-requests',{action:'issue',id:extra.id,expectedVersion:extra.version,recipient:'Nam',allocations:[{lineId:extra.lines[0].id,lotId:lot.id,quantity:1}]}));A.equal(extra.state,'completed');
+
+await call('users','POST',{username:'accountant',name:'Accountant',role:'sales',password:'Service-test-2026!',actionAccess:{finance:['view','create']}});
+const accountant=await call('login','POST',{username:'accountant',password:'Service-test-2026!'}),accountantId=ok(await call('ops/service-requests')).people.find(p=>p.name==='Accountant').id;
+let money=ok(await post('service-requests',{action:'create',type:'expense',department:'Office',recipient:'An',reason:'Transport',details:{amount:1000,payee:'Supplier',basis:'Invoice 01'}},req));
+A.equal((await post('service-requests',{action:'approve',id:money.id,expectedVersion:money.version,assigneeId:accountantId},accountant)).status,403);
+money=ok(await post('service-requests',{action:'approve',id:money.id,expectedVersion:money.version,assigneeId:accountantId}));
+A.equal((await post('service-requests',{action:'start',id:money.id,expectedVersion:money.version,provider:'Admin'})).status,403);
+money=ok(await post('service-requests',{action:'start',id:money.id,expectedVersion:money.version,provider:'Accounting'},accountant));
+A.equal((await post('service-requests',{action:'reassign',id:money.id,expectedVersion:money.version,assigneeId:adminId})).status,400);
+money=ok(await post('service-requests',{action:'reassign',id:money.id,expectedVersion:money.version,assigneeId:adminId,note:'Cover absence'}));
+A.equal((await post('service-requests',{action:'complete',id:money.id,expectedVersion:money.version,date:'2026-09-28',note:'Done',resultReference:'Receipt'},accountant)).status,404);
+A.equal(money.history.some(h=>h.action==='assign'&&h.assigneeId===accountantId),true);
 });
