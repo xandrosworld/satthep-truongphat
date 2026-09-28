@@ -5,7 +5,7 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
  await p.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password:'Corrections-browser-2026!'}));const d=TPPrice.demoSeed();d.quote.remnantMode='all';const q=await teamApi('quotes','POST',{document:d});await teamApi('quotes/'+q.id+'/submit','POST',{expectedVersion:q.version});await teamApi('quotes/'+q.id+'/approve','POST',{expectedVersion:2,acknowledgeBelowCost:true,reason:'Approved fixture'});await teamLoad(q.id);});
  await expect(p.locator('[data-corrections-open]')).toHaveText('Sửa lại');
 
- await p.locator('[data-corrections-open]').click();await p.locator('[name=sections][value=commercial]').check();await p.locator('[name=reason]').fill('Bổ sung điều kiện giao hàng');await p.locator('#dialog button[type=submit]').click();
+ await p.locator('[data-corrections-open]').click();await expect(p.locator('[data-correction-empty]')).toBeVisible();await expect(p.locator('#dialog [name=reason]')).toHaveCount(0);await p.locator('[data-correction-extend]').click();await p.locator('[name=sections][value=commercial]').check();await p.locator('[name=reason]').fill('Bổ sung điều kiện giao hàng');await p.locator('#dialog button[type=submit]').click();
  await expect(p.locator('#dialog')).toContainText('Đang sửa');await expect(p.locator('[data-correction-scope]')).toContainText('Bổ sung điều kiện giao hàng');
  await p.locator('#dialog [data-correction-goto=commercial]').click();await expect(p.locator('#dialog')).not.toBeVisible();
  expect(await p.evaluate(()=>{try{mutation(()=>db.quote.project='outside scope');return false;}catch(e){return e.message.includes('Ngoài vùng');}})).toBe(true);
