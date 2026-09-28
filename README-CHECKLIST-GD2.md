@@ -490,3 +490,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Loại nhập: nhà cung cấp (chọn tên có sẵn hoặc nhập tên), phần tận dụng/tồn cũ (bắt buộc ghi nguồn), nhập khác. Lưu nguồn vào lô/phiếu và hiển thị ở danh sách kho. Phần dư từ lệnh hiện hành vẫn qua đối soát lệnh để tránh nhập trùng; nhập tự động theo mua hàng/hoàn dư giữ nguồn tương ứng.
 - Kiểm thử 8 ca API/core đạt và trình duyệt thực: tấm/thanh/thiết bị, công thức có thông số gia công chưa khai, chọn khổ, tự tính/cân thực tế, lưu nguồn nhà cung cấp/phần tận dụng, chặn thiếu nguồn hoặc nhà cung cấp không tồn tại.
 - Triển khai `a67efea`, sao lưu nguồn/SQLite, đối chiếu 37 tệp runtime và healthcheck đạt. Web thật VT-00001: khổ 3000 × 1250 mm tự tính 59,475 kg; chọn khổ thông dụng, chọn loại nhập và khung điện thoại đạt. Kiểm tra chỉ đọc, không ghi phiếu kho thử; phiên tạm đã thu hồi. Ảnh: `artifacts/stock-receipt-live.png`.
+
+# Cập nhật 28/09/2026 — sửa trắng màn hình lệnh sau nhập kho
+
+- Tái hiện đúng lỗi bằng trình duyệt: vào Vật tư SX, đóng lệnh, nhập kho rồi mở danh sách lệnh; dữ liệu đã có nhưng bị lớp `production-material-focus` cũ che mất.
+- Đặt lại chế độ hiển thị khi mở danh sách, chi tiết lệnh, bảng kiến nghị, chia phần và phát hành lệnh. CSS chỉ giới hạn vật tư khi còn thanh tab của chi tiết; giới hạn thao tác ẩn panel trong đúng khung lệnh.
+- Kiểm thử hồi quy trước sửa thất bại vì danh sách bị ẩn; sau sửa đạt luồng nhập kho thực trên dữ liệu thử, quay lại danh sách nhiều lần, bảng kiến nghị và đóng/mở lệnh không F5. Kiểm thử toàn luồng công nghệ, đối soát, QC và thành phẩm vẫn đạt.
+- Triển khai `017a71d`, sao lưu nguồn/SQLite, đối chiếu 37 tệp runtime và healthcheck đạt. Web thật LSX-01: Vật tư → kho/form nhập → danh sách lệnh và Vật tư → danh sách đều hiển thị ngay, không tải lại trang. Không ghi kho thử trên dữ liệu thật; phiên kiểm tra đã thu hồi. Ảnh: `artifacts/production-navigation-live.png`.
