@@ -549,3 +549,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Kiểm tra: 26 ca API/core liên quan đạt; 3 luồng trình duyệt định mức/lịch sử/mobile, đề nghị vật tư → kỹ thuật → giá/NCC, máy/giá ca/sửa chữa đạt. Build đạt.
 - Đã triển khai 0377e68, sao lưu nguồn/SQLite; HTTPS health và 50 hash runtime khớp. Trình duyệt web thật kiểm tra menu/icon, form định mức, căn cứ giá ca, đối chiếu LSX-01 và 390 px; chặn ghi nghiệp vụ thử. LSX-01 chưa có định mức tham chiếu và số liệu đối soát, hiển thị đúng trạng thái thiếu dữ liệu. Ảnh: artifacts/reference-norms-live-desktop.png, artifacts/reference-norms-live-comparison.png, artifacts/reference-norms-live-mobile.png.
 
+
+### 2026-09-28 — Sửa kẹt xác nhận lại sau cập nhật danh mục (637d001)
+- Nguyên nhân trên BG-20260923-004 v29: công thức danh mục v75 làm xác nhận kỹ thuật hết hiệu lực, nhưng giao diện chỉ kiểm tra chưa mở khóa nên vẫn khóa và đưa người dùng vào yêu cầu mở sửa. Đồng bộ nút bàn giao, khóa sửa và giá theo trạng thái xác nhận còn hiệu lực; hiện Xác nhận bàn giao lại khi dữ liệu đã đổi.
+- Bàn giao từng phần cũng phân biệt xác nhận hiện hành với xác nhận cũ; giá từng phần cần kỹ thuật hiện hành. Giữ kiểm tra quyền, phiên bản, đầu vào, phạm vi sửa và dữ liệu kỹ thuật; không tự xác nhận thay khách.
+- 9 ca API/core và 3 browser đạt: hồi quy xác nhận cũ không có unlocked, xác nhận bằng estimator, khóa lại, chống thông báo trùng, tải lại; luồng yêu cầu mở sửa và bàn giao từng phần. Build đạt.
+- Sao chép SQLite hiện tại sang môi trường thử: dùng đúng quyền Nguyễn Khắc Phú, xác nhận lại thành công BG-20260923-004, BG-20260925-006, BG-20260925-005. Không ghi xác nhận thử lên hồ sơ vận hành.
+- Đã triển khai 637d001 sau sao lưu nguồn/SQLite; HTTPS health và 55 hash runtime đạt. Trên web thật, quyền anh Phú mở được nút và hộp xác nhận kỹ thuật của BG-20260923-004; chặn ghi nghiệp vụ trong phiên kiểm tra. Phiên tạm đã thu hồi. Ảnh: artifacts/stale-handoff-after.png.
