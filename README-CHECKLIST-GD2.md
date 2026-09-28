@@ -616,3 +616,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Thanh tổng hợp thêm số chưa làm/đang làm/đã xong/quá hạn. Quá hạn là cảnh báo bổ sung, có thể cùng thuộc nhóm chưa làm hoặc đang làm.
 - Kiểm thử API trạng thái/hạn/duyệt/mở sửa và browser danh sách desktop/mobile đạt; build đạt. Bộ notifications-server có 3 ca đạt, 1 ca cũ thất bại do vẫn yêu cầu mở khóa xác nhận cũ; đã đối chiếu cùng lỗi trên mã trước thay đổi này.
 - Đã triển khai `6ad2049` sau sao lưu nguồn/SQLite; HTTPS health và 66 hash runtime đạt. Kiểm tra web thật cột tiến độ, tổng hợp và khung 390 px chỉ đọc; không sửa báo giá khách. Phiên tạm đã thu hồi. Ảnh: `artifacts/quote-progress-live.png`, `artifacts/quote-progress-live-mobile.png`.
+
+
+### 2026-09-28 — Cấp quyền thêm mã vật tư cho Nguyễn Khắc Phú
+- Tài khoản nv-003 được bổ sung catalogMaterials.create và mức cấu hình danh mục vật tư qua bộ quyền bổ sung gắn vị trí Quản đốc xưởng hiện chỉ anh Phú đảm nhiệm. Tài khoản quản lý theo cơ cấu nên không sửa trực tiếp quyền tài khoản; giữ nguyên bộ quyền kỹ thuật dùng chung.
+- Đối chiếu trước/sau: các tài khoản khác và quyền không liên quan giữ nguyên; không cấp sửa/xóa vật tư hoặc thêm quyền duyệt/giá. API lưu lịch sử phân quyền và thu hồi phiên cũ của tài khoản.
+- Xác minh bằng phiên tạm đúng tài khoản anh Phú trên web thật: mở được nút thêm mới và form vật tư; không lưu vật tư thử. Phiên tạm đã thu hồi. Ảnh: artifacts/phu-material-create-live.png. Đây là cập nhật cấu hình quyền, không thay mã chạy hoặc triển khai lại.
