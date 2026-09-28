@@ -20,3 +20,5 @@
 @media(max-width:1050px){.dashboard-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:550px){.dashboard-cards{grid-template-columns:1fr}}
 .dashboard-grid>div>.dashboard-chart:first-child{margin-top:0}
+
+.norm-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}.norm-tabs .button{flex:0 0 auto;white-space:nowrap;min-height:40px}
