@@ -13,6 +13,7 @@ const nodeSection=k=>k==='productionSpecialPercent'?'factors':k==='productionLev
 const quoteSection=k=>['customer','customerInfo','request','requestId','opportunityId','requestSpecification','attachments','sourceFiles','project'].includes(k)?'customer':['expenses','purchaseSources','deviceInstallations'].includes(k)?'logistics':['operationColumns','ratesSnapshot','operationPriceChoices','operationChoices','operationMethods','operationPriceOptions'].includes(k)?'operations':['materialPriceHistory','materialPriceSelections','priceHistory'].includes(k)?'materials':['kerf','nestingPlans','remnantMode','remnantSelections','wasteMode','materialEstimate','stockSelections'].includes(k)?'bom':['offerDetailMode','date','valid','notes','vat','outputTax','issuer','offerTerms','documentMode','costPriceSources','costPriceHistory'].includes(k)?'commercial':'manage';
 const priceSection=k=>['incoming','outgoing','delivery','install','expenseRates'].includes(k)?'logistics':['selected','comparisonMethods','overrides','taxReview','tmcPolicy','productGroupSelections'].includes(k)?'commercial':'factors';
 const catalogSection=k=>['materials','materialPrices','stockSizes','catalogPriceBaseline'].includes(k)?'catalogMaterials':k==='rates'?'catalogOperations':k==='library'?'catalogLibrary':k==='pricingDefaults'?'catalogOperations':'catalogRules';
+function costSourceSection(key){return /^(material:|recipe:)/.test(key)?'materials':/^(rate:|rate-option:|operation:|package:)/.test(key)?'operations':/^(node:|expense:|device-rate:|device-base:|quote:)/.test(key)?'logistics':key.startsWith('tmc:')?'factors':'commercial';}
 function denied(before,after,rights,{catalog=false}={}){
  if(rights.users)return [];const allowed=new Set(rights.sections||[]),bad=new Set();
  const check=(s,a,b)=>{if(!equal(a,b)&&(!allowed.has(s)||s==='factors'&&!rights.factors))bad.add(s);};
@@ -28,7 +29,9 @@ function denied(before,after,rights,{catalog=false}={}){
   check('factors',factorData(before),factorData(after));return [...bad];}
  fields(before,after,catalogSection,['quote','version','history','pricingDefaults','rates']);defaults(before?.pricingDefaults,after?.pricingDefaults);
  const a=before?.quote||{},b=after?.quote||{};
- fields(a,b,quoteSection,['products','ratesSnapshot','pricing','status','workspaceKey','changeHistory','inputPriceAudit','approvedOffer','approvedBaseline']);
+ fields(a,b,quoteSection,['products','ratesSnapshot','pricing','status','workspaceKey','changeHistory','inputPriceAudit','approvedOffer','approvedBaseline','costPriceSources','costPriceHistory']);
+ for(const key of new Set([...Object.keys(a.costPriceSources||{}),...Object.keys(b.costPriceSources||{})]))check(costSourceSection(key),a.costPriceSources?.[key],b.costPriceSources?.[key]);
+ for(const key of new Set([...(a.costPriceHistory||[]),...(b.costPriceHistory||[])].map(x=>x.key||'')))check(costSourceSection(key),(a.costPriceHistory||[]).filter(x=>(x.key||'')===key),(b.costPriceHistory||[]).filter(x=>(x.key||'')===key));
  fields(a.pricing,b.pricing,priceSection);
 function rateParts(rows){const prices={},structure=JSON.parse(JSON.stringify(rows||[]));function walk(x,path){if(!x||typeof x!=='object')return;for(const k of Object.keys(x)){if(k==='spec'&&x[k]){for(const f of ['price','priceHistory','priceSource','priceSelection']){if(x[k][f]!==undefined)prices[path+'.spec.'+f]=x[k][f];delete x[k][f];}}walk(x[k],path+'.'+k);}}walk(structure,'rates');return {prices,structure};}
 const ar=rateParts(a.ratesSnapshot),br=rateParts(b.ratesSnapshot);for(const r of br.structure){const old=ar.structure.find(x=>x.id===r.id);if(!old)continue;for(const [i,x]of (r.consumptions||[]).entries())if(old.consumptions?.[i]&&old.consumptions[i].id===undefined)delete x.id;if(r.consumption&&old.consumption&&old.consumption.id===undefined)delete r.consumption.id;}check('operations',ar.structure,br.structure);check('materials',ar.prices,br.prices);
@@ -45,5 +48,5 @@ const ar=rateParts(a.ratesSnapshot),br=rateParts(b.ratesSnapshot);for(const r of
  }
  return [...bad];
 }
-const api={modeLabels,parseModes,modes,labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
+const api={costSourceSection,modeLabels,parseModes,modes,labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

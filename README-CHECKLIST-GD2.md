@@ -585,3 +585,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Thêm STT nối tiếp qua trang và cột Ngày tạo riêng với Cập nhật. STT theo danh sách đang lọc, không phải mã chứng từ cố định. Không dùng ngày báo giá khai tay làm ngày tạo.
 - Kiểm thử API tạo hai báo giá rồi sửa bản cũ: ngày tạo/thứ tự giữ nguyên; 2 browser danh sách desktop/mobile và tài khoản kỹ thuật đạt. Build đạt.
 - Đã triển khai `3172d4a` sau sao lưu nguồn/SQLite; HTTPS health và 61 hash runtime đạt. Web thật kiểm tra STT, ngày tạo, thứ tự cũ đến mới giữ nguyên khi làm mới và khung 390 px. Không ghi sửa báo giá khách; phiên tạm đã thu hồi. Ảnh: `artifacts/quote-created-live.png`, `artifacts/quote-created-live-mobile.png`.
+
+
+### 2026-09-28 — Nhập giá vật tư trong phạm vi mở sửa
+- Đối chiếu chỉ đọc: BG-20260925-005/006 đang mở riêng cấu thành/hao hụt, chưa mở Giá vật tư; nhập giá bị chặn theo phạm vi đó. Không tự mở rộng phạm vi hoặc ghi giá vào hồ sơ khách.
+- Bảng giá hiện rõ nguyên nhân và nút Mở thêm phạm vi nhập giá, chọn đúng Giá vật tư qua luồng mở sửa hiện có. Chưa được phép thì khóa ô ngay; các dòng nguồn giá ngoài phạm vi không được đưa vào Lưu toàn bộ.
+- Căn cứ/thuế nguồn giá được kiểm theo đúng nhóm đầu vào (vật tư, nguyên công, vận chuyển, hệ số), không gom tất cả thành Giá chào. Thuế đầu ra, giá chào và các vùng chưa mở vẫn được kiểm độc lập ở UI/API.
+- Kiểm thử: 13 ca API và 3 browser đạt, gồm bổ sung phạm vi, lưu nguồn/giá vật tư, tải lại, lưu toàn bộ và hồi quy mở sửa. Build đạt.
