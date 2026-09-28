@@ -608,3 +608,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Đề nghị bộ phận lưu căn cứ nhu cầu khai tay; không tự suy định mức theo sản lượng lệnh. Không mở sửa đề nghị đã trình duyệt hoặc tự duyệt mua.
 - Kiểm tra: 4 ca API/core đạt, gồm hai luồng đề nghị/định mức, phân quyền, phiên bản, giữ bản gốc, thêm chủng loại, nhận/nhập/cấp và chống lặp; 2 browser tạo/sửa/lịch sử/tải lại/mobile và xưởng → kỹ thuật → giá/NCC đạt. Build đạt.
 - Đã triển khai sau sao lưu nguồn/SQLite; HTTPS health và 65 hash runtime khớp. Web thật kiểm tra tab, form bộ phận, thêm dòng và 390 px, chặn ghi nghiệp vụ thử; phiên tạm đã thu hồi. Ảnh: `artifacts/department-material-request-live.png`, `artifacts/department-material-request-live-mobile.png`.
+
+
+### 2026-09-28 — Tiến độ trong danh sách báo giá máy chủ
+- Thêm cột Tiến độ: Chưa làm, Đang làm, Đã xong, Đã hủy theo trạng thái công việc hiện có; giữ tình trạng chào giá/gửi khách riêng.
+- Hiện hạn báo giá từ hồ sơ đầu vào. Máy chủ tính Quá hạn theo ngày Việt Nam cho việc chưa xong/chưa hủy; chưa khai hạn thì ghi rõ, không tự suy hạn từ ngày tạo. Mở sửa sau duyệt tiếp tục tính tiến độ và quá hạn.
+- Thanh tổng hợp thêm số chưa làm/đang làm/đã xong/quá hạn. Quá hạn là cảnh báo bổ sung, có thể cùng thuộc nhóm chưa làm hoặc đang làm.
+- Kiểm thử API trạng thái/hạn/duyệt/mở sửa và browser danh sách desktop/mobile đạt; build đạt. Bộ notifications-server có 3 ca đạt, 1 ca cũ thất bại do vẫn yêu cầu mở khóa xác nhận cũ; đã đối chiếu cùng lỗi trên mã trước thay đổi này.
+- Đã triển khai `6ad2049` sau sao lưu nguồn/SQLite; HTTPS health và 66 hash runtime đạt. Kiểm tra web thật cột tiến độ, tổng hợp và khung 390 px chỉ đọc; không sửa báo giá khách. Phiên tạm đã thu hồi. Ảnh: `artifacts/quote-progress-live.png`, `artifacts/quote-progress-live-mobile.png`.

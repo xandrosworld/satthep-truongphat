@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 const {test}=require('node:test'),A=require('node:assert/strict'),{createApp}=require('../server/app.cjs'),P=require('../pricing-core.js');
 test('quote list derives approval progress and safe update summaries without inferring customer delivery',async t=>{
  const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));let session;const base='http://127.0.0.1:'+app.server.address().port;
@@ -13,4 +13,3 @@ test('quote list derives approval progress and safe update summaries without inf
  await call('quotes/'+id+'/reopen','POST',{expectedVersion:4,reason:'Customer requested change'});
  row=(await call('quotes')).data.find(x=>x.id===id);A.equal(row.progress.work.status,'in-progress');A.equal(row.progress.work.overdue,true);A.equal(row.updateSummary,'Mở bản sửa');A.equal(row.commercialStatus,'draft');
 });
-
