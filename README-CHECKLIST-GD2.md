@@ -810,3 +810,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Form quản lý mã giữ bộ phận, ghi chú và các dòng vật tư đang nhập khi tạo mã rồi quay lại. Đề nghị cũ khai tay vẫn xem/điều chỉnh theo hồ sơ gốc, không tự gán lại nguồn.
 - Hai bài API liên thông đạt: đủ bảy loại nguồn, mã sai/ngoài quyền, bộ phận ngừng hoạt động, mã trùng/ngừng dùng, lịch sử và vòng đời mua–nhập–cấp. Hai browser bộ phận và đề nghị theo lệnh đạt; gồm quản lý mã, giữ form, lưu/tải lại, điều chỉnh và 390 px. Build đạt.
 - Triển khai c4b8c50 sau sao lưu nguồn/SQLite; HTTPS health và 86 hash runtime khớp. Trình duyệt web thật Admin kiểm tra 8 bộ phận, 25 báo giá, 2 đơn hàng, 2 lệnh; các nhóm nguồn còn lại trống tại lúc kiểm tra. Không tạo mã/đề nghị thử, chặn ghi nghiệp vụ; phiên tạm đã thu hồi. Ảnh artifacts/material-context-live.png và artifacts/material-context-live-mobile.png.
+
+
+### 2026-09-28 — Xoay và sắp phôi số lượng lớn (899835d)
+- Sửa đường mở từ Cách xếp có sẵn đang ẩn lựa chọn chỉnh tay và nút lấy gợi ý. Cả đường mở trực tiếp và chọn cách xếp đều cho chọn phôi, kéo vị trí, nhập tọa độ/đổi tấm và xoay; chỉ hiện cách xếp phù hợp hình dạng.
+- Nâng giới hạn chỉnh tay từ 500 lên 10.000 phôi tại giao diện và kiểm tra máy chủ. Sơ đồ chia trang 20 khổ, chọn phôi tự chuyển tới trang chứa phôi; không dựng hàng trăm tấm cùng lúc. Giữ kiểm tra đủ định danh/số lượng, khổ, va chạm, mạch cắt, hướng cố định và phương án cũ khi thông số thay đổi. Không cam kết tối ưu cắt toàn cục.
+- 22 ca core liên quan đạt. Browser với tài khoản kỹ thuật và 3.600 phôi: mở từ preset, chuyển trang/chọn phôi cuối, xoay 90°, kéo, đổi tấm, chặn vượt khổ, lưu máy chủ/tải lại giữ vị trí và góc; kiểm tra 390 px đạt. Build đạt.
+- Triển khai 899835d sau sao lưu nguồn/SQLite; HTTPS health và 88 hash runtime khớp. Web thật BG-20260923-004, VT-00021 có đúng 3.600 phôi: mở chỉnh tay từ preset, xoay thử trong hộp, sơ đồ chia trang, desktop/390 px đạt. Không bấm Áp dụng hoặc lưu thay đổi vào báo giá khách; lưu/tải lại đã thử trên dữ liệu riêng. Phiên xác minh đã thu hồi. Ảnh: artifacts/nesting-large-live.png, artifacts/nesting-large-live-mobile.png.
