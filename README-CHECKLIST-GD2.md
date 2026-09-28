@@ -775,3 +775,12 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Bổ sung mã đối chiếu ngẫu nhiên ở lỗi khóa công thức; nhật ký máy chủ chỉ ghi mã, mã báo giá, vùng và đường dẫn trường khác nhau, không ghi giá trị hệ số/công thức hay toàn bộ payload. Giữ nguyên kiểm tra quyền và khóa. 11 kiểm thử formula-access đạt.
 - Triển khai 91a4773 sau sao lưu nguồn/SQLite; HTTPS health và 82 hash runtime khớp. Đã nhờ thử lưu trên tab đang lỗi để lấy mã đối chiếu; tại lúc kiểm tra nhật ký chưa có lần lỗi mới. Trạng thái còn mở, không ghi đã sửa dứt điểm.
 - Yêu cầu liên kết bộ phận/mục đích của đề nghị vật tư với cơ cấu tổ chức và chứng từ nguồn vẫn đang chờ triển khai; ưu tiên xử lý lỗi lưu theo phản hồi mới nhất.
+
+
+### 2026-09-28 — Đối chiếu mã 9f8a5271 và sửa danh mục hệ số ẩn khi lưu
+- Nhật ký đúng mã 9f8a5271 của BG-20260922-002 chỉ ra 15 dòng rates.0–rates.14 ở danh mục, không phải hệ số quản lý của báo giá. Các lần thử tiếp theo cùng dấu lỗi. Kết quả này thay giả thuyết tham chiếu hệ số báo giá cũ ở đợt trước.
+- Tái hiện cùng 15 đường dẫn lỗi trên bản sao SQLite mới nhất, đúng hồ sơ v43 và quyền Nguyễn Khắc Phú: bản nháp danh mục lưu trong trình duyệt có hệ số bị ẩn nhưng mất tham chiếu khôi phục; F5 phục hồi lại bản nháp đó. Lưu kỹ thuật bị hiểu thành xóa hệ số danh mục. Chưa thu toàn bộ payload chưa lưu trực tiếp từ tab khách.
+- Tách danh mục nguyên công gửi cùng báo giá khỏi bản nháp danh mục dùng chung. Máy chủ nhận diện toàn bộ danh mục khớp dạng đã che hệ số của dữ liệu đã biết và giữ nguyên danh mục đang lưu; hỗ trợ cả tab cũ mất tham chiếu. Không bỏ khóa công thức, không cấp quyền hoặc nhận hệ số tự sửa.
+- Trước sửa tái hiện 403; sau sửa lưu → tải lại → bàn giao đạt trên bản sao v43, cả giao diện cũ và mới. pricingDefaults, rates, quote.pricing và quote.ratesSnapshot giữ nguyên; ghi chú kỹ thuật được lưu. Thử thêm nguyên công đã phát hành cũng đạt.
+- 12 ca formula-access đạt; browser quote-catalog-defaults và technical-missing-operation-price đạt; build đạt. Có hồi quy F5 phục hồi bản nháp mất tham chiếu, giá/hệ số tự sửa, danh mục bị cắt bớt và phiên bản cũ bị chặn.
+- Triển khai 40d4413 sau sao lưu nguồn/SQLite; HTTPS health và 82 hash runtime khớp. Không ghi lưu/bàn giao thử lên hồ sơ khách. Tab đang lỗi có thể thử lưu lại mà không cần F5 để nhận xử lý máy chủ; chưa ghi nhận khách lưu thành công sau bản này. Dừng phần đề nghị vật tư theo yêu cầu, chưa triển khai phần đang làm dở.
