@@ -15,7 +15,7 @@ Theo ảnh khách gửi: mục riêng dưới Định mức trong nhóm Sản xu
 - 11 ca API/core trong service-requests, operations-erp, reference-norms, machine-records, department-material-requests đạt. Ca mới kiểm tra phân quyền, phạm vi xem, số lượng, tồn giữ, cấp từng phần, rollback, thao tác đồng thời, phiên bản cũ và lịch sử máy không trùng.
 - Browser service-requests đạt: hai tab, thêm/bỏ dòng, gửi/duyệt/cấp từng phần và đủ, sửa chữa đến hoàn tất, lịch sử, tải lại, icon và form 390 px.
 - Browser machine-records đạt. Browser department-material-requests lần đầu timeout khi đóng form; chạy chẩn đoán và chạy lại bản gốc đều đạt. Không sửa luồng mua hàng để bỏ kiểm tra.
-- Build đạt. Triển khai và kiểm tra web thật ghi trong checklist sau xác minh. Kiểm thử ghi nghiệp vụ dùng cơ sở dữ liệu riêng.
+- Build đạt. Đã triển khai `8b09147` sau sao lưu nguồn/SQLite; 79 hash runtime và HTTPS health đạt. Web thật kiểm tra menu, icon, hai form và 390 px; không tạo đề nghị/xuất kho/sửa chữa thử, phiên xác minh đã thu hồi. Kiểm thử ghi nghiệp vụ dùng cơ sở dữ liệu riêng.
 
 ## Icon
 
