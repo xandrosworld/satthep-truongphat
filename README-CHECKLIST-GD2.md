@@ -767,3 +767,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Cùng payload trước sửa thất bại 403, sau sửa lưu → tải lại → bàn giao đạt trên bản sao đúng v43; toàn bộ quote.pricing và pricingDefaults giữ nguyên. Thay đổi kỹ thuật được giữ. Tab đang mở có thể thử lưu lại mà không cần tải lại để nhận mã giao diện mới.
 - 11 ca formula-access đạt; browser quote-catalog-defaults bổ sung tham chiếu cũ, Lưu và tiếp tục, tải lại, bàn giao và các trường hợp trái quyền đạt; build đạt. Một lần chạy bản sao gặp thiếu dung lượng máy thử, dọn bản sao thử cũ và chạy lại đạt.
 - Triển khai 9a24158 sau sao lưu nguồn/SQLite; HTTPS health và 82 hash runtime khớp. Web thật kiểm tra chỉ đọc đúng BG-20260922-002 v43 bằng quyền anh Phú ở desktop/390 px, không ghi thử vào hồ sơ khách; phiên tạm đã thu hồi. Ảnh: artifacts/stale-factor-live.png, artifacts/stale-factor-live-mobile.png.
+
+
+### 2026-09-28 — Lỗi khóa hệ số vẫn được phản ánh sau F5: chưa đóng
+- Khách báo vẫn lỗi trên BG-20260922-002 v43 sau F5. Bản sửa 9a24158 mới xử lý kịch bản tham chiếu hệ số cũ đã tái hiện, chưa đủ kết luận hết lỗi của tab khách.
+- Kiểm tra thêm trên bản sao v43 với quyền anh Phú: tải lại trang, mở form công đoạn, sửa lượng, Lưu và tiếp tục, tải lại và bàn giao đạt. Chưa thu được payload gây lỗi của khách. Thử bản nháp danh mục cũ giữ trong localStorage có thể gây lỗi công thức khác; chưa coi đó là nguyên nhân thực tế.
+- Bổ sung mã đối chiếu ngẫu nhiên ở lỗi khóa công thức; nhật ký máy chủ chỉ ghi mã, mã báo giá, vùng và đường dẫn trường khác nhau, không ghi giá trị hệ số/công thức hay toàn bộ payload. Giữ nguyên kiểm tra quyền và khóa. 11 kiểm thử formula-access đạt.
+- Triển khai 91a4773 sau sao lưu nguồn/SQLite; HTTPS health và 82 hash runtime khớp. Đã nhờ thử lưu trên tab đang lỗi để lấy mã đối chiếu; tại lúc kiểm tra nhật ký chưa có lần lỗi mới. Trạng thái còn mở, không ghi đã sửa dứt điểm.
+- Yêu cầu liên kết bộ phận/mục đích của đề nghị vật tư với cơ cấu tổ chức và chứng từ nguồn vẫn đang chờ triển khai; ưu tiên xử lý lỗi lưu theo phản hồi mới nhất.
