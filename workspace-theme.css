@@ -466,3 +466,6 @@ th{color:var(--muted)}
 .team-banner [data-quote-save-feedback] button{margin-top:10px}
 
 .home-table .home-sequence{width:52px;white-space:nowrap}.home-table .home-created{min-width:130px}
+
+.quotes-list .order-not-started{background:#e7ecf2;color:#37485c}
+.quotes-list .order-overdue{background:#ffe4e4;color:#9b1c1c}
