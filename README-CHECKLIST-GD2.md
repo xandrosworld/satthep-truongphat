@@ -593,3 +593,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Căn cứ/thuế nguồn giá được kiểm theo đúng nhóm đầu vào (vật tư, nguyên công, vận chuyển, hệ số), không gom tất cả thành Giá chào. Thuế đầu ra, giá chào và các vùng chưa mở vẫn được kiểm độc lập ở UI/API.
 - Kiểm thử: 13 ca API và 3 browser đạt, gồm bổ sung phạm vi, lưu nguồn/giá vật tư, tải lại, lưu toàn bộ và hồi quy mở sửa. Build đạt.
 - Đã triển khai `dff192a` sau sao lưu nguồn/SQLite; HTTPS health và 63 hash runtime đạt. Web thật BG-20260925-005 hiển thị hướng dẫn, khóa ô ngoài phạm vi và mở đúng hộp bổ sung Giá vật tư; kiểm tra desktop/390 px, không ghi nghiệp vụ thử. Phiên tạm đã thu hồi. Ảnh: `artifacts/material-price-scope-live.png`, `artifacts/material-price-scope-live-mobile.png`.
+
+
+### 2026-09-28 — Làm nổi bật tên được nhắc trong chat (84bfa68)
+- Tên @nhắc khớp thành viên hội thoại có chữ xanh đậm, nền xanh nhạt; áp dụng tin gửi, tin nhận và phần trích trả lời. Tin cũ hiển thị lại theo cùng cách, không sửa nội dung lưu hoặc thay đổi quy tắc thông báo.
+- Kiểm thử trình duyệt hai tài khoản đạt: màu tên, tải lại, ký tự HTML hiển thị an toàn và hồi quy cảm xúc/thu hồi/ảnh/điện thoại. Build đạt.
+- Đã triển khai sau sao lưu nguồn/SQLite; HTTPS health và 65 hash runtime khớp. Kiểm tra tên được nhắc trên tin có sẵn trong TP Group, desktop/390 px; chặn yêu cầu ghi nên cập nhật trạng thái đã đọc không thực hiện trong phiên kiểm tra. Không gửi tin thử; phiên tạm đã thu hồi. Ảnh: `artifacts/chat-mentions-live.png`, `artifacts/chat-mentions-live-mobile.png`.
