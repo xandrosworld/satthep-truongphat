@@ -521,3 +521,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Kho · Chọn phôi, Chọn khổ, Xem sắp phôi và Đề nghị đặt vật tư có cùng kích thước 112 × 48 px, căn theo đáy từng dòng; thông tin kho/khổ/số lượng nằm phía trên, không đẩy các nút lệch hàng.
 - Thống nhất tên nút, tiêu đề form và mục theo dõi thành Đề nghị đặt vật tư; giữ luồng xưởng → kỹ thuật → giá/NCC → duyệt mua đã triển khai.
 - Đã build, kiểm tra tọa độ/kích thước bốn nút bằng trình duyệt cục bộ và web thật LSX-01. Mở form đề nghị vẫn đúng số lượng, không có ô nhập số hay NCC ở bước xưởng. Triển khai 45765e8, sao lưu nguồn/SQLite, đối chiếu 40 tệp runtime và healthcheck đạt. Kiểm tra chỉ đọc, phiên tạm đã thu hồi. Ảnh: artifacts/material-action-layout-live.png.
+
+### 2026-09-28 — Máy / năng lực (a0b4db5)
+- Bổ sung thông số kỹ thuật và lịch sử sửa chữa theo máy (ngày, nội dung, đơn vị sửa, giờ dừng, người ghi nhận).
+- Khai báo đơn giá ca máy riêng; số giờ/ca và giá/ca quy đổi thành giá giờ dùng cho định mức. Phân quyền giá độc lập, sửa thông tin kỹ thuật giữ nguyên giá.
+- Kiểm tra: 23 tests API đạt; browser local lưu thông số/giá/lịch sử đạt; build đạt. Đã deploy a0b4db5, đối chiếu 40 runtime hashes và kiểm tra các form trên web thật ở chế độ chỉ đọc. Phiên kiểm tra đã thu hồi.
+
