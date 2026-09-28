@@ -22,8 +22,9 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
    return q.id;
   });
   const original=JSON.parse(app.sql.prepare('SELECT document FROM quotes WHERE id=?').get(id).document);
-  await p.evaluate(()=>{const catalog=cdSnapshot();for(const rate of catalog.rates)delete rate.__accessRef;localStorage.setItem(cdKey(),JSON.stringify({catalog,version:Team.catalogVersion,dirty:true,formulaView:Team.permissions.formulaView!==false}));});
+  await p.evaluate(()=>{const catalog=cdSnapshot();catalog.rules[0].width='W + 987';catalog.shapeDefinitions=[];for(const rate of catalog.rates)delete rate.__accessRef;localStorage.setItem(cdKey(),JSON.stringify({catalog,version:Team.catalogVersion,dirty:true,formulaView:Team.permissions.formulaView!==false}));});
   await p.reload();await p.waitForFunction(()=>Team.user);await p.evaluate(async id=>{await teamLoad(id);tab='operations';render();},id);
+  expect(await p.evaluate(()=>teamDocument().rules[0].width===db.rules[0].width)).toBe(false);
   expect(await p.evaluate(()=>db.rates.some(r=>r.__accessRef))).toBe(false);
   expect(await p.evaluate(()=>teamDocument().rates.some(r=>r.__accessRef))).toBe(true);
   // An already open technical tab retains a server-issued masked pricing

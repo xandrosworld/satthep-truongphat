@@ -188,3 +188,25 @@ test('masked catalogue rows without references cannot erase locked factors or bl
  }
  A.equal((await call('quotes/'+id,'PUT',{document:doc,expectedVersion:1},u.session)).status,409);
 });
+
+
+test('historical catalogue drafts cannot roll back locked declarations during quote saves',async t=>{
+ const {call,admin,create,sql}=await harness(t),u=await create('historical-catalog',{canFormulaEdit:false,sections:require('../section-access.js').keys});
+ const made=await call('quotes','POST',{document:P.demoSeed()},admin),id=made.data.id;
+ const historical=(await call('quotes/'+id,'GET',undefined,admin)).data.document;
+ const current=structuredClone(historical);current.rules.find(r=>r.id==='tray').width='W + 222';
+ A.equal((await call('quotes/'+id,'PUT',{document:current,expectedVersion:1},admin)).status,200);
+ sql.prepare('INSERT INTO catalog_revisions(version,document,updated,actor) VALUES(?,?,?,?)').run(999,JSON.stringify(historical),new Date().toISOString(),'admin');
+ await call('formulas/locks','POST',{key:'rules:tray',locked:true,expectedVersion:0,reason:'Protect rule'},admin);
+ const doc=(await call('quotes/'+id,'GET',undefined,u.session)).data.document;
+ doc.rules=structuredClone(historical.rules);doc.quote.products[0].ops[0].notes='Keep technical change';
+ const saved=await call('quotes/'+id,'PUT',{document:doc,expectedVersion:2},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const actual=(await call('quotes/'+id,'GET',undefined,admin)).data.document;
+ A.equal(actual.rules.find(r=>r.id==='tray').width,'W + 222');A.equal(actual.quote.products[0].ops[0].notes,'Keep technical change');
+ for(const change of [d=>d.rules.find(r=>r.id==='tray').width='W + 987',d=>C.flatten(d.quote.products).find(n=>n.rule==='tray').ruleSpec.width='W + 987']){
+  const bad=structuredClone(doc);change(bad);A.equal((await call('quotes/'+id,'PUT',{document:bad,expectedVersion:3},u.session)).status,403);
+ }
+ A.equal((await call('quotes/'+id,'PUT',{document:doc,expectedVersion:2},u.session)).status,409);
+ const catalog=(await call('catalog','GET',undefined,u.session)).data;catalog.catalog.rules.find(r=>r.id==='tray').width='W + 987';
+ A.equal((await call('catalog','PUT',{catalog:catalog.catalog,expectedVersion:catalog.version},u.session)).status,403);
+});

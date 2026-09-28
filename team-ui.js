@@ -37,12 +37,13 @@ async function teamLoad(id,revision){if(Team.loaded&&Team.dirty){if(!revision&&t
   if(generation!==Team.sessionGeneration||request!==Team.loadRequest||Team.dirty||page!==openingPage||db.quote!==openingQuote||Team.editGeneration!==editSequence){const error=Error('Giữ nguyên nội dung đang thao tác; tải lại báo giá khi sẵn sàng.');error.cancelledQuoteLoad=true;throw error;}
   if(!Team.loaded){quoteCheckpoint();Team.local=C.copy(db);}Team.loaded=true;Team.dirty=false;Team.catalogVersion=null;
   Team.quoteTechnicalBaseline=Team.permissions?.technical?{id,document:C.copy(record.document)}:null;
-  // The catalogue workspace may load newer defaults; saving a quote must retain
-  // its own defaults, independently of catalogue edits or pending proposals.
-  Team.quoteDefaultsBaseline={id,generation,defaults:C.copy(record.document.pricingDefaults||{}),rates:C.copy(record.document.rates||[])};
+  // Catalogue drafts are a separate workspace. Quote saves carry the loaded
+  // catalogue snapshot; selected specs and operations live inside the quote.
+  teamSetCatalogBaseline(id,generation,record.document);
   const key='server-'+id+(revision?'-v'+revision:'');db={...db,...record.document,savedQuotes:[],history:[]};db.quote.workspaceKey=key;Team.link={id,version:record.version,status:record.status,workspaceKey:key,readOnly:!!revision};selected=returnView&&C.findNode(db.quote.products,returnView.selected)?returnView.selected:db.quote.products[0]?.id;page='quote';tab=returnView?.tab||(Team.permissions?.technical?'bom':'pricing');UX.undo=[];UX.redo=[];UX.checked.clear();closeDialog();render();$('#save-status').textContent='Máy chủ · phiên bản '+record.version;
 }
-function teamDocument(){return {version:2,...(db.__accessRef?{__accessRef:db.__accessRef}:{}),pricingDefaults:Team.loaded&&Team.quoteDefaultsBaseline?.id===teamCurrent()?.id&&Team.quoteDefaultsBaseline.generation===Team.sessionGeneration?C.copy(Team.quoteDefaultsBaseline.defaults):db.__accessRef||db.pricingDefaults?.__accessRef?C.copy(db.pricingDefaults||{}):TPInputPrices.defaults(db),shapeDefinitions:C.copy(db.shapeDefinitions||[]),stockSizes:C.copy(db.stockSizes||[]),catalogPriceBaseline:db.catalogPriceBaseline?C.copy(db.catalogPriceBaseline):null,conventions:C.copy(db.conventions||{}),materialPrices:C.copy(db.materialPrices||[]),materials:C.copy(db.materials),rates:Team.loaded&&Team.quoteDefaultsBaseline?.id===teamCurrent()?.id&&Team.quoteDefaultsBaseline.generation===Team.sessionGeneration?C.copy(Team.quoteDefaultsBaseline.rates):C.copy(db.rates),rules:C.copy(db.rules),library:C.copy(db.library),quote:C.copy(db.quote)};}
+function teamSetCatalogBaseline(id,generation,document){Team.quoteDefaultsBaseline={id,generation,defaults:C.copy(document.pricingDefaults||{}),rates:C.copy(document.rates||[]),catalog:C.copy(Object.fromEntries(Object.entries(document).filter(([k])=>k!=='quote')))};}
+function teamDocument(){if(Team.loaded&&Team.quoteDefaultsBaseline?.id===teamCurrent()?.id&&Team.quoteDefaultsBaseline.generation===Team.sessionGeneration)return {...C.copy(Team.quoteDefaultsBaseline.catalog),quote:C.copy(db.quote)};return {version:2,...(db.__accessRef?{__accessRef:db.__accessRef}:{}),pricingDefaults:Team.loaded&&Team.quoteDefaultsBaseline?.id===teamCurrent()?.id&&Team.quoteDefaultsBaseline.generation===Team.sessionGeneration?C.copy(Team.quoteDefaultsBaseline.defaults):db.__accessRef||db.pricingDefaults?.__accessRef?C.copy(db.pricingDefaults||{}):TPInputPrices.defaults(db),shapeDefinitions:C.copy(db.shapeDefinitions||[]),stockSizes:C.copy(db.stockSizes||[]),catalogPriceBaseline:db.catalogPriceBaseline?C.copy(db.catalogPriceBaseline):null,conventions:C.copy(db.conventions||{}),materialPrices:C.copy(db.materialPrices||[]),materials:C.copy(db.materials),rates:Team.loaded&&Team.quoteDefaultsBaseline?.id===teamCurrent()?.id&&Team.quoteDefaultsBaseline.generation===Team.sessionGeneration?C.copy(Team.quoteDefaultsBaseline.rates):C.copy(db.rates),rules:C.copy(db.rules),library:C.copy(db.library),quote:C.copy(db.quote)};}
 function teamSaveFeedback(){
  const state=Team.saveFeedback;if(!state||state.quote!==db.quote||state.generation!==Team.sessionGeneration)return;
  const banner=document.querySelector('.team-banner');if(!banner)return;
@@ -111,6 +112,7 @@ async function teamRefreshIntake(manual=false){
   if(!manual&&document.activeElement?.matches('input,textarea,select'))return;
   db={...db,...record.document,savedQuotes:[],history:[]};db.quote.workspaceKey=link.workspaceKey;
   Team.link={...link,version:record.version,status:record.status};
+  teamSetCatalogBaseline(link.id,generation,record.document);
   Team.quoteTechnicalBaseline=Team.permissions?.technical?{id:link.id,document:C.copy(record.document)}:null;
   UX.undo=[];UX.redo=[];UX.checked.clear();render();
   const updated=$('[data-intake-sync-status]');if(updated)updated.textContent='Đã tải từ máy chủ · phiên bản '+record.version+' · '+(db.quote.request?.links?.length||0)+' link tài liệu · '+(db.quote.request?.files?.length||0)+' tệp';
