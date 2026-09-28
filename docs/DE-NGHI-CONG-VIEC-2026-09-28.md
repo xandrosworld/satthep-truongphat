@@ -41,3 +41,5 @@ Các đề nghị mới là căn cứ phê duyệt và theo dõi xử lý. Chưa
 - 9 ca API/core trong bốn bộ service-requests, operations-erp, machine-records, department-material-requests đạt. Bài service-requests kiểm tra vòng đời từng loại mới, bắt buộc căn cứ, giao người, sai quyền, đổi người, trả lại/xác nhận kết quả, ngừng loại vẫn giữ hồ sơ, chống lặp/phiên bản, bảo dưỡng và cấp bổ sung.
 - Hai browser service-requests và work-requests kiểm tra luồng cũ, tạm ứng, giao người, kết quả/trả lại/xác nhận, loại mở rộng, tải lại, mở mua hàng và khung 390 px.
 - Build đạt. Kiểm thử ghi dùng dữ liệu riêng; tình trạng triển khai ghi ở checklist sau xác minh.
+
+Triển khai `bb332cf`: đã sao lưu nguồn/SQLite, container healthy, HTTPS và 81 hash runtime khớp. Web thật đủ 14 loại và biểu mẫu desktop/390 px; chưa có hồ sơ thực tế. Phiên kiểm tra chặn ghi nghiệp vụ và đã thu hồi. Không thay thế nghiệm thu vận hành của khách.
