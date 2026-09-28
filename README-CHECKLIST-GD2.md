@@ -657,3 +657,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Chuyển hàm logo ra phạm vi dùng chung, áp dụng bản chào thường, nâng cao và bản chào kinh doanh. Không đổi giá hoặc quyền tài khoản.
 - Browser hồi quy thất bại trước sửa và đạt sau sửa; lưu hệ số quản lý bằng 0 rồi lưu máy chủ/tải lại đạt; cả ba hàm dựng bản chào có logo. Browser hồi quy hệ số/giá theo quyền và phạm vi sửa cũ đạt. Build đạt.
 - Triển khai f01f068 sau sao lưu nguồn/SQLite; HTTPS health và 71 hash runtime khớp. Web thật với tài khoản Thảo, BG-20260925-005 v14: dựng bản chào thành công, không lỗi tính toán, mở được form hệ số. Giá VT-00019 lúc kiểm tra đã là 18.700 do hồ sơ được cập nhật; phiên kiểm tra không ghi nghiệp vụ và đã thu hồi. Ảnh: artifacts/company-logo-policy-live.png.
+
+### 2026-09-28 — Luồng xác nhận theo chốt anh Hợp lúc 15:06–15:10
+- Giá/hệ số/nội dung chào được sửa theo quyền cả khi đang chờ Admin duyệt; lưu giữ trạng thái chờ duyệt, tăng phiên bản. Giá đã xác nhận khi điều chỉnh phải ghi lý do và xác nhận lại; không làm mất xác nhận kỹ thuật nếu bóc tách không đổi. Admin không duyệt được phiên bản cũ hoặc xác nhận đã hết hiệu lực.
+- Đầu vào và kỹ thuật đã xác nhận cần mở sửa: Kỹ thuật xét đề nghị Đầu vào, Giá xét đề nghị Kỹ thuật, theo người phụ trách đã phân công nếu có. Người đề nghị không tự xét bằng quyền bước sau. Bộ phận sau được cho phép hoặc từ chối; Admin/người có quyền xét có thể cho sửa sau từ chối, bắt buộc lý do, giữ lịch sử quyết định và thông báo.
+- Mở sửa đầu vào yêu cầu xác nhận lại đầu vào–kỹ thuật–giá; mở sửa kỹ thuật yêu cầu xác nhận lại kỹ thuật–giá. Các bộ phận tiếp tục lưu phần đang làm trong quyền/phạm vi của mình. Mở sửa kỹ thuật từ bản chờ duyệt đưa về bản nháp để hoàn thiện và trình lại.
+- Bản đã Admin duyệt vẫn khóa; bước sau không tự mở bản đã duyệt. Giữ bản duyệt trong lịch sử và luồng đề nghị người có quyền cho sửa.
+- Quy tắc này thay phần đầu vào được sửa tự do sau xác nhận ở ghi nhận 5c98bae và thay khóa giá ngay khi gửi duyệt. Chưa phải xác nhận nghiệm thu toàn hệ thống.
+- Kiểm thử: 25 ca API/core đạt; kiểm tra quyền/phạm vi, phân công người xét, từ chối–Admin can thiệp, xác nhận lại, lưu chờ duyệt, phiên bản cũ và khóa sau duyệt. Kết quả trình duyệt và triển khai ghi bổ sung sau xác minh.

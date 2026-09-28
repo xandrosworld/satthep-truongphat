@@ -14,7 +14,7 @@ document.addEventListener('click',event=>{
  page='quote';tab=target.tab;if(target.group)Intake.priceTab=target.group;render();
  const anchor=target.focus&&document.querySelector(target.focus)||document.querySelector('[data-quote-price-selector]')||document.querySelector('#content');
  anchor?.scrollIntoView({block:'center',behavior:'smooth'});anchor?.focus?.({preventScroll:true});
- if(['submitted','approved'].includes(db.quote.status))toast('Bản đã trình/duyệt đang khóa. Cần người có quyền mở bản sửa trước khi bổ sung.');
+ if(db.quote.status==='approved')toast('Bản đã duyệt đang khóa. Cần người có quyền mở bản sửa trước khi bổ sung.');
 });
 
 async function sourceCustomerClassification(){

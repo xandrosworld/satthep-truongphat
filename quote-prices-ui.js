@@ -2,10 +2,10 @@
 function inCorrectionAllows(section){const link=teamCurrent(),active=typeof QuoteCorrections!=='undefined'&&QuoteCorrections.id===link?.id&&QuoteCorrections.generation===Team.sessionGeneration?QuoteCorrections.record?.items.find(x=>x.status==='open'):null;return !active||TPSectionAccess.correctionSections(link?.status,active.sections).includes(section);}
 function inCanEditMaterialPrice(){
  if(!inCorrectionAllows('materials'))return false;
- if(Quotes.conflict||db.quote.status!=='draft')return false;
+ if(Quotes.conflict||!['draft','submitted'].includes(db.quote.status))return false;
  if(!Team.loaded)return true;
  const link=teamCurrent(),state=Notices.quoteId===link?.id?Notices.state:null;
- return !!(Team.permissions?.edit&&Team.permissions?.sections?.includes('materials')&&link?.status==='draft'&&!link.readOnly);
+ return !!(Team.permissions?.edit&&Team.permissions?.sections?.includes('materials')&&['draft','submitted'].includes(link?.status)&&!link.readOnly);
 }
 // Preserve other pending grouped prices and the editor's viewport across recalculation.
 function inPriceViewport(){
