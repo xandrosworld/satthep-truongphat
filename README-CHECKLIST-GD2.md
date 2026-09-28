@@ -824,3 +824,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Báo giá máy chủ chỉ gửi tên cấp độ; máy chủ kiểm danh mục và lấy hệ số tương ứng theo luồng đã có. Chế độ offline vẫn tính từ danh mục cục bộ. Không cấp thêm quyền sửa hệ số hoặc bỏ kiểm tra phạm vi kỹ thuật.
 - Browser hồi quy thất bại trước sửa, đạt sau sửa với ba kiểu quyền (cũ theo danh sách, ma trận chỉ xem hệ số, kỹ thuật ẩn giá): chọn/lưu/tải lại giữ cấp độ; Admin đọc lại hệ số đúng; cấp độ không tồn tại và ghi trực tiếp phần trăm bị từ chối; tài khoản thiếu quyền công đoạn bị khóa lựa chọn. 6 ca core và browser offline/khai báo phức tạp đạt; build đạt.
 - Bản sao SQLite dùng quyền nv-003 trên BG-20260923-003 có sản phẩm STEEL MESH FENCE: chọn cấp độ, lưu và tải lại đạt. Triển khai ec6f632 sau sao lưu nguồn/SQLite, HTTPS health và 88 hash runtime khớp. Web thật cùng tài khoản/hồ sơ chọn C1 không còn lỗi Hệ số tác động; chỉ thử trong bộ nhớ, chặn mọi ghi nghiệp vụ, không lưu thay cấp độ khách. Phiên tạm đã thu hồi. Ảnh: artifacts/production-level-live.png, artifacts/production-level-live-mobile.png.
+
+
+### 2026-09-28 — Tên gợi ý vật tư đủ đặc tính, đúng thứ tự (c621f17)
+- Bỏ quy tắc ẩn đặc tính Cán nóng. Tên gợi ý theo Vật liệu → Mác → Hình dạng → Đặc tính → Kích thước; ví dụ Thép CT3 tấm cán nóng dày 1,5 mm. Áp dụng cả tấm/thanh và quy ước cũ; thương hiệu/thông số bổ sung giữ phía sau, thiết bị giữ cách đặt tên riêng.
+- Đổi đặc tính/kích thước cập nhật gợi ý ngay; chỉ bấm Dùng tên này mới thay ô tên, không tự đổi tên mã hoặc hồ sơ đã lưu.
+- 14 ca core và browser chọn đặc tính/cập nhật gợi ý/dùng tên/giữ tên đã nhập/lưu vật tư đạt; build đạt. Triển khai c621f17 sau sao lưu nguồn/SQLite, HTTPS health và 89 hash runtime khớp. Web thật kiểm tra đúng Thép–CT3–Tấm–Cán nóng–1,5 mm và dùng tên trong form; không lưu mã thử. Phiên tạm đã thu hồi. Ảnh: artifacts/material-name-order-live.png, artifacts/material-name-order-live-mobile.png.
