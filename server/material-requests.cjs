@@ -1,6 +1,7 @@
 'use strict';
 const {randomUUID,createHash}=require('node:crypto'),AA=require('../action-access.js');
 module.exports=function({sql,list,get,put,job,plan,number,text,fail,now,catalogMaterials}){
+ const context=require('./material-request-context.cjs')({sql,list,get,put,fail});
  const rights=u=>({request:AA.allows(u,'production','edit',false)||AA.allows(u,'purchasing','create',false),technical:AA.allows(u,'production','confirm',false),pricing:(AA.allows(u,'production','reviewPricing',false)||AA.allows(u,'purchasing','edit',false))&&require('./access.cjs').permissions(u).costs&&AA.allows(u,'costs','view',u.role==='admin')});
  const signature=id=>{const j=job(id);return createHash('sha256').update(JSON.stringify([j.packet.materials,j.packet.cutting,get('production-purchase-sizes',id)||null])).digest('hex');};
  function notify(p,state){const N=require('./work-notifications.cjs'),recipients=sql.prepare('SELECT * FROM users WHERE active=1 AND deleted_at IS NULL').all().filter(u=>state==='technical-review'?rights(u).technical:state==='pricing-review'?rights(u).pricing:AA.allows(u,'purchasing','approve',false)).map(u=>u.id);N.notify(sql,[...recipients,p.actor],p.code+' · '+({'technical-review':'Đề nghị vật tư chờ kỹ thuật','pricing-review':'Vật tư chờ bổ sung giá và nhà cung cấp',pending:'Đề nghị mua chờ duyệt',rejected:'Đề nghị vật tư đã trả lại'})[state],p.jobIds.length?'source:production:'+p.jobIds[0]:'source:purchase:'+p.id);}
@@ -11,9 +12,9 @@ module.exports=function({sql,list,get,put,job,plan,number,text,fail,now,catalogM
  }
  function generalComparison(lines,basis){return lines.map(l=>({materialId:l.materialId,name:l.name,unit:l.unit,requested:l.quantity,length:l.length,width:l.width,thickness:l.thickness,basis,at:now(),references:[]}));}
  function generalCreate(b,u){
-  if(!rights(u).request)fail(403,'Chưa có quyền đề nghị vật tư');const department=text(b.department,200,true),basis=text(b.basis,3000,true),lines=generalLines(b.lines);
+  if(!rights(u).request)fail(403,'Chưa có quyền đề nghị vật tư');const reference=context.resolve(b,u),{department,basis}=reference,lines=generalLines(b.lines);
   const prefix='DNVT-'+require('../completion-core.js').todayVN().replaceAll('-','')+'-',codes=new Set(list('purchase').map(p=>p.code));let n=1;while(codes.has(prefix+String(n).padStart(4,'0')))n++;
-  const p=put('purchase',randomUUID(),{code:prefix+String(n).padStart(4,'0'),workflow:'material-request',allocationMode:'department',department,basis,jobIds:[],jobId:null,orderId:null,lines,originalLines:structuredClone(lines),normComparison:generalComparison(lines,basis),batchNote:text(b.batchNote||'',2000),state:'pricing-review',created:now(),actor:u.id,history:[{state:'pricing-review',at:now(),actor:u.name,note:'Đề nghị từ '+department}]},1);notify(p,p.state);return p;
+  const p=put('purchase',randomUUID(),{code:prefix+String(n).padStart(4,'0'),workflow:'material-request',allocationMode:'department',...reference,jobIds:[],jobId:null,orderId:null,lines,originalLines:structuredClone(lines),normComparison:generalComparison(lines,basis),batchNote:text(b.batchNote||'',2000),state:'pricing-review',created:now(),actor:u.id,history:[{state:'pricing-review',at:now(),actor:u.name,note:'Đề nghị từ '+department}]},1);notify(p,p.state);return p;
  }
  function amend(b,u,p){
   if(!rights(u).pricing)fail(403,'Chưa có quyền điều chỉnh đề nghị mua');const note=text(b.note,2000,true);if(p.state!=='pricing-review')fail(409,'Chỉ điều chỉnh trước khi trình duyệt mua');const before=structuredClone(p.lines);let lines;
@@ -47,5 +48,5 @@ module.exports=function({sql,list,get,put,job,plan,number,text,fail,now,catalogM
   }
   p.history.push({state:p.state,at:now(),actor:u.name,note});const saved=put('purchase',p.id,p,p.version+1);notify(saved,p.state);return saved;
  }
- return {create,review,rights,choices};
+ return {create,review,rights,choices,context};
 };

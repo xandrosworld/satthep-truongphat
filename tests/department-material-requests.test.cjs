@@ -7,9 +7,34 @@ test('department request retains original, purchaser amends, approval then recei
  const mat=await call('ops/master',{requestId:randomUUID(),kind:'material',expectedVersion:0,document:{code:'GENERAL-01',name:'Office material',unit:'cÃ¡i',form:'bulk',active:true}});A.equal(mat.status,200,JSON.stringify(mat.data));
  const mat2=await call('ops/master',{requestId:randomUUID(),kind:'material',expectedVersion:0,document:{code:'GENERAL-02',name:'Extra type',unit:'cái',form:'bulk',active:true}});A.equal(mat2.status,200);
  const supplier=await call('ops/master',{requestId:randomUUID(),kind:'supplier',expectedVersion:0,document:{code:'SUP-G',name:'Supplier',active:true,prices:[]}});
- const body={requestId:randomUUID(),scope:'department',department:'Office',basis:'10 staff x 1 item',lines:[{materialId:mat.data.id,quantity:10}]};
- A.equal((await call('ops/material-request',{...body,basis:''},requester)).status,400);
- let r=await call('ops/material-request',body,requester);A.equal(r.status,200,JSON.stringify(r.data));let p=r.data;A.equal(p.state,'pricing-review');A.equal((await call('ops/material-request',body,requester)).data.id,p.id);
+ app.sql.prepare('INSERT INTO organization VALUES(1,1,?)').run(JSON.stringify({departments:[{id:'office',name:'Office',active:true}],positions:[],employees:[]}));
+ const purpose=await call('ops/material-request-purpose',{type:'office',code:'CP-VP',name:'Office supplies',expectedVersion:0});A.equal(purpose.status,200,JSON.stringify(purpose.data));
+ const quote=await call('quotes',{document:require('../pricing-core.js').demoSeed()});A.equal(quote.status,201);
+ app.sql.prepare('INSERT INTO orders VALUES(?,?,?,?,?,?,?)').run('order-ref','DH-REF',quote.data.id,1,'{}',new Date().toISOString(),'admin');
+ app.sql.prepare('INSERT INTO production_jobs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run('job-ref','LSX-REF','order-ref','product',1,1,'draft','{}','{}','2026-09-28','2026-09-28','admin');
+ app.sql.prepare('INSERT INTO business_records VALUES(?,?,?,?)').run('contract','contract-ref',1,JSON.stringify({code:'HD-REF',status:'active'}));
+ const project=await call('ops/material-request-purpose',{type:'project',code:'DA-REF',name:'Project',expectedVersion:0});
+ const production=await call('ops/material-request-purpose',{type:'production',code:'SX-REF',name:'Production use',expectedVersion:0});
+ const options=(await call('ops/material-requests')).data.context;
+ for(const [type,id]of [['quote',quote.data.id],['order','order-ref'],['job','job-ref'],['contract','contract-ref'],['project',project.data.id],['production',production.data.id],['office',purpose.data.id]])A.ok(options.sources.some(s=>s.type===type&&s.id===id),type);
+ const limited=(await call('ops/material-requests',undefined,requester)).data.context;
+ A.ok(!limited.sources.some(s=>['quote','order','job','contract'].includes(s.type)));A.equal(limited.registry.length,0);
+ A.equal((await call('ops/material-request-purpose',{type:'office',code:'BAD',name:'No permission',expectedVersion:0},requester)).status,403);
+ A.equal((await call('ops/material-request-purpose',{type:'office',code:'CP-VP',name:'Duplicate',expectedVersion:0})).status,409);
+ const body={departmentId:'office',purposeType:'office',sourceId:purpose.data.id,requestId:randomUUID(),scope:'department',department:'Office',basis:'10 staff x 1 item',lines:[{materialId:mat.data.id,quantity:10}]};
+ A.equal((await call('ops/material-request',{...body,sourceId:'missing'},requester)).status,400);
+ A.equal((await call('ops/material-request',{...body,departmentId:'missing'},requester)).status,400);
+ A.equal((await call('ops/material-request',{...body,purposeType:'quote',sourceId:quote.data.id},requester)).status,400);
+ A.equal((await call('ops/material-request',{...body,purposeType:'project'},requester)).status,400);
+
+ let r=await call('ops/material-request',body,requester);A.equal(r.status,200,JSON.stringify(r.data));let p=r.data;A.equal(p.state,'pricing-review');A.equal(p.departmentId,'office');A.equal(p.purpose.code,'CP-VP');A.equal(p.purpose.id,purpose.data.id);A.equal((await call('ops/material-request',body,requester)).data.id,p.id);
+ app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify({departments:[{id:'parent',name:'Disabled',active:false},{id:'office',name:'Renamed',active:true,parentId:'parent'}],positions:[],employees:[]}));
+ A.equal((await call('ops/material-request',{...body,requestId:randomUUID()},requester)).status,400);
+ A.equal((await call('ops/material-requests')).data.rows.find(r=>r.id===p.id).department,'Office');
+ app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify({departments:[{id:'office',name:'Office',active:true}],positions:[],employees:[]}));
+ await call('ops/material-request-purpose',{id:purpose.data.id,type:'office',code:'CP-VP',name:'Renamed',active:false,expectedVersion:1});
+ A.equal((await call('ops/material-request',{...body,requestId:randomUUID()},requester)).status,400);
+ A.equal((await call('ops/material-requests')).data.rows.find(r=>r.id===p.id).purpose.name,'Office supplies');
  const amend={requestId:randomUUID(),id:p.id,expectedVersion:p.version,action:'amend',note:'Additional two staff',lines:[{materialId:mat.data.id,quantity:12},{materialId:mat2.data.id,quantity:2}]};
  A.equal((await call('ops/material-request-review',amend,requester)).status,403);
  A.equal((await call('ops/material-request-review',{...amend,note:''})).status,400);
@@ -18,7 +43,7 @@ test('department request retains original, purchaser amends, approval then recei
  A.equal((await call('ops/material-request-review',{...amend,requestId:randomUUID(),expectedVersion:p.version})).status,409);
  const visible=await call('ops/material-requests',undefined,requester);A.equal(visible.data.rows[0].lines[0].unitCost,undefined);
  for(const state of ['approved','ordered','shipping','received','stocked']){const b={requestId:randomUUID(),id:p.id,expectedVersion:p.version,state,receipts:p.lines.map(l=>({lineId:l.id,materialId:l.materialId,quantity:l.quantity,warehouse:'Office store',unitWeight:1,length:0,width:0,thickness:0}))};r=await call('ops/transition',b);A.equal(r.status,200,JSON.stringify(r.data));p=r.data;if(state==='stocked')A.equal((await call('ops/transition',b)).data.id,p.id);}
+ app.sql.prepare('DELETE FROM production_jobs WHERE id=?').run('job-ref');
  const stock=(await call('ops/state')).data;A.equal(stock.lots.length,2);const lot=stock.lots.find(l=>l.materialId===mat.data.id);A.equal(lot.quantity,12);
  const issue={requestId:randomUUID(),lotId:lot.id,quantity:12,reference:p.code,note:'Issue to Office'};A.equal((await call('ops/issue',issue)).status,200);A.equal((await call('ops/issue',issue)).status,200);A.equal((await call('ops/state')).data.lots.find(l=>l.id===lot.id).quantity,0);
 });
-
