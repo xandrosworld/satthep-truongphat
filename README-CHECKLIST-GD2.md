@@ -599,3 +599,12 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Tên @nhắc khớp thành viên hội thoại có chữ xanh đậm, nền xanh nhạt; áp dụng tin gửi, tin nhận và phần trích trả lời. Tin cũ hiển thị lại theo cùng cách, không sửa nội dung lưu hoặc thay đổi quy tắc thông báo.
 - Kiểm thử trình duyệt hai tài khoản đạt: màu tên, tải lại, ký tự HTML hiển thị an toàn và hồi quy cảm xúc/thu hồi/ảnh/điện thoại. Build đạt.
 - Đã triển khai sau sao lưu nguồn/SQLite; HTTPS health và 65 hash runtime khớp. Kiểm tra tên được nhắc trên tin có sẵn trong TP Group, desktop/390 px; chặn yêu cầu ghi nên cập nhật trạng thái đã đọc không thực hiện trong phiên kiểm tra. Không gửi tin thử; phiên tạm đã thu hồi. Ảnh: `artifacts/chat-mentions-live.png`, `artifacts/chat-mentions-live-mobile.png`.
+
+
+### 2026-09-28 — Đề nghị vật tư bộ phận và điều chỉnh trước mua (18b6826)
+- Thêm tab Đề nghị vật tư và nút tạo đề nghị bộ phận ngoài lệnh sản xuất. Khai bộ phận/nơi sử dụng, căn cứ nhu cầu, mã vật tư, số lượng và khổ; số DNVT tự sinh. Dùng quyền tạo/xem mua hàng hiện có; bộ phận/nơi sử dụng là nội dung người đề nghị khai, chưa tự gán từ cơ cấu tổ chức.
+- Bộ phận mua điều chỉnh số lượng, thêm/bỏ hoặc đổi chủng loại trước trình duyệt, bắt buộc lý do; giữ đề nghị gốc và lịch sử trước/sau. Đề nghị bộ phận chuyển bổ sung giá/NCC rồi duyệt → đặt → giao → nhận → nhập kho; sau nhập có nút cấp từ các lô của đề nghị, ghi người/bộ phận nhận và dẫn chiếu DNVT. Kiểm tồn khả dụng và chống gửi lặp qua giao dịch hiện có.
+- Đề nghị theo lệnh chỉ điều chỉnh các vật tư thuộc hồ sơ và trong nhu cầu còn lại; kiểm phiên bản, thông số và phần đang giữ/mua. Điều chỉnh phải kỹ thuật xác nhận lại trước chuyển mua; giữ bảng đối chiếu gốc và cập nhật bảng cho phần điều chỉnh.
+- Đề nghị bộ phận lưu căn cứ nhu cầu khai tay; không tự suy định mức theo sản lượng lệnh. Không mở sửa đề nghị đã trình duyệt hoặc tự duyệt mua.
+- Kiểm tra: 4 ca API/core đạt, gồm hai luồng đề nghị/định mức, phân quyền, phiên bản, giữ bản gốc, thêm chủng loại, nhận/nhập/cấp và chống lặp; 2 browser tạo/sửa/lịch sử/tải lại/mobile và xưởng → kỹ thuật → giá/NCC đạt. Build đạt.
+- Đã triển khai sau sao lưu nguồn/SQLite; HTTPS health và 65 hash runtime khớp. Web thật kiểm tra tab, form bộ phận, thêm dòng và 390 px, chặn ghi nghiệp vụ thử; phiên tạm đã thu hồi. Ảnh: `artifacts/department-material-request-live.png`, `artifacts/department-material-request-live-mobile.png`.
