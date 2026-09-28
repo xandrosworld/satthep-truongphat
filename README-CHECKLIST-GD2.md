@@ -729,3 +729,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Giữ cấu hình giá mặc định của đúng báo giá khi lưu; không lấy nhầm bảng giá/lịch sử từ danh mục đang làm. Giữ tham chiếu bảo vệ gắn với dữ liệu gốc. Máy chủ hỗ trợ tab cũ gửi đúng cấu hình danh mục hiện hành bằng cách giữ snapshot báo giá; dữ liệu tự sửa khác vẫn qua kiểm tra quyền.
 - Kiểm thử 15 ca API/core và 4 browser đạt: mở sửa nguyên công → lưu → tải lại → bàn giao; tab cũ; lịch sử giá bị ẩn; giả mạo giá, ngoài phạm vi và phiên bản cũ bị từ chối; hồi quy kỹ thuật thiếu giá và xét yêu cầu. Bản sao đúng hồ sơ v17 lưu/bàn giao thành công, bảng giá/lịch sử giữ nguyên. Build đạt. Không ghi lưu/bàn giao thử lên hồ sơ khách.
 - Đã triển khai `b95cbf1` sau sao lưu nguồn/SQLite; container healthy, HTTPS health và 82 hash runtime khớp. Web thật quyền anh Phú, BG-20260925-005 v17: dữ liệu chuẩn bị lưu giữ đúng bảng giá báo giá dù danh mục làm việc khác; desktop/390 px. Chặn ghi nghiệp vụ, không tự lưu hoặc bàn giao hồ sơ khách; phiên tạm đã thu hồi. Ảnh: `artifacts/quote-defaults-live.png`, `artifacts/quote-defaults-live-mobile.png`.
+
+
+### 2026-09-28 — Báo giá mới nhất hiển thị trên cùng
+- Theo phản hồi mới, đổi thứ tự ngày tạo sang mới → cũ cho danh sách báo giá, gồm tài khoản kỹ thuật và tài khoản chỉ xem bản duyệt. Thay quy tắc cũ → mới ghi trước đó; STT theo danh sách đang lọc, nối tiếp qua trang.
+- Ngày tạo vẫn lấy phiên bản đầu tiên trên máy chủ; sửa/lưu/duyệt báo giá cũ không đổi vị trí theo ngày cập nhật. Khi trùng thời điểm, dùng ID giảm dần để thứ tự ổn định.
+- Kiểm thử API tạo hai báo giá, kiểm tra thứ tự mới nhất và sửa bản cũ giữ vị trí đạt; hai browser danh sách desktop/mobile và kỹ thuật đạt. Build đạt.
