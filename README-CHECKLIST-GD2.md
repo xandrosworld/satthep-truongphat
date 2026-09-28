@@ -515,3 +515,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Phần đang đề nghị được tính vào nhu cầu đang xử lý để chống trùng. Kiểm phiên bản, quy cách/khổ mua đã đổi, số lượng nguyên, quá nhu cầu, nhu cầu giảm do giữ kho; gửi lại cùng mã thao tác không tạo thêm yêu cầu. Luồng mua/nhận/nhập kho hiện có tiếp tục sau bước chờ duyệt.
 - 27 kiểm thử API/core đạt; trình duyệt đi đủ luồng gửi đề nghị → kỹ thuật → nhà cung cấp/giá → chờ duyệt mua đạt. Sửa việc bộ lọc màn kỹ thuật báo giá vô tình bỏ cột giá của hộp xử lý vật tư; hộp này dùng quyền/dữ liệu riêng từ máy chủ.
 - Triển khai d7c88cc, sao lưu nguồn/SQLite, đối chiếu 40 tệp runtime, healthcheck đạt. Web thật LSX-01 mở bằng nút Đề nghị vật tư: không có trường mã/NCC, đúng số lượng 1 tấm, lịch sử đề nghị hiện trong lệnh. Không ghi đề nghị mua thử trên dữ liệu khách; phiên kiểm tra đã thu hồi. Ảnh: artifacts/material-requests-live.png.
+
+# Cập nhật 28/09/2026 — căn đều thao tác bảng rà soát vật tư
+
+- Kho · Chọn phôi, Chọn khổ, Xem sắp phôi và Đề nghị đặt vật tư có cùng kích thước 112 × 48 px, căn theo đáy từng dòng; thông tin kho/khổ/số lượng nằm phía trên, không đẩy các nút lệch hàng.
+- Thống nhất tên nút, tiêu đề form và mục theo dõi thành Đề nghị đặt vật tư; giữ luồng xưởng → kỹ thuật → giá/NCC → duyệt mua đã triển khai.
+- Đã build, kiểm tra tọa độ/kích thước bốn nút bằng trình duyệt cục bộ và web thật LSX-01. Mở form đề nghị vẫn đúng số lượng, không có ô nhập số hay NCC ở bước xưởng. Triển khai 45765e8, sao lưu nguồn/SQLite, đối chiếu 40 tệp runtime và healthcheck đạt. Kiểm tra chỉ đọc, phiên tạm đã thu hồi. Ảnh: artifacts/material-action-layout-live.png.
