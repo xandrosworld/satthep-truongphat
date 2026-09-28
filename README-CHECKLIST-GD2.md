@@ -708,3 +708,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Giữ luồng kỹ thuật gửi → bộ phận giá cho phép/từ chối trước Admin duyệt. Không chuyển lịch sử đã hoàn tất thành yêu cầu chờ hoặc tạo yêu cầu thay khách.
 - Build và 3 bài browser đạt: corrections, correction-queue, downstream-review. Bổ sung hồi quy mở thông báo của phạm vi đã hoàn tất: không có ô lý do/nút gửi hay nút duyệt; tạo mới là thao tác riêng. Luồng yêu cầu đang chờ, xét bởi Giá, xung đột phiên bản và mobile vẫn đạt.
 - Đã triển khai af9153e sau sao lưu nguồn/SQLite; container healthy, HTTPS health và 81 hash runtime khớp. Web thật quyền Nguyễn Công Thảo trên đúng BG-20260925-006 xác nhận danh sách lịch sử, thời điểm hoàn tất, không tự mở form gửi; desktop/390 px đạt. Chặn ghi nghiệp vụ và thu hồi phiên tạm. Ảnh: artifacts/correction-history-live.png, artifacts/correction-history-live-mobile.png.
+
+### 2026-09-28 — Kiểm chứng kỹ thuật bàn giao khi chưa có giá nguyên công
+- Theo ảnh BG-20260923-003: yêu cầu thiếu đơn giá nguyên công không chặn kỹ thuật lưu và bàn giao. Đối chiếu mã hiện tại: lưu nháp không bắt đủ giá; bàn giao kỹ thuật kiểm dữ liệu kỹ thuật đã loại giá.
+- Bổ sung `tests/technical-missing-operation-price-browser.cjs`: tài khoản kỹ thuật không xem giá sửa lượng công việc, bấm lưu máy chủ, tải lại và xác nhận bàn giao toàn bộ qua hộp thoại; API bàn giao từng phần đạt khi đơn giá nguyên công còn trống. Đọc lại bằng Admin xác nhận giá vẫn trống, không tự điền 0.
+- Kiểm tra đối chứng: cấu kiện thiếu thành phần vẫn lưu nháp được nhưng bàn giao toàn bộ bị từ chối. Cảnh báo được khoanh trong ảnh là thiếu lượng kg, không phải thiếu đơn giá; ảnh đồng thời có hai cấu kiện chưa có thành phần. Không bỏ kiểm tra cấu thành để xử lý yêu cầu về giá.
+- Kiểm thử trình duyệt đạt trên dữ liệu riêng. Đợt này chỉ bổ sung bằng chứng kiểm thử, không thay mã chạy hoặc triển khai lại; chưa xác nhận bàn giao thực tế BG-20260923-003 và không sửa hồ sơ khách.
