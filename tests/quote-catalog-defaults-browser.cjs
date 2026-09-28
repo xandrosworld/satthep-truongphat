@@ -9,8 +9,9 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
    const password='Catalog-defaults-test-42!';window.testPassword=password;
    teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password}));
    await teamApi('users','POST',{username:'tech',name:'Technical with catalogue access',password,role:'technical',technicalDelegation:true,canViewCosts:true,canEditFactors:false,sectionModes:Object.fromEntries(TPSectionAccess.keys.map(k=>[k,['bom','operations','catalogMaterials','catalogTechnicalOperations','catalogLibrary'].includes(k)?'configure':['materials','factors'].includes(k)?'none':'view']))});
-   const d=TPPrice.demoSeed();d.quote.remnantMode='all';d.pricingDefaults=TPInputPrices.defaults(d);d.pricingDefaults.expenseRates[0].rate=12345;d.pricingDefaults.expenseRates[0].priceHistory=[{at:'2026-09-01',from:{rate:10},to:{rate:12345}}];
+   const d=TPPrice.demoSeed();d.quote.remnantMode='all';d.pricingDefaults=TPInputPrices.defaults(d);d.pricingDefaults.overhead=17;d.pricingDefaults.expenseRates[0].rate=12345;d.pricingDefaults.expenseRates[0].priceHistory=[{at:'2026-09-01',from:{rate:10},to:{rate:12345}}];
    const q=await teamApi('quotes','POST',{document:d});window.testQuote=q.id;
+   await teamApi('formulas/locks','POST',{key:'calculationFactors:all',locked:true,reason:'Protect calculation factors during technical correction',expectedVersion:0});
    for(const stage of ['intake','technical','materials'])await teamApi('quotes/'+q.id+'/handoff/'+stage,'POST',{expectedVersion:q.version});
    teamSession(await teamApi('login','POST',{username:'tech',password}));
    await teamApi('quotes/'+q.id+'/corrections','POST',{action:'request',sections:['operations'],reason:'Update operation notes',expectedVersion:q.version});
@@ -25,7 +26,7 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
   expect(await p.evaluate(()=>db.pricingDefaults.expenseRates[0].rate)).not.toBe(12345);
   expect(await p.evaluate(()=>teamDocument().pricingDefaults.expenseRates[0].rate)).toBe(12345);
   await p.evaluate(()=>{mutation(()=>db.quote.products[0].ops[0].notes='Changed in permitted scope');render();});
-  const saved=p.waitForResponse(r=>r.request().method()==='PUT'&&r.url().endsWith('/quotes/'+id));await p.locator('[data-team=save]').first().click();expect((await saved).status()).toBe(200);await p.waitForFunction(()=>!Team.dirty&&!Team.savePending);
+  const saved=p.waitForResponse(r=>r.request().method()==='PUT'&&r.url().endsWith('/quotes/'+id));await p.evaluate(()=>noticeConfirm('technical'));await expect(p.locator('#dialog')).toContainText('Lưu và tiếp tục');await p.locator('#dialog button[type=submit]').click();expect((await saved).status()).toBe(200);await p.waitForFunction(()=>!Team.dirty&&!Team.savePending);
   await p.reload();await p.waitForFunction(()=>Team.user);await p.evaluate(id=>teamLoad(id),id);
   expect(await p.evaluate(()=>db.quote.products[0].ops[0].notes)).toBe('Changed in permitted scope');
   // An already open, older browser sends published defaults. Preserve the quote
@@ -35,9 +36,9 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
    doc.pricingDefaults=C.copy(master.catalog.pricingDefaults);doc.quote.products[0].ops[0].notes='Old tab saved';
    const saved=await teamApi('quotes/'+testQuote,'PUT',{document:doc,expectedVersion:current.version});
    async function denied(edit,version=saved.version){const d=C.copy((await teamApi('quotes/'+testQuote)).document);edit(d);try{await teamApi('quotes/'+testQuote,'PUT',{document:d,expectedVersion:version});return 200;}catch(e){return e.status;}}
-   return {forged:await denied(d=>d.pricingDefaults.expenseRates[0].rate=98765),outsideScope:await denied(d=>d.quote.products[0].qty++),stale:await denied(d=>{},current.version)};
+   return {forged:await denied(d=>d.pricingDefaults.expenseRates[0].rate=98765),outsideScope:await denied(d=>d.quote.products[0].qty++),stale:await denied(d=>{},current.version),factors:await denied(d=>d.quote.pricing.overhead=99)};
   },id);
-  expect(checks).toEqual({forged:403,outsideScope:403,stale:409});
+  expect(checks).toEqual({forged:403,outsideScope:403,stale:409,factors:403});
   await p.evaluate(id=>teamLoad(id),id);await p.evaluate(()=>noticeConfirm('technical'));
   const handoff=p.waitForResponse(r=>r.url().endsWith('/handoff/technical')&&r.request().method()==='POST');await p.locator('#dialog button[type=submit]').click();expect((await handoff).status()).toBe(200);
   const stored=JSON.parse(app.sql.prepare('SELECT document FROM quotes WHERE id=?').get(id).document);

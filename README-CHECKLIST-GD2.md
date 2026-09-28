@@ -743,3 +743,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Tăng chiều cao vùng bảng, thêm Mở rộng bảng / Thu gọn màn hình và phím Escape; chế độ xem không làm thay đổi báo giá hoặc trạng thái bàn giao. Nhãn đã xác nhận của các bộ phận dùng màu xanh đậm, vẫn có chữ/ký hiệu.
 - Build và browser kiểm tra độ rộng cột, tương phản trạng thái khóa, mở rộng/thu gọn/Escape, không đánh dấu dữ liệu thay đổi và 390 px đạt; hồi quy lưu/bàn giao kỹ thuật thiếu giá đạt.
 - Đã triển khai `c31b260` sau sao lưu nguồn/SQLite; HTTPS health và 82 hash runtime đạt. Web thật BG-20260925-005 kiểm tra độ rộng cột, mở rộng/thu gọn/Escape và 390 px; không ghi nghiệp vụ, phiên tạm đã thu hồi. Ảnh: `artifacts/operation-review-live.png`, `artifacts/operation-review-live-mobile.png`.
+
+
+### 2026-09-28 — Kiểm chứng lỗi khóa hệ số khi lưu trước bàn giao kỹ thuật
+- Đối chiếu ảnh “Công thức đã khóa: Hệ số tính toán và phạm vi áp dụng” trên BG-20260923-004. Hồ sơ hiện tại đã là v41; không khẳng định tái hiện được trạng thái cũ trong ảnh. Khóa calculationFactors:all vẫn bật.
+- Trên bản sao SQLite mới nhất, dùng đúng quyền Nguyễn Khắc Phú: sửa ghi chú nguyên công trong phạm vi được mở, bấm Xác nhận bàn giao → Lưu và tiếp tục, lưu thành công, tải lại giữ nội dung và xác nhận bàn giao đạt. Giữ nguyên pricingDefaults của hồ sơ; không ghi thử lên báo giá khách.
+- Bổ sung hồi quy quote-catalog-defaults-browser với hệ số mặc định khác danh mục, khóa công thức đang bật và đúng hộp Lưu và tiếp tục. Luồng tab cũ gửi danh mục mới vẫn lưu được; giá ngoài quyền, sửa hệ số trái quyền, ngoài phạm vi và phiên bản cũ bị chặn. Browser đạt; 10 ca formula-access đạt.
+- Bản sửa b95cbf1 đã có trên web đang chạy: giữ căn cứ mặc định của báo giá khi danh mục làm việc mới hơn, xử lý tab cũ gửi đúng mặc định đã phát hành. Đợt này bổ sung kiểm chứng, không đổi mã chạy hoặc triển khai lại, không mở khóa hay cấp thêm quyền.
+- Kiểm tra web thật chỉ đọc bằng quyền anh Phú trên BG-20260923-004 v41: dữ liệu gửi lưu giữ đúng mặc định hồ sơ dù danh mục hiện hành khác, không tự phát sinh thay đổi. Desktop/390 px; phiên tạm đã thu hồi. Ảnh: artifacts/formula-defaults-live.png và artifacts/formula-defaults-live-mobile.png.
