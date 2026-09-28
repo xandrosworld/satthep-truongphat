@@ -3,7 +3,7 @@ function inCanEditMaterialPrice(){
  if(Quotes.conflict||db.quote.status!=='draft')return false;
  if(!Team.loaded)return true;
  const link=teamCurrent(),state=Notices.quoteId===link?.id?Notices.state:null;
- return !!(Team.permissions?.edit&&Team.permissions?.sections?.includes('materials')&&link?.status==='draft'&&!link.readOnly&&state&&(!state.materials||state.materials.unlocked));
+ return !!(Team.permissions?.edit&&Team.permissions?.sections?.includes('materials')&&link?.status==='draft'&&!link.readOnly&&state&&(!state.materials?.current||state.materials.unlocked));
 }
 // Preserve other pending grouped prices and the editor's viewport across recalculation.
 function inPriceViewport(){
