@@ -584,3 +584,4 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Danh sách báo giá xếp ngày tạo cũ đến mới, dùng thời điểm phiên bản đầu tiên trên máy chủ và mã định danh để giữ thứ tự khi trùng thời điểm. Cập nhật, trình hoặc duyệt không đưa dòng lên đầu; báo giá mới thêm cuối danh sách.
 - Thêm STT nối tiếp qua trang và cột Ngày tạo riêng với Cập nhật. STT theo danh sách đang lọc, không phải mã chứng từ cố định. Không dùng ngày báo giá khai tay làm ngày tạo.
 - Kiểm thử API tạo hai báo giá rồi sửa bản cũ: ngày tạo/thứ tự giữ nguyên; 2 browser danh sách desktop/mobile và tài khoản kỹ thuật đạt. Build đạt.
+- Đã triển khai `3172d4a` sau sao lưu nguồn/SQLite; HTTPS health và 61 hash runtime đạt. Web thật kiểm tra STT, ngày tạo, thứ tự cũ đến mới giữ nguyên khi làm mới và khung 390 px. Không ghi sửa báo giá khách; phiên tạm đã thu hồi. Ảnh: `artifacts/quote-created-live.png`, `artifacts/quote-created-live-mobile.png`.
