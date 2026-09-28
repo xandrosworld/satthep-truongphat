@@ -569,3 +569,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Xưởng khai người phụ trách và máy thực hiện / Thủ công ngay trên thẻ rồi bắt đầu. Vẫn kiểm tra đủ hồ sơ, vật tư, thứ tự công đoạn, quyền, phiên bản và đối soát. Thay đổi nội dung/thứ tự công đoạn tiếp tục qua đề nghị điều chỉnh; xác nhận hồ sơ bị xóa do thay đổi không được dùng làm căn cứ cũ.
 - Kiểm thử: 3 ca API/core về căn cứ xác nhận, luồng công nghệ/kho và QC đạt; 2 browser đạt (toàn luồng chỉ xác nhận hồ sơ, không duyệt tiến trình riêng, đến nhập thành phẩm; bảng thao tác). Build đạt.
 - Đã triển khai 69a3e83 sau sao lưu nguồn/SQLite; HTTPS health và 56 hash runtime đạt. Web thật LSX-01 nhận đúng xác nhận công đoạn sẵn có, không còn báo chưa duyệt tiến trình; form bắt đầu có người và máy, kiểm tra desktop/390 px. Không ghi bắt đầu/nhập kho thử lên lệnh khách; phiên tạm đã thu hồi. Ảnh: artifacts/production-confirmed-flow-live.png và artifacts/production-confirmed-flow-live-mobile.png.
+
+
+### 2026-09-28 — Giờ công theo định mức và thời gian trong ca
+- Bỏ ô nhập giờ ở bảng công đoạn và form thực hiện chi tiết. Hiện tổng giờ định mức (giờ/đơn vị × sản lượng lệnh), giờ thực tế và chênh lệch. Định mức tiếp tục khai/điều chỉnh từ phần rà soát điều kiện sản xuất theo luồng hiện có.
+- Chấm công bổ sung khoảng ca/tăng ca theo ngày, giờ Việt Nam; tách giờ nghỉ, hỗ trợ ca đêm. Kiểm tra định dạng, không chồng khoảng, tổng giờ khớp các giờ làm đã khai; dùng quyền, duyệt, phiên bản và khóa kỳ hiện có.
+- Giờ thực tế tính giao giữa thời gian bắt đầu–bàn giao và khoảng làm việc đã duyệt; trừ hợp các khoảng chờ vật tư/phê duyệt đã kết thúc và xác nhận. Không tính giờ nghỉ hoặc ngoài ca. Ngày thiếu/chưa duyệt không tự coi là 0; ngày nghỉ cần xác nhận khoảng trống.
+- Chưa khai định mức hoặc thiếu lịch làm việc thì hiển thị thiếu căn cứ. Đổi người sau bắt đầu yêu cầu đối chiếu, không quy toàn bộ thời gian cho người mới. Giữ số giờ/lịch sử khai trước đây riêng; chưa chuyển hồi tố báo cáo/lương sang cách tính mới.
+- Kiểm tra: 20 ca API/core và 3 browser (bảng công đoạn, chấm công/lương, sản xuất đến thành phẩm) đạt; build đạt. Kiểm tra ca đêm, tăng ca, giờ nghỉ, chờ trùng, thiếu ngày công và kết thúc tại bàn giao.
