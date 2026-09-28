@@ -629,3 +629,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Giữ kiểm tra nhãn/phạm vi nhóm và hệ số trên máy chủ; không mở quyền xem/sửa hệ số.
 - Browser tài khoản estimator bị khóa hệ số: đánh giá nhanh, khai báo công đoạn, lưu máy chủ và tải lại đạt; xác minh hệ số thực bằng tài khoản Admin. 6 ca core liên quan đạt; build đạt.
 - Đã triển khai abfb6de sau sao lưu nguồn/SQLite; HTTPS health và 68 hash runtime khớp. Không lưu thay đổi công đoạn thử lên hồ sơ khách; xác minh lưu/tải lại dùng dữ liệu kiểm thử riêng.
+
+
+### 2026-09-28 — Đối chiếu lại chặn nhập giá của Nguyễn Công Thảo
+- Tài khoản nv-002 có quyền Giá vật tư. BG-20260925-005 v8 và BG-20260925-006 v9 vẫn chỉ mở Cấu thành/hao hụt; chưa được mở Giá vật tư.
+- BG-20260925-005 có đề nghị bổ sung của anh Thảo đang chờ cho phép, chọn cả 8 vùng dù lý do là bổ sung nhập giá vật tư. Chưa tự duyệt yêu cầu hoặc mở rộng phạm vi trên hồ sơ khách. Cần người duyệt rà phạm vi trước khi cho sửa.
+- Kiểm tra bản đang chạy: bảng giá hiện hướng dẫn bổ sung phạm vi, khóa ô ngoài phạm vi và mở được lịch sử yêu cầu chờ duyệt. Browser hồi quy trên dữ liệu thử đạt: bổ sung riêng Giá vật tư, lưu nguồn/giá và tải lại giữ giá trị. Ảnh chỉ đọc: artifacts/material-price-pending-live.png.
+- Không thay mã chạy hoặc triển khai lại; phiên xác minh đã thu hồi. Chưa coi việc nhập giá trên hai hồ sơ khách đã được gỡ chặn khi yêu cầu mở sửa còn chưa duyệt.
