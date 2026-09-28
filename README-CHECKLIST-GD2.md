@@ -667,3 +667,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Kiểm thử: 25 ca API/core đạt; kiểm tra quyền/phạm vi, phân công người xét, từ chối–Admin can thiệp, xác nhận lại, lưu chờ duyệt, phiên bản cũ và khóa sau duyệt. Kết quả trình duyệt và triển khai ghi bổ sung sau xác minh.
 - Ba bài browser đạt: `quote-downstream-review-browser`, `draft-commercial-edit-browser`, `company-logo-browser`; có lưu/tải lại hệ số khi đang chờ duyệt, Giá xét đề nghị, từ chối–Admin cho sửa, xác nhận hết hiệu lực và màn 390 px.
 - Đã triển khai `389c2bd` sau sao lưu nguồn/SQLite; HTTPS health và 76 hash runtime khớp. Web thật tài khoản Nguyễn Công Thảo, BG-20260925-005 v14 còn là bản nháp: ô giá/hệ số sửa được, có ô lý do và hướng dẫn luồng mới. Không tạo yêu cầu/duyệt/sửa giá thử trên hồ sơ khách; luồng chờ duyệt và xét yêu cầu chạy trên dữ liệu thử riêng. Phiên xác minh đã thu hồi. Ảnh: `artifacts/quote-downstream-price-live.png`, `artifacts/quote-downstream-policy-live.png`, `artifacts/quote-downstream-review-live-mobile.png`.
+
+
+### 2026-09-28 — Cấp vật tư / sửa chữa theo ảnh khách
+- Thêm mục ngay dưới Định mức, hai tab đề nghị cấp vật tư/thiết bị và đề nghị sửa chữa; icon PNG nền trong suốt được tạo riêng và nhúng bản build.
+- Cấp vật tư qua duyệt kho, xuất theo lô/người nhận, cấp từng phần hoặc đủ; chống vượt tồn khả dụng/phần còn lại, không lấy tồn giữ cho lệnh khác. Phiếu xuất dẫn chiếu đề nghị, chỉ xác nhận cấp mới giảm kho.
+- Sửa chữa có duyệt, bắt đầu, đơn vị thực hiện, kết quả/ngày hoàn tất/giờ dừng; nối lịch sử máy một lần. Có thiết bị ngoài danh mục. Không tự sinh chi hoặc thanh toán.
+- Lịch sử, thông báo nội bộ, rút/từ chối có lý do, quyền tại máy chủ, phiên bản và giao dịch chống trùng. Bộ phận/nơi sử dụng khai tay; chi tiết quyền và giới hạn: [Cấp vật tư / sửa chữa](docs/CAP-VAT-TU-SUA-CHUA-2026-09-28.md).
+- 11 ca API/core và browser luồng mới, lịch sử máy, đề nghị mua bộ phận đạt; build đạt. Browser mua bộ phận có một lần timeout, chẩn đoán và chạy lại bản gốc đạt. Triển khai và kiểm tra web thật ghi bổ sung sau xác minh.
