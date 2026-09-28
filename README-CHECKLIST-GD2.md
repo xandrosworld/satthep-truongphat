@@ -540,3 +540,12 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Bỏ lối tạo mã theo quy ước ở danh mục hình dạng; quy ước vẫn dùng khi khai chi tiết báo giá.
 - Kiểm tra 3 luồng browser (mã mới, lựa chọn mác/đặc tính, quy tắc mã/form vật tư) đạt; build đạt. Đã deploy e7389d2, đối chiếu 45 runtime hashes và kiểm tra form thêm/sửa trên web thật chỉ đọc. Phiên kiểm tra đã thu hồi.
 
+### 2026-09-28 — Định mức kỹ thuật / tài chính (0377e68)
+- Thêm mục Định mức dưới Sản xuất, icon PNG mới được tạo riêng và nhúng vào bản build. Gồm giá ca máy, vật tư, vật tư phụ, định mức khác, tài chính và đối chiếu thực tế.
+- Định mức có lượng/đơn vị, sản phẩm áp dụng, khổ vật tư, căn cứ nhà sản xuất hoặc thực tế sản xuất, tài liệu dẫn chiếu, phiên bản và lịch sử; cho ngừng dùng, không xóa lịch sử. Giá ca máy dùng dữ liệu máy hiện có, bổ sung căn cứ và lịch sử; thông tin giá chỉ trả về theo quyền.
+- Mỗi đề nghị vật tư/mua mới, gồm đường mua cũ và mua gộp nhiều lệnh, lưu đối chiếu máy chủ tại thời điểm gửi: nhu cầu hồ sơ/phương án phôi, đã giữ/cấp, đang đặt, lượng đề nghị và tham chiếu phù hợp. Mở xem trước khi gửi và xem lại khi xử lý đề nghị. Hồ sơ cũ không tự được bổ sung căn cứ hồi tố.
+- Đối chiếu theo lệnh lấy cấp, chi tiết, tận dụng, phế từ đối soát xưởng. Tham chiếu tự ghép khi cùng mã, tên sản phẩm, đơn vị và khổ; không so số tấm khác khổ như cùng tiêu chuẩn. Tham chiếu kg toàn vật tư đối chiếu tiêu hao gồm phế khi cân bằng; lệnh dở dang chưa phải tiêu hao cuối lệnh. Mã chỉ có trong báo giá gốc được ghi nhãn riêng.
+- Các định mức khác/tài chính hiện là khung khai và lịch sử tham chiếu; chưa tự suy ra lượng điện, nhân công hay mọi chi phí ngoài nguồn sản xuất hiện có. Cần nhập căn cứ định mức thực tế của doanh nghiệp; không sinh số chuẩn giả hoặc tự áp vào báo giá đã chốt.
+- Kiểm tra: 26 ca API/core liên quan đạt; 3 luồng trình duyệt định mức/lịch sử/mobile, đề nghị vật tư → kỹ thuật → giá/NCC, máy/giá ca/sửa chữa đạt. Build đạt.
+- Đã triển khai 0377e68, sao lưu nguồn/SQLite; HTTPS health và 50 hash runtime khớp. Trình duyệt web thật kiểm tra menu/icon, form định mức, căn cứ giá ca, đối chiếu LSX-01 và 390 px; chặn ghi nghiệp vụ thử. LSX-01 chưa có định mức tham chiếu và số liệu đối soát, hiển thị đúng trạng thái thiếu dữ liệu. Ảnh: artifacts/reference-norms-live-desktop.png, artifacts/reference-norms-live-comparison.png, artifacts/reference-norms-live-mobile.png.
+
