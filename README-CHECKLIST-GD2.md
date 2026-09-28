@@ -742,3 +742,4 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Cố định cột công đoạn 156 px, cột tên 240 px (160 px trên điện thoại); bỏ giãn cột theo toàn chiều ngang. Ô đã chọn có nền xanh, viền và chữ Đã chọn; nội dung/điều khiển bị khóa vẫn đọc rõ, giữ khóa sửa.
 - Tăng chiều cao vùng bảng, thêm Mở rộng bảng / Thu gọn màn hình và phím Escape; chế độ xem không làm thay đổi báo giá hoặc trạng thái bàn giao. Nhãn đã xác nhận của các bộ phận dùng màu xanh đậm, vẫn có chữ/ký hiệu.
 - Build và browser kiểm tra độ rộng cột, tương phản trạng thái khóa, mở rộng/thu gọn/Escape, không đánh dấu dữ liệu thay đổi và 390 px đạt; hồi quy lưu/bàn giao kỹ thuật thiếu giá đạt.
+- Đã triển khai `c31b260` sau sao lưu nguồn/SQLite; HTTPS health và 82 hash runtime đạt. Web thật BG-20260925-005 kiểm tra độ rộng cột, mở rộng/thu gọn/Escape và 390 px; không ghi nghiệp vụ, phiên tạm đã thu hồi. Ảnh: `artifacts/operation-review-live.png`, `artifacts/operation-review-live-mobile.png`.
