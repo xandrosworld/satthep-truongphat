@@ -735,3 +735,4 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Theo phản hồi mới, đổi thứ tự ngày tạo sang mới → cũ cho danh sách báo giá, gồm tài khoản kỹ thuật và tài khoản chỉ xem bản duyệt. Thay quy tắc cũ → mới ghi trước đó; STT theo danh sách đang lọc, nối tiếp qua trang.
 - Ngày tạo vẫn lấy phiên bản đầu tiên trên máy chủ; sửa/lưu/duyệt báo giá cũ không đổi vị trí theo ngày cập nhật. Khi trùng thời điểm, dùng ID giảm dần để thứ tự ổn định.
 - Kiểm thử API tạo hai báo giá, kiểm tra thứ tự mới nhất và sửa bản cũ giữ vị trí đạt; hai browser danh sách desktop/mobile và kỹ thuật đạt. Build đạt.
+- Đã triển khai `03b7ec6` sau sao lưu nguồn/SQLite; HTTPS health và 82 hash runtime đạt. Web thật kiểm tra 25 báo giá theo ngày tạo giảm dần, BG-20260928-001 ở đầu; desktop/390 px. Không ghi nghiệp vụ; phiên tạm đã thu hồi. Ảnh: `artifacts/quote-newest-live.png`, `artifacts/quote-newest-live-mobile.png`.
