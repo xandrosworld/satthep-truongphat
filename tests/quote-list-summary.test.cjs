@@ -5,9 +5,9 @@ test('quote list derives approval progress and safe update summaries without inf
  async function call(route,method='GET',body){const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-CSRF-Token':session.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();A.ok(r.ok,JSON.stringify(data));return {data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};}
  session=await call('setup','POST',{username:'admin',name:'Admin',password:'Quote-list-summary-42!'});
  const created=(await call('quotes','POST',{document:P.demoSeed()})).data,id=created.id;
- let row=(await call('quotes')).data.find(x=>x.id===id);A.equal(row.updateSummary,'Tạo báo giá');
+ let row=(await call('quotes')).data.find(x=>x.id===id);A.equal(row.updateSummary,'Tạo báo giá');const createdAt=row.created;A.ok(createdAt);const secondDocument=P.demoSeed();secondDocument.quote.id+='-SECOND';await call('quotes','POST',{document:secondDocument});const initialOrder=(await call('quotes')).data.map(x=>x.id);
  const q=(await call('quotes/'+id)).data;q.document.quote.pricing.delivery+=765432;
- await call('quotes/'+id,'PUT',{document:q.document,expectedVersion:q.version});row=(await call('quotes')).data.find(x=>x.id===id);A.match(row.updateSummary,/Vận chuyển/);A.ok(!row.updateSummary.includes('765432'));
+ await call('quotes/'+id,'PUT',{document:q.document,expectedVersion:q.version});row=(await call('quotes')).data.find(x=>x.id===id);A.equal(row.created,createdAt);A.deepEqual((await call('quotes')).data.map(x=>x.id),initialOrder);A.match(row.updateSummary,/Vận chuyển/);A.ok(!row.updateSummary.includes('765432'));
  await call('quotes/'+id+'/submit','POST',{expectedVersion:2});await call('quotes/'+id+'/approve','POST',{expectedVersion:3});
  row=(await call('quotes')).data.find(x=>x.id===id);A.equal(row.progress.work.status,'completed');A.equal(row.commercialStatus,'draft');A.equal(row.updateSummary,'Duyệt báo giá');
  await call('quotes/'+id+'/reopen','POST',{expectedVersion:4,reason:'Customer requested change'});

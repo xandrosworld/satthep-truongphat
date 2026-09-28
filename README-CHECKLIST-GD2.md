@@ -578,3 +578,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Chưa khai định mức hoặc thiếu lịch làm việc thì hiển thị thiếu căn cứ. Đổi người sau bắt đầu yêu cầu đối chiếu, không quy toàn bộ thời gian cho người mới. Giữ số giờ/lịch sử khai trước đây riêng; chưa chuyển hồi tố báo cáo/lương sang cách tính mới.
 - Kiểm tra: 20 ca API/core và 3 browser (bảng công đoạn, chấm công/lương, sản xuất đến thành phẩm) đạt; build đạt. Kiểm tra ca đêm, tăng ca, giờ nghỉ, chờ trùng, thiếu ngày công và kết thúc tại bàn giao.
 - Đã triển khai `1b6e609` sau sao lưu nguồn/SQLite; HTTPS health và 59 hash runtime đạt. Trình duyệt web thật LSX-01 xác minh bỏ ô giờ, định mức chưa khai, bắt đầu và khung 390 px; không ghi nghiệp vụ thử. Phiên tạm đã thu hồi. Ảnh: `artifacts/production-working-time-live.png`, `artifacts/production-working-time-live-mobile.png`.
+
+
+### 2026-09-28 — Thứ tự báo giá, STT và ngày tạo theo phản hồi Thảo
+- Danh sách báo giá xếp ngày tạo cũ đến mới, dùng thời điểm phiên bản đầu tiên trên máy chủ và mã định danh để giữ thứ tự khi trùng thời điểm. Cập nhật, trình hoặc duyệt không đưa dòng lên đầu; báo giá mới thêm cuối danh sách.
+- Thêm STT nối tiếp qua trang và cột Ngày tạo riêng với Cập nhật. STT theo danh sách đang lọc, không phải mã chứng từ cố định. Không dùng ngày báo giá khai tay làm ngày tạo.
+- Kiểm thử API tạo hai báo giá rồi sửa bản cũ: ngày tạo/thứ tự giữ nguyên; 2 browser danh sách desktop/mobile và tài khoản kỹ thuật đạt. Build đạt.
