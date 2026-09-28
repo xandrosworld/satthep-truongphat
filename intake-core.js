@@ -22,12 +22,13 @@ function materialName(m){
  if(m.shape==='piece')return [m.brand,m.specification].filter(Boolean).join(' / ');
  const props=m.props||{},fmt=v=>Number(v).toLocaleString('vi-VN',{maximumFractionDigits:6}),value=k=>Number(props[k])>0?fmt(props[k]):'',grade=m.substance==='Inox'?String(m.grade||'').replace(/^SUS\s*/i,''):m.grade;
  const base=[m.substance,grade].filter(Boolean).join(' '),shape={sheet:'tấm',box:'hộp',pipe:'ống',round:'tròn đặc',solid:'vuông đặc',angle:'góc L / V',u:'U',c:'C',h:'H',i:'I',profile:'hình'}[m.shape]||C.shapes[m.shape]?.name||'';
+ const characteristic=String(m.characteristic||'').trim().toLocaleLowerCase('vi-VN'),prefix=[base,m.shapeDefinition?.name||shape,characteristic].filter(Boolean).join(' ');
  let name,used=[];
- if(m.shapeDefinition){name=[base,m.shapeDefinition.name].filter(Boolean).join(' ');}
- else if(m.shape==='sheet'){name=base+' tấm'+(value('T')?' dày '+value('T')+' mm':'');used=['T'];}
- else {used=(C.shapes[m.shape]?.fixed||[]);const dims=used.filter(k=>value(k)).map(k=>(k==='D'?'Ø':'')+value(k));name=[base,shape,dims.length?dims.join(' × ')+' mm':''].filter(Boolean).join(' ');}
+ if(m.shapeDefinition){name=prefix;}
+ else if(m.shape==='sheet'){name=prefix+(value('T')?' dày '+value('T')+' mm':'');used=['T'];}
+ else {used=(C.shapes[m.shape]?.fixed||[]);const dims=used.filter(k=>value(k)).map(k=>(k==='D'?'Ø':'')+value(k));name=[prefix,dims.length?dims.join(' × ')+' mm':''].filter(Boolean).join(' ');}
  const extra=Object.entries(props).filter(([k,v])=>!used.includes(k)&&Number(v)>0).map(([k,v])=>k+' '+fmt(v)+' '+(m.shapeDefinition?.fields?.find(f=>f.key===k)?.unit||'mm'));
- return [name.trim(),...extra,m.characteristic&&m.characteristic!=='Cán nóng'?m.characteristic.toLocaleLowerCase('vi-VN'):'',m.brand,m.specification].filter(Boolean).join(', ');
+ return [name.trim(),...extra,m.brand,m.specification].filter(Boolean).join(', ');
 }
 function validateMaterial(db,m){if(m.shape==='piece'&&!m.substance){if(m.grade||m.characteristic)throw Error('Chọn vật liệu trước mác / đặc tính');return;}if(!CV.entries(db,'substances').some(x=>x.name===m.substance))throw Error('Chọn vật liệu trong Quy ước');for(const [key,kind]of [['grade','grades'],['characteristic','characteristics']])if(m[key]&&!materialChoices(db,kind,m.substance).some(x=>x.name===m[key]))throw Error((key==='grade'?'Mác':'Đặc tính')+' không thuộc vật liệu đã chọn');}
 function priceRows(db){const rows=new Map();function put(spec,target,owner){if(!spec)return;const key=B.variantKey(spec);if(!rows.has(key))rows.set(key,{key,id:spec.id,name:spec.name,brand:spec.brand||'',specification:spec.specification||'',unit:spec.unit,targets:[],owners:[],reference:db.materials.find(m=>B.variantKey(m)===key)?.price});const row=rows.get(key);row.targets.push(target);row.owners.push(owner);}
