@@ -175,6 +175,6 @@ function operationProductionCell(n){
 document.addEventListener('change',e=>{const el=e.target;if(!el.matches('[data-production-level]'))return;try{
  inWritable();if(Team.loaded&&!Team.permissions?.sections?.includes('operations'))throw Error('Cần quyền Công đoạn & định mức');
  const n=db.quote.products.find(x=>x.id===el.dataset.productionLevel),rows=Team.loaded?OperationMaster.productionLevels:policyTypes('production'),row=rows?.find(x=>x.name===el.value);if(!n||!row)throw Error('Cấp độ không còn trong danh mục');
- mutation(()=>{n.productionLevelChoice=row.name;if((!Team.loaded||Team.permissions.costs)&&!n.__accessRef&&!db.quote.pricing.__accessRef){n.productionSpecialPercent=Number(((row.multiplier-1)*100).toFixed(6));db.quote.pricing.policySelections??={};db.quote.pricing.policySelections['product:'+n.id]=C.copy(row);}});
+ mutation(()=>{n.productionLevelChoice=row.name;if(!Team.loaded){n.productionSpecialPercent=Number(((row.multiplier-1)*100).toFixed(6));db.quote.pricing.policySelections??={};db.quote.pricing.policySelections['product:'+n.id]=C.copy(row);}});
  toast('Đã chọn cấp độ sản xuất. Lưu báo giá lên máy chủ để giữ thay đổi.');
  }catch(err){toast(err.message);render();}});
