@@ -14,7 +14,7 @@ const legacyCalculate=C.calculate, legacySeed=C.seed;
 const METHODS=[['detail','Theo tính toán'],['tmc','Theo thang máng cáp'],['kg','Theo kg phôi'],['competitor','Theo đối thủ']];
 const PARTS=['stock','ancillary','allowance','finishing','factory','outside','tmcCommon','incoming','outgoing','install','delivery'];
 const copy=C.copy, finite=v=>v!==null&&v!==''&&v!==undefined&&Number.isFinite(Number(v));
-function amount(v,label,errors,allowNegative=false){if(!finite(v)||(!allowNegative&&Number(v)<0)){errors.push(label+': cần nhập số '+(allowNegative?'hợp lệ':'không âm'));return 0;}return Number(v);}
+function amount(v,label,errors,allowNegative=false){if(v==null||typeof v==='string'&&!v.trim()){errors.push(label+': chưa nhập giá trị');return 0;}if(!finite(v)){errors.push(label+': cần nhập số hợp lệ');return 0;}if(!allowNegative&&Number(v)<0){errors.push(label+': giá trị không được âm');return 0;}return Number(v);}
 function defaults(){return {version:2,selected:'detail',comparisonMethods:['detail'],overhead:2,management:3,special:0,profit:10,processing:3,order:5,reserve:0,customer:0,salesFactors:[],productionFactors:[],incoming:0,outgoing:0,delivery:0,install:0,overrides:{},tmcLoss:1.5,tmcTables:[
   {id:'tray',name:'Máng cáp',unit:'m',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]},
   {id:'ladder',name:'Thang cáp',unit:'m',tiers:[{max:100,price:2000},{max:500,price:5000},{max:1000,price:7000},{max:null,price:10000}]},
