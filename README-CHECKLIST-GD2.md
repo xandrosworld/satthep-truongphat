@@ -534,3 +534,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Tab kỹ thuật chỉ hiện lỗi kỹ thuật. Bàn giao kỹ thuật khi đầu vào còn chờ xác nhận có hướng dẫn về mục đầu vào; không bỏ kiểm soát xác nhận. BG-20260923-004 đã có xác nhận đầu vào hợp lệ của khách tại thời điểm đối chiếu.
 - Kiểm tra: 26 tests liên quan đạt; browser chọn độ phức tạp và lưu trước bàn giao đạt; build đạt. Đã deploy bd0f4ee, đối chiếu 43 runtime hashes; kiểm tra web thật với quyền Nguyễn Khắc Phú, BG-20260925-006 thấy danh sách mức độ và không còn cảnh báo giá trong tab kỹ thuật. Không ghi sửa báo giá khách khi kiểm tra production; phiên kiểm tra đã thu hồi.
 
+
+### 2026-09-28 — Bỏ quy ước hình dạng khỏi mã vật tư (e7389d2)
+- Form thêm/sửa mã vật tư không còn chọn Quy ước hình dạng; mã mới và tạo tương tự không gắn quy ước. Giữ loại phôi/cách đo, vật liệu và thông số cố định. Dữ liệu quy ước cũ được giữ khi sửa mã cũ.
+- Bỏ lối tạo mã theo quy ước ở danh mục hình dạng; quy ước vẫn dùng khi khai chi tiết báo giá.
+- Kiểm tra 3 luồng browser (mã mới, lựa chọn mác/đặc tính, quy tắc mã/form vật tư) đạt; build đạt. Đã deploy e7389d2, đối chiếu 45 runtime hashes và kiểm tra form thêm/sửa trên web thật chỉ đọc. Phiên kiểm tra đã thu hồi.
+
