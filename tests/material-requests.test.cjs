@@ -22,6 +22,10 @@ test('workshop material request gets automatic number, technical and pricing gat
  A.equal((await call('ops/transition','POST',{requestId:randomUUID(),id:p.id,expectedVersion:p.version,state:'approved'})).status,409);
  let r=await transition('technical',{note:'Correct specification'},tech);A.equal(r.status,200,JSON.stringify(r.data));p=r.data;A.equal(p.state,'pricing-review');
  A.equal((await transition('pricing',{},tech)).status,403);A.equal((await transition('pricing')).status,400);
+ const amendment={allocations:body.allocations,jobVersions:body.jobVersions,note:'Purchasing reviewed quantities'};
+ A.equal((await transition('amend',{...amendment,allocations:body.allocations.map(a=>({...a,quantity:a.quantity+1000}))})).status,409);
+ r=await transition('amend',amendment);A.equal(r.status,200,JSON.stringify(r.data));p=r.data;A.equal(p.state,'technical-review');A.equal(p.adjustments.length,1);A.ok(p.originalNormComparison);A.ok(p.normComparison.length);
+ r=await transition('technical',{note:'Rechecked after purchasing adjustment'},tech);A.equal(r.status,200);p=r.data;
  const supplier=await call('ops/master','POST',{requestId:randomUUID(),kind:'supplier',expectedVersion:0,document:{code:'SUP-MR',name:'Supplier',active:true,prices:[]}});A.equal(supplier.status,200,JSON.stringify(supplier.data));const pricing={supplierId:supplier.data.id,prices:p.lines.map(l=>({lineId:l.id,unitCost:12345}))};
  A.equal((await transition('pricing',{...pricing,prices:pricing.prices.slice(1)})).status,400);
  A.equal((await transition('pricing',{...pricing,prices:pricing.prices.map(l=>({...l,unitCost:0}))})).status,400);
