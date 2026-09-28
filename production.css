@@ -193,7 +193,7 @@
 #production-console .review-inline-fields label{min-width:0;font-size:12px}
 #production-console .review-inline-fields label:has(select){grid-column:1/-1}
 #production-console [data-inline-status]{color:#245885}
-#production-main.production-material-focus>:not(.production-tabs):not(#production-materials){display:none!important}
+#production-main.production-material-focus:has(>.production-tabs)>:not(.production-tabs):not(#production-materials){display:none!important}
 #production-materials [data-production-materials-stock]>h3{margin-top:12px}
 #dialog [data-stock-layout-preview] table{width:100%}
 #dialog [data-stock-layout-preview] th,#dialog [data-stock-layout-preview] td{padding:7px;text-align:left}
