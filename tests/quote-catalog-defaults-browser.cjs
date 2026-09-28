@@ -22,6 +22,12 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
    return q.id;
   });
   const original=JSON.parse(app.sql.prepare('SELECT document FROM quotes WHERE id=?').get(id).document);
+  // An already open technical tab retains a server-issued masked pricing
+  // reference while the current quote has newer coefficients after reopening.
+  const historical=structuredClone(original);historical.quote.pricing.management=77;
+  const technicalUser=app.sql.prepare("SELECT * FROM users WHERE username='tech'").get();
+  const oldPricing=require('../server/data-access.cjs').createDataAccess({sql:app.sql,fail:(status,message)=>{throw Error(message);}}).protect(historical,technicalUser).quote.pricing;
+  await p.evaluate(ref=>{db.quote.pricing.__accessRef=ref;},oldPricing.__accessRef);
   expect(await p.evaluate(()=>Team.permissions.technical)).toBeFalsy();
   expect(await p.evaluate(()=>db.pricingDefaults.expenseRates[0].rate)).not.toBe(12345);
   expect(await p.evaluate(()=>teamDocument().pricingDefaults.expenseRates[0].rate)).toBe(12345);

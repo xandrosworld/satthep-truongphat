@@ -6,6 +6,7 @@ const blank=x=>Array.isArray(x)?[]:x&&typeof x==='object'?Object.fromEntries(Obj
 // Restoring a reference never grants write access: normal section/lock guards still run.
 function createDataAccess({sql,fail}){
  sql.exec('CREATE TABLE IF NOT EXISTS access_refs(token TEXT PRIMARY KEY,user_id TEXT NOT NULL,digest TEXT NOT NULL,value TEXT NOT NULL,UNIQUE(user_id,digest))');
+ const restoredFields=new WeakMap();
  const locked=()=>!!sql.prepare("SELECT locked FROM formula_locks WHERE key='calculationFactors:all'").get()?.locked;
  function explicit(user){const x=typeof user.section_access==='string'?JSON.parse(user.section_access):user.section_access;return x&&!Array.isArray(x);}
  function hideFactors(user){return user.role!=='admin'&&(locked()||explicit(user)&&['use','none'].includes(SA.modes(user).factors));}
@@ -50,8 +51,20 @@ function createDataAccess({sql,fail}){
  // Quote history is server-owned: discard stale client appends and restore the
  // protected value. saveQuote then records actual changes from the stored revision.
  // All other protected fields still reject client modifications.
- function hydrate(value,user){const out=copy(value);function walk(o,parent=''){if(!o||typeof o!=='object')return;if(Array.isArray(o)){for(const x of o)walk(x,parent);return;}if(parent==='pricing')delete o.classificationLabel;if(['rates','ratesSnapshot'].includes(parent)&&hideFactors(user)&&!require('./access.cjs').permissions(user).technical)delete o.complexityLevels;if(o.__accessRef){const row=sql.prepare('SELECT value FROM access_refs WHERE token=? AND user_id=?').get(o.__accessRef,user.id);if(!row)fail(403,'Dữ liệu bảo vệ không thuộc tài khoản. Tải lại dữ liệu.');const {saved,mask}=JSON.parse(row.value);if(['rates','ratesSnapshot'].includes(parent)&&Object.hasOwn(saved,'factors'))delete o.complexityLevels;for(const k of Object.keys(saved)){const changed=o[k]!==undefined&&!SA.equal(o[k],mask[k]);if(changed&&parent==='pricing'&&['overhead','management','special','profit','processing','order','reserve','customer'].includes(k)&&require('./access.cjs').permissions(user).factors&&!(k==='customer'&&explicit(user)&&SA.modes(user).customer==='none'))continue;if(!(parent==='quote'&&k==='changeHistory')&&o[k]!==undefined&&!SA.equal(o[k],mask[k]))fail(403,'Không được sửa dữ liệu đang ẩn: '+k);o[k]=saved[k];}delete o.__accessRef;}for(const [k,v] of Object.entries(o))walk(v,k);}walk(out);return out;}
+ function hydrate(value,user){const out=copy(value);function walk(o,parent=''){if(!o||typeof o!=='object')return;if(Array.isArray(o)){for(const x of o)walk(x,parent);return;}if(parent==='pricing')delete o.classificationLabel;if(['rates','ratesSnapshot'].includes(parent)&&hideFactors(user)&&!require('./access.cjs').permissions(user).technical)delete o.complexityLevels;if(o.__accessRef){const row=sql.prepare('SELECT value FROM access_refs WHERE token=? AND user_id=?').get(o.__accessRef,user.id);if(!row)fail(403,'Dữ liệu bảo vệ không thuộc tài khoản. Tải lại dữ liệu.');const {saved,mask}=JSON.parse(row.value);if(['rates','ratesSnapshot'].includes(parent)&&Object.hasOwn(saved,'factors'))delete o.complexityLevels;for(const k of Object.keys(saved)){const changed=o[k]!==undefined&&!SA.equal(o[k],mask[k]);if(changed&&parent==='pricing'&&['overhead','management','special','profit','processing','order','reserve','customer'].includes(k)&&require('./access.cjs').permissions(user).factors&&!(k==='customer'&&explicit(user)&&SA.modes(user).customer==='none'))continue;if(!(parent==='quote'&&k==='changeHistory')&&o[k]!==undefined&&!SA.equal(o[k],mask[k]))fail(403,'Không được sửa dữ liệu đang ẩn: '+k);o[k]=saved[k];if(!restoredFields.has(o))restoredFields.set(o,new Set());restoredFields.get(o).add(k);}delete o.__accessRef;}for(const [k,v] of Object.entries(o))walk(v,k);}walk(out);return out;}
  function guardRoute(route,method,user){if(user.role==='admin'||!explicit(user))return;if(require('../action-access.js').explicit(user)&&/^\/api\/(production|orders)(?:\/|$)/.test(route))return;const m=SA.modes(user);const scopes=[[/^\/api\/(orders|production)(?:\/|$)/,'commercial'],[/^\/api\/quotes\/[^/]+\/(commercial|revisions|revision)/,'commercial'],[/^\/api\/intake\//,'customer'],[/^\/api\/operation-catalog$/,'operations'],[/^\/api\/commercial/,'commercial']];for(const [re,k]of scopes)if(re.test(route)&&m[k]==='none')fail(403,'Không được xem phần '+SA.labels[k]);}
- return {protect,hydrate,hideFactors,guardRoute};
+ // Reopened tabs can hold references issued before pricing changed. Only fields
+ // actually restored from a validated opaque reference may use the current value.
+ // Explicit client values and accounts allowed to edit factors keep normal guards.
+ function retainCurrentHiddenCoefficients(document,current,user){
+  if(require('./access.cjs').permissions(user).factors)return;
+  const pricing=document?.quote?.pricing,stored=current?.quote?.pricing,restored=pricing&&restoredFields.get(pricing);
+  if(!restored||!stored)return;
+  for(const key of ['overhead','management','special','profit','processing','order','reserve','customer']){
+   if(!restored.has(key))continue;
+   if(Object.hasOwn(stored,key))pricing[key]=copy(stored[key]);else delete pricing[key];
+  }
+ }
+ return {protect,hydrate,hideFactors,guardRoute,retainCurrentHiddenCoefficients};
 }
 module.exports={createDataAccess};

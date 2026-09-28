@@ -149,3 +149,24 @@ test('legacy masked quote coefficients save with current authority while unchang
  const forbidden=structuredClone(doc);forbidden.quote.pricing.tmcLoss=97;A.equal((await call('quotes/'+made.data.id,'PUT',{document:forbidden,expectedVersion:2},u.session)).status,403);
  sql.prepare('UPDATE users SET can_factors=0 WHERE id=?').run(u.id);A.equal((await call('quotes/'+made.data.id,'PUT',{document:doc,expectedVersion:2},u.session)).status,403);
 });
+
+test('old masked coefficient references preserve current quote factors during technical save',async t=>{
+ const {call,admin,create}=await harness(t),u=await create('stale-hidden',{canEditFactors:false,sections:require('../section-access.js').keys});
+ const source=P.demoSeed();source.quote.pricing.management=7;
+ const made=await call('quotes','POST',{document:source},admin),id=made.data.id;
+ await call('formulas/locks','POST',{key:'calculationFactors:all',locked:true,expectedVersion:0,reason:'Protect coefficients'},admin);
+ const old=(await call('quotes/'+id,'GET',undefined,u.session)).data.document;
+ const updated=(await call('quotes/'+id,'GET',undefined,admin)).data.document;updated.quote.pricing.management=3;
+ A.equal((await call('quotes/'+id,'PUT',{document:updated,expectedVersion:1},admin)).status,200);
+ old.quote.products[0].ops[0].notes='Technical edit from an existing tab';
+ A.equal((await call('quotes/'+id,'PUT',{document:old,expectedVersion:1},u.session)).status,409);
+ const saved=await call('quotes/'+id,'PUT',{document:old,expectedVersion:2},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const actual=(await call('quotes/'+id,'GET',undefined,admin)).data.document;
+ A.equal(actual.quote.pricing.management,3);A.equal(actual.quote.products[0].ops[0].notes,'Technical edit from an existing tab');
+ const forged=structuredClone(old);forged.quote.pricing.management=99;
+ A.equal((await call('quotes/'+id,'PUT',{document:forged,expectedVersion:3},u.session)).status,403);
+ delete forged.quote.pricing.__accessRef;
+ A.equal((await call('quotes/'+id,'PUT',{document:forged,expectedVersion:3},u.session)).status,403);
+ const stranger=await create('stranger-hidden',{canEditFactors:false,sections:require('../section-access.js').keys});
+ A.equal((await call('quotes/'+id,'PUT',{document:old,expectedVersion:3},stranger.session)).status,403);
+});
