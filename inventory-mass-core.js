@@ -14,5 +14,11 @@ function rate(m,length,width){
  if(!Number.isFinite(value)||value<=0)throw Error('Mã vật tư chưa đủ căn cứ tính khối lượng');return value;
 }
 function weight(m,length,width){if(!(length>0)||m.shape==='sheet'&&!(width>0))throw Error('Nhập đủ kích thước khổ phôi');return rate(m,length,width)*length/1000*(m.shape==='sheet'?width/1000:1);}
-const api={rate,weight};if(typeof module!=='undefined')module.exports=api;else root.TPInventoryMass=api;
+function sizes(configured=[]){
+ const active=configured.filter(s=>s.active!==false),result=[...active];
+ if(!active.some(s=>s.base==='sheet'))for(const [length,width]of [[2000,1000],[2440,1220],[2500,1250],[3000,1250],[3000,1500],[6000,1500]])result.push({id:'common-sheet-'+length+'-'+width,name:'Khổ tấm thông dụng',base:'sheet',length,width});
+ if(!active.some(s=>s.base==='bar'))for(const length of [6000,12000])result.push({id:'common-bar-'+length,name:'Chiều dài thanh thông dụng',base:'bar',length,width:0});
+ return result;
+}
+const api={rate,weight,sizes};if(typeof module!=='undefined')module.exports=api;else root.TPInventoryMass=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
