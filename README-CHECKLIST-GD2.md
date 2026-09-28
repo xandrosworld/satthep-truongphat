@@ -622,3 +622,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Tài khoản nv-003 được bổ sung catalogMaterials.create và mức cấu hình danh mục vật tư qua bộ quyền bổ sung gắn vị trí Quản đốc xưởng hiện chỉ anh Phú đảm nhiệm. Tài khoản quản lý theo cơ cấu nên không sửa trực tiếp quyền tài khoản; giữ nguyên bộ quyền kỹ thuật dùng chung.
 - Đối chiếu trước/sau: các tài khoản khác và quyền không liên quan giữ nguyên; không cấp sửa/xóa vật tư hoặc thêm quyền duyệt/giá. API lưu lịch sử phân quyền và thu hồi phiên cũ của tài khoản.
 - Xác minh bằng phiên tạm đúng tài khoản anh Phú trên web thật: mở được nút thêm mới và form vật tư; không lưu vật tư thử. Phiên tạm đã thu hồi. Ảnh: artifacts/phu-material-create-live.png. Đây là cập nhật cấu hình quyền, không thay mã chạy hoặc triển khai lại.
+
+
+### 2026-09-28 — Sửa lỗi categories khi lưu khai báo công đoạn
+- Tài khoản lập giá có hệ số bị ẩn vẫn được chọn nhãn độ phức tạp, nhưng giao diện cố tra bảng hệ số đã bị loại khỏi dữ liệu nên lỗi đọc categories. Chuyển lựa chọn về máy chủ để giải hệ số theo danh mục, áp dụng form công đoạn, đánh giá nhanh và gán nguyên công nhiều dòng.
+- Giữ kiểm tra nhãn/phạm vi nhóm và hệ số trên máy chủ; không mở quyền xem/sửa hệ số.
+- Browser tài khoản estimator bị khóa hệ số: đánh giá nhanh, khai báo công đoạn, lưu máy chủ và tải lại đạt; xác minh hệ số thực bằng tài khoản Admin. 6 ca core liên quan đạt; build đạt.
+- Đã triển khai abfb6de sau sao lưu nguồn/SQLite; HTTPS health và 68 hash runtime khớp. Không lưu thay đổi công đoạn thử lên hồ sơ khách; xác minh lưu/tải lại dùng dữ liệu kiểm thử riêng.
