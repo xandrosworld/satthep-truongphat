@@ -491,3 +491,14 @@ html[data-theme=dark] .pa-operations td:has([data-pa-op-toggle]:checked){backgro
 html[data-theme=dark] .pa-operations :is(button,input,select):disabled,html[data-theme=dark] .pa-operations :is(.pa-op-declared,.pa-op-check){color:#e2edf5;-webkit-text-fill-color:#e2edf5}
 html[data-theme=dark] .pa-operations button:disabled{background:#243443;border-color:#7b93a6}
 @media(max-width:600px){.pa-operations th:first-child,.pa-operations.pa-compact th:first-child{width:160px;min-width:160px;max-width:160px}.pa-operation-area.is-fullscreen{inset:0;padding:8px}}
+
+/* Keep cost labels and figures close enough to review on wide screens. */
+.source-analysis .table-scroll table{width:max-content;min-width:0;table-layout:fixed;font-size:14px;line-height:1.5}
+.source-analysis .source-label-col{width:300px}
+.source-analysis .source-rate-col{width:180px}
+.source-analysis .source-amount-col{width:200px}
+.source-analysis .source-action-col{width:160px}
+.source-analysis table th,.source-analysis table td{padding:9px 12px;color:var(--text,#17324d)}
+.source-analysis table tbody th{text-align:left;white-space:normal}
+.source-analysis .button.small{font-size:13px;min-height:32px}
+@media(max-width:600px){.source-analysis .source-label-col{width:220px}.source-analysis .source-rate-col{width:150px}.source-analysis .source-amount-col{width:170px}}

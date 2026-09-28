@@ -62,14 +62,19 @@ function technicalRecipes(id,index){const n=C.findNode(db.quote.products,id),rat
  const recipes=TPWork.recipes(rate);
  openDialog('Vật tư định mức · '+esc(operationDisplayName(rate)),`<p>Lượng vật tư = lượng thực hiện × định mức × số lớp × (1 + hao hụt / 100). Áp dụng cho mọi dòng dùng công đoạn này trong báo giá.</p>${recipes.map((r,i)=>`<section class="panel panel-body"><strong>${esc(r.spec?.id)} · ${esc(r.spec?.name)}</strong><div class="form-grid">${field('Định mức ('+r.spec?.unit+'/'+r.basis+')','norm-'+i,r.norm,'number','min="0" step="any" required')}${field('Số lớp','layers-'+i,r.layers??1,'number','min="0.001" step="any" required')}${field('Hao hụt (%)','loss-'+i,r.loss??0,'number','min="0" step="any" required')}</div></section>`).join('')}`,'Lưu định mức',f=>saveAndClose(()=>{const targets=rate.consumptions?.length?rate.consumptions:[rate.consumption];targets.forEach((r,i)=>{for(const key of ['norm','layers','loss'])r[key]=Number(f.get(key+'-'+i));});}));
 }
+function operationColumnPreferenceKey(){return Team.loaded&&teamCurrent()?.id?'tp-operation-columns:'+Team.user?.id+':'+teamCurrent().id:null;}
+function operationVisibleColumns(){const key=operationColumnPreferenceKey();if(key){try{const value=JSON.parse(localStorage.getItem(key));if(Array.isArray(value))return value;}catch{}}return db.quote.operationColumns;}
 function technicalSelectOperation(){
- inWritable();
+ if(!Team.loaded)inWritable();
  const existing=db.quote.ratesSnapshot,used=new Set(C.flatten(db.quote.products).flatMap(n=>(n.ops||[]).map(op=>op.id)));
  const master=operationMasterRates();if(!master)return toast('Đang tải danh mục công đoạn; mở lại sau vài giây');const rates=[...master.filter(r=>r.enabled!==false),...existing.filter(r=>used.has(r.id)&&!master.some(x=>x.id===r.id&&x.enabled!==false))].filter(r=>r.operationType!=='package');
- const selected=new Set(db.quote.operationColumns||existing.map(r=>r.id));
+ const selected=new Set(operationVisibleColumns()||existing.map(r=>r.id));
  openDialog('Chọn công đoạn cho báo giá',`<p>Tích nhiều công đoạn rồi áp dụng để cập nhật các cột. Công đoạn đã có dòng thực hiện được giữ lại; bỏ công việc tại dòng đó trước nếu không còn dùng.</p><div class="actions"><button type="button" class="button" data-operation-pick-all>Chọn tất cả</button><button type="button" class="button" data-operation-pick-none>Bỏ chọn chưa sử dụng</button></div>${rates.map(r=>`<label class="pa-checkbox"><input type="checkbox" name="operationIds" value="${esc(r.id)}" ${selected.has(r.id)||used.has(r.id)?'checked':''} ${used.has(r.id)?'disabled':''}> ${esc(operationDisplayName(r))}${used.has(r.id)?' · Đang sử dụng':''}</label>`).join('')}`,'Áp dụng lựa chọn',f=>{
-  inWritable();const ids=[...new Set([...f.getAll('operationIds'),...used])];
-  saveAndClose(()=>{for(const r of rates)if(ids.includes(r.id)&&!existing.some(x=>x.id===r.id))existing.push(C.copy(r));db.quote.operationColumns=ids;},'Đã cập nhật các cột công đoạn');
+  const ids=[...new Set([...f.getAll('operationIds'),...used])],added=rates.filter(r=>ids.includes(r.id)&&!existing.some(x=>x.id===r.id));
+  if(Team.loaded){
+   if(added.length){inWritable();if(!saveAndClose(()=>{for(const r of added)existing.push(C.copy(r));},''))return;}else closeDialog();
+   localStorage.setItem(operationColumnPreferenceKey(),JSON.stringify(ids));render();toast('Đã cập nhật cột hiển thị trên trình duyệt này');
+  }else{inWritable();saveAndClose(()=>{for(const r of added)existing.push(C.copy(r));db.quote.operationColumns=ids;},'Đã cập nhật các cột công đoạn');}
  });
  for(const [attr,checked]of [['data-operation-pick-all',true],['data-operation-pick-none',false]])$('#dialog ['+attr+']').onclick=()=>document.querySelectorAll('#dialog [name=operationIds]:not(:disabled)').forEach(x=>x.checked=checked);
 }
