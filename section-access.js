@@ -48,5 +48,7 @@ const ar=rateParts(a.ratesSnapshot),br=rateParts(b.ratesSnapshot);for(const r of
  }
  return [...bad];
 }
-const api={costSourceSection,modeLabels,parseModes,modes,labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
+const draftSections=['customer','materials','logistics','factors','commercial','manage'];
+function correctionSections(status,sections){return status==='draft'?[...new Set([...sections,...draftSections])]:sections;}
+const api={draftSections,correctionSections,costSourceSection,modeLabels,parseModes,modes,labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

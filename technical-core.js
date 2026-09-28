@@ -169,5 +169,6 @@ function mergeCatalog(original,input){
  result.library=merged.map(retain);
  return result;
 }
-const api={sameMaterial,reconcileDrafts,productionChoice,resolveProductionLevels,productionBaseline,complexityRate,resolveDocumentChoices,complexityLevels,choiceFor,resolveComplexity,project,merge,nodeKeys,opKeys,projectCatalog,mergeCatalog,catalogSections};if(typeof module!=='undefined')module.exports=api;else root.TPTechnical=api;
+function handoffQuote(d){const q=project(d).quote;for(const k of ['status','pricing','vat','workspaceKey','customer','project','customerInfo','request','date'])delete q[k];return q;}
+const api={handoffQuote,sameMaterial,reconcileDrafts,productionChoice,resolveProductionLevels,productionBaseline,complexityRate,resolveDocumentChoices,complexityLevels,choiceFor,resolveComplexity,project,merge,nodeKeys,opKeys,projectCatalog,mergeCatalog,catalogSections};if(typeof module!=='undefined')module.exports=api;else root.TPTechnical=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

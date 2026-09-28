@@ -10,8 +10,8 @@ test('submitted correction requires approver, limits edit scope, keeps quote ide
  f.set(f.admin);assert.ok((await call('notifications')).data.items.some(n=>n.stage==='correction'));
  r=await call(path+'/corrections','POST',{action:'approve',id:review.id,expectedVersion:version});assert.equal(r.status,200,JSON.stringify(r.data));version=r.data.version;
  assert.equal((await call(path)).data.status,'draft');assert.equal((await call(path+'/revision/2')).data.status,'submitted');
- const current=(await call(path)).data.document;current.quote.project='Unauthorized field';assert.equal((await call(path,'PUT',{expectedVersion:version,document:current})).status,403);
- current.quote.project=d.quote.project;current.quote.notes='Nội dung đã sửa';r=await call(path,'PUT',{expectedVersion:version,document:current});assert.equal(r.status,200,JSON.stringify(r.data));version=r.data.version;
+ const current=(await call(path)).data.document;current.quote.products[0].qty++;assert.equal((await call(path,'PUT',{expectedVersion:version,document:current})).status,403);
+ current.quote.products[0].qty--;current.quote.notes='Nội dung đã sửa';r=await call(path,'PUT',{expectedVersion:version,document:current});assert.equal(r.status,200,JSON.stringify(r.data));version=r.data.version;
  r=await call(path+'/submit','POST',{expectedVersion:version});assert.equal(r.status,200,JSON.stringify(r.data));assert.equal((await call(path+'/corrections')).data.items[0].status,'completed');
  assert.notEqual((await call(path+'/revision/2')).data.document.quote.notes,'Nội dung đã sửa');
 });
@@ -62,7 +62,7 @@ test('review current revision opens an older request without losing updates; con
  const out=await call(path+'/corrections','POST',{action:'approve',id:item.id,expectedVersion:version,reviewedVersion:version});assert.equal(out.status,200,JSON.stringify(out.data));
  const now=(await call(path)).data;assert.equal(now.status,'draft');for(const key of ['products','pricing','notes','project'])assert.deepEqual(now.document.quote[key],snapshot.document.quote[key]);assert.deepEqual((await call(path+'/revision/'+version)).data,snapshot);
  const opened=(await call(path+'/corrections')).data.items[0];assert.equal(opened.sourceVersion,2);assert.equal(opened.reviewedSourceVersion,version);assert.deepEqual(opened.sections,['commercial']);
- now.document.quote.project='Outside scope';assert.equal((await call(path,'PUT',{expectedVersion:now.version,document:now.document})).status,403);
+ now.document.quote.products[0].qty++;assert.equal((await call(path,'PUT',{expectedVersion:now.version,document:now.document})).status,403);
 });
 test('extend an open scope only after authorized approval and retain its original sections',async t=>{
  const f=await fixture(t),{call}=f,d=P.demoSeed();d.quote.remnantMode='all';const q=(await call('quotes','POST',{document:d})).data,path='quotes/'+q.id;

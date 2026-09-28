@@ -8,7 +8,7 @@ test('partial handoff locks selected subtree while siblings and pricing remain e
  sib.qty++;r=await call('quotes/'+q.id,'PUT',{expectedVersion:version,document:d});A.equal(r.status,200,JSON.stringify(r.data));version++;
  n.spec.price+=1;r=await call('quotes/'+q.id,'PUT',{expectedVersion:version,document:d});A.equal(r.status,200,JSON.stringify(r.data));version++;
  A.equal((await hand('materials','confirm',d.quote.products[0].id)).status,409,'a child handoff does not confirm its whole parent');
- A.equal((await hand('materials')).status,200);n.spec.price+=1;A.equal((await call('quotes/'+q.id,'PUT',{expectedVersion:version,document:d})).status,409);n.spec.price--;
+ A.equal((await hand('materials')).status,200);n.spec.price+=1;A.equal((await call('quotes/'+q.id,'PUT',{expectedVersion:version,document:d})).status,200);version++;
  A.equal((await hand('technical','reopen',n.id,'')).status,400);A.equal((await hand('technical','reopen',n.id,'Change dimensions')).status,200);A.equal((await call(path)).data.every(x=>x.unlocked),true);
  n.qty++;r=await call('quotes/'+q.id,'PUT',{expectedVersion:version,document:d});A.equal(r.status,200,JSON.stringify(r.data));version++;A.equal((await hand('materials')).status,409);A.equal((await hand('technical')).status,200);
  A.equal((await call(path,'POST',{stage:'technical',action:'confirm',nodeId:n.id,expectedVersion:1})).status,409);
