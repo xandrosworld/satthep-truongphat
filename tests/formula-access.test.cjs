@@ -170,3 +170,21 @@ test('old masked coefficient references preserve current quote factors during te
  const stranger=await create('stranger-hidden',{canEditFactors:false,sections:require('../section-access.js').keys});
  A.equal((await call('quotes/'+id,'PUT',{document:old,expectedVersion:3},stranger.session)).status,403);
 });
+
+test('masked catalogue rows without references cannot erase locked factors or block technical quote saves',async t=>{
+ const {call,admin,create}=await harness(t),u=await create('masked-catalogue',{canEditFactors:false,sections:require('../section-access.js').keys});
+ const made=await call('quotes','POST',{document:P.demoSeed()},admin),id=made.data.id;
+ await call('formulas/locks','POST',{key:'calculationFactors:all',locked:true,expectedVersion:0,reason:'Lock'},admin);
+ const original=(await call('quotes/'+id,'GET',undefined,admin)).data.document;
+ const doc=(await call('quotes/'+id,'GET',undefined,u.session)).data.document;
+ for(const rate of doc.rates)delete rate.__accessRef;
+ doc.quote.products[0].ops[0].notes='Keep this technical edit';
+ const saved=await call('quotes/'+id,'PUT',{document:doc,expectedVersion:1},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const actual=(await call('quotes/'+id,'GET',undefined,admin)).data.document;
+ A.deepEqual(actual.rates,original.rates);A.deepEqual(actual.quote.pricing,original.quote.pricing);A.deepEqual(actual.quote.ratesSnapshot,original.quote.ratesSnapshot);
+ A.equal(actual.quote.products[0].ops[0].notes,'Keep this technical edit');
+ for(const edit of [d=>d.rates[0].factors=[{id:'forged',param:'complexity',value:999}],d=>d.rates.pop(),d=>d.rates[0].inside=987654]){
+  const bad=structuredClone(doc);edit(bad);A.equal((await call('quotes/'+id,'PUT',{document:bad,expectedVersion:2},u.session)).status,403);
+ }
+ A.equal((await call('quotes/'+id,'PUT',{document:doc,expectedVersion:1},u.session)).status,409);
+});

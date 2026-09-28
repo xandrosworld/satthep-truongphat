@@ -65,6 +65,24 @@ function createDataAccess({sql,fail}){
    if(Object.hasOwn(stored,key))pricing[key]=copy(stored[key]);else delete pricing[key];
   }
  }
- return {protect,hydrate,hideFactors,guardRoute,retainCurrentHiddenCoefficients};
+ // A persisted catalogue draft from older clients can lose row references while
+ // retaining the exact masked catalogue. It is not an instruction to erase factors.
+ // Match the entire known projection; any changed field still goes through guards.
+ function retainMaskedCatalogRates(document,current,master,user){
+  if(!hideFactors(user)||!Array.isArray(document?.rates)||!Array.isArray(current?.rates))return;
+  const strip=value=>{if(Array.isArray(value))return value.map(strip);if(!value||typeof value!=='object')return value;return Object.fromEntries(Object.entries(value).filter(([k])=>!['__accessRef','complexityLevels'].includes(k)).map(([k,v])=>[k,strip(v)]));};
+  const incoming=strip(document.rates);
+  for(const rates of [current.rates,master?.rates]){
+   if(!Array.isArray(rates))continue;
+   const projected=protect({rates},user),rowMasked=copy(rates);
+   for(let i=0;i<rowMasked.length;i++){
+    const token=projected.rates[i].__accessRef;if(!token)continue;
+    const {mask}=JSON.parse(sql.prepare('SELECT value FROM access_refs WHERE token=? AND user_id=?').get(token,user.id).value);
+    Object.assign(rowMasked[i],mask);
+   }
+   if(SA.equal(incoming,strip(protect({rates},user,false).rates))||SA.equal(incoming,strip(rowMasked))){document.rates=copy(current.rates);return;}
+  }
+ }
+ return {protect,hydrate,hideFactors,guardRoute,retainCurrentHiddenCoefficients,retainMaskedCatalogRates};
 }
 module.exports={createDataAccess};

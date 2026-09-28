@@ -77,6 +77,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
     if(!id&&autoCode){document=C.copy(document);try{document.quote.id=require('../batch-one-core.js').nextQuoteCode(document.quote.date,all('SELECT code FROM quotes').map(x=>x.code));}catch(error){fail(400,error.message);}}
     const old=id?getQuote(id):null;if(old&&old.version!==expectedVersion)fail(409,'Bản trên máy chủ đã đổi. Tải lại hoặc lưu bản sao, không ghi đè.');
     const hydrated=formulaAccess.hydrate(document,user),complexityMaster=one('SELECT document FROM catalog WHERE id=1');
+    if(old)dataAccess.retainMaskedCatalogRates(hydrated,JSON.parse(old.document),complexityMaster?JSON.parse(complexityMaster.document):null,user);
     // Older open tabs serialize the published catalogue defaults alongside quote
     // edits. Recognize only that exact server-owned value and retain the quote's
     // snapshot; arbitrary client changes still pass through all section guards.
