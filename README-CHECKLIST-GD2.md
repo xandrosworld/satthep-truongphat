@@ -527,3 +527,10 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Khai báo đơn giá ca máy riêng; số giờ/ca và giá/ca quy đổi thành giá giờ dùng cho định mức. Phân quyền giá độc lập, sửa thông tin kỹ thuật giữ nguyên giá.
 - Kiểm tra: 23 tests API đạt; browser local lưu thông số/giá/lịch sử đạt; build đạt. Đã deploy a0b4db5, đối chiếu 40 runtime hashes và kiểm tra các form trên web thật ở chế độ chỉ đọc. Phiên kiểm tra đã thu hồi.
 
+
+### 2026-09-28 — Phản hồi kỹ thuật anh Phú (bd0f4ee)
+- Sửa lựa chọn mức độ phức tạp bị mất khi hệ số bị ẩn: trả nhãn/tham chiếu an toàn, giữ hệ số trên máy chủ; dữ liệu lựa chọn không làm thay đổi bảng giá khi lưu.
+- Sửa quyền dùng công thức gắn trong mã vật tư đã phát hành khi quy ước chung có phiên bản mới; vẫn chặn công thức tự sửa. Tái hiện trên các mã VT-00019/VT-00018 và các mã tấm khác.
+- Tab kỹ thuật chỉ hiện lỗi kỹ thuật. Bàn giao kỹ thuật khi đầu vào còn chờ xác nhận có hướng dẫn về mục đầu vào; không bỏ kiểm soát xác nhận. BG-20260923-004 đã có xác nhận đầu vào hợp lệ của khách tại thời điểm đối chiếu.
+- Kiểm tra: 26 tests liên quan đạt; browser chọn độ phức tạp và lưu trước bàn giao đạt; build đạt. Đã deploy bd0f4ee, đối chiếu 43 runtime hashes; kiểm tra web thật với quyền Nguyễn Khắc Phú, BG-20260925-006 thấy danh sách mức độ và không còn cảnh báo giá trong tab kỹ thuật. Không ghi sửa báo giá khách khi kiểm tra production; phiên kiểm tra đã thu hồi.
+
