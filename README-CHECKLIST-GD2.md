@@ -506,3 +506,12 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - 27 kiểm thử API/core đạt; trình duyệt kiểm tra cảnh báo, tách mã và chọn cùng mã trong form nhập kho đạt.
 - Triển khai 395925f, sao lưu nguồn/SQLite và đối chiếu 39 tệp runtime; healthcheck đạt. Đã xử lý dữ liệu LSX-01 qua giao diện thật: inox dùng VT-00002-SX-95613E5A; VT-00002 thép mạ kẽm giữ nguyên. Xác minh sau tải lại và form nhập kho cùng mã/tên, không đổi thông số/khối lượng/công đoạn, không tạo giao dịch nhập/xuất thử.
 - Rà cả 2 lệnh hiện có: không còn xung đột quy cách với danh mục. Phiên kiểm tra tạm đã thu hồi. Ảnh: artifacts/material-identity-live-production.png và artifacts/material-identity-live-receipt.png.
+
+# Cập nhật 28/09/2026 — xưởng đề nghị vật tư, kỹ thuật xác nhận rồi bộ phận giá chuyển mua
+
+- Form trong lệnh chuyển thành Đề nghị vật tư: số DNVT-ngày-số thứ tự sinh trên máy chủ khi gửi, không nhập tay; xưởng chỉ chọn vật tư/số lượng và ghi chú, không cần nhà cung cấp hoặc giá.
+- Lưu trạng thái chờ kỹ thuật, chờ giá/nhà cung cấp, rồi mới chờ duyệt mua. Kỹ thuật xác nhận quy cách; người có quyền giá bổ sung nhà cung cấp hoạt động và đơn giá dương cho đủ từng dòng. Không tự duyệt hoặc đặt hàng. Có lịch sử, thông báo theo quyền và trả lại/rút đề nghị kèm lý do.
+- Theo dõi ngay trong Vật tư SX và danh sách Mua hàng. Phân quyền xưởng gửi, kỹ thuật xác nhận, giá xử lý; người không có quyền giá không nhận đơn giá/bảng giá nhà cung cấp.
+- Phần đang đề nghị được tính vào nhu cầu đang xử lý để chống trùng. Kiểm phiên bản, quy cách/khổ mua đã đổi, số lượng nguyên, quá nhu cầu, nhu cầu giảm do giữ kho; gửi lại cùng mã thao tác không tạo thêm yêu cầu. Luồng mua/nhận/nhập kho hiện có tiếp tục sau bước chờ duyệt.
+- 27 kiểm thử API/core đạt; trình duyệt đi đủ luồng gửi đề nghị → kỹ thuật → nhà cung cấp/giá → chờ duyệt mua đạt. Sửa việc bộ lọc màn kỹ thuật báo giá vô tình bỏ cột giá của hộp xử lý vật tư; hộp này dùng quyền/dữ liệu riêng từ máy chủ.
+- Triển khai d7c88cc, sao lưu nguồn/SQLite, đối chiếu 40 tệp runtime, healthcheck đạt. Web thật LSX-01 mở bằng nút Đề nghị vật tư: không có trường mã/NCC, đúng số lượng 1 tấm, lịch sử đề nghị hiện trong lệnh. Không ghi đề nghị mua thử trên dữ liệu khách; phiên kiểm tra đã thu hồi. Ảnh: artifacts/material-requests-live.png.
