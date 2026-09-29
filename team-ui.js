@@ -42,7 +42,7 @@ async function teamLoad(id,revision){if(Team.loaded&&Team.dirty){if(!revision&&t
   teamSetCatalogBaseline(id,generation,record.document);
   const key='server-'+id+(revision?'-v'+revision:'');db={...db,...record.document,savedQuotes:[],history:[]};db.quote.workspaceKey=key;Team.link={id,version:record.version,status:record.status,workspaceKey:key,readOnly:!!revision};selected=returnView&&C.findNode(db.quote.products,returnView.selected)?returnView.selected:db.quote.products[0]?.id;page='quote';tab=returnView?.tab||(Team.permissions?.technical?'bom':'pricing');UX.undo=[];UX.redo=[];UX.checked.clear();closeDialog();render();$('#save-status').textContent='Máy chủ · phiên bản '+record.version;
 }
-function teamSetCatalogBaseline(id,generation,document){Team.quoteDefaultsBaseline={id,generation,protectedFields:teamProtectedFields(document.quote),pricing:C.copy(document.quote?.pricing||{}),defaults:C.copy(document.pricingDefaults||{}),rates:C.copy(document.rates||[]),catalog:C.copy(Object.fromEntries(Object.entries(document).filter(([k])=>k!=='quote')))};}
+function teamSetCatalogBaseline(id,generation,document){Team.quoteDefaultsBaseline={id,generation,protectedFields:teamProtectedFields(document),pricing:C.copy(document.quote?.pricing||{}),defaults:C.copy(document.pricingDefaults||{}),rates:C.copy(document.rates||[]),catalog:C.copy(Object.fromEntries(Object.entries(document).filter(([k])=>k!=='quote')))};}
 // A technical edit must not serialize read-only coefficient values left by an older tab.
 // Server field names identify masked data, not editable defaults. Omit their
 // placeholder values; the user-bound reference restores them on the server.
