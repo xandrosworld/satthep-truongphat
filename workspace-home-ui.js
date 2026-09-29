@@ -46,3 +46,12 @@ document.addEventListener('click',e=>{if(e.target.closest('.workspace-home [data
 
 // Refresh server-derived progress while the list is visible, without a manual status edit.
 setInterval(()=>{if(!document.hidden&&document.querySelector('[data-home-results]')&&!document.querySelector('#dialog[open]'))workspaceHomeFetch();},30000);
+
+function installQuoteListNavigation(){
+ let showHome=false;
+ const list=teamList;teamList=async(...args)=>{await list(...args);const table=document.querySelector('#dialog .quotes-list');if(!table)return;const tools=document.querySelector('#dialog .actions');if(tools&&!tools.querySelector('[data-quote-home]'))tools.insertAdjacentHTML('afterbegin','<button type="button" class="button" data-quote-home>Về trang Báo giá</button>');};
+ const draw=render;render=()=>{if(!showHome||page!=='quote'||!Team.user)return draw();document.querySelector('#content').innerHTML=workspaceHome();document.querySelector('#page-label').textContent='Báo giá';document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page==='quote'));if(Team.loaded)document.querySelector('.workspace-home .page-heading')?.insertAdjacentHTML('beforeend','<button type="button" class="button" data-quote-resume>Tiếp tục báo giá đang mở'+(Team.dirty?' · Có thay đổi chưa lưu':'')+'</button>');workspaceHomeMount();actionPaint();};
+ const load=teamLoad;teamLoad=async(...args)=>{const value=await load(...args);showHome=false;render();return value;};
+ const session=teamSession;teamSession=value=>{if(Team.user?.id!==value?.user?.id)showHome=false;return session(value);};
+ document.addEventListener('click',e=>{if(e.target.closest('[data-quote-home]')){closeDialog();showHome=true;page='quote';render();}if(e.target.closest('[data-quote-resume]')){showHome=false;page='quote';render();}},true);
+}

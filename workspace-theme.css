@@ -516,3 +516,9 @@ html[data-theme=dark] .pa-operations button:disabled{background:#243443;border-c
 
 #dialog .permission-editor .action-matrix thead th:nth-child(2){width:68%}
 @media(max-width:600px){#dialog .permission-editor .action-matrix thead th:nth-child(2){width:65%}}
+
+#dialog:has(.quotes-list){width:calc(100vw - 32px)!important;max-width:none!important;height:calc(100dvh - 32px);max-height:calc(100dvh - 32px);box-sizing:border-box}
+#dialog:has(.quotes-list) .quotes-list{min-width:1100px}
+@media(max-width:600px){#dialog:has(.quotes-list){width:100vw!important;height:100dvh;max-height:100dvh;margin:0;inset:0;border-radius:0}}
+
+#dialog:has(.quotes-list) .dialog-body{max-height:none;flex:1;min-height:0}
