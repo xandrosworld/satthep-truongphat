@@ -20,4 +20,10 @@ Khi nâng cấp, khóa đơn giá kế thừa trạng thái, người và thời
 - Lượt quét toàn bộ Node có 4 ca lỗi nghiệp vụ tái hiện nguyên trạng ở commit nền `661cc77`: 1 ca formula-sync, 2 ca notifications, 1 ca production-changes. Một tiến trình customer-import bị lỗi trong lượt chạy đồng thời; chạy riêng lại đủ 4 bài đạt. Không mô tả toàn bộ suite là xanh.
 - Kiểm thử ghi dữ liệu dùng SQLite thử riêng; không sửa hệ số thực của khách để thử.
 
-Thông tin phát hành và xác minh máy chủ được bổ sung sau khi triển khai.
+## Phát hành
+
+- Runtime `7e678c2`, đã push `main` và triển khai Docker trên VPS phục vụ `https://truongphat-group.xyz` ngày 29/09/2026. Đã sao lưu SQLite và hai tệp runtime cũ trước triển khai.
+- Container `truongphat-quotation:7e678c2` healthy; HTTPS trang chính trả 200, `/healthz` trả `ok: true`.
+- SHA-256 của hai tệp thay đổi khớp giữa mã local, thư mục máy chủ và container. HTML công khai khớp build local sau chuẩn hóa xuống dòng Windows/Linux.
+- Kiểm tra SQLite chỉ đọc: trước nâng cấp khóa tác động bật, phiên bản 9; sau nâng cấp cả khóa tác động và khóa đơn giá đều bật, phiên bản 9. Khóa cũ không bị thay đổi.
+- Lượt này cập nhật qua quy trình VPS hiện có. Chưa xác minh được cơ chế tự động từ GitHub tới VPS; không thay cấu hình CI/CD.
