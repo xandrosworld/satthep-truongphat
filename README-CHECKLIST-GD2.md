@@ -919,3 +919,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Máy chủ chặn bàn giao giá toàn bộ/từng phần khi nguyên công tính lỗi; bàn giao kỹ thuật độc lập.
 - Kiểm thử: 7 test API/core; trình duyệt lựa chọn kg/m²/tấn/gói và F5; kiểm tra chỉ đọc BG-20260922-002 trên production thấy cảnh báo khai kg/giá m. Đối chiếu 93 runtime hashes và HTTPS đạt.
 
+
+### 2026-09-29 — Sửa hệ số / mẫu chào của Thảo (9a418bf)
+- Đã xem video 11-13-24: nút hệ số bị khóa theo quyền; xác nhận mẫu báo chung chung do thiếu căn cứ.
+- Mẫu có Lưu nháp và báo rõ thiếu căn cứ. Hệ số, điều kiện và nội dung chào có ô lý do sửa phần giá đã bàn giao; chờ máy chủ lưu, giữ cửa sổ/nội dung khi thất bại. Hỗ trợ sửa điều kiện khi đang trình duyệt; bản đã duyệt vẫn khóa.
+- Lịch sử mẫu theo quyền thương mại; điều kiện giao hàng không bị ẩn nhầm theo quyền chi phí vận chuyển.
+- Kiểm thử: 11 test quyền/core đạt; bộ trình duyệt offer-edit-save và mẫu dùng chung đạt; bản sao BG-20260925-005 thử hệ số, nháp, xác nhận, sửa tên, F5 đạt. Hai bộ UI cũ offer-content/batch-six bị selector cũ; đã kiểm tra bản trước sửa cũng lỗi cùng vị trí.
+- Production: 95 runtime hashes/HTTPS đạt; kiểm tra chỉ đọc tài khoản Thảo đạt. Không cấp lại quyền theo trao đổi mới: người quản trị khách tự phân quyền. Quyền factors=false, commercial=true tại thời điểm kiểm tra. Phiên kiểm tra đã thu hồi.
+
