@@ -913,3 +913,9 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Xếp phôi: kiểm tra lại ngay khi nhập X/Y/góc/tấm, không phải đợi rời ô mới mở lại nút Áp dụng. Khi bố trí sai, bỏ hình xem trước cũ gây hiểu nhầm; giữ giá trị đang nhập để sửa. Vẫn chặn vượt khổ, chồng phôi, thiếu mạch cắt và xoay ở chế độ giữ hướng.
 - 14 ca core đạt; browser hidden-factor-complexity, technical-missing-operation-price, nesting-large đạt. Bao gồm gán hàng loạt khi thiếu cờ factorsHidden, lưu/tải lại, bàn giao toàn bộ/từng phần thiếu giá, chặn thiếu cấu thành, 3.600 phôi, xoay, sửa vị trí sai về đúng không cần blur, mobile. Bản sao mới quyền Phú/BG-20260925-004 gán mức và lưu đạt.
 - Đã triển khai sau sao lưu nguồn/SQLite; HTTPS health và 93 hash runtime khớp. Web thật Phú gán mức nguyên công, xoay 180° và áp dụng phương án tại trình duyệt đạt; chặn mọi ghi nghiệp vụ thử. Hồ sơ hiện có 4 phôi 1672,5 × 117 trên khổ 3100 × 1250; phương án lưu cũ đã không còn khớp kích thước/số lượng nên cần lấy gợi ý mới. Không tự lưu thay khách. Phiên thử thu hồi. Ảnh artifacts/phu-technical-complexity-live.png và artifacts/phu-nesting-validity-live.png.
+
+### 2026-09-29 — Đối chiếu đơn vị nguyên công (0437cb0)
+- Hiện đơn vị xưởng/thuê ngoài ngay ở lựa chọn giá; dòng lỗi vẫn lưu nháp, không hiện tổng công như đã đủ.
+- Máy chủ chặn bàn giao giá toàn bộ/từng phần khi nguyên công tính lỗi; bàn giao kỹ thuật độc lập.
+- Kiểm thử: 7 test API/core; trình duyệt lựa chọn kg/m²/tấn/gói và F5; kiểm tra chỉ đọc BG-20260922-002 trên production thấy cảnh báo khai kg/giá m. Đối chiếu 93 runtime hashes và HTTPS đạt.
+
