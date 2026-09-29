@@ -5,9 +5,9 @@ test('protected coefficient roundtrip accepts only mask or exact server value, k
 
 test('quote transport restores masked catalogue defaults for old tabs without granting catalogue or quote writes',()=>{
  const app=createApp(),u={id:'qa',role:'estimator',can_view_costs:1,can_factors:0,section_access:JSON.stringify({bom:'use',operations:'use',factors:'none'})},D=require('../server/data-access.cjs').createDataAccess({sql:app.sql,fail});
- const source={document:{pricingDefaults:{tmcLoss:2.75,salesFactors:[{id:'a',percent:7}]},quote:{pricing:{tmcLoss:2.75},products:[{id:'a',qty:1}]}}},d=D.protect(source,u);
- d.document.pricingDefaults.tmcLoss=1.5;d.document.pricingDefaults.salesFactors=[{id:'bad',percent:999}];delete d.document.pricingDefaults.__accessFields;d.document.quote.products[0].qty=3;
- A.throws(()=>D.hydrate(d,u),/tmcLoss/);
- const saved=D.hydrate(d,u,{quoteTransport:true});A.deepEqual(saved.document.pricingDefaults,source.document.pricingDefaults);A.equal(saved.document.quote.products[0].qty,3);
+ const source={document:{rates:[{id:'cut',factors:[{id:'width',percent:7}]}],pricingDefaults:{tmcLoss:2.75,salesFactors:[{id:'a',percent:7}]},quote:{pricing:{tmcLoss:2.75},products:[{id:'a',qty:1}]}}},d=D.protect(source,u);
+ d.document.rates[0].factors=[{id:'client-default',percent:999}];d.document.pricingDefaults.tmcLoss=1.5;d.document.pricingDefaults.salesFactors=[{id:'bad',percent:999}];delete d.document.pricingDefaults.__accessFields;d.document.quote.products[0].qty=3;
+ A.throws(()=>D.hydrate(d,u),/factors|tmcLoss/);
+ const saved=D.hydrate(d,u,{quoteTransport:true});A.deepEqual(saved.document.pricingDefaults,source.document.pricingDefaults);A.deepEqual(saved.document.rates,source.document.rates);A.equal(saved.document.quote.products[0].qty,3);
  d.document.quote.pricing.tmcLoss=99;A.throws(()=>D.hydrate(d,u,{quoteTransport:true}),/tmcLoss/);A.throws(()=>D.hydrate(d,{...u,id:'other'},{quoteTransport:true}),/không thuộc/);app.sql.close();
 });
