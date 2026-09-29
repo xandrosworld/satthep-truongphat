@@ -39,3 +39,12 @@ API tạo tài khoản trước đây nhận hồ sơ tự khai; nay cần `empl
 Các fixture kiểm thử cần tạo hồ sơ được duyệt trước; helper
 `tests/helpers/personnel-user.cjs` cung cấp luồng này. Không chạy toàn bộ bộ
 kiểm thử cũ vì nhiều fixture còn giả định luồng tạo nhân sự trực tiếp.
+
+## Triển khai
+
+Runtime `9228714` đã đẩy GitHub và triển khai Vietnix, có sao lưu trước triển
+khai; container healthy. Kiểm tra trình duyệt trên HTTPS thật đạt: không còn
+thêm hồ sơ ở cơ cấu, chỉ bố trí vị trí; form Nhân sự đủ 101 trường và gửi duyệt;
+tạo tài khoản mở danh sách người có sẵn; năng lực nhân sự tổng hợp và không
+có nút nhập riêng; kiểm tra cả màn hình điện thoại. Không ghi hồ sơ thử lên
+sản xuất, không đổi cơ cấu/quyền đang dùng; phiên kiểm tra đã thu hồi.
