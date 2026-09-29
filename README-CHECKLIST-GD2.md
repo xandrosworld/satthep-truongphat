@@ -936,3 +936,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - API regression: tài khoản chỉ sửa hệ số lưu được sau bàn giao, có yêu cầu cũ, cả draft/submitted; sửa vận chuyển ngoài quyền bị 403, bản approved bị 409. Không bỏ yêu cầu ghi lý do điều chỉnh giá đã bàn giao.
 - Kiểm thử: 3 draft-commercial-edit + 10 offer-terms/section-access đều qua; Edge browser kiểm tra đủ nhóm/quyền không trùng, thông báo yêu cầu cũ, lưu hệ số, lưu nháp/xác nhận điều kiện, giữ dữ liệu khi lỗi và tải lại F5 đều qua.
 - Production: HTTPS health/trang chính và SHA-256 của 95 runtime files khớp. Đã sao lưu trước triển khai; chưa đổi quyền của Thảo/Phú. Anh Hợp tiếp tục cấp quyền thực tế.
+
+
+### 29/09/2026 — Phân quyền Đề nghị công việc
+- Đã triển khai `8befe57`: bổ sung phân hệ Đề nghị công việc với quyền Xem đề nghị liên quan / Lập đề nghị trong ma trận tài khoản và bộ quyền. Không cần cấp quyền kho/mua hàng/sản xuất chỉ để lập đề nghị; quyền xử lý/duyệt vẫn theo nghiệp vụ hiện có.
+- Thống nhất nút Phân quyền trong bảng tài khoản; ghi rõ Quyền trực tiếp hoặc Quyền theo vị trí, giữ đúng nơi chỉnh và cơ chế áp dụng quyền.
+- Không tự cấp thêm quyền cho tài khoản thật. Admin chọn Xem + Lập đề nghị cho bộ quyền/vị trí hoặc tài khoản được giao, lưu và yêu cầu đăng nhập lại.
+- Kiểm thử API service requests (bao gồm quyền chỉ xem, tạo riêng, không tự duyệt, riêng tư, tồn kho/phiên bản), 10 bài action-access/organization và hai luồng Edge service-requests/organization đều qua. Tài khoản chỉ có quyền Đề nghị công việc tạo và tải lại thấy đề nghị; không có quyền duyệt.
+- Đã sao lưu trước triển khai; HTTPS health và trang chính hoạt động, SHA-256 của 97 runtime files khớp bản phát hành.
