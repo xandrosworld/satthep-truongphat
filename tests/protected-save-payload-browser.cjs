@@ -21,6 +21,17 @@ try{await p.goto('http://127.0.0.1:'+app.server.address().port);await p.waitForF
  for(const key of ['tmcLoss','overhead','salesFactors','tmcTables'])expect(after.quote.pricing[key]).toEqual(before.quote.pricing[key]);
  expect(require('../core').flatten(after.quote.products).find(n=>n.ops?.length).ops[0].amount).toBe(3);
  expect(JSON.stringify(after)).not.toContain('__accessFields');
+ const oldTab=await p.evaluate(async()=>{
+ const r=await teamApi('quotes/'+teamCurrent().id),d=r.document;
+ d.pricingDefaults.tmcLoss=1.5;d.pricingDefaults.salesFactors=[{id:'stale-default',percent:999}];delete d.pricingDefaults.__accessFields;
+ C.flatten(d.quote.products).find(n=>n.ops?.length).ops[0].amount=4;
+ await teamApi('access/calculate','POST',{document:d});
+ return teamApi('quotes/'+r.id,'PUT',{document:d,expectedVersion:r.version});
+ });
+ const recovered=JSON.parse(app.sql.prepare('SELECT document FROM quotes WHERE id=?').get(id).document);
+ expect(recovered.pricingDefaults).toEqual(before.pricingDefaults);
+ expect(require('../core').flatten(recovered.quote.products).find(n=>n.ops?.length).ops[0].amount).toBe(4);
+ await p.evaluate(id=>teamLoad(id),id);
  const attack=await p.evaluate(async()=>{const d=teamDocument();d.quote.pricing.tmcLoss=99;d.quote.pricing.__accessFields=['tmcLoss'];try{await teamApi('quotes/'+teamCurrent().id,'PUT',{document:d,expectedVersion:teamCurrent().version});return 'accepted';}catch(e){return e.message;}});
  expect(attack).toContain('tmcLoss');
  expect(errors).toEqual([]);console.log('PASS protected fields: restored defaults do not block calculate/save/F5; server values preserved; technical edits kept; direct tampering rejected');
