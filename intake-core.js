@@ -44,7 +44,7 @@ function operationUnitUpdates(db){
   if(!['catalog','factors'].includes(method)||(q.operationPriceOptions?.[op.id]??op.priceOptionId)||!op.quantityUnit||!['inside','outside'].includes(op.mode))continue;
   const key=op.id+'|'+op.mode;if(!rows.has(key))rows.set(key,{key,id:op.id,mode:op.mode,units:new Set()});rows.get(key).units.add(op.quantityUnit);
  }
- return [...rows.values()].flatMap(x=>{const old=q.ratesSnapshot?.find(r=>r.id===x.id),ref=db.rates?.find(r=>r.id===x.id);if(!old||!ref||x.units.size!==1)return [];const wanted=[...x.units][0],beforeUnit=old[x.mode+'Unit']||old.unit,unit=ref[x.mode+'Unit']||ref.unit,value=ref[x.mode];if(beforeUnit===wanted||unit!==wanted||value==null||value===''||!Number.isFinite(Number(value))||Number(value)<0)return [];return [{key:x.key,id:x.id,mode:x.mode,name:old.name,beforeUnit,before:old[x.mode],unit,value:Number(value)}];});
+ return [...rows.values()].flatMap(x=>{const old=q.ratesSnapshot?.find(r=>r.id===x.id),ref=db.rates?.find(r=>r.id===x.id);if(!old||!ref||x.units.size!==1)return [];const wanted=[...x.units][0],beforeUnit=old[x.mode+'Unit']||old.unit,unit=ref[x.mode+'Unit']||ref.unit,value=ref[x.mode];if(beforeUnit===wanted||unit!==wanted||value==null||value===''||!Number.isFinite(Number(value))||Number(value)<0)return [];return [{key:x.key,id:x.id,mode:x.mode,name:ref.name||old.name,snapshotName:old.name,beforeUnit,before:old[x.mode],unit,value:Number(value)}];});
 }
 function applyOperationUnitUpdates(db,updates){
  if(db.quote.status==='approved')throw Error('Không sửa giá bản đã duyệt');
