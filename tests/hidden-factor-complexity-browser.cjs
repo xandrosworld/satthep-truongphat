@@ -46,6 +46,8 @@ const release=path.resolve(process.env.COMPLEXITY_RELEASE||'.'),{createApp}=requ
   await p.evaluate(id=>teamLoad(id),ids.id);
   const savedByAdmin=await admin.evaluate(id=>teamApi('quotes/'+id),ids.id);
   expect(find(savedByAdmin.document,ids.node).ops[0].complexity.multiplier).toBe(1.8);
+  await p.evaluate(async id=>{delete Team.permissions.factorsHidden;await bulkOperation([id]);},ids.node);
+  await p.locator('[name=operation][value=cut]').check();await p.locator('[name=complexity-cut]').selectOption('1');await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();await p.evaluate(()=>teamSave());expect(await p.evaluate(()=>Team.dirty)).toBe(false);
   console.log('PASS hidden-factor estimator: quick complexity, operation declaration, server save and reload');
  }finally{await browser.close();await new Promise(r=>app.server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

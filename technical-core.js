@@ -22,7 +22,7 @@ function complexityLevels(r){
  const rows=[];for(const f of r?.factors||[]){if(f.enabled===false||f.param!=='complexity'||f.kind!=='category')continue;for(const c of f.categories||[])rows.push({factorId:f.sharedFactorId||f.id,label:String(c.key),groups:copy(f.productGroups||[]),rateGroups:copy(r.productGroups||[])});}return rows;
 }
 function choiceFor(op){return op?.complexityChoice?pick(op.complexityChoice,['factorId','label']):(op?.complexity?{factorId:'',label:op.complexity.label}:undefined);}
-function resolveComplexity(rate,choice,group){
+function resolveComplexity(rate,choice,group,allowMissingPrice=false){
  const allowed=complexityLevels(rate).some(x=>x.factorId===choice?.factorId&&x.label===choice?.label&&(!x.groups.length||x.groups.includes(group))&&(!x.rateGroups.length||x.rateGroups.includes(group)));
  if(!allowed){
   const matching=complexityLevels(rate).filter(x=>x.factorId===choice?.factorId&&x.label===choice?.label);
@@ -30,7 +30,8 @@ function resolveComplexity(rate,choice,group){
   if(matching.length)throw Error('Mức độ phức tạp đã chọn không áp dụng cho nhóm '+group+'. Chọn lại mức theo nhóm sản phẩm hiện tại.');
   throw Error('Mức độ phức tạp đã chọn không còn trong danh mục của nguyên công. Mở lại khai báo để chọn mức hiện có.');
  }
- const f=rate.factors.find(x=>(x.sharedFactorId||x.id)===choice.factorId&&x.param==='complexity'),c=f?.categories?.find(x=>String(x.key)===choice.label),value=Number(c?.percent),multiplier=f?.valueMode==='multiplier'?value:1+value/100;
+ const f=(rate.factors||[]).find(x=>(x.sharedFactorId||x.id)===choice.factorId&&x.param==='complexity'),c=f?.categories?.find(x=>String(x.key)===choice.label),value=Number(c?.percent),multiplier=f?.valueMode==='multiplier'?value:1+value/100;
+ if(allowMissingPrice&&(!c||c.percent===null||c.percent===''||!Number.isFinite(multiplier)||multiplier<=0))return undefined;
  if(!c||c.percent===null||c.percent===''||!Number.isFinite(multiplier)||multiplier<=0)throw Error('Hệ số trong danh mục chưa hợp lệ; người phụ trách giá cần kiểm tra.');
  return {label:choice.label,multiplier};
 }
@@ -38,11 +39,12 @@ function resolveDocumentChoices(d,before,catalog,canFactors){
  const old=new Map();const index=ns=>{for(const n of ns||[]){old.set(n.id,n);index(n.children);}};index(before?.quote?.products);
  function visit(ns,group=''){for(const n of ns||[]){const g=n.productGroup||group,prev=old.get(n.id);for(const [i,op]of (n.ops||[]).entries()){
   const previous=(prev?.ops||[]).find((o,j)=>o.id===op.id&&(o.instanceId&&op.instanceId?o.instanceId===op.instanceId:j===i));
-  if(!equal(choiceFor(previous),choiceFor(op))){
-   if(op.complexityChoice?.factorId){const rate=complexityRate(d.quote.ratesSnapshot.find(r=>r.id===op.id),catalog||d);op.complexity=resolveComplexity(rate,op.complexityChoice,g);}
+  if(!equal(choiceFor(previous),choiceFor(op))||previous?.complexityPricePending){
+   if(op.complexityChoice?.factorId){const rate=complexityRate(d.quote.ratesSnapshot.find(r=>r.id===op.id),catalog||d);op.complexity=resolveComplexity(rate,op.complexityChoice,g,true);if(!op.complexity)delete op.complexity;}
    else if(!op.complexityChoice&&!op.complexity)delete op.complexity;
    else if(!canFactors)throw Error('Chỉ chọn mức độ đã khai; không được nhập hệ số phức tạp.');
   }else if(!canFactors&&!equal(previous?.complexity,op.complexity))throw Error('Không được thay hệ số phức tạp; chỉ chọn mức độ từ danh mục.');
+ if(op.complexityChoice?.factorId&&!op.complexity)op.complexityPricePending=true;else delete op.complexityPricePending;
  }visit(n.children,g);}}
  visit(d.quote.products);resolveProductionLevels(d,before,catalog);return d;
 }
@@ -119,7 +121,7 @@ function merge(original,input,catalog){
   const used=new Set();next.ops=n.ops.map((op,index)=>{if(!original.quote.ratesSnapshot.some(r=>r.id===op.id))throw Error('Chọn công đoạn có trong báo giá');const existing=(prev?.ops||[]).find((o,i)=>!used.has(i)&&o.id===op.id&&(op.instanceId&&o.instanceId?o.instanceId===op.instanceId:i===index));if(existing)used.add(prev.ops.indexOf(existing));const merged=assign(existing?copy(existing):{},op,opKeys);
    if(!equal(choiceFor(existing),op.complexityChoice)){
     if(!op.complexityChoice)delete merged.complexity;
-    else {const r=complexityRate(original.quote.ratesSnapshot.find(r=>r.id===op.id),catalog||original);let group='';const path=(nodes,parents=[])=>{for(const x of nodes){const chain=parents.concat(x);if(x.id===n.id)return chain;const found=path(x.children||[],chain);if(found)return found;}};group=(path(submitted.quote.products)||[]).reverse().find(x=>x.productGroup)?.productGroup||'';merged.complexity=resolveComplexity(r,op.complexityChoice,group);}
+    else {const r=complexityRate(original.quote.ratesSnapshot.find(r=>r.id===op.id),catalog||original);let group='';const path=(nodes,parents=[])=>{for(const x of nodes){const chain=parents.concat(x);if(x.id===n.id)return chain;const found=path(x.children||[],chain);if(found)return found;}};group=(path(submitted.quote.products)||[]).reverse().find(x=>x.productGroup)?.productGroup||'';merged.complexity=resolveComplexity(r,op.complexityChoice,group,true);if(!merged.complexity)delete merged.complexity;}
    }
    return merged;});
   next.children=n.children.map(combine);return next;

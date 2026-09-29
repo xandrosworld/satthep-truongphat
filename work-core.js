@@ -41,6 +41,7 @@ function factor(f,input,tier){
   return {value:convert(found.percent),label:String(found.key),kind:'category'};
 }
 function price(rate,op,ctx,tier){
+  if(op.complexityPricePending)throw Error('Ch?a c? h? s? gi? cho m?c ?? ph?c t?p ?? khai; b? ph?n gi? c?n b? sung.');
   if(!groupsMatch(rate.productGroups,ctx.productGroup))throw Error(rate.name+': chỉ áp dụng nhóm '+rate.productGroups.join(', ')+'. Hãy kiểm tra nhóm sản phẩm / cấu kiện.');
   const selected=resolvePriceOption(rate,op);rate=selected.rate;op=selected.op;
   if(!['inside','outside'].includes(op.mode))throw Error('Nơi thực hiện không hợp lệ');

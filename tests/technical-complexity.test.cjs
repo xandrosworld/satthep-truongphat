@@ -36,3 +36,11 @@ test('scoped catalogue assessments require an explicit group and resolve after c
  A.equal(JSON.stringify(T.project(saved,catalog)).includes('multiplier'),false);
  const bad={factorId:'missing',label:'Hard'};A.throws(()=>T.resolveComplexity(T.complexityRate(d.rates[0],catalog),bad,'Cơ khí'),/không còn trong danh mục/);
 });
+
+test('technical assessment survives missing price coefficient without inventing a multiplier',()=>{
+ const d=P.demoSeed(),catalog={rates:d.rates.map(r=>({...r,factors:[]})),pricingDefaults:{factorDefinitions:[factor()]}};catalog.pricingDefaults.factorDefinitions[0].categories[1].percent=null;
+ const view=T.project(d,catalog);view.quote.products[0].ops[0].complexityChoice={factorId:'difficulty',label:'Hard'};
+ const saved=T.merge(d,view,catalog);T.resolveDocumentChoices(saved,d,catalog,false);
+ A.deepEqual(saved.quote.products[0].ops[0].complexityChoice,{factorId:'difficulty',label:'Hard'});A.equal(saved.quote.products[0].ops[0].complexity,undefined);A.equal(saved.quote.products[0].ops[0].complexityPricePending,true);A.equal(T.project(saved,catalog).quote.products[0].ops[0].complexityPricePending,undefined);A.throws(()=>require('../work-core').price({},saved.quote.products[0].ops[0],{},1));
+ A.throws(()=>T.resolveComplexity(T.complexityRate(d.rates[0],catalog),{factorId:'difficulty',label:'Hard'},''));
+});

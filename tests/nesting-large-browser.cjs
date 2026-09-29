@@ -22,7 +22,7 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
  for(const name of ['npX','npY']){await p.locator('[name='+name+']').fill('0');await p.locator('[name='+name+']').dispatchEvent('change');}
  await p.locator('[name=npAngle]').fill('0');await p.locator('[name=npAngle]').dispatchEvent('change');await p.locator('[data-np-turn="90"]').click();await expect(p.locator('#np-result')).toHaveAttribute('data-valid','true');
  await p.locator('[name=npX]').fill('3001');await p.locator('[name=npX]').dispatchEvent('change');await expect(p.locator('#dialog button[type=submit]')).toBeDisabled();
- await p.locator('[name=npX]').fill('0');await p.locator('[name=npX]').dispatchEvent('change');
+ await p.locator('[name=npX]').fill('0');await expect(p.locator('#dialog button[type=submit]')).toBeEnabled();
  await p.locator('[name=npSelected]').dispatchEvent('change');
  const piece=p.locator('[data-np-piece="0"]');await piece.scrollIntoViewIfNeeded();const box=await piece.boundingBox();await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.mouse.move(box.x+box.width/2+15,box.y+box.height/2,{steps:3});await p.mouse.up();expect(Number(await p.locator('[name=npX]').inputValue())).toBeGreaterThan(0);await expect(p.locator('#np-result')).toHaveAttribute('data-valid','true');
  await p.setViewportSize({width:390,height:844});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);

@@ -62,6 +62,13 @@ function createDataAccess({sql,fail}){
  // Explicit client values and accounts allowed to edit factors keep normal guards.
  function retainCurrentHiddenCoefficients(document,current,user){
   if(require('./access.cjs').permissions(user).factors)return;
+  const previous=new Map();const index=ns=>{for(const n of ns||[]){previous.set(n.id,n);index(n.children);}};index(current?.quote?.products);
+  const visit=ns=>{for(const n of ns||[]){const old=previous.get(n.id);for(const [i,op]of (n.ops||[]).entries()){
+   const prior=old?.ops?.find((v,j)=>v.id===op.id&&(v.instanceId&&op.instanceId?v.instanceId===op.instanceId:j===i));
+   if(prior&&restoredFields.get(op)?.has('complexity')&&SA.equal(prior.complexityChoice,op.complexityChoice)){
+    if(prior.complexity===undefined)delete op.complexity;else op.complexity=copy(prior.complexity);
+   }
+  }visit(n.children);}};visit(document?.quote?.products);
   const pricing=document?.quote?.pricing,stored=current?.quote?.pricing,restored=pricing&&restoredFields.get(pricing);
   if(!restored||!stored)return;
   for(const key of ['overhead','management','special','profit','processing','order','reserve','customer']){
