@@ -31,3 +31,14 @@ trong mutation, khiến lỗi lưu trông như mất dữ liệu vừa nhập.
 
 Thảo cần tải lại trang để nhận quyền mới; sau khi lưu khoản chi vẫn bấm
 **Lưu báo giá lên máy chủ** như luồng hiện hành.
+
+## Triển khai
+
+- Runtime `c7aa82d` đã đẩy lên GitHub và triển khai Vietnix, container healthy,
+  HTTPS `/healthz` trả `ok: true`; HTML công khai khớp bản build đã kiểm thử.
+- Quyền thực tế Thảo: `logistics=use`, được sửa báo giá, không có quyền duyệt;
+  lịch sử quyền ghi `grant-quote-logistics`, các trường tài khoản khác giữ nguyên.
+- Báo giá thực vẫn phiên bản 9, nháp, chưa có khoản chi vận chuyển; không ghi
+  số liệu thử lên báo giá. Cần nhập lại số liệu chưa lưu trước đó.
+- Hai khóa hệ số tác động và đơn giá vẫn khóa, phiên bản 9.
+- Đã sao lưu trước triển khai; runtime trước đó `7e678c2` được giữ để rollback.
