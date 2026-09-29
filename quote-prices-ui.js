@@ -73,7 +73,7 @@ async function inRefreshFactorRights(session){
  const actor=Team.user?.id;
  if(!actor||session.user?.id!==actor)throw Error('Phiên đăng nhập đã đổi; cần đăng nhập lại đúng tài khoản. Nội dung đang nhập vẫn được giữ.');
  Team.expired=false;const recovery=document.querySelector('#team-session-resume');if(recovery){recovery.close();recovery.remove();}
- const remask=!!Team.permissions?.factorsHidden!==!!session.permissions.factorsHidden;
+ const remask=!!Team.permissions?.factorsHidden!==!!session.permissions.factorsHidden||!!Team.permissions?.factors!==!!session.permissions.factors;
  Team.csrf=session.csrf;
  // Reload server values when visibility changes: masked zeros must never
  // become editable coefficients. Save the current draft before that reload.

@@ -5,13 +5,13 @@ try{
  await p.evaluate(async hidden=>{
  const password='Session-recovery-2026!';
  teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password}));
- const seed=TPPrice.demoSeed();seed.quote.pricing.management=3;const q=await teamApi('quotes','POST',{document:seed});
+ if(hidden==='locked')await teamApi('formulas/locks','POST',{key:'calculationFactors:all',locked:true,expectedVersion:0,reason:'QA shared lock'});const seed=TPPrice.demoSeed();seed.quote.pricing.management=3;const q=await teamApi('quotes','POST',{document:seed});
  for(const username of ['staff','other'])await teamApi('users','POST',{username,name:username,password,role:'estimator',canViewCosts:true,canEditFactors:false,canFormulaView:false,sectionModes:Object.fromEntries(TPSectionAccess.keys.map(k=>[k,['materials','commercial','manage'].includes(k)?'configure':k==='factors'&&hidden?'use':k==='logistics'?'none':'view']))});
  teamSession(await teamApi('login','POST',{username:'staff',password}));await teamLoad(q.id);page='quote';tab='prices';Intake.priceTab='factors';render();
- },process.env.HIDDEN_FACTORS==='1');
+ },process.env.HIDDEN_FACTORS==='locked'?'locked':process.env.HIDDEN_FACTORS==='1');
  await expect(p.locator('[data-factor-permission-notice]')).toBeVisible();
- if(process.env.HIDDEN_FACTORS!=='1')await expect(p.locator('#intake-policy [type=submit]')).toBeDisabled();
- await p.locator('[data-factor-refresh-rights]').click();if(process.env.HIDDEN_FACTORS!=='1')await expect(p.locator('#intake-policy [type=submit]')).toBeDisabled();
+ if(!process.env.HIDDEN_FACTORS)await expect(p.locator('#intake-policy [type=submit]')).toBeDisabled();
+ await p.locator('[data-factor-refresh-rights]').click();if(!process.env.HIDDEN_FACTORS)await expect(p.locator('#intake-policy [type=submit]')).toBeDisabled();
  const asyncResult=await p.evaluate(async()=>{
   const old=Team.csrf;await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'staff',password:'Session-recovery-2026!'})});
   await teamApi('access/calculate','POST',{document:teamDocument()});return old!==Team.csrf;
@@ -28,10 +28,9 @@ try{
  const grant=await fetch(url+'/api/users/'+userId+'/access',{method:'POST',headers:{'Content-Type':'application/json','Cookie':cookie,'X-CSRF-Token':admin.csrf},body:JSON.stringify({role:'estimator',canViewCosts:true,canEditFactors:true,sectionModes:Object.fromEntries(require('../section-access.js').keys.map(k=>[k,['materials','commercial','manage','factors'].includes(k)?'configure':k==='logistics'?'none':'view']))})});
  expect(grant.status).toBe(200);
  await p.evaluate(async()=>{db.quote.notes='Draft must survive permission refresh';Team.dirty=true;});
- await p.locator('[data-factor-refresh-rights]').click();await expect(p.locator('#dialog')).toContainText('Đăng nhập lại');await p.locator('#dialog [name=password]').fill('Session-recovery-2026!');await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();await expect(p.locator('#intake-policy [type=submit]')).toBeEnabled();expect(await p.locator('#intake-policy [name=management]').inputValue()).toBe('3');
+ await p.locator('[data-factor-refresh-rights]').click();await expect(p.locator('#dialog')).toContainText('Đăng nhập lại');await p.locator('#dialog [name=password]').fill('Session-recovery-2026!');await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();if(process.env.HIDDEN_FACTORS==='locked'){await p.getByRole('button',{name:'Sửa hệ số báo giá',exact:true}).click();expect(await p.locator('#dialog [name=management]').inputValue()).toBe('3');}else{await expect(p.locator('#intake-policy [type=submit]')).toBeEnabled();expect(await p.locator('#intake-policy [name=management]').inputValue()).toBe('3');}
  expect(await p.evaluate(()=>db.quote.notes)).toBe('Draft must survive permission refresh');
- await p.locator('#intake-policy [name=management]').fill('7');
- await p.locator('#intake-policy [type=submit]').click();
+ const editor=process.env.HIDDEN_FACTORS==='locked'?'#dialog':'#intake-policy';await p.locator(editor+' [name=management]').fill('7');await p.locator(editor+' [type=submit]').click();if(editor==='#dialog')await expect(p.locator('#dialog')).not.toBeVisible();
  await p.evaluate(()=>teamSave());
  await p.evaluate(()=>teamLoad(teamCurrent().id));
  expect(await p.evaluate(()=>db.quote.pricing.management)).toBe(7);
