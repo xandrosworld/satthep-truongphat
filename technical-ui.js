@@ -12,6 +12,9 @@ function technicalQuoteDocument(document){
 const technicalTabs=['intake','bom','operations','waste','mass'];
 function technicalStage(){return page==='quote'&&technicalTabs.includes(tab);}
 function technicalOnly(){return !!Team.user&&!!Team.permissions?.technical;}
+// Workspace navigation follows assigned work, independently of cost visibility.
+function technicalWorkspaceOnly(){const p=Team.permissions,s=p?.sections||[];return !!Team.user&&!p?.users&&(!!p?.technical||(s.some(k=>['bom','operations'].includes(k))&&!s.some(k=>['materials','logistics','factors','commercial','manage'].includes(k))));}
+function technicalWorkspaceClean(root){if(!technicalWorkspaceOnly()||page!=='quote'||!root)return;root.querySelectorAll('[data-tab="prices"],[data-tab="pricing"],[data-tab="preview"],[data-intake="goto"][data-id="prices"],[data-intake="goto"][data-id="pricing"],[data-intake="goto"][data-id="preview"],[data-review-jump="cost"],[data-review-jump="materials"],[data-action="tmc-freight"],[data-action="pa-pricing"],[data-remnant="compare"],[data-ux="price-ops"],[data-team="submit"],[data-pa="node-costs"],[data-pa="quote-rates"],[data-pa="edit-rate"],[data-pa="policy"],[data-pa="tmc"],[data-pa="product-inputs"]').forEach(x=>x.remove());}
 function technicalCatalogPage(){return technicalOnly()&&['materials','library','rules'].includes(page)&&((Team.permissions.viewSections||Team.permissions.sections).includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[page])||page==='rules'&&(Team.permissions.viewSections||Team.permissions.sections).includes('catalogTechnicalOperations'));}
 function technicalCatalogClean(root){
  if(!technicalOnly()||!root)return;
@@ -144,6 +147,7 @@ ${field('Từ ngày báo giá','tq-from','','date')}${field('Đến ngày báo g
  };
  const oldSession=teamSession;teamSession=value=>{if(value.permissions?.technical){db=TPTechnical.project(TPPrice.demoSeed());result=C.calculate(db);Team.local=null;Team.loaded=false;Team.link=null;Team.dirty=false;UX.undo=[];UX.redo=[];}oldSession(value);};
  const oldRender=render;render=()=>{
+  if(technicalWorkspaceOnly()&&page==='quote'&&['prices','pricing','preview'].includes(tab))tab='operations';
   if(technicalOnly()){
    $('#save-status').textContent='Máy chủ · dữ liệu kỹ thuật';
    if(!Team.loaded){$('#content').innerHTML=workspaceHome();workspaceHomeMount();return;}
@@ -151,18 +155,18 @@ ${field('Từ ngày báo giá','tq-from','','date')}${field('Đến ngày báo g
    if(page==='rules'&&!Team.permissions.sections.includes('catalogRules'))RulesCatalog.kind='operations';
    if(page==='rules'&&['factors','transport','customers','complexity'].includes(RulesCatalog.kind))RulesCatalog.kind='productGroups';
   }
-  oldRender();if(technicalStage())technicalClean($('#content'));technicalIntakeAccess($('#content'));
+  oldRender();technicalWorkspaceClean($('#content'));if(technicalStage())technicalClean($('#content'));technicalIntakeAccess($('#content'));
   document.querySelectorAll('#sidebar [data-page]').forEach(el=>el.hidden=technicalOnly()&&el.dataset.page!=='quote'&&!((Team.permissions.viewSections||Team.permissions.sections).includes({materials:'catalogMaterials',library:'catalogLibrary',rules:'catalogRules'}[el.dataset.page])||el.dataset.page==='rules'&&(Team.permissions.viewSections||Team.permissions.sections).includes('catalogTechnicalOperations')));
   if(technicalCatalogPage()){technicalCatalogClean($('#content'));$('#save-status').textContent='Danh mục kỹ thuật trên máy chủ';if(!Team.link)$('#content').querySelectorAll('[data-team=reopen]').forEach(x=>x.remove());$('#content').insertAdjacentHTML('afterbegin',`<div class="notice" data-technical-catalog>Danh mục kỹ thuật · không xem hoặc sửa giá, hệ số. ${teamButton('Lấy danh mục máy chủ','catalog-workspace')}</div>`);}
   if(technicalOnly()){$('#content').querySelectorAll('[data-tab="prices"],[data-tab="pricing"],[data-tab="preview"],[data-action="history"],[data-pa="sample"],[data-team="submit"],[data-team="leave"],[data-batch-one="new-shared"]').forEach(x=>x.remove());const ribbon=$('.quote-ribbon > span');if(ribbon)ribbon.textContent='Ngày '+db.quote.date;}
  };
- const oldQuick=refreshQuickUI;refreshQuickUI=()=>{oldQuick();if(technicalStage())technicalClean($('#content'));};
+ const oldQuick=refreshQuickUI;refreshQuickUI=()=>{oldQuick();technicalWorkspaceClean($('#content'));if(technicalStage())technicalClean($('#content'));};
  const oldDialog=openDialog;openDialog=(...args)=>{const value=oldDialog(...args);if(!$('#dialog [data-material-request-dialog]')){if(technicalStage())technicalClean($('#dialog'));if(technicalCatalogPage())technicalCatalogClean($('#dialog'));}technicalPermissionFields();return value;};
  document.addEventListener('change',e=>{if(e.target.hasAttribute('data-access-role')){technicalPermissionFields();if(e.target.value==='technical')document.querySelectorAll('#dialog [name=sections]').forEach(x=>x.checked=['customer','bom','operations'].includes(x.value));}});
  // Capture before legacy handlers: cost editors are reached only from step 6.
  document.addEventListener('click',e=>{const el=e.target.closest('[data-pa],[data-mfg],[data-close-gap],[data-ux],[data-action]');if(!el||!technicalStage())return;
   const priceAction=['node-costs','quote-rates','edit-rate','policy','tmc','product-inputs'].includes(el.dataset.pa)||['package','breakdown','policy'].includes(el.dataset.mfg)||['source-table','source-export'].includes(el.dataset.closeGap)||['price-ops'].includes(el.dataset.ux);
-  if(priceAction){e.preventDefault();e.stopImmediatePropagation();if(technicalOnly())toast('Tài khoản kỹ thuật không được xem giá');else{closeDialog();tab='prices';Intake.priceTab='operations';render();}}
+  if(priceAction){e.preventDefault();e.stopImmediatePropagation();if(technicalWorkspaceOnly())toast('Phần giá thuộc không gian làm việc của bộ phận chào giá');else{closeDialog();tab='prices';Intake.priceTab='operations';render();}}
  },true);
 }
 
