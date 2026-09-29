@@ -13,8 +13,21 @@ function setRemnantParts(g,ids,checked){
   ids.forEach(id=>checked&&g.remnants.find(r=>r.id===id)?.eligible!==false?chosen.add(id):chosen.delete(id));
   if(chosen.size)db.quote.remnantSelections[g.signature]=[...chosen];else delete db.quote.remnantSelections[g.signature];
 }
+function remnantScopeMessage(){
+  const link=teamCurrent();
+  const active=QuoteCorrections.id===link?.id&&QuoteCorrections.generation===Team.sessionGeneration?QuoteCorrections.record?.items.find(x=>x.status==='open'):null;
+  return active&&!TPSectionAccess.correctionSections(link.status,active.sections).includes('bom')?'Phần dư thuộc Cấu thành, kích thước và hao hụt; phạm vi đang mở chỉ gồm '+active.sections.map(k=>TPSectionAccess.labels[k]).join(', ')+'. Cần được cho phép bổ sung phạm vi hao hụt trước khi thay đổi.':'';
+}
+function remnantFeedback(message){
+  let box=document.querySelector('[data-remnant-feedback]');
+  if(!box){box=document.createElement('div');box.dataset.remnantFeedback='';box.className='notice error';box.setAttribute('role','alert');document.querySelector('.remnant-panel')?.before(box);}
+  box.textContent=message;toast(message);
+}
 function remnantMutation(action,focusSelector){
-  const y=scrollY;let reset=false;mutation(()=>{action();reset=normalizeRemnantMode();});window.scrollTo(0,y);if(focusSelector)$(focusSelector)?.focus({preventScroll:true});if(reset)toast('Không còn phần dư được chọn. Báo giá trở về tính toàn bộ vật tư mua.');
+  const y=scrollY,wasDirty=Team.dirty;let reset=false;
+  try{const blocked=remnantScopeMessage();if(blocked)throw Error(blocked);mutation(()=>{action();reset=normalizeRemnantMode();});}
+  catch(error){Team.dirty=wasDirty;render();remnantFeedback(error.message);}
+  window.scrollTo(0,y);if(focusSelector)$(focusSelector)?.focus({preventScroll:true});if(reset)toast('Không còn phần dư được chọn. Báo giá trở về tính toàn bộ vật tư mua.');
 }
 function normalizeRemnantMode(){if(db.quote.remnantMode!=='exclude')return false;const r=C.calculate(db).reuse;if(!r.selectedCount&&!r.staleCount){db.quote.remnantMode='all';return true;}return false;}
 function remnantOverlay(g,index){
@@ -45,6 +58,7 @@ function renderRemnantWaste(){
       <label class="remnant-option ${!preview.estimated&&r.mode==='exclude'?'active':''}"><input type="radio" name="remnant-mode" value="exclude" ${!preview.estimated&&r.mode==='exclude'?'checked':''} ${!r.selectedCount||r.staleCount?'disabled':''}><span><strong>Không tính phần tận dụng</strong><small>${r.selectedCount?'Giữ lại phần đã chọn cho công việc khác.':'Chọn phần dư bên dưới để so sánh giá.'}</small><b data-remnant-grand="exclude">${r.selectedCount?money(r.excludeSelected.grand)+' ₫':'Chưa chọn phần dư'}</b><small>${r.selectedCount?'Tổng chào sau thuế · giảm '+money(discount)+' ₫':'Không tự động coi mọi phần dư là tận dụng được'}</small></span></label>
     </div><p class="remnant-comparison-note">Hai phương án dùng cùng số tấm/thanh cần mua. Giá trị phần giữ lại tính theo tỷ lệ diện tích/chiều dài và đơn giá mua; đây không phải tiền bán phế liệu hay giảm tiền phải trả nhà cung cấp.</p></fieldset>
     <div class="remnant-work-head"><div><strong>${r.selectedCount?num(r.selectedCount)+' phần dư đã chọn · '+money(r.credit)+' ₫ giá trị vật tư':'Bắt đầu: chọn phần dư có thể dùng lại'}</strong><p>Các phần cùng kích thước được gom một dòng. Có thể chọn từng phần nếu chỉ giữ lại một số.</p></div><label class="inline-field">Mạch cắt <input type="number" min="0" max="20" step="0.1" data-quote-field="kerf" value="${db.quote.kerf}"> mm</label></div>
+    ${remnantScopeMessage()?`<div class="notice error" role="alert" data-remnant-scope>${esc(remnantScopeMessage())}<button type="button" class="button" data-remnant="request-scope">Đề nghị bổ sung phạm vi hao hụt</button></div>`:''}
     ${result.groups.map((g,gi)=>g.error?`<div class="panel error-panel"><h3>${esc(g.spec.id)} / ${esc(g.spec.name)}</h3><p>${esc(g.error)}</p>${meButton('Xoay / sắp xếp phôi','nesting',gi)} ${btn('Chỉnh khổ mua','edit-stock',`data-id="${esc(g.spec.id)}"`)}</div>`:renderRemnantGroup(g,gi)).join('')}
     ${!hasGroups?empty('Chưa có phôi gia công','Thêm mã vật tư tấm hoặc thanh tại Cấu thành sản phẩm.'):''}
     <div class="remnant-final"><span>Giá chào đang áp dụng <strong>${money(result.total.grand)} ₫</strong><small>${preview.estimated?'Theo hao hụt đã khai':r.mode==='exclude'?'Không tính phần tận dụng đã chọn':'Tính cả phần dư'} · Sau thuế${result.errors.length?' · Còn nội dung cần kiểm tra':''}</small></span><button class="button primary" data-remnant="open-mass">Tiếp: Khối lượng & diện tích →</button></div>`;
@@ -75,7 +89,8 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-remnant]');if(!el)return;e.preventDefault();const g=result.groups[Number(el.dataset.gi)];
-  if(el.dataset.remnant==='compare'){const box=$('.remnant-comparison');box?.scrollIntoView({block:'start'});$('.remnant-option.active input')?.focus({preventScroll:true});}
+  if(el.dataset.remnant==='request-scope'){quoteCorrectionsDialog(['bom'],'Bổ sung phạm vi hao hụt để chọn phần dư tận dụng').catch(error=>remnantFeedback(error.message));}
+  else if(el.dataset.remnant==='compare'){const box=$('.remnant-comparison');box?.scrollIntoView({block:'start'});$('.remnant-option.active input')?.focus({preventScroll:true});}
   else if(['open-waste','open-pricing','open-mass'].includes(el.dataset.remnant)){tab=el.dataset.remnant==='open-waste'?'waste':el.dataset.remnant==='open-mass'?'mass':'pricing';render();}
   else if(el.dataset.remnant==='piece'){const part=g.remnants.find(r=>r.id===el.dataset.rid);remnantMutation(()=>setRemnantParts(g,[part.id],!part.selected),'[data-remnant="piece"][data-gi="'+el.dataset.gi+'"][data-rid="'+el.dataset.rid+'"]');}
   else if(el.dataset.remnant==='threshold')remnantThreshold(g);
