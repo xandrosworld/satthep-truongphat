@@ -927,3 +927,12 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Kiểm thử: 11 test quyền/core đạt; bộ trình duyệt offer-edit-save và mẫu dùng chung đạt; bản sao BG-20260925-005 thử hệ số, nháp, xác nhận, sửa tên, F5 đạt. Hai bộ UI cũ offer-content/batch-six bị selector cũ; đã kiểm tra bản trước sửa cũng lỗi cùng vị trí.
 - Production: 95 runtime hashes/HTTPS đạt; kiểm tra chỉ đọc tài khoản Thảo đạt. Không cấp lại quyền theo trao đổi mới: người quản trị khách tự phân quyền. Quyền factors=false, commercial=true tại thời điểm kiểm tra. Phiên kiểm tra đã thu hồi.
 
+
+
+### 29/09/2026 — Phân quyền bốn nhóm và sửa hệ số trước duyệt cuối
+- Đã triển khai runtime `a82569b`: ma trận phân quyền chia bốn nhóm đầu vào, kỹ thuật, giá, hệ số/phân tích giá; danh mục dùng chung riêng. Giữ các quyền chi tiết hiện có, không tự đổi quyền tài khoản.
+- Hộp hệ số khóa ô vận chuyển/thuế ngoài quyền và giữ nguyên giá trị khi lưu. Thông báo thiếu quyền ở bản nháp/đang trình không hướng người dùng sang yêu cầu mở sửa.
+- Yêu cầu cũ đang chờ/từ chối có chú thích rõ phần giá/hệ số/bản chào không phải chờ cho phép trước duyệt cuối. Giữ lịch sử yêu cầu và cơ chế khóa đầu vào/kỹ thuật.
+- API regression: tài khoản chỉ sửa hệ số lưu được sau bàn giao, có yêu cầu cũ, cả draft/submitted; sửa vận chuyển ngoài quyền bị 403, bản approved bị 409. Không bỏ yêu cầu ghi lý do điều chỉnh giá đã bàn giao.
+- Kiểm thử: 3 draft-commercial-edit + 10 offer-terms/section-access đều qua; Edge browser kiểm tra đủ nhóm/quyền không trùng, thông báo yêu cầu cũ, lưu hệ số, lưu nháp/xác nhận điều kiện, giữ dữ liệu khi lỗi và tải lại F5 đều qua.
+- Production: HTTPS health/trang chính và SHA-256 của 95 runtime files khớp. Đã sao lưu trước triển khai; chưa đổi quyền của Thảo/Phú. Anh Hợp tiếp tục cấp quyền thực tế.
