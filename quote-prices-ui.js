@@ -72,6 +72,7 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-material-scope]
 async function inRefreshFactorRights(session){
  const actor=Team.user?.id;
  if(!actor||session.user?.id!==actor)throw Error('Phiên đăng nhập đã đổi; cần đăng nhập lại đúng tài khoản. Nội dung đang nhập vẫn được giữ.');
+ Team.factorRefreshPending=true;$('#content').inert=true;try{
  Team.expired=false;const recovery=document.querySelector('#team-session-resume');if(recovery){recovery.close();recovery.remove();}
  const remask=!!Team.permissions?.factorsHidden!==!!session.permissions.factorsHidden||!!Team.permissions?.factors!==!!session.permissions.factors;
  Team.csrf=session.csrf;
@@ -84,6 +85,7 @@ async function inRefreshFactorRights(session){
  }
  Team.permissions=session.permissions;Team.user=session.user;render();
  toast(session.permissions.factors?'Đã có quyền sửa hệ số.':'Tài khoản vẫn chưa được cấp quyền sửa hệ số.');
+ }finally{Team.factorRefreshPending=false;$('#content').inert=false;}
 }
 document.addEventListener('click',async e=>{
  if(!e.target.closest('[data-factor-refresh-rights]'))return;
