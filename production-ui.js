@@ -18,7 +18,8 @@ async function productionFromQuote(){
 document.addEventListener('click',e=>{
  if(!e.target.closest('#sidebar [data-page="quote"]')||!Team.user)return;
  e.preventDefault();e.stopImmediatePropagation();document.querySelector('#sidebar')?.classList.remove('open');
- // Opening the list does not discard an unsaved quotation.
+ // Return to the in-memory quote; reloading would discard unsaved work.
+ if(Team.loaded&&teamCurrent()?.id){page='quote';render();return;}
  teamList().catch(inError);
 },true);
 // Changes are proposals until technical confirmation and explicit Admin approval.
