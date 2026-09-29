@@ -15,3 +15,23 @@ test('GD03 unknown signature/terms blocks official independently of valid price/
 test('GD03 issuer/both/none layouts explicit, do not silently accept unnamed issuer signer',()=>{const q=seed().quote;require('./offer-fixture.cjs')(q);const s=C.copy(q.offerTerms);A.throws(()=>O.save(q,{...s,signature:'issuer'},true),/người ký/);q.issuer.signer='QA signer';O.save(q,{...s,signature:'issuer',signerTitle:'QA đại diện'},true);A.deepEqual(O.errors(q),[]);A.throws(()=>O.save(q,{...s,signature:'both',signerTitle:'QA'},true),/bên nhận/);O.save(q,{...s,signature:'both',signerTitle:'QA',customerTitle:'QA người nhận'},true);A.deepEqual(O.errors(q),[]);});
 test('GD03 altered notes/identity/issuer/terms invalidates confirmation, locked versions immutable',()=>{for(const edit of [q=>q.notes+=' changed',q=>q.id+=' changed',q=>q.customer+=' changed',q=>q.issuer.signer='changed',q=>q.offerTerms.payment='changed']){const q=seed().quote;require('./offer-fixture.cjs')(q);edit(q);A.ok(O.errors(q).length);}const q=seed().quote;require('./offer-fixture.cjs')(q);const before=JSON.stringify(q);A.throws(()=>O.save(q,{signature:'none'},true));A.equal(JSON.stringify(q),before);q.status='approved';A.throws(()=>O.save(q,{},false));});
 test('GD03 public terms exclude internal authorization/history; serialization remains stable',()=>{const q=seed().quote;require('./offer-fixture.cjs')(q);A.equal(JSON.stringify(O.publicTerms(q)).includes('reason'),false);A.deepEqual(O.errors(JSON.parse(JSON.stringify(q))),[]);A.equal(O.lines(q.offerTerms).length,6);});
+
+test('quote price sources exclude unrelated TMC tables and unused tiers; actual TMC inputs remain confirmable',()=>{
+ const q=seed().quote;
+ const sources=()=>S.view(q).filter(r=>r.tmcOnly);
+ A.deepEqual(sources().map(r=>r.key),['tmc:tray:1']);
+ const used=sources()[0];S.apply(q,[{key:used.key,original:1234,status:'excluded'}],'Supplier');A.ok(sources()[0].known);
+ A.throws(()=>S.apply(q,[{key:'tmc:ladder:0',original:1,status:'excluded'}],'Supplier'),/đã đổi/);
+ q.products.forEach(n=>{n.priceGroupId='detail';n.tmcScope='detail';});A.deepEqual(sources(),[]);
+ // Existing declarations are kept even when a product is temporarily outside TMC.
+ A.equal(q.costPriceSources[used.key].net,1234);
+});
+test('TMC source selection uses exact thresholds, breakdown targets, and assigned package operations',()=>{
+ const q=seed().quote,n=q.products[0];q.products=[n];n.tmcBreakdown=[{nodeId:n.children[0].id,tableId:'tray',width:100}];
+ const table=q.pricing.tmcTables.find(t=>t.id==='tray');table.thresholdMode='exact';table.tiers=[{max:100,price:10},{max:200,price:20}];
+ A.deepEqual(S.view(q).filter(r=>r.tmcOnly).map(r=>r.key),['tmc:tray:0']);
+ n.tmcBreakdown[0].width=150;A.deepEqual(S.view(q).filter(r=>r.tmcOnly),[]);
+ n.tmcBreakdown[0].width=200;
+ q.pricing.tmcLaborOperation={default:{choice:'catalog',rate:{id:'qa',name:'Work',inside:30,unit:'m'}},tables:{unused:{choice:'catalog',rate:{id:'unused',name:'Unused',inside:40,unit:'m'}}}};
+ A.deepEqual(S.view(q).filter(r=>r.tmcOnly).map(r=>r.key),['tmc:operation:default:catalog']);
+});

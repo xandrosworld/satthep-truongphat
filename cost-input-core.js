@@ -4,6 +4,21 @@ const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const copy=C.copy, valid=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))&&Number(v)>=0&&Number(v)<=1e15;
 const stable=v=>Array.isArray(v)?v.map(stable):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>[k,stable(v[k])])):v;
 const signature=v=>JSON.stringify(stable(v));
+// Resolve only the TMC price sources assigned to products in this quote.
+function tmcSources(q){
+ const keys=new Set(),G=typeof module!=='undefined'?require('./group-pricing-core.js'):root.TPGroupPrice;
+ for(const n of q.products||[]){if(G.resolve(q,n).scope!=='tmc')continue;
+  for(const e of n.tmcBreakdown?.length?n.tmcBreakdown:[{nodeId:n.id,tableId:n.tmcKind,width:n.tmcWidth}]){
+   const t=q.pricing?.tmcTables?.find(t=>t.id===e.tableId),target=C.findNode([n],e.nodeId);if(!t||!target)continue;
+   const width=e.width??target.params?.W??target.dims?.W??target.spec?.props?.W??n.params?.W;
+   const binding=q.pricing?.tmcLaborOperation?.tables?.[t.id]||q.pricing?.tmcLaborOperation?.default;
+   if(binding&&binding.choice!=='table-factors')keys.add('tmc:operation:'+(q.pricing.tmcLaborOperation.tables?.[t.id]?t.id:'default')+':'+(binding.choice||'catalog'));
+   else if(Number(width)>0){try{const i=t.thresholdMode==='exact'?t.tiers.findIndex((b,i)=>b.max===null?Number(width)>(t.tiers[i-1]?.max??0):Number(width)===Number(b.max)):C.pricingTier(width,t.tiers,'price').index;if(i>=0)keys.add('tmc:'+t.id+':'+i);}catch(_){/* Missing dimensions remain a calculation error. */}}
+   for(const field of ['ancillary','common'])keys.add('tmc:'+t.id+':'+field);
+  }
+ }
+ return keys;
+}
 function rows(q){
  const out=[],usedRates=new Set(),usedOptions=new Map();
  const add=(target,field,key,label,unit,identity)=>{if(!target||!Object.hasOwn(target,field))return;out.push({key,label,unit:unit||'đ',value:target[field],identity:signature(identity),target,field});};
@@ -21,8 +36,8 @@ function rows(q){
  for(const e of q.deviceInstallations||[]){if(e.mode==='unit')add(e,'rate','device-rate:'+e.id,e.work+' / '+e.location,'đ / thiết bị',[e.id,e.nodeId,e.variant,e.work,e.location,e.mode]);if(e.mode==='percent'&&e.basis==='declared-total')add(e,'deviceTotal','device-base:'+e.id,e.work+' / tổng giá trị thiết bị','đ / toàn phạm vi',[e.id,e.nodeId,e.variant,e.work,e.location,e.totalQuantity]);}
  for(const field of ['incoming','outgoing','delivery','install'])add(q.pricing,field,'quote:'+field,'Khoản chung / '+field,'đ / báo giá',[field]);
  for(const t of q.pricing?.tmcTables||[]){for(const [i,b]of (t.tiers||[]).entries())add(b,'price','tmc:'+t.id+':'+i,'TMC / '+t.name+' / bậc '+(i+1),t.unit,[t.id,t.unit,i,b.max,t.thresholdMode]);for(const field of ['ancillary','common'])if(t[field]?.kind==='fixed')add(t[field],'value','tmc:'+t.id+':'+field,'TMC / '+t.name+' / '+field,t.unit,[t.id,t.unit,field]);}for(const r of out)if(r.key.startsWith('tmc:'))r.tmcOnly=true;
- const labor=q.pricing?.tmcLaborOperation;for(const [id,b] of [['default',labor?.default],...Object.entries(labor?.tables||{})]){if(!b||b.choice==='table-factors')continue;const option=b.choice?.startsWith('option:')?b.rate.priceOptions?.find(x=>x.id===b.choice.slice(7)):null,target=option||b.rate;add(target,'inside','tmc:operation:'+id+':'+b.choice,'TMC / công trọn gói / '+b.rate.name+(option?' / '+option.name:''),target.insideUnit||target.unit,[id,b.rate.id,b.choice,target.insideUnit||target.unit,target.fixedScope]);out.at(-1).tmcOnly=true;}
- return out;
+ const labor=q.pricing?.tmcLaborOperation;for(const [id,b] of [['default',labor?.default],...Object.entries(labor?.tables||{})]){if(!b||b.choice==='table-factors')continue;const choice=b.choice||'catalog',option=choice.startsWith('option:')?b.rate.priceOptions?.find(x=>x.id===choice.slice(7)):null,target=option||b.rate;add(target,'inside','tmc:operation:'+id+':'+choice,'TMC / công trọn gói / '+b.rate.name+(option?' / '+option.name:''),target.insideUnit||target.unit,[id,b.rate.id,b.choice,target.insideUnit||target.unit,target.fixedScope]);out.at(-1).tmcOnly=true;}
+ const activeTmc=tmcSources(q);return out.filter(r=>!r.tmcOnly||activeTmc.has(r.key));
 }
 function state(q,row){const d=q.costPriceSources?.[row.key],known=!!d&&d.identity===row.identity&&valid(d.net)&&valid(row.value)&&Number(d.net)===Number(row.value)&&['excluded','included'].includes(d.status)&&valid(d.original)&&(d.status!=='included'||valid(d.rate)&&Number(d.rate)<=100)&&Number(d.net)===Number(d.original)/(d.status==='included'?1+Number(d.rate)/100:1);return {known,record:d||null,status:known?d.status:'unknown'};}
 function view(q){return rows(q).map(r=>({key:r.key,label:r.label,unit:r.unit,value:r.value,identity:r.identity,tmcOnly:!!r.tmcOnly,...state(q,r)}));}

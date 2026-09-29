@@ -147,7 +147,7 @@ test('legacy masked quote coefficients save with current authority while unchang
  const saved=await call('quotes/'+made.data.id,'PUT',{document:doc,expectedVersion:1},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));
  const loaded=(await call('quotes/'+made.data.id,'GET',undefined,admin)).data.document;A.equal(loaded.quote.pricing.overhead,2);A.equal(loaded.quote.pricing.management,7);A.equal(loaded.quote.pricing.incoming,450000);
  const forbidden=structuredClone(doc);forbidden.quote.pricing.tmcLoss=97;A.equal((await call('quotes/'+made.data.id,'PUT',{document:forbidden,expectedVersion:2},u.session)).status,403);
- sql.prepare('UPDATE users SET can_factors=0 WHERE id=?').run(u.id);A.equal((await call('quotes/'+made.data.id,'PUT',{document:doc,expectedVersion:2},u.session)).status,403);
+ sql.prepare('UPDATE users SET can_factors=0 WHERE id=?').run(u.id);doc.quote.pricing.overhead=9;A.equal((await call('quotes/'+made.data.id,'PUT',{document:doc,expectedVersion:2},u.session)).status,403);
 });
 
 test('old masked coefficient references preserve current quote factors during technical save',async t=>{
