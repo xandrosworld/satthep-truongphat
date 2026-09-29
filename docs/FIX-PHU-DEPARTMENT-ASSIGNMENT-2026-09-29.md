@@ -30,3 +30,22 @@ bố trí nhân viên vào vị trí. Không tự thêm Huấn, Hanh, Trung vào
 Việc ghi cấu hình có lịch sử cơ cấu, lịch sử quyền và audit. Nhân viên do
 anh Hợp bố trí vào vị trí; người không thuộc cơ cấu không tự xuất hiện chỉ
 vì có quyền kỹ thuật.
+
+## Kết quả trên web thật
+
+- Runtime `30d4a0e` đã đẩy GitHub và triển khai Vietnix, container healthy.
+- Cấu hình ghi tại cơ cấu phiên bản 93: bật quản lý vị trí Trưởng phòng kỹ
+  thuật; thêm `quotes.assign` vào bộ quyền vị trí và tài khoản Phú; đồng bộ
+  `work_roles` và nhóm giao việc. Không thay vị trí nhân viên hoặc quyền khác.
+- Trình duyệt truy cập HTTPS bằng phiên kiểm tra ngắn hạn của Phú: nút giao
+  việc hiện trên BG-20260923-003; danh sách đúng phạm vi cơ cấu; phần giá và
+  trạng thái toàn báo giá bị khóa trong form.
+- Báo giá QA riêng: lưu người phụ trách đã thiết lập, tải lại và bỏ phân công
+  thành công, kiểm tra giao diện điện thoại; API từ chối giao ngoài phòng,
+  giao phần giá hoặc đổi trạng thái toàn báo giá. Không gửi thông báo thử
+  đến nhân viên. Luồng giao mới và thông báo đã kiểm thử trên môi trường local.
+- Đã xóa báo giá QA và thu hồi phiên kiểm tra. Báo giá khách hàng vẫn phiên
+  bản 20, nháp; không ghi thay đổi phân công vào báo giá này.
+- Đối chiếu sau cùng cơ cấu phiên bản 96: các phiên bản 94–96 do Admin cập
+  nhật trong lúc kiểm tra; quyền quản lý và giao việc của Phú vẫn giữ đúng.
+  Không ghi đè các cập nhật đồng thời của Admin.
