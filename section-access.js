@@ -49,7 +49,20 @@ const ar=rateParts(a.ratesSnapshot),br=rateParts(b.ratesSnapshot);for(const r of
  }
  return [...bad];
 }
+// Read-only logistics are copied from the loaded revision, never from a restored
+// technical draft. The API still validates rights and optimistic concurrency.
+function retainLogistics(quote,baseline){
+ const out=JSON.parse(JSON.stringify(quote)),copy=(a,b,k)=>{if(Object.hasOwn(b||{},k))a[k]=JSON.parse(JSON.stringify(b[k]));else delete a[k];};
+ for(const k of ['expenses','purchaseSources','deviceInstallations'])copy(out,baseline,k);
+ if(out.pricing)for(const k of ['incoming','outgoing','delivery','install','expenseRates'])copy(out.pricing,baseline.pricing,k);
+ const nodes=new Map();function visit(ns,fn){for(const n of ns||[]){fn(n);visit(n.children,fn);}}visit(baseline.products,n=>nodes.set(n.id,n));
+ visit(out.products,n=>{for(const k of ['transport','install','freightIn','freightOut'])copy(n,nodes.get(n.id),k);});
+ const logisticsKey=k=>costSourceSection(k)==='logistics';
+ if(out.costPriceSources||baseline.costPriceSources){out.costPriceSources=Object.fromEntries([...Object.entries(out.costPriceSources||{}).filter(([k])=>!logisticsKey(k)),...Object.entries(baseline.costPriceSources||{}).filter(([k])=>logisticsKey(k))]);if(!Object.keys(out.costPriceSources).length&&!baseline.costPriceSources)delete out.costPriceSources;}
+ if(out.costPriceHistory||baseline.costPriceHistory){out.costPriceHistory=[...(out.costPriceHistory||[]).filter(x=>!logisticsKey(x.key||'')),...(baseline.costPriceHistory||[]).filter(x=>logisticsKey(x.key||''))];if(!out.costPriceHistory.length&&!baseline.costPriceHistory)delete out.costPriceHistory;}
+ return out;
+}
 const draftSections=['customer','materials','logistics','factors','commercial','manage'];
 function correctionSections(status,sections){return ['draft','submitted'].includes(status)?[...new Set([...sections,...draftSections.filter(k=>!['customer','manage'].includes(k))])]:sections;}
-const api={permissionGroups,draftSections,correctionSections,costSourceSection,modeLabels,parseModes,modes,labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
+const api={retainLogistics,permissionGroups,draftSections,correctionSections,costSourceSection,modeLabels,parseModes,modes,labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

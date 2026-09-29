@@ -1,0 +1,14 @@
+const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs');
+(async()=>{const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({channel:'msedge',headless:true});try{
+ const p=await browser.newPage();await p.goto('http://127.0.0.1:'+app.server.address().port);await p.waitForFunction(()=>Team.available);
+ const id=await p.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password:'Logistics-save-test-2026!'}));const d=TPPrice.demoSeed();d.quote.products=[{id:'product',kind:'product',name:'Technical save',qty:2,children:[],ops:[],transport:123,install:456}];const q=await teamApi('quotes','POST',{document:d});await teamApi('users','POST',{username:'tech',name:'Technical',password:'Logistics-save-test-2026!',role:'estimator',sections:['bom','operations']});teamSession(await teamApi('login','POST',{username:'tech',password:'Logistics-save-test-2026!'}));await teamLoad(q.id);tab='bom';UX.mode='quick';render();window.baselineLogistics=C.copy(db.quote);return q.id;});
+ // Simulate a restored old tab carrying unrelated logistics changes.
+ await p.evaluate(()=>{db.quote.expenses=[{id:'old',rate:999}];db.quote.pricing.incoming=999;db.quote.products[0].transport=999;});
+ await p.locator('[data-action=add-material][data-parent=product]').click();await p.locator('[data-basket-id="PH-H402"]').check();await p.locator('#dialog button[type=submit]').click();await expect(p.locator('#dialog')).not.toBeVisible();
+ await p.evaluate(()=>teamSave());expect(await p.evaluate(()=>Team.dirty)).toBe(false);expect(await p.evaluate(()=>db.quote.products[0].transport)).toBe(123);
+ await p.evaluate(id=>teamLoad(id),id);expect(await p.evaluate(()=>db.quote.products[0].children.length)).toBe(1);expect(await p.evaluate(()=>db.quote.expenses)).toEqual(await p.evaluate(()=>baselineLogistics.expenses));expect(await p.evaluate(()=>db.quote.pricing.incoming)).toBe(await p.evaluate(()=>baselineLogistics.pricing.incoming));
+ // An explicit forbidden edit is still rejected by UI and API.
+ expect(await p.evaluate(()=>{try{mutation(()=>db.quote.products[0].transport=999);return '';}catch(e){return e.message;}})).toContain('Vận chuyển');
+ expect(await p.evaluate(async id=>{const r=await teamApi('quotes/'+id);r.document.quote.products[0].transport=999;try{await teamApi('quotes/'+id,'PUT',{document:r.document,expectedVersion:r.version});return '';}catch(e){return e.message;}},id)).toContain('Vận chuyển');
+ console.log('PASS technical logistics isolation: restored draft, add material, save, reload, UI/API denial');
+ }finally{await browser.close();app.server.closeAllConnections();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
