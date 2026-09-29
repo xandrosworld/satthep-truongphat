@@ -20,3 +20,11 @@ Các đề nghị mới dùng chung danh mục căn cứ: báo giá, đơn hàng
 - `npm run build`, `git diff --check`: đạt.
 
 Các fixture tài khoản trong kiểm thử service/material đã chuyển sang quy trình khai báo–duyệt nhân sự–bố trí vị trí–tạo tài khoản hiện hành.
+
+## Triển khai và kiểm tra web thật
+
+- Runtime `ccf346f` đã đẩy lên GitHub và triển khai tại `https://truongphat-group.xyz`; sao lưu trước triển khai, container `healthy`, `/healthz` trả `ok`.
+- HTML trên web khớp hoàn toàn bản build đã kiểm thử (sau chuẩn hóa xuống dòng).
+- Playwright trên web thật: mở biểu mẫu cấp vật tư; đối chiếu người đề nghị với tài khoản; chọn phòng và mã đơn hàng; từ đơn hàng mở đề nghị mua với căn cứ điền sẵn; từ lệnh sản xuất mở đề nghị nhân lực; kiểm tra màn hình 390px. Không gửi đề nghị, không ghi dữ liệu nghiệp vụ.
+- Chưa có hợp đồng trong danh sách nguồn của web thật để kiểm tra trực tiếp. Nhánh hợp đồng đã kiểm tra bằng hồ sơ cục bộ, gồm nút trên hồ sơ, điền sẵn và phân bổ chi phí mua về hợp đồng/đơn hàng.
+- Phiên kiểm tra tạm đã thu hồi và tệp xác thực đã xóa.
