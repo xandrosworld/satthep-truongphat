@@ -22,5 +22,6 @@ test('permission source switches preserve direct rights and survive organization
  A.equal((await call('users/'+users.worker.id+'/access','POST',{role:'technical',sections:['bom'],technicalDelegation:true},admin)).status,200);
  res=await call(route,'POST',{employeeId:employee.id,source:'position',expectedVersion:state.version},admin);A.equal(res.status,200,JSON.stringify(res.data));state=(await call('organization','GET',undefined,admin)).data;
  A.equal(state.employees.find(e=>e.id===employee.id).managed,true);A.ok(JSON.parse(app.sql.prepare('SELECT section_access FROM users WHERE id=?').get(users.worker.id).section_access).operations);
+ A.equal((await save(state,{preserveDirectEmployeeId:employee.id})).status,409,'repair cannot silently turn an already managed account into direct rights');
  const adminEmployee=state.employees.find(e=>e.userId===admin.data.user.id);A.equal((await call(route,'POST',{employeeId:adminEmployee.id,source:'position',expectedVersion:state.version},admin)).status,400);
 });
