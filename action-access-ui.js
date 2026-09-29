@@ -1,5 +1,5 @@
 'use strict';
-function actionLabel(key,a){return key==='accounts'&&a==='activate'?'Khóa / mở tài khoản':key==='accounts'&&a==='assign'?'Cấp quyền':TPActionAccess.labels[a];}
+function actionLabel(key,a){if(key==='serviceRequests')return a==='create'?'Lập đề nghị':'Xem đề nghị liên quan';return key==='accounts'&&a==='activate'?'Khóa / mở tài khoản':key==='accounts'&&a==='assign'?'Cấp quyền':TPActionAccess.labels[a];}
 function actionUser(){return {...Team.user,actionAccess:Team.permissions?.actionAccess};}
 function actionCan(key,action,legacy=true){return !Team.user||TPActionAccess.allows(actionUser(),key,action,legacy);}
 function actionFields(user){const explicit=TPActionAccess.explicit(user),grants=explicit?TPActionAccess.parse(user.action_access??user.actionAccess):TPActionAccess.legacy({role:user.role,sectionModes:TPSectionAccess.modes(user),sections:TPSectionAccess.sections(user)});
