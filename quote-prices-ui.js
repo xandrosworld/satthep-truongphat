@@ -72,6 +72,7 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-material-scope]
 async function inRefreshFactorRights(session){
  const actor=Team.user?.id;
  if(!actor||session.user?.id!==actor)throw Error('Phiên đăng nhập đã đổi; cần đăng nhập lại đúng tài khoản. Nội dung đang nhập vẫn được giữ.');
+ Team.expired=false;const recovery=document.querySelector('#team-session-resume');if(recovery){recovery.close();recovery.remove();}
  const remask=!!Team.permissions?.factorsHidden!==!!session.permissions.factorsHidden;
  Team.csrf=session.csrf;
  // Reload server values when visibility changes: masked zeros must never
@@ -90,7 +91,7 @@ document.addEventListener('click',async e=>{
  catch(error){
   if(error.status!==401){toast(error.message);return;}
   const actor=Team.user?.id,username=Team.user?.username;
-  teamDialog('Đăng nhập lại để cập nhật quyền',`<p>Quyền hoặc phiên đăng nhập đã thay đổi. Đăng nhập lại tài khoản ${esc(username)}; giữ báo giá đang làm.</p>${field('Mật khẩu','password','','password','required autocomplete="current-password"')}`,'Đăng nhập và cập nhật quyền',async f=>{
+  teamDialog('Đăng nhập lại để cập nhật quyền',`<p data-factor-reauth>Quyền hoặc phiên đăng nhập đã thay đổi. Đăng nhập lại tài khoản ${esc(username)}; giữ báo giá đang làm.</p>${field('Mật khẩu','password','','password','required autocomplete="current-password"')}`,'Đăng nhập và cập nhật quyền',async f=>{
    const session=await teamApi('login','POST',{username,password:f.get('password')});
    if(Team.user?.id!==actor)throw Error('Tài khoản đang làm việc đã đổi.');
    await inRefreshFactorRights(session);closeDialog();

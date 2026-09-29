@@ -8,7 +8,7 @@ function installSectionAccessUI(){
  const actor=Team.user?.id,sessionRequest=new XMLHttpRequest();sessionRequest.open('GET','/api/me',false);sessionRequest.send();const session=JSON.parse(sessionRequest.responseText);
  if(sessionRequest.status!==200||!actor||session.user?.id!==actor)throw Error('Phiên đăng nhập đã đổi. Nội dung đang nhập vẫn được giữ; đăng nhập lại đúng tài khoản.');
  Team.csrf=session.csrf;const retry=new XMLHttpRequest();retry.open('POST','/api/access/calculate',false);retry.setRequestHeader('Content-Type','application/json');retry.setRequestHeader('X-CSRF-Token',Team.csrf);retry.send(payload);data=TPFormulaAccess.unwrap(JSON.parse(retry.responseText));if(retry.status!==200)throw Error(data.error||'Không tính được dữ liệu bảo vệ');
- }else if(xhr.status!==200)throw Error(data.error||'Không tính được dữ liệu bảo vệ');if(cache.size>30)cache.clear();cache.set(Team.csrf+payload,data);return C.copy(data);};
+ }else if(xhr.status!==200){if(xhr.status===401&&typeof teamExpireSession==='function')teamExpireSession();throw Error(data.error||'Không tính được dữ liệu bảo vệ');}if(cache.size>30)cache.clear();cache.set(Team.csrf+payload,data);return C.copy(data);};
 
  const dialogBefore=openDialog;openDialog=(...args)=>{const value=dialogBefore(...args);sectionMatrixRefresh();return value;};
  document.addEventListener('change',e=>{if(e.target.matches('[data-section-choice]')){const select=$('#dialog-form').querySelector('[data-section-mode="'+e.target.dataset.sectionChoice+'"]');select.value=e.target.value;}if(e.target.closest('#dialog-form'))queueMicrotask(sectionMatrixRefresh);});
