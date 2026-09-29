@@ -28,7 +28,7 @@ function createPersonnel({sql,fail,readBody,transaction,audit,get,validate,apply
    if(route==='/api/personnel/editors'){if(!admin(user))fail(403,'Chỉ quản trị được phân quyền nhân sự');if(!Array.isArray(b.ids)||b.ids.some(id=>!sql.prepare('SELECT 1 FROM users WHERE id=? AND active=1 AND deleted_at IS NULL').get(id)))fail(400,'Tài khoản phụ trách không hợp lệ');d.personnelEditors=[...new Set(b.ids)];audit(user,'personnel:editors','1');return save(d,user);}
    if(route==='/api/personnel/submit'){
     const old=b.employeeId?d.employees.find(e=>e.id===b.employeeId):null;if(b.employeeId&&!old)fail(404,'Không tìm thấy nhân sự');
-    const e=record(b.employee,old,d);if(d.employees.some(x=>x.id!==e.id&&x.code.toLocaleLowerCase('vi')===e.code.toLocaleLowerCase('vi')))fail(409,'Mã nhân sự đã tồn tại');
+    if(JSON.stringify(b.employee?.positionIds||[])!==JSON.stringify(old?.positionIds||[]))fail(409,'Bố trí vị trí tại Cơ cấu tổ chức sau khi hồ sơ được duyệt');const e=record({...b.employee,positionIds:old?.positionIds||[]},old,d);if(d.employees.some(x=>x.id!==e.id&&x.code.toLocaleLowerCase('vi')===e.code.toLocaleLowerCase('vi')))fail(409,'Mã nhân sự đã tồn tại');
     if(d.personnelRequests.some(r=>r.status==='pending'&&r.kind==='profile'&&r.employeeId===e.id))fail(409,'Hồ sơ này đang chờ duyệt');
     d.personnelRequests.push({id:randomUUID(),kind:'profile',employeeId:e.id,employee:e,before:old||null,status:'pending',actorId:user.id,actor:user.name,at:new Date().toISOString()});audit(user,'personnel:submit',e.id);return save(d,user);
    }
@@ -42,7 +42,7 @@ function createPersonnel({sql,fail,readBody,transaction,audit,get,validate,apply
      if(!admin(user)&&(r.kind==='activation'||JSON.stringify(r.employee?.positionIds||[])!==JSON.stringify(r.before?.positionIds||[])||r.before?.userId&&r.employee.active!==r.before.active))fail(403,'Thay đổi vị trí, trạng thái tài khoản và kích hoạt cần quản trị duyệt');
      if(r.kind==='profile'){
       const old=d.employees.find(e=>e.id===r.employeeId);if(JSON.stringify(old||null)!==JSON.stringify(r.before))fail(409,'Hồ sơ gốc đã thay đổi; từ chối để khai lại trên bản mới');
-      const e=record(r.employee,old,d);if(old)d.employees=d.employees.map(x=>x.id===e.id?e:x);else d.employees.push(e);
+      const e=record(r.employee,old,d);if(!old)e.id=r.employeeId;if(d.employees.some(x=>x.id!==e.id&&x.code.toLocaleLowerCase('vi')===e.code.toLocaleLowerCase('vi')))fail(409,'Mã nhân sự đã tồn tại');if(old)d.employees=d.employees.map(x=>x.id===e.id?e:x);else d.employees.push(e);
       const checked=validate(d,get());apply(checked,user);d.employees=checked.employees;
      }else{
       const e=d.employees.find(e=>e.id===r.employeeId);if(!e||!e.active||e.userId||!e.positionIds.length)fail(409,'Nhân sự cần bố trí vị trí, đang làm việc và chưa có tài khoản');const rights=effective(d,e);if(!rights.roleTemplateIds.length)fail(400,'Vị trí cần bộ quyền hoạt động');
