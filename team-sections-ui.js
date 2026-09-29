@@ -23,6 +23,7 @@ function installSectionAccessUI(){
   if(Team.loaded&&scope&&!rights.sections.includes(scope)){
    $('#content').insertAdjacentHTML('afterbegin',page==='quote'&&tab==='prices'&&Intake.priceTab==='operations'&&rights.sections.includes('materials')?'<div class="notice">Bạn được cập nhật đơn giá cơ sở và đơn vị giá. Công việc, định mức và hệ số kỹ thuật chỉ được xem theo quyền tài khoản.</div>':`<div class="notice">Bạn đang xem phần <strong>${esc(TPSectionAccess.labels[scope])}</strong>. Tài khoản chưa được cấp quyền sửa phần này.</div>`);
    $('#content').querySelectorAll('input,select,textarea').forEach(el=>el.disabled=true);
+   if(scope==='logistics')$('#content').querySelectorAll('[data-ql="choose"],[data-ql-batch],[data-work="expense"],[data-work="delete-expense"],[data-work="suppliers"],[data-work="convert-expenses"]').forEach(el=>el.disabled=true);
   }
   if(!rights.reopen)document.querySelectorAll('[data-team="reopen"],[data-team="restore-version"]').forEach(el=>el.hidden=true);
   if(!rights.manage)document.querySelectorAll('[data-team="submit"],[data-team="order"],[data-access="new-document"]').forEach(el=>el.hidden=true);
