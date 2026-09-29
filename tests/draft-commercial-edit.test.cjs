@@ -29,3 +29,23 @@ test('draft price remains editable within BOM-only correction, and legacy techni
  f.set(f.worker);let doc=(await call(path)).data.document;doc.quote.pricing.profit=0.19;doc.quote.ratesSnapshot[0].inside+=200;doc.quote.notes='Offer';
  r=await call(path,'PUT',{document:doc,expectedVersion:v,reason:'Điều chỉnh giá'});assert.equal(r.status,200,JSON.stringify(r.data));assert.equal((await call(path+'/handoff')).data.technical.current,true);
 });
+
+test('factor department saves after handoff and pending request, but cannot edit prices or an approved quote',async t=>{
+ const f=await fixture(t),{call}=f,SA=require('../section-access.js'),d=P.demoSeed();d.quote.remnantMode='all';
+ const q=(await call('quotes','POST',{document:d})).data,path='quotes/'+q.id;let v=q.version;
+ for(const stage of ['intake','technical','materials'])assert.equal((await call(path+'/handoff/'+stage,'POST',{expectedVersion:v})).status,200);
+ let r=await call('users','POST',{username:'factors',name:'Factors only',role:'estimator',canViewCosts:true,canApprove:false,canEditFactors:true,sectionModes:Object.fromEntries(SA.keys.map(k=>[k,k==='factors'?'configure':'view'])),password:'Corrections-2026!'});assert.equal(r.status,201,JSON.stringify(r.data));
+ f.set(await call('login','POST',{username:'factors',password:'Corrections-2026!'}));
+ r=await call(path+'/corrections','POST',{action:'request',expectedVersion:v,sections:['factors'],reason:'Legacy pending request'});assert.equal(r.status,200,JSON.stringify(r.data));
+ for(const status of ['draft','submitted']){
+  // Set only workflow state in this isolated fixture: test the save boundary independently of release prerequisites.
+  f.app.sql.prepare('UPDATE quotes SET status=? WHERE id=?').run(status,q.id);
+  let doc=(await call(path)).data.document;doc.quote.pricing.overhead+=1;
+  r=await call(path,'PUT',{document:doc,expectedVersion:v,reason:'Factor adjustment'});assert.equal(r.status,200,JSON.stringify(r.data));v=r.data.version;
+  doc=(await call(path)).data.document;doc.quote.pricing.delivery+=1;
+  r=await call(path,'PUT',{document:doc,expectedVersion:v,reason:'Cross-scope write'});assert.equal(r.status,403,JSON.stringify(r.data));
+ }
+ f.app.sql.prepare("UPDATE quotes SET status='approved' WHERE id=?").run(q.id);
+ const doc=(await call(path)).data.document;doc.quote.pricing.overhead+=1;
+ r=await call(path,'PUT',{document:doc,expectedVersion:v,reason:'Requires reopening'});assert.equal(r.status,409,JSON.stringify(r.data));
+});

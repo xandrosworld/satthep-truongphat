@@ -1,6 +1,7 @@
 (function(root){
 'use strict';
 const labels={customer:'Đầu vào báo giá / khai báo khách hàng',bom:'Cấu thành, kích thước và hao hụt',operations:'Nguyên công và định mức',materials:'Giá vật tư',logistics:'Vận chuyển và lắp đặt',factors:'Hệ số tác động',commercial:'Giá chào, thuế và lịch sử gửi',manage:'Tạo và trình báo giá',catalogMaterials:'Danh mục vật tư',catalogTechnicalOperations:'Danh mục công đoạn kỹ thuật (không gồm giá)',catalogOperations:'Đơn giá nguyên công và nhóm sản phẩm',catalogLogistics:'Bảng giá vận chuyển, lắp đặt',catalogRules:'Danh mục quy ước và công thức',catalogLibrary:'Thư viện mẫu'};
+const permissionGroups=[{label:'1. Đầu vào báo giá',keys:['customer']},{label:'2. Khai báo kỹ thuật',keys:['bom','operations']},{label:'3. Khai báo giá',keys:['materials','logistics']},{label:'4. Hệ số và phân tích giá',keys:['factors','commercial','manage']}];
 const keys=Object.keys(labels),catalogKeys=keys.filter(k=>k.startsWith('catalog'));
 const modeLabels={configure:'Bổ sung / cài đặt trước khi khóa',use:'Sử dụng / vận hành',view:'Chỉ xem',none:'Không được xem'};
 function parseModes(value){if(value==null)return null;const x=typeof value==='string'?JSON.parse(value):value;if(!x||Array.isArray(x)||typeof x!=='object'||Object.entries(x).some(([k,v])=>!keys.includes(k)||!Object.hasOwn(modeLabels,v)))throw Error('Cấp độ quyền không hợp lệ');return Object.fromEntries(keys.map(k=>[k,x[k]||'none']));}
@@ -50,5 +51,5 @@ const ar=rateParts(a.ratesSnapshot),br=rateParts(b.ratesSnapshot);for(const r of
 }
 const draftSections=['customer','materials','logistics','factors','commercial','manage'];
 function correctionSections(status,sections){return ['draft','submitted'].includes(status)?[...new Set([...sections,...draftSections.filter(k=>!['customer','manage'].includes(k))])]:sections;}
-const api={draftSections,correctionSections,costSourceSection,modeLabels,parseModes,modes,labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
+const api={permissionGroups,draftSections,correctionSections,costSourceSection,modeLabels,parseModes,modes,labels,keys,catalogKeys,parse,sections,denied,equal};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.TPSectionAccess=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
