@@ -2,7 +2,21 @@
 'use strict';
 const Team={available:false,configured:false,user:null,permissions:null,csrf:'',link:null,loaded:false,local:null,dirty:false};
 const teamButton=(label,action,attrs='',style='')=>`<button type="button" class="button ${style}" data-team="${action}" ${attrs}>${label}</button>`;
-async function teamApi(route,method='GET',data){const response=await fetch('/api/'+route,{method,credentials:'same-origin',headers:{...(data!==undefined?{'Content-Type':'application/json'}:{}),...(method!=='GET'?{'X-CSRF-Token':Team.csrf}:{})},body:data===undefined?undefined:JSON.stringify(data)});const value=window.TPFormulaAccess?TPFormulaAccess.unwrap(await response.json()):await response.json();if(!response.ok){const error=Error(value.error||'Không kết nối được máy chủ');error.status=response.status;error.recovery=value.recovery;throw error;}return value;}
+async function teamApi(route,method='GET',data){
+ const actor=Team.user?.id;
+ for(let attempt=0;attempt<2;attempt++){
+  const response=await fetch('/api/'+route,{method,credentials:'same-origin',headers:{...(data!==undefined?{'Content-Type':'application/json'}:{}),...(method!=='GET'?{'X-CSRF-Token':Team.csrf}:{})},body:data===undefined?undefined:JSON.stringify(data)});
+  const value=window.TPFormulaAccess?TPFormulaAccess.unwrap(await response.json()):await response.json();
+  if(response.ok)return value;
+  if(!attempt&&actor&&response.status===403&&String(value.error).startsWith('Phiên yêu cầu không hợp lệ')){
+   const res=await fetch('/api/me',{credentials:'same-origin'}),session=await res.json();
+   if(!res.ok||session.user?.id!==actor||Team.user?.id!==actor)throw Error('Phiên đăng nhập đã đổi. Nội dung đang nhập vẫn được giữ; đăng nhập lại đúng tài khoản trước khi lưu.');
+   Team.csrf=session.csrf;continue;
+  }
+  const error=Error(value.error||'Không kết nối được máy chủ');error.status=response.status;error.recovery=value.recovery;throw error;
+ }
+}
+
 function teamDialog(title,body,label,handler){openDialog(title,body,label,f=>{const submit=$('#dialog button[type=submit]');submit.disabled=true;Promise.resolve().then(()=>handler(f)).catch(e=>{if($('#dialog').open){$('#dialog-error').hidden=false;$('#dialog-error').textContent=e.message;}else toast(e.message);}).finally(()=>{if(submit.isConnected)submit.disabled=false;});});}
 function teamSession(value){Team.sessionGeneration=(Team.sessionGeneration||0)+1;Object.assign(Team,value);if(typeof pushResume==='function')pushResume();const button=$('#team-entry');if(button)button.textContent=Team.user?Team.user.name+' · Máy chủ':'Đăng nhập dùng chung';}
 function teamLogin(){teamDialog(Team.configured?'Đăng nhập dùng chung':'Khởi tạo quản trị dùng chung',`<p>${Team.mode==='https-proxy'?'Máy chủ dùng chung qua kết nối HTTPS.':'Máy chủ dùng thử chạy tại máy này.'} Tài khoản đầu tiên là quản trị; không có mật khẩu mặc định.</p>${!Team.configured&&Team.setupKeyRequired?field('Mã khởi tạo do người vận hành cấp','setupKey','','password','required autocomplete="off"'):''}${field('Tài khoản không dấu','username','','text','required autocomplete="username" minlength="3" maxlength="64"')}${!Team.configured?field('Họ tên','name','','text','required'):''}${field('Mật khẩu'+(!Team.configured?' (ít nhất 12 ký tự)':''),'password','','password',`required autocomplete="${Team.configured?'current-password':'new-password'}" ${Team.configured?'':'minlength="12"'}`)}`,Team.configured?'Đăng nhập':'Tạo quản trị',async f=>{const value=await teamApi(Team.configured?'login':'setup','POST',Object.fromEntries(f));Team.configured=true;teamSession(value);closeDialog();render();if(!await teamOpenRequestedQuote()&&!$('[data-home-results]'))await teamList();});}
