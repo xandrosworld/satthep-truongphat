@@ -12,12 +12,15 @@ const {chromium,expect}=require('@playwright/test'),{createApp}=require('../serv
  await p.locator('[data-me=proposal]').click();
  // Open through the same preset button as the reported screenshot.
  await p.locator('[data-me=nesting-preset][data-mode=bounding]').first().click();
- await expect(p.locator('[name=npEditing]')).toBeVisible();await expect(p.locator('#np-seed')).toBeVisible();expect(await p.locator('[name=npMode] option').count()).toBe(2);
+ await expect(p.locator('[name=npEditing]')).toBeVisible();await expect(p.locator('#np-seed')).toBeVisible();expect(await p.locator('[name=npMode] option').count()).toBe(4);
+ await p.locator('[data-np-compare] summary').click();await p.locator('[data-np-choice=length-desc]').click();await expect(p.locator('[name=npMode]')).toHaveValue('length-desc');await expect(p.locator('#np-result')).toHaveAttribute('data-valid','true');
+ await p.locator('#dialog button[type=submit]').click();await p.evaluate(()=>teamSave());await p.waitForFunction(()=>!Team.dirty&&!Team.savePending);await p.evaluate(id=>teamLoad(id),id);expect(await p.evaluate(()=>db.quote.nestingPlans[0].mode)).toBe('length-desc');
+ await p.evaluate(()=>meNesting(0));await expect(p.locator('[name=npMode]')).toHaveValue('length-desc');await p.locator('[name=npMode]').selectOption('bounding');
  await p.locator('#np-seed').click();await expect(p.locator('#np-result')).toHaveAttribute('data-valid','true');expect(await p.locator('[data-np-stock]').count()).toBe(20);
  await p.locator('[data-np-page="1"]').click();await expect(p.locator('[data-np-stock="20"]')).toBeVisible();
  await p.locator('[name=npSelected]').selectOption('3599');expect(await p.locator('[data-np-stock]').count()).toBeLessThanOrEqual(20);
  await p.locator('[name=npSelected]').selectOption('0');await expect(p.locator('[data-np-stock="0"]')).toBeVisible();
- const count=await p.evaluate(()=>result.groups[0].layout.stocks.length);
+ const count=await p.evaluate(()=>{const g=result.groups[0];return TPNestingPlan.auto(g.rows,g.spec,Number(db.quote.kerf),'bounding').stocks.length;});
  await p.locator('[name=npStock]').fill(String(count+1));await p.locator('[name=npStock]').dispatchEvent('change');
  for(const name of ['npX','npY']){await p.locator('[name='+name+']').fill('0');await p.locator('[name='+name+']').dispatchEvent('change');}
  await p.locator('[name=npAngle]').fill('0');await p.locator('[name=npAngle]').dispatchEvent('change');await p.locator('[data-np-turn="90"]').click();await expect(p.locator('#np-result')).toHaveAttribute('data-valid','true');

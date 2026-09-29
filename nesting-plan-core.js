@@ -2,7 +2,7 @@
 (function(root){'use strict';
 const C=typeof module!=='undefined'?require('./core.js'):root.TP;
 const maxManualPieces=10000;
-const modes=['bounding','bounding-fixed','circle','right-triangle'];
+const modes=['bounding','bounding-fixed','length-desc','area-desc','circle','right-triangle'];
 const ids=rows=>rows.map(r=>r.id).sort();
 function fingerprint(rows,spec,kerf){return JSON.stringify([spec.id,spec.shape,spec.stockL,spec.stockW,Number(kerf),rows.map(r=>[r.id,r.count,r.geometry.length,r.geometry.width,r.geometry.blankArea,...(r.geometry.polygon?[r.geometry.polygon]:[])]).sort((a,b)=>a[0].localeCompare(b[0]))]);}
 // Accept only the former two-face area fingerprint; every physical input stays identical.
@@ -38,10 +38,10 @@ function choice(rows,spec,mode){
   if(mode==='circle'&&Math.abs(g.length-g.width)>1e-7||Math.abs(area-expected)>Math.max(1e-5,expected*1e-8))throw Error('Hình dạng/diện tích phôi không khớp cách xếp đã chọn');
   if(mode==='right-triangle'&&spec.shapeDefinition?.nesting!=='right-triangle'&&!rightTriangle(g))throw Error('Chỉ ghép cặp quy ước tam giác vuông đã khai; không suy đoán từ diện tích');
  }
- return {...spec,shapeDefinition:{...spec.shapeDefinition,nesting:mode}};
+ return {...spec,shapeDefinition:{...spec.shapeDefinition,nesting:mode==='length-desc'?'bounding-fixed':mode==='area-desc'?'bounding':mode}};
 }
 function available(rows,spec){return modes.filter(mode=>{try{choice(rows,spec,mode);return true;}catch(_){return false;}});}
-function auto(rows,spec,kerf,mode){const selected=choice(rows,spec,mode);const layout=C.nest(mode==='right-triangle'?rows.map(r=>({...r,geometry:normalizedTriangle(r.geometry)})):rows,selected,kerf);if(['bounding','bounding-fixed'].includes(mode)&&available(rows,spec).includes('circle')){for(const stock of layout.stocks)for(const p of stock.placements)p.circle=true;layout.netUsed=rows.reduce((sum,r)=>sum+r.geometry.blankArea*1e6,0);layout.contourOffcut=Math.max(0,layout.used-layout.netUsed);layout.util=layout.purchased?layout.netUsed/layout.purchased:0;}return layout;}
+function auto(rows,spec,kerf,mode){const selected=choice(rows,spec,mode);const layout=C.nest(mode==='right-triangle'?rows.map(r=>({...r,geometry:normalizedTriangle(r.geometry)})):rows,selected,kerf,mode==='length-desc'?'length-desc':mode==='area-desc'?'descending':'best');if(['bounding','bounding-fixed','length-desc','area-desc'].includes(mode)&&available(rows,spec).includes('circle')){for(const stock of layout.stocks)for(const p of stock.placements)p.circle=true;layout.netUsed=rows.reduce((sum,r)=>sum+r.geometry.blankArea*1e6,0);layout.contourOffcut=Math.max(0,layout.used-layout.netUsed);layout.util=layout.purchased?layout.netUsed/layout.purchased:0;}return layout;}
 function draft(rows,spec,kerf,mode){const layout=auto(rows,spec,kerf,mode),counts={};return layout.stocks.flatMap((s,stock)=>s.placements.map(p=>{const g=rowGeometry(rows.find(r=>r.id===p.rowId).geometry,mode);let angle=Math.abs(p.l-g.length)>1e-7?90:0;if(p.polygon){const target=p.polygon.map(([x,y])=>[x-p.x,y-p.y]);const base=outline(g),angles=[0,90,180,270,...base.flatMap((v,i)=>target.map((t,j)=>(Math.atan2(target[(j+1)%target.length][1]-t[1],target[(j+1)%target.length][0]-t[0])-Math.atan2(base[(i+1)%base.length][1]-v[1],base[(i+1)%base.length][0]-v[0]))*180/Math.PI))];angle=angles.find(a=>outline(g,a).every(v=>target.some(t=>Math.hypot(v[0]-t[0],v[1]-t[1])<1e-5)));if(angle===undefined)throw Error('Không chuyển được hướng phôi từ gợi ý');}return {rowId:p.rowId,index:counts[p.rowId]=(counts[p.rowId]??-1)+1,stock,x:p.x,y:p.y,rotate:angle===90,...(![0,90].includes(angle)?{angle}:{})};}));}
 function manual(rows,spec,kerf,mode,placements){
  choice(rows,spec,mode);
@@ -50,7 +50,7 @@ function manual(rows,spec,kerf,mode,placements){
  const total=rows.reduce((s,r)=>s+r.count,0);if(total>maxManualPieces||!Array.isArray(placements)||placements.length!==total)throw Error('Chỉnh tay cần đủ từng phôi, tối đa 10.000 phôi');
  const seen=new Set(),stocks=[],byId=new Map(rows.map(r=>[r.id,r]));let netUsed=0,used=0;
  for(const p of placements){const r=byId.get(p.rowId),key=p.rowId+':'+p.index;if(!r||!Number.isInteger(p.index)||p.index<0||p.index>=r.count||seen.has(key)||!Number.isInteger(p.stock)||p.stock<0||p.stock>=total||(p.angle===undefined?typeof p.rotate!=='boolean':!Number.isFinite(p.angle))||![p.x,p.y].every(Number.isFinite)||p.x<0||p.y<0)throw Error('Vị trí, tấm hoặc định danh phôi không hợp lệ');seen.add(key);
-  if((p.angle??(p.rotate?90:0))%360!==0&&(!sheet||mode==='bounding-fixed'))throw Error('Phương án này không cho phép xoay');
+  if((p.angle??(p.rotate?90:0))%360!==0&&(!sheet||['bounding-fixed','length-desc'].includes(mode)))throw Error('Phương án này không cho phép xoay');
   const angle=p.angle??(p.rotate?90:0),poly=sheet?outline(rowGeometry(r.geometry,mode),mode==='circle'?0:angle):null,l=sheet?Math.max(...poly.map(v=>v[0])):r.geometry.length,w=sheet?Math.max(...poly.map(v=>v[1])):0;
   if(p.x+l>stockL+1e-7||sheet&&p.y+w>stockW+1e-7||!sheet&&p.y!==0)throw Error('Phôi vượt ra ngoài khổ mua');
   const stock=stocks[p.stock]??={placements:[],free:[]};const piece={rowId:r.id,label:r.label,color:r.color,x:p.x,y:p.y,l,w,...(mode==='circle'?{circle:true}:sheet?{polygon:poly.map(([x,y])=>[p.x+x,p.y+y])}:{})};
