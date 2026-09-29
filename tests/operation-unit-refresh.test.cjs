@@ -18,3 +18,21 @@ test('price unit refresh preserves technical full/partial signatures but technic
  A.notEqual(H.fingerprints(before).technical,H.fingerprints(d).technical);
  A.notEqual(PH.signature(before,id,'technical'),PH.signature(d,id,'technical'));
 });
+
+
+test('price staff can refresh base price and unit without technical editing rights',()=>{
+ const S=require('../section-access.js'),before=fixture(),after=C.copy(before),rights={sections:['materials']};
+ I.applyOperationUnitUpdates(after,I.operationUnitUpdates(after));
+ A.deepEqual(S.denied(before,after,rights),[]);
+ A.ok(S.denied(before,after,{sections:[]}).includes('materials'));
+ A.deepEqual(S.denied(before,after,{sections:['operations']}),[]);
+ for(const alter of [
+  d=>d.quote.products[0].ops[0].quantityUnit='m',
+  d=>d.quote.ratesSnapshot[0].consumptions=[{norm:2}],
+  d=>d.quote.ratesSnapshot[0].factors=[{name:'Changed',value:2}],
+  d=>d.quote.ratesSnapshot[0].name='Another operation'
+ ]){
+  const changed=C.copy(after);alter(changed);
+  A.ok(S.denied(before,changed,rights).includes('operations'));
+ }
+});
