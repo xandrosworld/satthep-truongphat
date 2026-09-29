@@ -78,6 +78,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
     const old=id?getQuote(id):null;if(old&&old.version!==expectedVersion)fail(409,'Bản trên máy chủ đã đổi. Tải lại hoặc lưu bản sao, không ghi đè.');
     const hydrated=formulaAccess.hydrate(document,user),complexityMaster=one('SELECT document FROM catalog WHERE id=1');
     if(old)require('./quote-catalog-baseline.cjs').retainPublishedHistory(hydrated,JSON.parse(old.document),()=>all('SELECT document FROM catalog_revisions ORDER BY version DESC').map(r=>JSON.parse(r.document)));
+    if(old)require('./quote-catalog-baseline.cjs').retainReadOnlyPricing(hydrated,JSON.parse(old.document),permissions(user));
     if(old)dataAccess.retainMaskedCatalogRates(hydrated,JSON.parse(old.document),complexityMaster?JSON.parse(complexityMaster.document):null,user);
     // Older open tabs serialize the published catalogue defaults alongside quote
     // edits. Recognize only that exact server-owned value and retain the quote's

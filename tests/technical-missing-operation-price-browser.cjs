@@ -16,6 +16,7 @@ const {createApp}=require('../server/app.cjs');
    for(const suffix of ['full','partial','incomplete']){const doc=C.copy(d);doc.quote.id='QA-MISSING-PRICE-'+suffix;if(suffix==='incomplete')doc.quote.products[0].children=[];const q=await teamApi('quotes','POST',{document:doc});await teamApi('quotes/'+q.id+'/handoff/intake','POST',{expectedVersion:q.version});quotes.push(q.id);}
    await teamApi('logout','POST');teamSession(await teamApi('login','POST',{username:'tech',password:'Missing-price-test-42!'}));return {quotes,node:n.id};
   });
+  await page.evaluate(async id=>{await teamLoad(id);tab='bom';render();result.errors.push('PRICE_ONLY_SENTINEL');if(errorStrip().includes('PRICE_ONLY_SENTINEL'))throw Error('Pricing error leaked into technical BOM');},ids.quotes[0]);
   for(const [i,id]of ids.quotes.entries()){
    await page.evaluate(async id=>{await teamLoad(id);tab='operations';mutation(()=>db.quote.products[0].ops[0].workQuantity=7);render();},id);
    await page.locator('[data-team=save]').first().click();await page.waitForFunction(()=>!Team.dirty&&!Team.savePending);

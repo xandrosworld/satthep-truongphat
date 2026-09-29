@@ -18,4 +18,19 @@ function retainPublishedHistory(document,current,loadHistory){
   });
  }
 }
-module.exports={retainPublishedHistory};
+// Quote saves are not a write channel for catalog pricing outside the actor's
+// rights. Retain stored values even for mixed/stale browser catalog drafts.
+function retainReadOnlyPricing(document,current,rights){
+ if(rights.users)return;
+ const allowed=new Set(rights.sections||[]);
+ const retain=(target,source,key)=>{if(Object.hasOwn(source||{},key))target[key]=copy(source[key]);else delete target[key];};
+ if(!allowed.has('catalogOperations'))retain(document,current,'rates');
+ const section=k=>['expenseRates','incoming','outgoing','delivery','install'].includes(k)?'catalogLogistics':['factorDefinitions','salesFactors','productionFactors','overhead','management','special','profit','processing','order','reserve','customer'].includes(k)?'factors':'catalogOperations';
+ const target=document.pricingDefaults||(document.pricingDefaults={}),source=current.pricingDefaults||{};
+ for(const key of new Set([...Object.keys(target),...Object.keys(source)])){
+  const owner=section(key);
+  if(!allowed.has(owner)||owner==='factors'&&!rights.factors)retain(target,source,key);
+ }
+ if(current.pricingDefaults===undefined&&!Object.keys(target).length)delete document.pricingDefaults;
+}
+module.exports={retainPublishedHistory,retainReadOnlyPricing};
