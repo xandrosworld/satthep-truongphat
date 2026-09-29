@@ -210,3 +210,51 @@ test('historical catalogue drafts cannot roll back locked declarations during qu
  const catalog=(await call('catalog','GET',undefined,u.session)).data;catalog.catalog.rules.find(r=>r.id==='tray').width='W + 987';
  A.equal((await call('catalog','PUT',{catalog:catalog.catalog,expectedVersion:catalog.version},u.session)).status,403);
 });
+
+
+test('two independent coefficient locks protect catalogues and quote prices while authorized commercial factors stay editable',async t=>{
+ const {call,admin,create}=await harness(t),u=await create('split-editor',{canEditFactors:true,canFormulaEdit:true,sections:require('../section-access.js').keys});
+ const id=(await call('quotes','POST',{document:P.demoSeed()},admin)).data.id;
+ const lock=async(key,locked)=>{const rows=(await call('formulas/locks','GET',undefined,admin)).data,l=rows.find(r=>r.key===key);const r=await call('formulas/locks','POST',{key,locked,expectedVersion:l.version,reason:'Independent lock test'},admin);A.equal(r.status,200,JSON.stringify(r.data));};
+ await lock('calculationFactors:all',true);await lock('operationPricing:all',true);
+ const master=(await call('catalog','GET',undefined,admin)).data;
+ for(const change of [d=>d.rates[0].inside++,d=>d.rates[0].outside++,d=>d.rates[0].priceOptions=[{id:'new',name:'New',method:'unit',inside:1,outside:1,insideUnit:'kg',outsideUnit:'kg'}],d=>d.pricingDefaults.tmcTables[0].tiers[0].price++,d=>d.rates.pop()]){
+  const d=structuredClone(master.catalog);change(d);const r=await call('catalog','PUT',{catalog:d,expectedVersion:master.version},admin);A.equal(r.status,403,JSON.stringify(r.data));
+ }
+ const view=(await call('quotes/'+id,'GET',undefined,u.session)).data;
+ const price=structuredClone(view.document);price.quote.ratesSnapshot[0].inside++;
+ A.equal((await call('quotes/'+id,'PUT',{document:price,expectedVersion:view.version},u.session)).status,403);
+ const adminPrice=(await call('quotes/'+id,'GET',undefined,admin)).data.document;adminPrice.quote.ratesSnapshot[0].inside++;A.equal((await call('quotes/'+id,'PUT',{document:adminPrice,expectedVersion:view.version},admin)).status,403);
+ view.document.quote.pricing.management=7;view.document.quote.pricing.profit=12;
+ const saved=await call('quotes/'+id,'PUT',{document:view.document,expectedVersion:view.version},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));
+ A.equal((await call('quotes/'+id,'GET',undefined,admin)).data.document.quote.pricing.management,7);
+ await lock('calculationFactors:all',false);
+ let m=(await call('catalog','GET',undefined,admin)).data;m.catalog.rates[0].factors[0].tiers[0].percent++;
+ let r=await call('catalog','PUT',{catalog:m.catalog,expectedVersion:m.version},admin);A.equal(r.status,200,JSON.stringify(r.data));
+ A.equal((await call('formulas/locks','GET',undefined,admin)).data.find(x=>x.key==='operationPricing:all').locked,1);
+ await lock('calculationFactors:all',true);await lock('operationPricing:all',false);
+ m=(await call('catalog','GET',undefined,admin)).data;m.catalog.rates[0].inside++;
+ r=await call('catalog','PUT',{catalog:m.catalog,expectedVersion:m.version},admin);A.equal(r.status,200,JSON.stringify(r.data));
+ A.equal((await call('formulas/locks','GET',undefined,admin)).data.find(x=>x.key==='calculationFactors:all').locked,1);
+ A.equal((await call('formulas/locks','POST',{key:'operationPricing:all',locked:true,expectedVersion:0,reason:'stale'},admin)).status,409);
+ A.equal((await call('formulas/locks','POST',{key:'operationPricing:all',locked:false,expectedVersion:2,reason:'not authorized'},u.session)).status,403);
+});
+
+test('legacy coefficient lock migrates once preserving state and audit provenance across restarts',()=>{
+ const {DatabaseSync}=require('node:sqlite'),sql=new DatabaseSync(':memory:'),F=require('../server/formula-access.cjs');
+ try{sql.exec('CREATE TABLE users(id TEXT PRIMARY KEY,name TEXT); CREATE TABLE formula_locks(key TEXT PRIMARY KEY,locked INTEGER,version INTEGER,actor TEXT,at TEXT);');
+ sql.prepare('INSERT INTO formula_locks VALUES(?,?,?,?,?)').run('calculationFactors:all',1,7,'original-admin','2026-09-29T09:00:00Z');
+ F.createFormulaAccess({sql});let row=sql.prepare("SELECT * FROM formula_locks WHERE key='operationPricing:all'").get();A.equal(row.locked,1);A.equal(row.version,7);A.equal(row.actor,'original-admin');A.equal(row.at,'2026-09-29T09:00:00Z');
+ sql.exec("UPDATE formula_locks SET locked=0,version=8 WHERE key='operationPricing:all'");F.createFormulaAccess({sql});row=sql.prepare("SELECT * FROM formula_locks WHERE key='operationPricing:all'").get();A.equal(row.locked,0);A.equal(row.version,8);A.equal(sql.prepare("SELECT locked FROM formula_locks WHERE key='calculationFactors:all'").get().locked,1);
+ }finally{sql.close();}
+});
+
+
+test('locked operation pricing permits published additions and technical edits but rejects forged options and package prices',async t=>{
+ const {sql}=await harness(t),F=require('../server/formula-access.cjs'),master=JSON.parse(sql.prepare('SELECT document FROM catalog WHERE id=1').get().document),before=P.demoSeed();
+ const added={...structuredClone(master.rates[0]),id:'published-extra'};master.rates.push(added);sql.prepare('UPDATE catalog SET document=? WHERE id=1').run(JSON.stringify(master));
+ sql.exec("UPDATE formula_locks SET locked=1 WHERE key='operationPricing:all'");
+ const guard=F.createFormulaAccess({sql,fail:(status,message)=>{throw Object.assign(Error(message),{status});}}).guard,p={formulaUse:true,formulaEdit:true,formulaUnlock:false,factors:true};
+ const after=structuredClone(before);after.quote.ratesSnapshot.push(added);after.quote.products[0].ops[0].notes='Technical edit';A.doesNotThrow(()=>guard(before,after,p));
+ for(const change of [d=>d.quote.ratesSnapshot.at(-1).inside++,d=>d.quote.ratesSnapshot[0].outside++,d=>d.quote.pricing.tmcTables[0].tiers[0].price++,d=>d.quote.pricing.operationPriceTables=[{id:'forged',tiers:[{price:999}]}],d=>d.quote.pricing.tmcLaborOperation={default:{rate:{id:'fake',inside:999}}}]){const bad=structuredClone(after);change(bad);A.throws(()=>guard(before,bad,p),e=>e.status===403);}
+});

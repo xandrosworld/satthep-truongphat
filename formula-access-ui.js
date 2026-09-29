@@ -32,7 +32,7 @@ function formulaRightFields(user){const sections=TPSectionAccess.sections(user),
 }
 function formulaMatrixRefresh(){const form=$('#dialog-form'),only=form?.querySelector('[data-formula-view-only]');if(only)only.checked=!!form.elements.canFormulaView?.checked&&!form.elements.canFormulaEdit?.checked;}
 
-async function formulaLocks(){if(CatalogDraft.dirty)await cdSave();const rows=await teamApi('formulas/locks');openDialog('Khóa công thức và hệ số đã chốt','<p>Khóa công thức hoặc toàn bộ bảng hệ số đã lưu trên máy chủ, gồm giá trị và phạm vi áp dụng. Người được cấp quyền khóa/mở cần mở khóa trước khi chỉnh sửa hoặc xóa. Nhân viên vẫn dùng để tính và chọn mức độ công việc.</p><div class="table-scroll"><table><thead><tr><th>Công thức / hệ số</th><th>Trạng thái</th><th></th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.locked?'Đã khóa':'Chưa khóa'}</td><td>${Team.permissions.formulaUnlock?`<button type="button" class="button small" data-formula-lock="${esc(r.key)}" data-version="${r.version}" data-locked="${r.locked?0:1}">${r.locked?'Mở khóa':r.kind==='calculationFactors'?'Khóa hệ số':'Khóa công thức'}</button>`:''}</td></tr>`).join('')+'</tbody></table></div>');$('#dialog').classList.add('wide-dialog');}
+async function formulaLocks(){if(CatalogDraft.dirty)await cdSave();const rows=await teamApi('formulas/locks');openDialog('Khóa công thức và hệ số đã chốt','<p>Hai khóa độc lập: hệ số tác động tại Danh mục quy ước và hệ số đơn giá tại Nguyên công & hệ số. Hệ số chi phí chào giá ở bước 6 được sửa theo quyền, không chịu hai khóa này. Người được cấp quyền khóa/mở cần mở khóa trước khi chỉnh sửa hoặc xóa. Nhân viên vẫn dùng để tính và chọn mức độ công việc.</p><div class="table-scroll"><table><thead><tr><th>Công thức / hệ số</th><th>Trạng thái</th><th></th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.locked?'Đã khóa':'Chưa khóa'}</td><td>${Team.permissions.formulaUnlock?`<button type="button" class="button small" data-formula-lock="${esc(r.key)}" data-version="${r.version}" data-locked="${r.locked?0:1}">${r.locked?'Mở khóa':['calculationFactors','operationPricing'].includes(r.kind)?'Khóa hệ số':'Khóa công thức'}</button>`:''}</td></tr>`).join('')+'</tbody></table></div>');$('#dialog').classList.add('wide-dialog');}
 function formulaPaint(){if(!Team.user)return;if(!Team.permissions.formulaView){const walk=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);for(let n; n=walk.nextNode();)if(!['SCRIPT','STYLE'].includes(n.parentElement?.tagName)&&/__TPF_[a-f0-9]{32}/.test(n.data))n.data=n.data.replace(/__TPF_[a-f0-9]{32}/g,'[Công thức được bảo vệ]');document.querySelectorAll('[title]').forEach(el=>{if(el.title.includes('__TPF_'))el.title='Công thức được bảo vệ';});}}
 function installFormulaAccessUI(){
  document.addEventListener('change',e=>{const form=e.target.closest('#dialog-form');if(!form)return;if(e.target.matches('[data-formula-view-only]')){form.elements.canFormulaView.checked=e.target.checked;if(e.target.checked)form.elements.canFormulaEdit.checked=false;}if(e.target.name==='canFormulaEdit'&&e.target.checked)form.elements.canFormulaView.checked=true;queueMicrotask(formulaMatrixRefresh);});
@@ -40,7 +40,7 @@ function installFormulaAccessUI(){
  const api=teamApi;teamApi=(route,method='GET',data)=>{if(data&&['POST','PUT'].includes(method)&&(/^(users(?:\/[^/]+\/access)?|roles(?:\/[^/]+)?)$/.test(route))){const box=$('#dialog .formula-rights');if(box)data={...data,...Object.fromEntries(Object.keys(FORMULA_RIGHTS).map(k=>[k,!!box.querySelector('[name='+k+']')?.checked]))};}return api(route,method,data);};
  const session=teamSession;teamSession=value=>{if(!value.user||Team.user?.id!==value.user.id||Team.permissions?.formulaView!==value.permissions?.formulaView)TPFormulaAccess.clear();if(value.permissions?.formulaView===false&&Team.permissions?.formulaView!==false){CatalogDraft.record=null;CatalogDraft.dirty=false;CatalogDraft.user=null;}FormulaCatalogLocks.rows=null;FormulaCatalogLocks.at=0;session(value);};
  document.addEventListener('change',e=>{if(e.target.hasAttribute('data-access-role')){const user={role:e.target.value};for(const [key,[col]]of Object.entries(FORMULA_RIGHTS)){const el=$('#dialog [name='+key+']');if(el)el.checked=user.role==='admin'||['canFormulaUse','canFormulaView'].includes(key)||key==='canFormulaEdit'&&['estimator','technical'].includes(user.role);}}});
- const renderBefore=render;render=()=>{renderBefore();if(Team.user&&page==='rules'&&(Team.permissions.catalog||Team.permissions.formulaUnlock))$('#content .page-heading,.rc-workspace > header,.rc-workspace')?.insertAdjacentHTML('afterbegin','<div class="actions"><button type="button" class="button" data-formula-locks>Khóa công thức và hệ số</button></div>');formulaPaint();formulaCatalogPaint();if(Team.user&&page==='rules'&&Date.now()-FormulaCatalogLocks.at>5000)formulaRefreshLocks().then(formulaCatalogPaint).catch(inError);};
+ const renderBefore=render;render=()=>{renderBefore();if(Team.user&&page==='rules'&&(Team.permissions.catalog||Team.permissions.formulaUnlock))$('#content .page-heading,.rc-workspace > header,.rc-workspace')?.insertAdjacentHTML('afterbegin','<div class="actions"><button type="button" class="button" data-formula-locks>Khóa công thức và hệ số</button></div>');formulaPaint();formulaCatalogPaint();if(Team.user&&(Team.permissions.costs||Team.permissions.technical||Team.permissions.formulaUnlock)&&['rules','rates','quote'].includes(page)&&Date.now()-FormulaCatalogLocks.at>5000)formulaRefreshLocks().then(formulaCatalogPaint).catch(inError);};
  const readonly=()=>{document.querySelectorAll('#dialog input,#dialog textarea,#dialog select').forEach(el=>el.disabled=true);document.querySelectorAll('#dialog button[type=submit]').forEach(el=>el.hidden=true);$('#dialog-form').insertAdjacentHTML('afterbegin','<p class="notice">Chỉ xem công thức. Muốn sửa cần quyền Sửa công thức; công thức đã khóa cần Admin mở khóa trước.</p>');};
  const factorGuard=fn=>async(...args)=>{try{if(Team.user){const locks=await teamApi('formulas/locks');if(locks.some(r=>r.key==='calculationFactors:all'&&r.locked))return toast('Hệ số đã khóa. Chỉ Admin được mở khóa và chỉnh sửa.');}return fn(...args);}catch(e){inError(e);}};
  rcFactorEdit=factorGuard(rcFactorEdit);rcFactorRemove=factorGuard(rcFactorRemove);fmMatrix=factorGuard(fmMatrix);
@@ -52,6 +52,7 @@ function installFormulaAccessUI(){
  const rows=rcFormulaRows;rcFormulaRows=d=>Team.user&&!Team.permissions.formulaView?'<p class="notice">Công thức được bảo vệ. Bạn có thể chọn dạng cấu kiện và nhập thông số để tính khi được cấp quyền sử dụng.</p>':rows(d);
  document.addEventListener('click',e=>{const list=e.target.closest('[data-formula-locks]'),b=e.target.closest('[data-formula-lock]');if(list){formulaLocks().catch(inError);return;}if(!b)return;teamDialog(b.dataset.locked==='1'?'Khóa công thức':'Mở khóa công thức',field('Lý do','reason','','text','required maxlength="500"'),'Xác nhận',async f=>{if(CatalogDraft.dirty)await cdSave();await teamApi('formulas/locks','POST',{expectedCatalogVersion:Team.catalogVersion,key:b.dataset.formulaLock,locked:b.dataset.locked==='1',expectedVersion:Number(b.dataset.version),reason:f.get('reason')});await formulaRefreshLocks();render();await formulaLocks();});});
  installFormulaEditLeases();
+ installOperationPricingLocks();
  const observer=new MutationObserver(()=>formulaPaint());observer.observe($('#dialog'),{childList:true,subtree:true});
 }
 
@@ -64,13 +65,15 @@ async function formulaRefreshLocks(){
  return FormulaCatalogLocks.pending;
 }
 function formulaCatalogPaint(){
- if(!Team.user||page!=='rules')return;
+ if(!Team.user)return;
+ operationPricingLockPaint();
+ if(page!=='rules')return;
  let panel=document.querySelector('[data-factor-lock-panel]');
- if(RulesCatalog.tab==='factors'||document.querySelector('[data-shared-factor]')){
+ if(RulesCatalog.kind==='factors'||document.querySelector('[data-shared-factor]')){
  const lock=FormulaCatalogLocks.rows?.find(r=>r.key==='calculationFactors:all');
  const state=lock?.locked?'Đã khóa':'Chưa khóa',dirty=CatalogDraft.dirty;
- if(!panel){panel=document.createElement('section');panel.className='notice';panel.dataset.factorLockPanel='';document.querySelector('[data-shared-factor]')?.closest('section')?.before(panel);}
- panel.innerHTML=`<strong>Bảng hệ số: ${FormulaCatalogLocks.rows?state:'Đang kiểm tra…'}</strong><p>${dirty?'Có thay đổi chưa lưu: lưu danh mục chung trước khi khóa.':'Khóa bảng hệ số nguyên công và phạm vi áp dụng. Hệ số chi phí chào giá được sửa riêng theo quyền tại bước 6.'}${lock?.at?' · Cập nhật khóa: '+esc(lock.actorName||'')+' ? '+esc(TPDisplay.date(lock.at,true)):''}</p><div class="actions">${Team.permissions.formulaUnlock&&lock?`<button class="button" type="button" data-formula-lock="calculationFactors:all" data-version="${lock.version}" data-locked="${lock.locked?0:1}" ${dirty?'disabled':''}>${lock.locked?'Mở khóa hệ số':'Khóa hệ số'}</button>`:''}${(!lock?.locked||Team.permissions.factors)?'<button class="button" type="button" data-policy-edit="customer">Khai loại khách hàng</button><button class="button" type="button" data-policy-edit="production">Khai cấp độ sản xuất C1–C8</button>':''}</div>`;
+ if(!panel){panel=document.createElement('section');panel.className='notice';panel.dataset.factorLockPanel='';const target=document.querySelector('[data-shared-factor]')?.closest('section');if(target)target.before(panel);else document.querySelector('#content .rc-workspace,#content')?.append(panel);}
+ panel.innerHTML=`<strong>Hệ số tác động: ${FormulaCatalogLocks.rows?state:'Đang kiểm tra…'}</strong><p>${dirty?'Có thay đổi chưa lưu: lưu danh mục chung trước khi khóa.':'Khóa giá trị yếu tố tác động, ma trận công việc và hao hụt chung; độc lập với khóa đơn giá nguyên công. Hệ số chi phí chào giá được sửa riêng theo quyền tại bước 6.'}${lock?.at?' · Cập nhật khóa: '+esc(lock.actorName||'')+' · '+esc(TPDisplay.date(lock.at,true)):''}</p><div class="actions">${Team.permissions.formulaUnlock&&lock?`<button class="button" type="button" data-formula-lock="calculationFactors:all" data-version="${lock.version}" data-locked="${lock.locked?0:1}" ${dirty?'disabled':''}>${lock.locked?'Mở khóa hệ số':'Khóa hệ số'}</button>`:''}${(!lock?.locked||Team.permissions.factors)?'<button class="button" type="button" data-policy-edit="customer">Khai loại khách hàng</button><button class="button" type="button" data-policy-edit="production">Khai cấp độ sản xuất C1–C8</button>':''}</div>`;
  }
  for(const row of document.querySelectorAll('[data-rc-definition]')){
   const key=row.dataset.rcDefinition,source=key.startsWith('source:'),lockKey=source?'rules:'+key.slice(7):'shapeDefinitions:'+key;
@@ -112,4 +115,34 @@ function installFormulaEditLeases(){
  const session=teamSession;teamSession=value=>{if(!value.user||value.user.id!==Team.user?.id){held.clear();active=null;}return session(value);};
  const mutate=mutation;mutation=(action,options={})=>mutate(()=>{const before=snapshot();action();if(before!==snapshot()&&[...held.values()].some(l=>l.lost||l.expires<=Date.now()))throw Error('Đã mất khóa sửa. Giữ nội dung đang nhập và mở lại để đối chiếu.');},options);
  setInterval(()=>{for(const [key,lease]of held){if(lease.lost)continue;teamApi('formulas/edit','POST',{action:'renew',key,token:lease.token}).then(next=>{if(held.get(key)===lease)held.set(key,next);}).catch(()=>{lease.lost=true;const note=$('[data-edit-lease]');if(note)note.textContent='Đã mất kết nối hoặc khóa sửa. Nội dung đang nhập vẫn giữ; chưa thể lưu. Mở lại để đối chiếu.';});}},30000);
+}
+
+// The two catalogue locks use the same authoritative API, but independent keys.
+function operationPricingLocked(){return !!Team.user&&(FormulaCatalogLocks.rows===null||FormulaCatalogLocks.rows.some(r=>r.key==='operationPricing:all'&&r.locked));}
+function impactFactorsLocked(){return !!Team.user&&(FormulaCatalogLocks.rows===null||FormulaCatalogLocks.rows.some(r=>r.key==='calculationFactors:all'&&r.locked));}
+function coefficientLockDisabled(el,locked){
+ if(locked){if(el.dataset.coefficientLockDisabled===undefined)el.dataset.coefficientLockDisabled=String(el.disabled);el.disabled=true;}
+ else if(el.dataset.coefficientLockDisabled!==undefined){el.disabled=el.dataset.coefficientLockDisabled==='true';delete el.dataset.coefficientLockDisabled;}
+}
+function operationPricingLockPaint(){
+ if(page!=='rates'||rateTab!=='operations')return;
+ const host=document.querySelector('#content .page-heading');if(!host)return;
+ let panel=document.querySelector('[data-operation-pricing-lock-panel]');if(!panel){panel=document.createElement('section');panel.className='notice';panel.dataset.operationPricingLockPanel='';host.after(panel);}
+ const lock=FormulaCatalogLocks.rows?.find(r=>r.key==='operationPricing:all'),dirty=CatalogDraft.dirty;
+ panel.innerHTML=`<strong>Hệ số đơn giá: ${!FormulaCatalogLocks.rows?'Đang kiểm tra…':lock?.locked?'Đã khóa':'Chưa khóa'}</strong><p>Khóa bảng giá cơ sở, cách tính đơn giá và bảng giá nguyên công trọn gói. Yếu tố tác động dùng khóa riêng tại Danh mục quy ước. Hệ số chi phí báo giá tại bước 6 vẫn sửa theo quyền.${lock?.at&&lock.version?' · Cập nhật khóa: '+esc(lock.actorName||'')+' · '+esc(TPDisplay.date(lock.at,true)):''}</p>${Team.permissions.formulaUnlock&&lock?`<button type="button" class="button" data-formula-lock="operationPricing:all" data-version="${lock.version}" data-locked="${lock.locked?0:1}" ${dirty?'disabled':''}>${lock.locked?'Mở khóa đơn giá':'Khóa đơn giá'}</button>`:''}${dirty?'<p>Lưu danh mục chung trước khi đổi trạng thái khóa.</p>':''}`;
+ for(const b of document.querySelectorAll('[data-pa="edit-rate"],[data-pa="new-rate"],[data-action="new-rate"],[data-po-new],[data-pg-copy],[data-ip="tmc-edit"],[data-ot="edit"]'))coefficientLockDisabled(b,operationPricingLocked());
+ for(const el of document.querySelectorAll('[data-pd-matrix] input,[data-pd-matrix] button,[data-ip="tmc-loss"]'))coefficientLockDisabled(el,impactFactorsLocked());
+}
+function installOperationPricingLocks(){
+ const message=()=>toast(FormulaCatalogLocks.rows?'Hệ số đơn giá đã khóa. Người có quyền cần mở khóa trước khi sửa.':'Đang kiểm tra khóa, vui lòng thử lại.');
+ const guard=fn=>function(...args){if(operationPricingLocked())return message();return fn(...args);};
+ const edit=workRateEdit;workRateEdit=function(id,catalog,draft){if(catalog&&page==='rules')return edit(id,catalog,draft);if(operationPricingLocked())return message();const value=edit(id,catalog,draft);if(impactFactorsLocked()){
+  for(const el of document.querySelectorAll('#dialog [name=factorsEnabled],#dialog [name=outsideFactors],#dialog [data-rate-feature="factorsEnabled"] input,#dialog [data-rate-feature="factorsEnabled"] select,#dialog [data-rate-feature="factorsEnabled"] button'))el.disabled=true;
+  document.querySelector('#dialog-form')?.insertAdjacentHTML('afterbegin','<p class="notice">Hệ số tác động đã khóa; chỉ chỉnh phần đơn giá đang mở. Các yếu tố và phạm vi áp dụng được giữ nguyên.</p>');
+ }return value;};
+ const read=reviewReadRate;reviewReadRate=(form,rate,recipes)=>{const next=read(form,rate,recipes);if(impactFactorsLocked())for(const key of ['factors','factorsEnabled','outsideFactors','productGroups']){if(Object.hasOwn(rate,key))next[key]=C.copy(rate[key]);else delete next[key];}return next;};
+ poNew=guard(poNew);pdTmcEdit=guard(pdTmcEdit);otEdit=guard(otEdit);
+ const tmc=ipTmcEdit;ipTmcEdit=guard(tmc);
+ const matrix=pdSaveMatrix;pdSaveMatrix=form=>{if(impactFactorsLocked())return toast('Hệ số tác động đã khóa. Mở khóa trước khi sửa ma trận.');return matrix(form);};
+ document.addEventListener('click',e=>{if(!Team.user)return;const el=e.target.closest('[data-ip="tmc-loss"],[data-pg-copy],[data-po-new],[data-action="new-rate"],[data-pa="edit-rate"],[data-ot="edit"]');if(!el)return;const impact=el.matches('[data-ip="tmc-loss"]');if(impact?impactFactorsLocked():operationPricingLocked()&&page!=='rules'){e.preventDefault();e.stopImmediatePropagation();impact?toast('Hệ số tác động đã khóa. Mở khóa trước khi sửa hao hụt.'):message();}},true);
 }
