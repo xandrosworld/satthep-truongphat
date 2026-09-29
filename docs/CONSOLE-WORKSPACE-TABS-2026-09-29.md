@@ -17,3 +17,9 @@ Không lưu nội dung form vào localStorage/sessionStorage. Kiểm thử:
   giữ input/scroll, form con, Escape, điện thoại, đóng và đổi phiên.
 - `node tests/console-workspace-server-browser.cjs`: API đơn hàng/sản xuất,
   bộ lọc và form tạo đơn chưa lưu giữ nguyên qua chuyển tab; không tạo đơn thử.
+
+Runtime `2932855` đã triển khai Vietnix và đẩy GitHub; container healthy.
+Kiểm thử HTTPS thật đạt ở 1440×1000 và 390×844: thu nhỏ, mở rộng, chuyển hai
+bảng, giữ bộ lọc và mã đơn chưa lưu. Các request ghi nghiệp vụ bị chặn trong
+kiểm thử; không tạo đơn hàng. Đã xem ảnh giao diện điện thoại, đối chiếu bản
+build công khai và thu hồi phiên kiểm tra.
