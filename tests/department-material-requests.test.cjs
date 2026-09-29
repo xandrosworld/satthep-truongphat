@@ -1,13 +1,14 @@
 const {test}=require('node:test'),A=require('node:assert/strict'),{randomUUID}=require('node:crypto'),{createApp}=require('../server/app.cjs');
 test('department request retains original, purchaser amends, approval then receipt and stock; duplicate protection',async t=>{
  const app=createApp();await new Promise(r=>app.server.listen(0,r));t.after(()=>new Promise(r=>app.server.close(r)));let session;
- const call=async(path,body,auth=session)=>{const r=await fetch('http://localhost:'+app.server.address().port+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:auth?.cookie||'','X-CSRF-Token':auth?.csrf||''},body:body?JSON.stringify(body):undefined});const data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
+ const request=async(path,method='GET',body,auth=session)=>{const r=await fetch('http://localhost:'+app.server.address().port+'/api/'+path,{method,headers:{'Content-Type':'application/json',Cookie:auth?.cookie||'','X-CSRF-Token':auth?.csrf||''},body:body?JSON.stringify(body):undefined});const data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
+ const call=(path,body,auth=session)=>request(path,body?'POST':'GET',body,auth);
  session=await call('setup',{username:'admin',name:'Admin',password:'Department-test-2026!'});
- await call('users',{username:'requester',name:'Requester',role:'technical',password:'Department-test-2026!',actionAccess:{purchasing:['view','create']}});const requester=await call('login',{username:'requester',password:'Department-test-2026!'});
- const mat=await call('ops/master',{requestId:randomUUID(),kind:'material',expectedVersion:0,document:{code:'GENERAL-01',name:'Office material',unit:'cÃ¡i',form:'bulk',active:true}});A.equal(mat.status,200,JSON.stringify(mat.data));
+ await require('./helpers/personnel-user.cjs')(request,session,{username:'requester',name:'Requester',role:'technical',password:'Department-test-2026!',actionAccess:{purchasing:['view','create']}});const requester=await call('login',{username:'requester',password:'Department-test-2026!'});
+ const mat=await call('ops/master',{requestId:randomUUID(),kind:'material',expectedVersion:0,document:{code:'GENERAL-01',name:'Office material',unit:'cái',form:'bulk',active:true}});A.equal(mat.status,200,JSON.stringify(mat.data));
  const mat2=await call('ops/master',{requestId:randomUUID(),kind:'material',expectedVersion:0,document:{code:'GENERAL-02',name:'Extra type',unit:'cái',form:'bulk',active:true}});A.equal(mat2.status,200);
  const supplier=await call('ops/master',{requestId:randomUUID(),kind:'supplier',expectedVersion:0,document:{code:'SUP-G',name:'Supplier',active:true,prices:[]}});
- app.sql.prepare('INSERT INTO organization VALUES(1,1,?)').run(JSON.stringify({departments:[{id:'office',name:'Office',active:true}],positions:[],employees:[]}));
+ const baseOrg=JSON.parse(app.sql.prepare('SELECT document FROM organization WHERE id=1').get().document);baseOrg.departments=[{id:'office',name:'Office',stage:'other',active:true}];baseOrg.positions.forEach(p=>p.departmentId='office');app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify(baseOrg));
  const purpose=await call('ops/material-request-purpose',{type:'office',code:'CP-VP',name:'Office supplies',expectedVersion:0});A.equal(purpose.status,200,JSON.stringify(purpose.data));
  const quote=await call('quotes',{document:require('../pricing-core.js').demoSeed()});A.equal(quote.status,201);
  app.sql.prepare('INSERT INTO orders VALUES(?,?,?,?,?,?,?)').run('order-ref','DH-REF',quote.data.id,1,'{}',new Date().toISOString(),'admin');
@@ -28,10 +29,10 @@ test('department request retains original, purchaser amends, approval then recei
  A.equal((await call('ops/material-request',{...body,purposeType:'project'},requester)).status,400);
 
  let r=await call('ops/material-request',body,requester);A.equal(r.status,200,JSON.stringify(r.data));let p=r.data;A.equal(p.state,'pricing-review');A.equal(p.departmentId,'office');A.equal(p.purpose.code,'CP-VP');A.equal(p.purpose.id,purpose.data.id);A.equal((await call('ops/material-request',body,requester)).data.id,p.id);
- app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify({departments:[{id:'parent',name:'Disabled',active:false},{id:'office',name:'Renamed',active:true,parentId:'parent'}],positions:[],employees:[]}));
+ app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify({...baseOrg,departments:[{id:'parent',name:'Disabled',active:false},{id:'office',name:'Renamed',active:true,parentId:'parent'}]}));
  A.equal((await call('ops/material-request',{...body,requestId:randomUUID()},requester)).status,400);
  A.equal((await call('ops/material-requests')).data.rows.find(r=>r.id===p.id).department,'Office');
- app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify({departments:[{id:'office',name:'Office',active:true}],positions:[],employees:[]}));
+ app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify(baseOrg));
  await call('ops/material-request-purpose',{id:purpose.data.id,type:'office',code:'CP-VP',name:'Renamed',active:false,expectedVersion:1});
  A.equal((await call('ops/material-request',{...body,requestId:randomUUID()},requester)).status,400);
  A.equal((await call('ops/material-requests')).data.rows.find(r=>r.id===p.id).purpose.name,'Office supplies');

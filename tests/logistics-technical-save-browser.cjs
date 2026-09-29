@@ -1,6 +1,6 @@
 const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs');
 (async()=>{const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({channel:'msedge',headless:true});try{
- const p=await browser.newPage();await p.goto('http://127.0.0.1:'+app.server.address().port);await p.waitForFunction(()=>Team.available);
+ const p=await browser.newPage();await p.goto('http://127.0.0.1:'+app.server.address().port);await p.waitForFunction(()=>Team.available);await require('./helpers/browser-personnel.cjs')(p);
  const id=await p.evaluate(async()=>{teamSession(await teamApi('setup','POST',{username:'admin',name:'Admin',password:'Logistics-save-test-2026!'}));const d=TPPrice.demoSeed();d.quote.products=[{id:'product',kind:'product',name:'Technical save',qty:2,children:[],ops:[],transport:123,install:456}];const q=await teamApi('quotes','POST',{document:d});await teamApi('users','POST',{username:'tech',name:'Technical',password:'Logistics-save-test-2026!',role:'estimator',sections:['bom','operations']});teamSession(await teamApi('login','POST',{username:'tech',password:'Logistics-save-test-2026!'}));await teamLoad(q.id);tab='bom';UX.mode='quick';render();window.baselineLogistics=C.copy(db.quote);return q.id;});
  // Simulate a restored old tab carrying unrelated logistics changes.
  await p.evaluate(()=>{db.quote.expenses=[{id:'old',rate:999}];db.quote.pricing.incoming=999;db.quote.products[0].transport=999;});

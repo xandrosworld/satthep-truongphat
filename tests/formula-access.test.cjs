@@ -4,7 +4,7 @@ const password='Formula-permissions-test-42!';
 async function harness(t){const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));const base='http://127.0.0.1:'+app.server.address().port;
  const call=async(route,method='GET',body,session)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:session.cookie,'X-CSRF-Token':session.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)}),raw=await r.json(),data=raw.__formulaProtected?raw.value:raw;return {status:r.status,data,raw,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
  const admin=await call('setup','POST',{username:'admin',name:'Admin',password});
- const create=async(name,rights={})=>{const body={username:name,name,password,role:'estimator',...rights};const u=await call('users','POST',body,admin);A.equal(u.status,201,JSON.stringify(u.data));return {id:u.data.id,body,session:await call('login','POST',{username:name,password})};};
+ const create=async(name,rights={})=>{const body={username:name,name,password,role:'estimator',...rights};const u={data:await require('./helpers/personnel-user.cjs')(call,admin,body,{direct:true})};return {id:u.data.id,body,session:await call('login','POST',{username:name,password})};};
  const grant=async(u,flags)=>{Object.assign(u.body,flags);const r=await call('users/'+u.id+'/access','POST',u.body,admin);A.equal(r.status,200,JSON.stringify(r.data));u.session=await call('login','POST',{username:u.body.username,password});};
  return {...app,call,admin,create,grant};
 }
@@ -79,7 +79,7 @@ test('invalid permission update is atomic; role templates carry separate grants'
  A.equal((await call('users/'+u.id+'/access','POST',{...u.body,role:'invalid',canReopen:true},admin)).status,400);
  A.equal((await call('me','GET',undefined,u.session)).data.permissions.reopen,false);
  const role=await call('roles','POST',{name:'Dùng công thức kín',role:'technical',sections:['bom'],canFormulaUse:true,canFormulaView:false,canFormulaEdit:false,canFormulaUnlock:false,canReopen:true},admin);A.equal(role.status,201);
- const added=await call('users','POST',{username:'templated',name:'Template',password,roleTemplateId:role.data.id},admin);A.equal(added.status,201);
+ await require('./helpers/personnel-user.cjs')(call,admin,{username:'templated',name:'Template',password,roleTemplateId:role.data.id},{direct:true});
  const login=await call('login','POST',{username:'templated',password});A.equal(login.data.permissions.formulaView,false);A.equal(login.data.permissions.reopen,true);
 });
 test('technical without prices or formula visibility can save dimensions; formula removal and revoked use are rejected',async t=>{

@@ -6,7 +6,7 @@ test('only admin adds production/sales factors; delegated factor editor keeps nu
  session=await call('setup','POST',{username:'admin',name:'Admin',password:'Extra-factor-2026!'});const admin=session;
  const d=P.demoSeed();d.quote.pricing.productionFactors=[{id:'p1',name:'Existing production',percent:2,reason:'Existing',enabled:true}];d.quote.pricing.salesFactors=[{id:'s1',name:'Existing sales',percent:3,reason:'Existing',enabled:true}];
  const q=(await call('quotes','POST',{document:d})).data;A.ok(q.id);
- await call('users','POST',{username:'editor',name:'Editor',role:'estimator',password:'Extra-factor-2026!',canEditFactors:true});session=await call('login','POST',{username:'editor',password:'Extra-factor-2026!'});A.equal(session.data.permissions.factors,true);
+ await require('./helpers/personnel-user.cjs')(call,admin,{username:'editor',name:'Editor',role:'estimator',password:'Extra-factor-2026!',canEditFactors:true},{direct:true});session=await call('login','POST',{username:'editor',password:'Extra-factor-2026!'});A.equal(session.data.permissions.factors,true);
  let r=await call('quotes/'+q.id),document=r.data.document;
  for(const key of ['productionFactors','salesFactors']){
   const changed=structuredClone(document);changed.quote.pricing[key].push({id:'injected',name:'New factor',percent:4,reason:'New',enabled:true});r=await call('quotes/'+q.id,'PUT',{expectedVersion:q.version,document:changed});A.equal(r.status,403,JSON.stringify(r.data));
