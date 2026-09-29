@@ -7,7 +7,7 @@ const copy=x=>JSON.parse(JSON.stringify(x));
 function retainPublishedHistory(document,current,loadHistory){
  let history;
  const known=()=>history||(history=loadHistory());
- for(const key of ['shapeDefinitions','rules','materials','library','stockSizes','materialPrices','conventions']){
+ for(const key of ['rates','pricingDefaults','shapeDefinitions','rules','materials','library','stockSizes','materialPrices','conventions']){
   if(equal(document[key],current[key])||document[key]===undefined||current[key]===undefined)continue;
   if(known().some(c=>equal(c[key],document[key]))){document[key]=copy(current[key]);continue;}
   if(!Array.isArray(document[key])||!Array.isArray(current[key]))continue;

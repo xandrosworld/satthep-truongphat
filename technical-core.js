@@ -43,7 +43,8 @@ function resolveDocumentChoices(d,before,catalog,canFactors){
    if(op.complexityChoice?.factorId){const rate=complexityRate(d.quote.ratesSnapshot.find(r=>r.id===op.id),catalog||d);op.complexity=resolveComplexity(rate,op.complexityChoice,g,true);if(!op.complexity)delete op.complexity;}
    else if(!op.complexityChoice&&!op.complexity)delete op.complexity;
    else if(!canFactors)throw Error('Chỉ chọn mức độ đã khai; không được nhập hệ số phức tạp.');
-  }else if(!canFactors&&!equal(previous?.complexity,op.complexity))throw Error('Không được thay hệ số phức tạp; chỉ chọn mức độ từ danh mục.');
+  }else if(!canFactors&&op.complexity===undefined&&previous?.complexity!==undefined){op.complexity=copy(previous.complexity);}
+  else if(!canFactors&&!equal(previous?.complexity,op.complexity))throw Error('Không được thay hệ số phức tạp; chỉ chọn mức độ từ danh mục.');
  if(op.complexityChoice?.factorId&&!op.complexity)op.complexityPricePending=true;else delete op.complexityPricePending;
  }visit(n.children,g);}}
  visit(d.quote.products);resolveProductionLevels(d,before,catalog);return d;

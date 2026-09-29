@@ -44,3 +44,14 @@ test('technical assessment survives missing price coefficient without inventing 
  A.deepEqual(saved.quote.products[0].ops[0].complexityChoice,{factorId:'difficulty',label:'Hard'});A.equal(saved.quote.products[0].ops[0].complexity,undefined);A.equal(saved.quote.products[0].ops[0].complexityPricePending,true);A.equal(T.project(saved,catalog).quote.products[0].ops[0].complexityPricePending,undefined);A.throws(()=>require('../work-core').price({},saved.quote.products[0].ops[0],{},1));
  A.throws(()=>T.resolveComplexity(T.complexityRate(d.rates[0],catalog),{factorId:'difficulty',label:'Hard'},''));
 });
+
+
+test('unchanged declared complexity may omit its private number without blocking technical save',()=>{
+ const before=P.demoSeed(),op=before.quote.products[0].ops[0];
+ op.complexityChoice={factorId:'difficulty',label:'Hard'};op.complexity={label:'Hard',multiplier:1.5};
+ const d=structuredClone(before);delete d.quote.products[0].ops[0].complexity;
+ T.resolveDocumentChoices(d,before,before,false);
+ A.deepEqual(d.quote.products[0].ops[0].complexity,op.complexity);
+ const forged=structuredClone(before);forged.quote.products[0].ops[0].complexity.multiplier=99;
+ A.throws(()=>T.resolveDocumentChoices(forged,before,before,false),/Không được thay hệ số/);
+});
