@@ -1,0 +1,10 @@
+.console-shade{position:fixed;inset:0;background:#14263c88;z-index:1000}
+.console-tabs{position:fixed;bottom:8px;left:12px;right:12px;display:flex;gap:8px;overflow-x:auto;padding:6px;background:var(--surface,#fff);border:1px solid var(--line,#cbd5e1);border-radius:9px;box-shadow:0 3px 15px #14263c22;z-index:1002}
+.console-tabs button{flex-shrink:0;padding:9px 18px;border:1px solid #9babbc;border-radius:6px;background:var(--surface,#fff);color:var(--ink,#244362);cursor:pointer}
+.console-tabs button[aria-pressed=true]{background:#245885;color:#fff;border-color:#245885}
+.console-shade[hidden],.console-tabs[hidden],dialog.console-window[hidden]{display:none!important}
+dialog.console-window{position:fixed!important;inset:24px 24px 76px!important;margin:auto!important;z-index:1001;max-height:calc(100dvh - 100px)!important}
+dialog.console-window.console-expanded{inset:0 0 64px!important;width:100vw!important;max-width:none!important;height:calc(100dvh - 64px)!important;max-height:none!important;margin:0!important;border-radius:0!important}
+dialog.console-window>header{gap:10px}dialog.console-window>header>div{flex:1}
+@media(max-width:600px){dialog.console-window{inset:8px 8px 76px!important;width:calc(100vw - 16px)!important;max-height:calc(100dvh - 84px)!important}dialog.console-window>header{padding:12px;flex-wrap:wrap}.console-tabs{left:6px;right:6px}.console-tabs button{padding:8px 12px}}
+@media print{.console-tabs,.console-shade,[data-console-minimize]{display:none!important}dialog.console-window{position:static!important;inset:auto!important;height:auto!important;max-height:none!important}}
