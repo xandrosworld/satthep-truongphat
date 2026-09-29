@@ -19,3 +19,19 @@ Chi tiết yêu cầu mua phân bổ theo lệnh gọi biến `pricing` ngoài p
 Một số fixture cũ tạo tài khoản trực tiếp nên dừng ngay trước khi kiểm tra nghiệp vụ. Đã chuyển chúng qua nhân sự được duyệt, bố trí vị trí rồi tạo tài khoản. Các ca chuyên kiểm tra quyền trực tiếp chuyển nguồn quyền qua API quản trị; các ca kiểm tra cơ cấu chuyển rõ sang nguồn vị trí. Không nới kiểm tra trên máy chủ để phục vụ test. Các kỳ vọng chỉnh hồ sơ nhân sự và chống tăng quyền cũng đã chuyển sang quy trình hiện hành.
 
 `factor-lock-browser.cjs` cũ chạy bản phát hành lưu trữ ngày 20/09, không phải runtime hiện tại. Nhóm rà soát dùng `coefficient-locks-browser.cjs` và 16 bài `formula-access.test.cjs` để kiểm tra hai khóa hiện hành. Số liệu trên là nhóm kiểm thử xác định, không phải tuyên bố mọi tệp kiểm thử lịch sử trong repository đều đạt.
+
+## Đối chiếu trên máy chủ thật
+
+Bản runtime `808755f` đã triển khai lên https://truongphat-group.xyz; HTML khớp build cục bộ và `/healthz` trả thành công.
+
+- **6/6 luồng trình duyệt thật đạt**: bộ quyền thống nhất; nguồn nhân sự; thứ tự vị trí; cửa sổ làm việc/chat; danh sách báo giá và về trang chủ; người đề nghị/căn cứ/điểm tạo từ đơn hàng và lệnh sản xuất. Có kiểm tra màn hình di động.
+- Kiểm tra thật chỉ đọc dữ liệu và thao tác biểu mẫu chưa lưu, chặn API ghi nghiệp vụ. Máy chủ chưa có hợp đồng để thử điểm tạo từ hợp đồng; luồng này đã kiểm tra cục bộ.
+- Phú có vị trí quản lý và quyền giao việc; Thảo có quyền sử dụng vận chuyển. Hai khóa `calculationFactors:all` và `operationPricing:all` đang khóa.
+- Tổ giá và vị trí đã bỏ không còn; Phòng dự án đã đổi tên; không có vị trí tham chiếu phòng ban mất. VIVIAN còn một hồ sơ.
+- Phiên quản trị tạm dùng kiểm tra đã thu hồi.
+
+## Dữ liệu cũ cần xử lý riêng
+
+Còn ba hồ sơ AMME cùng tên, người liên hệ và số điện thoại; chưa khai mã số thuế. Mã sinh theo thời gian cho thấy cả ba được tạo ngày 17/09/2026, trước bản sửa chống trùng. Đây là dữ liệu tồn tại sẵn, không phải kết quả lưu mới trong đợt kiểm tra. Chưa gộp/xóa vì chưa đối chiếu toàn bộ tham chiếu của các hồ sơ này. Cơ chế hiện tại chặn tạo thêm hồ sơ trùng nhưng không tự gộp dữ liệu cũ.
+
+Các kiểm thử trên xác nhận phạm vi vừa sửa; không thay thế nghiệm thu mọi luồng nghiệp vụ với dữ liệu thực tế.
