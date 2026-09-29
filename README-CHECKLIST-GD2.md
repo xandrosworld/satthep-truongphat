@@ -878,3 +878,11 @@ Danh sách giữ mã và mô tả từ bản checklist gốc đã đọc ngày 2
 - Ưu tiên liên kết báo giá được mở trực tiếp. Xóa vị trí khi đăng xuất/đổi tài khoản; hồ sơ không còn truy cập được báo lỗi và trở về màn hiện có, không bỏ kiểm tra quyền máy chủ. Đây là khôi phục vị trí, không thay thao tác lưu dữ liệu trước F5.
 - Browser navigation-resume đạt: đủ 8 tab báo giá, tab giá con, dòng được chọn, bảng giao việc, kho, tab trình duyệt độc lập, liên kết trực tiếp và đăng xuất. Browser hồi quy lưu giá/hệ số đạt; build đạt.
 - Triển khai 3341203 sau sao lưu nguồn/SQLite; HTTPS health và 92 hash runtime khớp, container healthy. Web thật quyền Phú trên BG-20260925-005: F5 giữ đúng báo giá và tab Công đoạn/Khai triển & hao hụt, kiểm tra desktop/390 px, không ghi nghiệp vụ thử. Phiên tạm đã thu hồi. Ảnh: artifacts/navigation-resume-live.png, artifacts/navigation-resume-mobile-live.png.
+
+
+### 2026-09-29 — Phản hồi khi chọn phần dư ngoài phạm vi mở sửa (4cd6979)
+- Tái hiện đúng BG-20260925-005 bằng quyền Nguyễn Khắc Phú trên bản sao SQLite mới nhất: phạm vi đang mở chỉ có Nguyên công và định mức. Chọn lô phần dư 3.200 × 80 hoặc bấm sơ đồ bị chặn bởi phạm vi Cấu thành, kích thước và hao hụt; lỗi trước đây thoát khỏi bộ xử lý sự kiện nên không hiện thông báo.
+- Hiện lý do ngay tại bảng phần dư và nút Đề nghị bổ sung phạm vi hao hụt, mở đúng lựa chọn/lý do để người dùng xem và gửi. Bắt lỗi chọn phần dư, phục hồi ô chọn và trạng thái chưa lưu, hiện thông báo tại màn hình. Không tự mở quyền, duyệt yêu cầu hoặc thay phần dư trên hồ sơ thật.
+- 19 ca core/API phần dư và yêu cầu mở sửa đạt; browser hồi quy mới đạt. Trên bản sao đúng hồ sơ: chặn thao tác ngoài phạm vi, gửi và duyệt bổ sung, chọn 19 phần dư, chọn sơ đồ/bàn phím, lưu máy chủ/F5 và điện thoại đạt; không có lỗi JavaScript không được xử lý.
+- Đã triển khai 4cd6979 sau sao lưu nguồn/SQLite; HTTPS health và 93 hash runtime khớp. Web thật quyền Phú kiểm tra thông báo, thao tác bị chặn giữ nguyên dữ liệu, form bổ sung phạm vi và desktop/390 px đạt. Chặn ghi nghiệp vụ, phiên tạm đã thu hồi. Ảnh: artifacts/remnant-scope-live.png, artifacts/remnant-scope-request-live.png, artifacts/remnant-scope-mobile-live.png.
+- Hồ sơ thật vẫn cần người có quyền cho phép bổ sung hao hụt trước khi sửa phần dư. Không coi sửa thông báo giao diện là đã mở phạm vi hoặc khách đã lưu lựa chọn mới.
