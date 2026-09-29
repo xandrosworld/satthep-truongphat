@@ -23,7 +23,7 @@ function createDataAccess({sql,fail}){
    const hide=k=>{if(o[k]===undefined)return;saved[k]=copy(o[k]);mask[k]=blank(o[k]);o[k]=copy(mask[k]);};
    for(const k of Object.keys(o)){
     if(scoped&&modes.materials==='none'&&['price','priceHistory','priceSource','priceSelection','materialPriceHistory','materialPriceSelections','materialPrices'].includes(k)){hide(k);continue;}
-    if(scoped&&modes.logistics==='none'&&(['incoming','outgoing','delivery','install','expenseRates','expenses','logistics','devices','deviceInstallations','transport','freightIn','freightOut'].includes(k))){hide(k);continue;}
+    if(scoped&&modes.logistics==='none'&&parent!=='offerTerms'&&(['incoming','outgoing','delivery','install','expenseRates','expenses','logistics','devices','deviceInstallations','transport','freightIn','freightOut'].includes(k))){hide(k);continue;}
     if(scoped&&modes.operations==='none'&&['ops','ownOps','ratesSnapshot','rates','operationColumns','operationMethods','operationPriceOptions','operationPriceChoices','operationChoices'].includes(k)){hide(k);continue;}
     if(scoped&&modes.bom==='none'&&['products','rows','nodes','node','library','nestingPlans','errors','warnings'].includes(k)&&!(k==='products'&&parent==='offer'&&modes.commercial!=='none')){hide(k);continue;}
     if(scoped&&modes.customer==='none'&&['customer','project','customerInfo','request','requestSpecification','attachments','sourceFiles'].includes(k)){hide(k);continue;}
