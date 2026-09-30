@@ -187,6 +187,13 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
       if(await notifications.handle({req,route,user,rights,send}))return;
       if(await require('./customer-classification.cjs').create({getQuote,one,readBody,saveQuote,fail})({req,route,user,rights,send}))return;
       if(await quotePresence.handle({req,route,user,rights,send}))return;
+      const provisionalRoute=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/provisional-price$/);
+      if(provisionalRoute&&req.method==='GET'){
+        if(user.role!=='admin')fail(403,'Chỉ Admin được xem giá trị tạm tính');
+        const quote=getQuote(provisionalRoute[1]),master=one('SELECT document,version,updated FROM catalog WHERE id=1');
+        if(!master)fail(409,'Chưa có danh mục giá');
+        return send(200,{quoteVersion:quote.version,catalogVersion:master.version,catalogAt:master.updated,...require('./provisional-price.cjs').estimate(JSON.parse(quote.document),JSON.parse(master.document))});
+      }
       const formulaUpdateRoute=route.match(/^\/api\/quotes\/([a-f0-9-]+)\/formula-update(?:\/(\d+))?$/);if(formulaUpdateRoute&&req.method==='GET'){if(!(rights.costs||rights.technical))fail(403,'Không có quyền xem đối chiếu nội bộ');const current=getQuote(formulaUpdateRoute[1]),record=formulaUpdateRoute[2]?one('SELECT * FROM revisions WHERE id=? AND version=?',current.id,Number(formulaUpdateRoute[2])):current;if(!record)fail(404,'Không tìm thấy phiên bản');return send(200,formulaSync.describe(record,rights));}
       const deleteDraft=route.match(/^\/api\/quotes\/([a-f0-9-]+)$/);
       if(deleteDraft&&req.method==='DELETE'){

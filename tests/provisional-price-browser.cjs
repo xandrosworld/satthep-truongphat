@@ -1,0 +1,10 @@
+﻿const {chromium,expect}=require('@playwright/test'),{createApp}=require('../server/app.cjs');
+(async()=>{const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({channel:'msedge',headless:true}),page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));try{
+ await page.goto('http://127.0.0.1:'+app.server.address().port);await page.locator('#team-entry').click();await page.locator('#dialog [name=username]').fill('admin');await page.locator('#dialog [name=name]').fill('QA');await page.locator('#dialog [name=password]').fill('Provisional-browser-local-42!');await page.locator('#dialog button[type=submit]').click();await expect.poll(()=>page.evaluate(()=>!!Team.user)).toBe(true);await page.locator('#dialog [data-action=close]').first().click();
+ await page.evaluate(async()=>{const q=await teamApi('quotes','POST',{document:TPPrice.demoSeed()});await teamLoad(q.id);});
+ const panel=page.locator('[data-provisional-price]');await expect(panel).toBeVisible();await expect.poll(()=>page.evaluate(()=>ProvisionalPrice.value?.quoteVersion)).toBe(1);
+ const old=await page.evaluate(()=>ProvisionalPrice.value.sources);const master=JSON.parse(app.sql.prepare('SELECT document FROM catalog WHERE id=1').get().document);master.materials.forEach(m=>m.price=Number(m.price||0)+8000);app.sql.prepare('UPDATE catalog SET document=?,version=version+1 WHERE id=1').run(JSON.stringify(master));
+ await page.locator('[data-provisional-refresh]').click();await expect.poll(()=>page.evaluate(()=>ProvisionalPrice.pending)).toBe(false);expect(await page.evaluate(()=>ProvisionalPrice.value.sources)).not.toEqual(old);
+ await page.setViewportSize({width:390,height:844});await expect(panel).toBeVisible();
+ await page.evaluate(()=>{Team.user.role='technical';provisionalPriceMount();});await expect(panel).toHaveCount(0);expect(errors).toEqual([]);console.log('PASS provisional admin panel, source refresh, mobile, role removal');
+ }finally{await browser.close();await new Promise(r=>app.server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

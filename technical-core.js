@@ -113,7 +113,8 @@ function merge(original,input,catalog){
   if(n.kind==='product'&&n.productGroup!==prev?.productGroup&&n.productGroup){next.priceGroupId=n.productGroup==='Thang máng cáp'?'tmc':'detail';next.tmcScope=next.priceGroupId;if(next.priceGroupId==='tmc'&&!result.quote.pricing.comparisonMethods?.includes('tmc'))(result.quote.pricing.comparisonMethods??=['detail']).push('tmc');}
   if(n.spec){
    const sameLine=prev?.materialId===n.materialId&&prev.spec;
-   const material=sameLine&&!prev.draftMaterial?prev.spec:original.materials.find(m=>m.id===n.materialId)||catalog?.materials?.find(m=>m.id===n.materialId);
+   const latest=catalog?.materials?.find(m=>m.id===n.materialId&&m.unit===n.spec.unit&&sameMaterial(n.spec,m));
+   const material=sameLine&&!prev.draftMaterial?prev.spec:latest||original.materials.find(m=>m.id===n.materialId)||catalog?.materials?.find(m=>m.id===n.materialId);
    // Technical declarations never replace the commercial snapshot of an existing material line.
    next.spec=assign(copy(sameLine?prev.spec:material||{price:null}),n.spec,specKeys);
    if(!material)next.draftMaterial=true;else if(!n.draftMaterial||sameMaterial(n.spec,material))delete next.draftMaterial;
