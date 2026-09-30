@@ -41,7 +41,7 @@ test('control records validate limits, units, catalogue references and preserve 
  await save({...routing,product:j.packet.product.name,sequence:j.packet.operations.map(o=>o.rateId)});
  await save({...body(groups.find(g=>g.id==='finance')),product:j.packet.product.name});
  const comparison=await call('ops/norms?job='+j.id);A.equal(comparison.status,200,JSON.stringify(comparison.data));A.equal(comparison.data.controls.find(n=>n.category==='routing').status,'within');
- await call('users','POST',{username:'tech',name:'Tech',role:'technical',password:'Controls-test-2026!',actionAccess:{workshop:['view','edit']}});session=await call('login','POST',{username:'tech',password:'Controls-test-2026!'});
+ await require('./helpers/personnel-user.cjs')(call,admin,{username:'tech',name:'Tech',role:'technical',password:'Controls-test-2026!',actionAccess:{workshop:['view','edit']}},{direct:true});session=await call('login','POST',{username:'tech',password:'Controls-test-2026!'});
  const visible=(await call('ops/norms')).data;A.ok(!visible.groups.some(g=>g.id==='finance'));A.ok(!visible.rows.some(n=>n.category==='finance'));A.equal(visible.rows.find(n=>n.id===finance.id).history.length,0);
  const safe=await call('ops/norms?job='+j.id);A.equal(safe.status,200,JSON.stringify(safe.data));A.ok(!safe.data.controls.some(n=>n.category==='finance'));A.equal(typeof safe.data.controls.find(n=>n.category==='routing').actualValue,'string');A.equal(safe.data.actual.recordedTotal,undefined);
  A.equal((await save(body(groups.find(g=>g.id==='finance')))).status,403);session=admin;

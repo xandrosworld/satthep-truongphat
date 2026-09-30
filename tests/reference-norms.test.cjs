@@ -3,7 +3,7 @@ test('norms require evidence, version and permissions; finance history stays pri
  const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));let admin;
  const call=async(path,method='GET',body,s=admin)=>{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api/'+path,{method,headers:{'Content-Type':'application/json',Cookie:s?.cookie||'','X-CSRF-Token':s?.csrf||''},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
  admin=await call('setup','POST',{username:'admin',name:'Admin',password:'Norm-test-2026!'});
- for(const [username,actions]of [['tech',['view','edit']],['read',['view']]])await call('users','POST',{username,name:username,role:'technical',password:'Norm-test-2026!',actionAccess:{workshop:actions}});
+ for(const [username,actions]of [['tech',['view','edit']],['read',['view']]])await require('./helpers/personnel-user.cjs')(call,admin,{username,name:username,role:'technical',password:'Norm-test-2026!',actionAccess:{workshop:actions}},{direct:true});
  const tech=await call('login','POST',{username:'tech',password:'Norm-test-2026!'}),read=await call('login','POST',{username:'read',password:'Norm-test-2026!'});
  const body={requestId:randomUUID(),expectedVersion:0,category:'other',name:'Electricity',product:'Product A',unit:'kWh',outputUnit:'bộ',quantity:2,source:'manufacturer',evidence:'Manual page 12',active:true};
  A.equal((await call('ops/norm','POST',body,read)).status,403);A.equal((await call('ops/norm','POST',{...body,evidence:''},tech)).status,400);A.equal((await call('ops/norm','POST',{...body,quantity:-1},tech)).status,400);

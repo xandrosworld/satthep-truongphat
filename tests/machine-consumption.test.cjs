@@ -1,0 +1,28 @@
+const {test}=require('node:test'),A=require('node:assert/strict'),{randomUUID}=require('node:crypto'),{createApp}=require('../server/app.cjs');
+test('machine consumption: modes, immutable snapshots, evidence, access and concurrency',async t=>{
+ const app=createApp();await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>app.server.close(r)));let admin;
+ const call=async(path,method='GET',body,s=admin)=>{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api/'+path,{method,headers:{'Content-Type':'application/json',Cookie:s?.cookie||'','X-CSRF-Token':s?.csrf||''},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
+ admin=await call('setup','POST',{username:'admin',name:'Admin',password:'Machine-test-2026!'});
+ const people=(await call('ops/machine-consumption')).data.people;
+ const master=async(kind,document)=>{const r=await call('ops/master','POST',{requestId:randomUUID(),kind,expectedVersion:0,document});A.equal(r.status,200,JSON.stringify(r.data));return r.data;};
+ const m=await master('machine',{code:'M',name:'Laser',workshop:'A',powerKw:10,hoursPerDay:8}),raw=await master('material',{code:'RAW',name:'Steel',unit:'kg'}),gas=await master('material',{code:'GAS',name:'Gas',unit:'m3'});
+ const post=(b,s)=>call('ops/machine-consumption','POST',{requestId:randomUUID(),...b},s);
+ const norm={action:'norm',mode:'average',expectedVersion:0,loadFactor:.8,lines:[{materialId:gas.id,quantity:2}],evidence:'Workshop measurement'};
+ A.equal((await post({...norm,loadFactor:1.1})).status,400);A.equal((await post(norm)).status,200);A.equal((await post(norm)).status,409);
+ const actual={action:'actual',machineId:m.id,materialId:raw.id,hours:3,date:'2026-09-30',operatorId:people[0].id,checkerId:people[0].id,meterStart:100,meterEnd:125,lines:[{materialId:gas.id,actual:7}]};
+ A.equal((await post({...actual,meterEnd:99})).status,400);A.equal((await post({...actual,lines:[]})).status,400);
+ const key=randomUUID();let r=await post({...actual,requestId:key});A.equal(r.status,200,JSON.stringify(r.data));const record=r.data;A.equal(record.estimatedKwh,24);A.equal(record.actualKwh,25);A.equal(record.lines[0].expected,6);A.equal(record.lines[0].perHour,7/3);A.equal((await post({...actual,requestId:key})).data.id,record.id);
+ A.equal((await post({...norm,expectedVersion:1,loadFactor:1,lines:[{materialId:gas.id,quantity:4}]})).status,200);
+ A.equal((await post({action:'confirm',id:record.id,expectedVersion:1,note:'Checked'})).status,400);
+ const file={action:'file',id:record.id,expectedVersion:1,name:'signed.pdf',mime:'application/pdf',data:Buffer.from('%PDF-1.4\nfixture signed document\n%%EOF').toString('base64')};
+ A.equal((await post({...file,data:Buffer.from('bad file contents').toString('base64')})).status,400);r=await post(file);A.equal(r.status,200);A.equal((await post(file)).status,409);const fileId=r.data.files[0].id;
+ r=await post({action:'confirm',id:record.id,expectedVersion:2,note:'Compared signed original'});A.equal(r.status,200);A.equal(r.data.state,'confirmed');A.equal((await post({...file,expectedVersion:3})).status,409);
+ A.equal((await call('ops/machine-consumption?file='+fileId)).data.data,file.data);
+ const snapshot=(await call('ops/machine-consumption')).data.actuals[0];A.equal(snapshot.normSnapshot.version,1);A.equal(snapshot.estimatedKwh,24);A.equal(snapshot.lines[0].expected,6);
+ A.equal((await post({action:'setting',machineId:m.id,mode:'material',expectedVersion:0})).status,200);A.equal((await post(actual)).status,400);
+ A.equal((await post({...norm,mode:'material',machineId:m.id,materialId:raw.id,observationId:record.id})).status,200);A.equal((await post(actual)).status,200);
+ A.equal((await post({...actual,useNorm:false})).data.estimatedKwh,null);
+ await require('./helpers/personnel-user.cjs')(call,admin,{username:'viewer',name:'Viewer',role:'technical',password:'Machine-test-2026!',actionAccess:{workshop:['view']}},{direct:true});const viewer=await call('login','POST',{username:'viewer',password:'Machine-test-2026!'});
+ A.equal((await call('ops/machine-consumption','GET',undefined,viewer)).status,200);A.equal((await post(actual,viewer)).status,403);A.equal((await post({action:'confirm',id:record.id,expectedVersion:3,note:'No'},viewer)).status,403);
+ A.equal((await call('ops/state')).data.movements.length,0);
+});
