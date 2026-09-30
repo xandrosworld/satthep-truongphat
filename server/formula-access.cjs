@@ -33,6 +33,23 @@ function publishedRateAddition(before,after,master){
  if(old.some(r=>!SA.equal(r,next.find(n=>n.id===r.id))))return false;
  return next.filter(r=>!old.some(o=>o.id===r.id)).every(r=>SA.equal(r,published.find(m=>m.id===r.id)));
 }
+// A unit repair adopts only published price/unit pairs. Historical prices for
+// other modes and operations need not equal today's entire catalogue.
+function publishedUnitRepair(before,after,master){
+ if(!before||!after||!master)return false;
+ const expected=JSON.parse(JSON.stringify(before));let changed=false;
+ for(const rate of expected.rates||[]){
+  const next=after.rates?.find(r=>r.id===rate.id),ref=master.rates?.find(r=>r.id===rate.id);
+  if(!next||!ref)continue;
+  for(const mode of ['inside','outside']){
+   const unit=mode+'Unit';
+   if(rate[unit]===next[unit])continue;
+   if(next[unit]!==ref[unit]||next[mode]!==ref[mode]||!Number.isFinite(next[mode])||next[mode]<0)return false;
+   rate[unit]=next[unit];rate[mode]=next[mode];changed=true;
+  }
+ }
+ return changed&&SA.equal(expected,after);
+}
 // Shared impact factors have one owner even when shown beside operation prices.
 // Technical instructions/machines and quote cost coefficients are outside this lock.
 function operationPricing(catalog){
@@ -73,7 +90,7 @@ function createFormulaAccess({sql,fail,readBody,audit,transaction}){
   function snapshotLocks(prev,next){if(!next||typeof next!=='object')return;if(Array.isArray(next)){for(const [i,item]of next.entries()){const previous=item?.id?(item.kind?priorSnapshotNodes.get(item.id):undefined)||(Array.isArray(prev)?prev.find(x=>x?.id===item.id):undefined):prev?.[i];snapshotLocks(previous,item);}return;}for(const [k,v]of Object.entries(next)){if(!v||typeof v!=='object')continue;const kind=k==='ruleSpec'?'rules':k==='shapeDefinition'?'shapeDefinitions':null,key=kind+':'+v.id;if(kind&&blocked.has(key)&&!p.formulaUnlock&&!SA.equal(declaration(prev?.[k]),declaration(v))){const master=masterRecords.find(r=>r.key===key);const embedded=kind==='shapeDefinitions'&&masterCatalog.materials?.some(m=>m.id===next.id&&m.shapeDefinition?.id===v.id&&SA.equal(declaration(m.shapeDefinition),declaration(v)));if(!embedded&&(!master||!SA.equal(master.fields,declaration(v))))fail(403,'Công thức đã khóa; cần quyền mở sửa');}snapshotLocks(prev?.[k],v);}}
   snapshotLocks(before,after);
   if(catalog)return;
-  const priorPricing=scopedRecords({rates:before.quote?.ratesSnapshot,pricingDefaults:before.quote?.pricing}),nextPricing=scopedRecords({rates:after.quote?.ratesSnapshot,pricingDefaults:after.quote?.pricing});for(const r of priorPricing){const n=nextPricing.find(x=>x.key===r.key);if(blocked.has(r.key)&&(r.kind==='operationPricing'||!p.formulaUnlock)&&!(r.key==='calculationFactors:all'&&p.factors&&SA.equal({...r.fields,coefficients:{}},{...n?.fields,coefficients:{}}))&&!SA.equal(r.fields,n?.fields)&&!SA.equal(n?.fields,masterRecords.find(x=>x.key===r.key)?.fields)&&!(['calculationFactors:all','operationPricing:all'].includes(r.key)&&publishedRateAddition(r.fields,n?.fields,masterRecords.find(x=>x.key===r.key)?.fields)))lockedChange(r,n,'báo giá');}
+  const priorPricing=scopedRecords({rates:before.quote?.ratesSnapshot,pricingDefaults:before.quote?.pricing}),nextPricing=scopedRecords({rates:after.quote?.ratesSnapshot,pricingDefaults:after.quote?.pricing});for(const r of priorPricing){const n=nextPricing.find(x=>x.key===r.key);if(blocked.has(r.key)&&(r.kind==='operationPricing'||!p.formulaUnlock)&&!(r.key==='calculationFactors:all'&&p.factors&&SA.equal({...r.fields,coefficients:{}},{...n?.fields,coefficients:{}}))&&!SA.equal(r.fields,n?.fields)&&!SA.equal(n?.fields,masterRecords.find(x=>x.key===r.key)?.fields)&&!(r.key==='operationPricing:all'&&publishedUnitRepair(r.fields,n?.fields,masterRecords.find(x=>x.key===r.key)?.fields))&&!(['calculationFactors:all','operationPricing:all'].includes(r.key)&&publishedRateAddition(r.fields,n?.fields,masterRecords.find(x=>x.key===r.key)?.fields)))lockedChange(r,n,'báo giá');}
   const nodes=d=>require('../core.js').flatten(d.quote?.products||[]),priorNodes=priorSnapshotNodes;
   const allowed=new Set([...expressions(before),...expressions(after)].filter(x=>!x.path.startsWith('quote.')).map(x=>x.value));
   const previous=new Set(expressions(before.quote).map(x=>x.value));

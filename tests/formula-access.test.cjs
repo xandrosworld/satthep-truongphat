@@ -271,3 +271,39 @@ test('technical user can save duplicated historical formula snapshots with hidde
  clonedLeaf.ruleSpec.width='W + 999';A.equal((await call('quotes/'+made.data.id,'PUT',{document:d,expectedVersion:saved.data.version},u.session)).status,403);
  A.equal((await call('quotes/'+made.data.id,'GET',undefined,admin)).data.version,saved.data.version);
 });
+
+test('price staff can persist selected published unit-price pairs under operation lock',async t=>{
+ const {call,admin,create,sql}=await harness(t),I=require('../intake-core.js');
+ const u=await create('price-unit-sync',{sections:['materials'],canFormulaEdit:false,canFormulaView:true});
+ const d=P.demoSeed();for(const n of C.flatten(d.quote.products))n.ops=[];
+ const rate=d.quote.ratesSnapshot.find(r=>r.id==='weld');A.ok(rate);
+ rate.insideUnit='m';rate.inside=35000;
+ d.quote.ratesSnapshot.find(r=>r.id!==rate.id).outside=123456;
+ d.quote.products[0].ops=[{id:rate.id,mode:'inside',quantityUnit:'kg',amount:1,basisMode:'auto'}];
+ const made=await call('quotes','POST',{document:d},admin);A.equal(made.status,201,JSON.stringify(made.data));
+ const master=JSON.parse(sql.prepare('SELECT document FROM catalog WHERE id=1').get().document);
+ Object.assign(master.rates.find(r=>r.id===rate.id),{insideUnit:'kg',inside:2000});
+ sql.prepare('UPDATE catalog SET document=? WHERE id=1').run(JSON.stringify(master));
+ sql.exec("UPDATE formula_locks SET locked=1 WHERE key='operationPricing:all'");
+ const read=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data;
+ const edited=C.copy(read.document);edited.rates=master.rates;
+ I.applyOperationUnitUpdates(edited,I.operationUnitUpdates(edited));
+ // Quote transport keeps its old catalogue; only the selected snapshot pair changes.
+ edited.rates=read.document.rates;
+ for(const alter of [
+  q=>q.ratesSnapshot.find(r=>r.id===rate.id).inside=2001,
+  q=>q.ratesSnapshot.find(r=>r.id!==rate.id).outside=98765,
+  q=>q.ratesSnapshot.find(r=>r.id===rate.id).priceOptions=[{id:'forged',method:'catalog',inside:1}],
+  q=>q.ratesSnapshot.find(r=>r.id===rate.id).factors=[]
+ ]){
+  const bad=C.copy(edited);alter(bad.quote);
+  A.ok([400,403].includes((await call('quotes/'+made.data.id,'PUT',{document:bad,expectedVersion:read.version},u.session)).status));
+ }
+ const saved=await call('quotes/'+made.data.id,'PUT',{document:edited,expectedVersion:read.version},u.session);
+ A.equal(saved.status,200,JSON.stringify(saved.data));
+ const after=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data.document;
+ const stored=after.quote.ratesSnapshot.find(r=>r.id===rate.id);A.equal(stored.insideUnit,'kg');A.equal(stored.inside,2000);
+ A.deepEqual(after.quote.products,read.document.quote.products);
+ A.equal(after.quote.ratesSnapshot.find(r=>r.id!==rate.id).outside,123456);
+ A.equal(sql.prepare("SELECT locked FROM formula_locks WHERE key='operationPricing:all'").get().locked,1);
+});
