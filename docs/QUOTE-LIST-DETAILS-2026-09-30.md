@@ -13,3 +13,5 @@ Ngày: 30/09/2026.
 Kiểm tra đạt: `quote-list-details.test.cjs`, `quote-list-summary.test.cjs`, `quote-overview-browser.cjs`, `quote-list-browser.cjs`; build và cú pháp. Browser kiểm tra cả desktop/mobile và cuộn bằng wheel sau khi thu nhỏ hai cửa sổ.
 
 `offer-followup.test.cjs` có ba lỗi tồn tại trước thay đổi (fixture tài khoản/phân công); đối chiếu bằng `server/app.cjs` tại HEAD trước bản sửa vẫn cùng ba lỗi. Log đối chiếu cục bộ: `artifacts/offer-followup-baseline.log`.
+
+Triển khai `0fe8597`: container healthy, `/healthz` OK. Kiểm tra web thật đạt: tên kinh doanh, hạn khai, ngày duyệt, số lần chăm sóc khớp API; thu nhỏ cả hai cửa sổ và cuộn wheel hoạt động; giao diện điện thoại hiển thị đủ. Không ghi dữ liệu nghiệp vụ; đã thu hồi phiên kiểm tra tạm.
