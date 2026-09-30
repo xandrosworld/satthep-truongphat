@@ -33,6 +33,7 @@ function actionLayout(){
 }
 function actionRequirement(el){
  const d=el.dataset;
+ if(d.action==='approve'&&Team.loaded)return ['quotes',Team.permissions?.approve&&teamCurrent()?.status==='submitted'?'approve':'submit'];
  if(el.hasAttribute('data-gov-placement'))return ['organization','view'];
  if(d.gov)return [d.gov,d.grant||'view'];
  if(d.ar){const a={'roles':'view','new-role':'create','inline-new-role':'create','edit-role':'edit','inline-edit-role':'edit','delete-role':'delete'}[d.ar];if(a)return ['roles',a];if(['profile','delete-user'].includes(d.ar))return ['accounts',d.ar==='profile'?'edit':'delete'];}
