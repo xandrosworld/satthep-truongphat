@@ -286,6 +286,10 @@ test('price staff can persist selected published unit-price pairs under operatio
  sql.prepare('UPDATE catalog SET document=? WHERE id=1').run(JSON.stringify(master));
  sql.exec("UPDATE formula_locks SET locked=1 WHERE key='operationPricing:all'");
  const read=(await call('quotes/'+made.data.id,'GET',undefined,u.session)).data;
+ A.equal(read.operationUnitPrices.find(r=>r.id===rate.id).insideUnit,'kg');
+ A.ok(read.operationUnitPrices.every(r=>read.document.quote.ratesSnapshot.some(s=>s.id===r.id)));
+ const viewer=await create('unit-viewer',{sections:['customer'],canFormulaView:true});
+ A.equal((await call('quotes/'+made.data.id,'GET',undefined,viewer.session)).data.operationUnitPrices,undefined);
  const edited=C.copy(read.document);edited.rates=master.rates;
  I.applyOperationUnitUpdates(edited,I.operationUnitUpdates(edited));
  // Quote transport keeps its old catalogue; only the selected snapshot pair changes.
