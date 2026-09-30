@@ -4,8 +4,8 @@ test('routing: review sequence, source approval, department delegation, snapshot
  const call=async(path,method='GET',body,s=admin)=>{const response=await fetch('http://127.0.0.1:'+app.server.address().port+'/api/'+path,{method,headers:{'Content-Type':'application/json',Cookie:s?.cookie||'','X-CSRF-Token':s?.csrf||''},body:body===undefined?undefined:JSON.stringify(body)}),data=await response.json();return {status:response.status,data,cookie:response.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};};
  const ok=r=>{A.equal(r.status,200,JSON.stringify(r.data));return r.data;},post=(path,b,s)=>call(path,'POST',{requestId:randomUUID(),...b},s);
  admin=await call('setup','POST',{username:'admin',name:'Admin',password:'Routing-test-2026!'});
- const sessions={};for(const [name,actionAccess]of Object.entries({stockworker:{inventory:['view','edit','approve'],serviceRequests:['view']},worker:{production:['view'],serviceRequests:['view']},tech:{production:['view'],serviceRequests:['view']},stock:{inventory:['view','create','edit','approve'],serviceRequests:['view']},price:{purchasing:['view','edit','approve'],serviceRequests:['view']},outsider:{inventory:['view','edit','approve'],serviceRequests:['view']}})){
-  await require('./helpers/personnel-user.cjs')(call,admin,{username:name,name,role:'estimator',password:'Routing-test-2026!',actionAccess});sessions[name]=await call('login','POST',{username:name,password:'Routing-test-2026!'});
+ const sessions={};for(const [name,actionAccess]of Object.entries({readonlymanager:{production:['view'],serviceRequests:['view']},stockworker:{inventory:['view','edit','approve'],serviceRequests:['view']},worker:{production:['view'],serviceRequests:['view']},tech:{production:['view'],serviceRequests:['view']},stock:{inventory:['view','create','edit','approve'],serviceRequests:['view']},price:{purchasing:['view','edit','approve'],serviceRequests:['view']},outsider:{inventory:['view','edit','approve'],serviceRequests:['view']}})){
+  await require('./helpers/personnel-user.cjs')(call,admin,{username:name,name,role:'estimator',password:'Routing-test-2026!',actionAccess:{...actionAccess,processRouting:name==='readonlymanager'?['view']:['view','submit','confirm','return','propose','assign']}});sessions[name]=await call('login','POST',{username:name,password:'Routing-test-2026!'});
  }
  let org=ok(await call('organization'));const department=name=>org.departments.find(d=>d.name==='Fixture '+name).id;
  for(const name of ['tech','stock','price'])org.positions.find(p=>p.departmentId===department(name)).manager=true;org.positions.find(p=>p.departmentId===department('worker')).departmentId=department('tech');org.positions.find(p=>p.departmentId===department('stockworker')).departmentId=department('stock');app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify(org));
@@ -59,6 +59,38 @@ test('routing: review sequence, source approval, department delegation, snapshot
  const purchaseFlow=ok(await call('process-routing')).instances.find(r=>r.sourceId===purchase.id);ok(await post('process-routing',{action:'complete',id:purchaseFlow.id,expectedVersion:purchaseFlow.version,note:'Nhu cầu và giá đã đối chiếu'},sessions.price));
  for(const state of ['approved','ordered','shipping','received','stocked'])purchase=ok(await post('ops/transition',{id:purchase.id,expectedVersion:purchase.version,state,receipts:purchase.lines.map(l=>({lineId:l.id,materialId:l.materialId,quantity:l.quantity,warehouse:'Main',unitWeight:1,length:0,width:0,thickness:0}))}));
  A.equal(ok(await call('process-routing')).instances.find(r=>r.sourceId===purchase.id).state,'completed');A.ok(app.sql.prepare("SELECT id FROM business_records WHERE kind='cost' AND id=?").get('purchase-'+purchase.id));
+ // Review departments can confirm out of order, but native approval waits for all.
+ const parallelSteps=configured.steps.map(s=>({...s,parallelWithPrevious:['stock','price'].includes(s.key)}));
+ A.equal((await post('process-routing',{...configured,expectedVersion:2,steps:parallelSteps.map(s=>s.key==='approve'?{...s,parallelWithPrevious:true}:s)})).status,400);
+ ok(await post('process-routing',{...configured,expectedVersion:2,steps:parallelSteps}));
+ const parallelRequest=ok(await make()),parallelId='service:'+parallelRequest.id;
+ const readParallel=async()=>ok(await call('process-routing')).instances.find(x=>x.id===parallelId);
+ let pr=await readParallel();A.equal(pr.activeSteps.length,3);
+ const act=async(action,key,session,extra={})=>{pr=await readParallel();return post('process-routing',{action,stepKey:key,id:parallelId,expectedVersion:pr.version,note:'Kiểm tra thực tế '+action,...extra},session);};
+ pr=ok(await act('complete','stock',sessions.stock));A.equal(pr.index,0);A.ok(pr.steps[1].completedAt);A.equal(pr.activeSteps.length,2);
+ A.equal((await post('ops/service-requests',{action:'approve',id:parallelRequest.id,expectedVersion:parallelRequest.version},sessions.stock)).status,403);
+ A.equal((await act('complete','stock',sessions.stock)).status,409);
+ pr=ok(await act('propose','price',sessions.price));A.ok(pr.steps[2].proposal);A.equal((await act('complete','price',sessions.price)).status,403);
+ pr=ok(await act('resolve-proposal','price',sessions.price,{decision:'reject'}));A.equal(pr.steps[2].proposal,undefined);
+ pr=ok(await act('return','price',sessions.price));A.ok(pr.correction);A.equal(pr.steps[1].completedAt,undefined);A.equal(pr.activeSteps.length,3);
+ A.equal((await act('complete','technical',sessions.tech)).status,403);A.equal((await act('resubmit','technical',sessions.tech)).status,403);
+ const edited=ok(await post('ops/service-requests',{action:'edit',id:parallelRequest.id,expectedVersion:parallelRequest.version,type:'supply',departmentId:department('tech'),purposeType:'office',sourceId:'purpose',recipient:'Xưởng',reason:'Đã điều chỉnh sau rà soát',neededDate:'2026-10-03',lines:[{materialId:'MAT',quantity:3}]}));A.equal(edited.id,parallelRequest.id);A.equal(edited.lines[0].quantity,3);A.equal(edited.history.at(-1).action,'edit');A.equal((await post('ops/service-requests',{action:'edit',id:parallelRequest.id,expectedVersion:edited.version,type:'repair'})).status,400);
+ pr=ok(await act('resubmit','technical',admin));A.equal(pr.correction,undefined);
+ // Two simultaneous writes never overwrite each other's results; the loser retries current version.
+ const version=pr.version;
+ const concurrent=await Promise.all([['stock',sessions.stock],['price',sessions.price]].map(([key,session])=>post('process-routing',{action:'complete',stepKey:key,id:parallelId,expectedVersion:version,note:'Rà soát song song'},session)));
+ A.deepEqual(concurrent.map(x=>x.status).sort(),[200,409]);pr=await readParallel();const retry=pr.steps[1].completedAt?'price':'stock';ok(await act('complete',retry,sessions[retry]));
+ pr=await readParallel();A.equal(pr.index,0);A.equal(pr.activeSteps.length,1);
+ pr=ok(await act('complete','technical',sessions.tech));A.equal(pr.index,3);A.equal(pr.steps[pr.index].key,'approve');A.equal(pr.history.filter(h=>h.action==='complete'&&h.stepKey==='stock').length,2,JSON.stringify(pr.history));
+ // A departmental manager with view only cannot confirm, return, propose or assign.
+
+ org=ok(await call('organization'));const readonlyPosition=org.positions.find(p=>p.departmentId===department('readonlymanager'));readonlyPosition.departmentId=department('tech');readonlyPosition.manager=true;app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify(org));
+ const readonlySession=await call('login','POST',{username:'readonlymanager',password:'Routing-test-2026!'}),restrictedRequest=ok(await make());const restricted=ok(await call('process-routing','GET',undefined,readonlySession)).instances.find(r=>r.sourceId===restrictedRequest.id);
+ A.equal(restricted.activeSteps[0].canComplete,false);for(const action of ['complete','return','propose','assign'])A.equal((await post('process-routing',{action,id:restricted.id,expectedVersion:restricted.version,stepKey:'technical',note:'Không được cấp quyền',assigneeId:techId},readonlySession)).status,403);
+ // Accepted changes invalidate the group's confirmations and require the originator to resubmit.
+ let changeFlow=ok(await call('process-routing')).instances.find(r=>r.id===restricted.id);
+ for(const [action,stepKey,decision]of [['complete','stock'],['propose','price'],['resolve-proposal','price','accept']])changeFlow=ok(await post('process-routing',{action,stepKey,decision,id:changeFlow.id,expectedVersion:changeFlow.version,note:'Đề nghị điều chỉnh theo thực tế'}));
+ A.ok(changeFlow.correction);A.equal(changeFlow.steps[1].completedAt,undefined);A.equal(changeFlow.steps[2].proposal,undefined);A.equal(changeFlow.activeSteps.some(s=>s.canComplete),false);
  // Deactivating a department removes execution access, rather than falling back to another department.
  org.departments.find(d=>d.id===department('tech')).active=false;app.sql.prepare('UPDATE organization SET document=? WHERE id=1').run(JSON.stringify(org));const nextFlow=ok(await call('process-routing')).instances.find(r=>r.sourceId===next.id);
  A.equal((await post('process-routing',{action:'complete',id:nextFlow.id,expectedVersion:nextFlow.version,note:'Phòng đã dừng'},sessions.tech)).status,404);

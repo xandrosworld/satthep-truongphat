@@ -25,5 +25,7 @@ function target(actor,u,fail){
  for(const [field,col]of Object.entries(flags))if(u[col]!=null)b[field]=!!u[col];
  grant(actor,b,fail);
 }
-function rawResponse(url,u){const route=url.split('?')[0];return route==='/api/backup'?can(u,'backup','export'):/^\/api\/users(?:\/|$)/.test(route)?can(u,'accounts'):/^\/api\/roles(?:\/|$)/.test(route)?can(u,'roles'):route==='/api/organization'?can(u,'organization'):['/api/access-review','/api/access-history','/api/audit-search'].includes(route)?can(u,'audit'):false;}
+// Routing returns scoped workflow metadata and notes, not quotation documents.
+// Keep its audit trail readable independently of quote price/formula permissions.
+function rawResponse(url,u){const route=url.split('?')[0];return route==='/api/process-routing'?true:route==='/api/backup'?can(u,'backup','export'):/^\/api\/users(?:\/|$)/.test(route)?can(u,'accounts'):/^\/api\/roles(?:\/|$)/.test(route)?can(u,'roles'):route==='/api/organization'?can(u,'organization'):['/api/access-review','/api/access-history','/api/audit-search'].includes(route)?can(u,'audit'):false;}
 module.exports={can,need,grant,target,rawResponse};

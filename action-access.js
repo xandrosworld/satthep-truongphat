@@ -1,7 +1,8 @@
 (function(root){
 'use strict';
-const labels={reviewBusiness:'Xác nhận điều chỉnh với khách',reviewPricing:'Xác nhận giá điều chỉnh',approveChange:'Duyệt điều chỉnh sản xuất',approveSchedule:'Duyệt tiến độ phối hợp',view:'Xem',create:'Thêm',edit:'Sửa',delete:'Xóa / hủy',submit:'Trình duyệt',approve:'Duyệt',reopen:'Mở sửa',confirm:'Xác nhận / bàn giao',assign:'Giao việc',export:'Xuất / in',import:'Nhập Excel',activate:'Yêu cầu tài khoản',review:'Duyệt hồ sơ',issue:'Phát hành lệnh',qc:'Kiểm tra chất lượng',complete:'Hoàn thành',send:'Gửi tin'};
+const labels={return:'Trả lại xử lý',propose:'Đề xuất điều chỉnh',reviewBusiness:'Xác nhận điều chỉnh với khách',reviewPricing:'Xác nhận giá điều chỉnh',approveChange:'Duyệt điều chỉnh sản xuất',approveSchedule:'Duyệt tiến độ phối hợp',view:'Xem',create:'Thêm',edit:'Sửa',delete:'Xóa / hủy',submit:'Trình duyệt',approve:'Duyệt',reopen:'Mở sửa',confirm:'Xác nhận / bàn giao',assign:'Giao việc',export:'Xuất / in',import:'Nhập Excel',activate:'Yêu cầu tài khoản',review:'Duyệt hồ sơ',issue:'Phát hành lệnh',qc:'Kiểm tra chất lượng',complete:'Hoàn thành',send:'Gửi tin'};
 const modules={
+ processRouting:['Xử lý quy trình',['view','submit','confirm','return','propose','assign']],
  serviceRequests:['Đề nghị công việc',['view','create']],
  reports:['Trung tâm báo cáo',['view','export']],
  finance:['Thu chi, công nợ và giá thành',['view','create','delete','approve','export']],
