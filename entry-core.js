@@ -53,7 +53,7 @@ function readPaste(text,materials,rules,{format='auto',parentCount=1}={}){
     if(!m)throw Error('Dòng '+line+': chưa có mã '+(id||'(trống)')+' trong danh mục');
     const number=(value,key,fallback)=>{if(value===undefined||value==='')return fallback;try{return parseNumber(value,format);}catch(e){throw Error('Dòng '+line+', '+key+': '+e.message);}};
     const qty=number(q,'Số lượng',1);
-    if(!(qty>0)||qty>5000)throw Error('Dòng '+line+': số lượng phải lớn hơn 0 và không quá 5.000');
+    if(!(qty>0)||qty>100000)throw Error('Dòng '+line+': số lượng phải lớn hơn 0 và không quá 100.000');
     const dims={L:1000,W:300,H:50,F:15},provided=[];
     ['L','W','H','F'].forEach((key,i)=>{if(sizes[i]!==undefined&&sizes[i]!==''){
       const value=number(sizes[i],key,0);

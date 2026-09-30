@@ -5,7 +5,7 @@ function plan(db,job,rows){
  if(rows.length>80||db.quote.products.length+rows.length>500)throw Error('Quá nhiều chi tiết');
  const seen=new Set(),existing=new Set(C.flatten(db.quote.products).map(n=>n.aiSourceKey).filter(Boolean));
  return rows.map(r=>{const source=job.result.items[r.index],key=job.digest+':'+r.index;if(!source||seen.has(key)||existing.has(key))throw Error('Chi tiết đã được nhập hoặc chọn trùng');seen.add(key);
- const qty=Number(r.qty);if(!Number.isFinite(qty)||qty<=0||qty>5000)throw Error('Nhập số lượng cho '+source.name);
+ const qty=Number(r.qty);if(!Number.isFinite(qty)||qty<=0||qty>100000)throw Error('Nhập số lượng cho '+source.name);
  if(!String(r.name||'').trim()||r.name.length>200)throw Error('Nhập tên chi tiết (tối đa 200 ký tự)');
  const notes=String(r.specification||'');if(notes.length>2000)throw Error('Thông số tối đa 2.000 ký tự');
  const p={id:C.uid(),kind:'product',name:r.name.trim(),manualName:true,qty,unit:String(r.unit||'cái').slice(0,30),model:'assembly',children:[],ops:[],transport:0,install:0,aiSourceKey:key,requestSpecification:[source.group,source.material,notes,...['L','W','T','D'].filter(k=>Number(r[k])>0).map(k=>k+' '+Number(r[k])+' mm')].filter(Boolean).join(' · ')+'\nNguồn: '+job.filename+' · trang '+source.page+' · '+source.evidence+((source.warnings||[]).length?'\nC?n ki?m tra: '+source.warnings.join(' ? '):'')};
