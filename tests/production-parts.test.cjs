@@ -26,7 +26,7 @@ test('partial batches retain allocation and independently enforce review, stock 
  A.equal((await call('production/'+job.id)).data.state,'ready');A.equal((await call('production/'+job.id+'/dossier')).data.reviewed,undefined);
  A.equal((await call('production/'+part+'/parts','POST',{expectedVersion:started.data.version,code:'BLOCKED',quantity:.5})).status,409);
  const allocation=(await call('production/orders/'+job.order_id)).data;A.equal(allocation.allocated.find(x=>x.product_id===job.product_id).quantity,2);
- const u=(await call('users','POST',{username:'readonly',name:'Viewer',role:'sales',password:'Operations-test-2026!'})).data;app.sql.prepare('UPDATE users SET action_access=? WHERE id=?').run(JSON.stringify({production:['view']}),u.id);const session=await call('login','POST',{username:'readonly',password:'Operations-test-2026!'});
+ const u=await require('./helpers/personnel-user.cjs')(call,admin,{username:'readonly',name:'Viewer',role:'sales',password:'Operations-test-2026!'},{direct:true});app.sql.prepare('UPDATE users SET action_access=? WHERE id=?').run(JSON.stringify({production:['view']}),u.id);const session=await call('login','POST',{username:'readonly',password:'Operations-test-2026!'});
  A.equal((await call('production/'+part+'/parts','POST',{expectedVersion:2,code:'NO',quantity:.5},session)).status,403);
 });
 

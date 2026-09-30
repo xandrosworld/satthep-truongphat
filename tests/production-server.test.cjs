@@ -3,7 +3,7 @@ test('production: approved snapshot, batches, technical isolation, preparation, 
  const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),dir=fs.mkdtempSync(path.join(os.tmpdir(),'tp-production-')),databasePath=path.join(dir,'app.sqlite');let app=createApp({databasePath});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));t.after(async()=>{await new Promise(r=>app.server.close(r));fs.rmSync(dir,{recursive:true,force:true});});let base='http://127.0.0.1:'+app.server.address().port;
  const call=async(route,method='GET',body,s)=>{const r=await fetch(base+'/api/'+route,{method,headers:{'Content-Type':'application/json',...(s?{Cookie:s.cookie,'X-CSRF-Token':s.csrf}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};};
  const password='Local-production-test-2026!';const admin=await call('setup','POST',{username:'admin',name:'Admin',password});admin.csrf=admin.data.csrf;
- for(const role of ['technical','sales'])await call('users','POST',{username:role,name:role,password,role},admin);
+ for(const role of ['technical','sales'])await require('./helpers/personnel-user.cjs')(call,admin,{username:role,name:role,password,role},{direct:true});
  const tech=await call('login','POST',{username:'technical',password});tech.csrf=tech.data.csrf;const sales=await call('login','POST',{username:'sales',password});sales.csrf=sales.data.csrf;
  A.equal((await call('production')).status,401);A.equal((await call('production','GET',undefined,sales)).status,403);
  const d=P.demoSeed(),pid=d.quote.products[0].id,qty=d.quote.products[0].qty;
