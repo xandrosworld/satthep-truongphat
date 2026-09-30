@@ -18,3 +18,7 @@
 
 - `production-norm-review-browser.cjs`: bảng rà soát hiển thị lượng báo giá, định mức điện/thời gian và phiên bản; điền phần thiếu và mobile đạt.
 - Bài kiểm tra rộng `production-review-sections-browser.cjs` còn dùng ô số đề nghị mua/nút chọn vật tư của giao diện cũ; không tính bài này là đạt. Kịch bản định mức riêng và luồng xác nhận/duyệt nêu trên đã kiểm tra đạt.
+
+## Triển khai
+
+Runtime `d5c2329` đã lên truongphat-group.xyz, có sao lưu trước triển khai; container healthy, healthz OK. Kiểm tra chỉ đọc trên lệnh hiện có: lượng báo giá, nguồn định mức, bảng hao phí, ô căn cứ tạm tính, nút lấy phần thiếu và mobile đạt, không có lỗi JavaScript. Không gửi đề nghị hay sửa dữ liệu nghiệp vụ thật. Phiên kiểm thử đã thu hồi.
