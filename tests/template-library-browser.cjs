@@ -81,8 +81,8 @@ const artifacts=path.resolve('artifacts/customer-review/template-library-2026-09
   expect(workTree(restored.children.at(-1))).toEqual(workTree(component));
   expect(workTree({...restored,children:restored.children.slice(0,-1)})).toEqual(workTree(template));
   await page.locator('[data-tab=bom]').click();
-  await page.locator(`[data-action=add-component][data-parent="${restored.id}"]`).first().click();
-  await page.locator('#dialog [name=componentTemplate]').selectOption(component.id);
+  await page.locator(`[data-action=pick-template][data-parent="${restored.id}"]`).first().click();
+  await page.locator('#dialog [name=template]').selectOption(component.id);
   await page.locator('#dialog [name=qty]').fill('3');
   await page.locator('#dialog button[type=submit]').click();
   await expect(page.locator('#dialog')).not.toBeVisible();
