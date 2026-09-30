@@ -10,7 +10,7 @@ function duplicates(before,after){const found=[];
  }}return found;
 }
 function approvedShape(definition,master){return [...master.shapeDefinitions||[],...(master.materials||[]).map(m=>m.shapeDefinition).filter(Boolean)].some(published=>published.id===definition?.id&&equal(shapeMeaning(definition),shapeMeaning(published)));}
-function guardQuote(before,after,master){const previous=new Map(C.flatten(before?.quote?.products||[]).map(n=>[n.id,n]));
+function guardQuote(before,after,master){const previous=require('./formula-access.cjs').snapshotBaselines(before,after);
  for(const n of C.flatten(after.quote.products||[])){if(n.kind!=='material')continue;const old=previous.get(n.id),d=n.spec?.shapeDefinition;
   if(d){if(equal(d,old?.spec?.shapeDefinition)||approvedShape(d,master))continue;throw Error('Hình dạng / công thức '+(d.name||d.id)+' chưa được Admin duyệt. Gửi khai báo tại Danh mục quy ước và chờ duyệt trước khi áp dụng.');}
   const r=n.ruleSpec;if(!r||equal(r,old?.ruleSpec))continue;const published=master.rules?.find(x=>x.id===r.id),formula=x=>({length:x?.length,width:x?.width,formulas:x?.formulas});if(!published||!equal(formula(r),formula(published)))throw Error('Quy tắc '+(r.name||r.id)+' chưa được Admin duyệt.');

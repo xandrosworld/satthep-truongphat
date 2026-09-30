@@ -258,3 +258,16 @@ test('locked operation pricing permits published additions and technical edits b
  const after=structuredClone(before);after.quote.ratesSnapshot.push(added);after.quote.products[0].ops[0].notes='Technical edit';A.doesNotThrow(()=>guard(before,after,p));
  for(const change of [d=>d.quote.ratesSnapshot.at(-1).inside++,d=>d.quote.ratesSnapshot[0].outside++,d=>d.quote.pricing.tmcTables[0].tiers[0].price++,d=>d.quote.pricing.operationPriceTables=[{id:'forged',tiers:[{price:999}]}],d=>d.quote.pricing.tmcLaborOperation={default:{rate:{id:'fake',inside:999}}}]){const bad=structuredClone(after);change(bad);A.throws(()=>guard(before,bad,p),e=>e.status===403);}
 });
+
+test('technical user can save duplicated historical formula snapshots with hidden formulas and retain edit restrictions',async t=>{
+ const {call,admin,create}=await harness(t),u=await create('clone-tech',{role:'technical',technicalDelegation:true,canFormulaUse:true,canFormulaView:false,canFormulaEdit:false,canViewCosts:false,sections:['bom','operations']});
+ const document=P.demoSeed(),leaf=C.flatten(document.quote.products).find(n=>n.rule==='tray');leaf.ruleSpec.width='W + 2 * H + 2 * F + 7';leaf.rule='historical-tray';leaf.ruleSpec.id='historical-tray';
+ const made=await call('quotes','POST',{document},admin);A.equal(made.status,201,JSON.stringify(made.data));
+ A.equal((await call('formulas/locks','POST',{key:'rules:tray',locked:true,expectedVersion:0,reason:'Published rule locked'},admin)).status,200);
+ const record=await call('quotes/'+made.data.id,'GET',undefined,u.session);A.equal(record.status,200);const d=record.data.document,clone=C.cloneNode(d.quote.products[0]);d.quote.products.push(clone);
+ const clonedLeaf=C.flatten([clone]).find(n=>n.rule==='historical-tray');clonedLeaf.dims.L+=10;
+ const saved=await call('quotes/'+made.data.id,'PUT',{document:d,expectedVersion:record.data.version},u.session);A.equal(saved.status,200,JSON.stringify(saved.data));
+ const full=(await call('quotes/'+made.data.id,'GET',undefined,admin)).data.document;A.equal(full.quote.products.length,document.quote.products.length+1);A.equal(C.flatten(full.quote.products).find(n=>n.id===clonedLeaf.id).ruleSpec.width,leaf.ruleSpec.width);
+ clonedLeaf.ruleSpec.width='W + 999';A.equal((await call('quotes/'+made.data.id,'PUT',{document:d,expectedVersion:saved.data.version},u.session)).status,403);
+ A.equal((await call('quotes/'+made.data.id,'GET',undefined,admin)).data.version,saved.data.version);
+});
