@@ -1,6 +1,6 @@
 const {test}=require('node:test'),A=require('node:assert/strict'),P=require('../pricing-core.js'),C=require('../core.js'),Costs=require('../cost-input-core.js'),{estimate}=require('../server/provisional-price.cjs'),T=require('../technical-core.js'),{createApp}=require('../server/app.cjs');
 test('latest same-code material price is provisional, preserves reviewed prices, detects missing matches and never mutates quote',()=>{
- const d=P.demoSeed(),before=JSON.stringify(d),catalog=structuredClone(d);catalog.materials.forEach(m=>m.price=Number(m.price||0)+1234);
+ const d=P.demoSeed(),before=JSON.stringify(d),catalog=structuredClone(d);catalog.materials.forEach(m=>{m.price=Number(m.price||0)+1234;m.brand='Updated catalog metadata';});
  const r=estimate(d,catalog);A.equal(JSON.stringify(d),before);A.ok(r.sources.some(x=>x.status==='catalog'));const row=Costs.rows(d.quote).find(x=>x.key.startsWith('material:'));
  Costs.apply(d.quote,[{key:row.key,original:87654,status:'excluded'}],'Reviewed source');
  const reviewed=estimate(d,catalog).sources.find(x=>x.key===row.key);A.equal(reviewed.status,'reviewed');A.equal(reviewed.value,87654);

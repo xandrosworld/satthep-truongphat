@@ -2,12 +2,12 @@
 const C=require('../core.js'),Costs=require('../cost-input-core.js');
 function estimate(document,catalog){
  const copy=structuredClone(document),sources=[],missing=[];
- const refs=new Map(Costs.catalogReferences(catalog).map(r=>[r.identity+'|'+r.unit,r]));
+ const refs=new Map((catalog.materials||[]).filter(m=>m.price!==null&&m.price!==undefined&&m.price!==''&&Number.isFinite(Number(m.price))&&Number(m.price)>=0).map(m=>[JSON.stringify([m.id,m.unit]),{value:Number(m.price)}]));
  for(const row of Costs.rows(copy.quote)){
   if(!row.key.startsWith('material:'))continue;
   if(Costs.state(copy.quote,row).known){sources.push({key:row.key,code:row.target.id,status:'reviewed',value:row.value,unit:row.unit});continue;}
-  const ref=refs.get(row.identity+'|'+row.unit);
-  if(!ref){missing.push({code:row.target.id,unit:row.unit,reason:'Chưa có giá danh mục cùng mã, quy cách và đơn vị'});continue;}
+  const ref=refs.get(JSON.stringify([row.target.id,row.unit]));
+  if(!ref){missing.push({code:row.target.id,unit:row.unit,reason:'Chưa có giá danh mục cùng mã và đơn vị'});continue;}
   row.target[row.field]=ref.value;sources.push({key:row.key,code:row.target.id,status:'catalog',value:ref.value,unit:row.unit});
  }
  const result=C.calculate(copy),incomplete=missing.length>0||result.errors.length>0;
