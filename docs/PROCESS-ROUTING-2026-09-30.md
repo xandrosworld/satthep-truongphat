@@ -29,3 +29,9 @@ Hai ca trình duyệt đạt: cấu hình → giao cá nhân → rà soát → m
 Đã cập nhật hai fixture kiểm thử sản xuất cũ để tạo tài khoản qua hồ sơ nhân sự được duyệt, phù hợp cơ chế hiện tại. Không thay đổi kiểm tra nghiệp vụ của hai bộ kiểm thử này.
 
 Kiểm tra web thật được thực hiện chỉ đọc: giao diện, bảng tổng hợp, cấu hình, bố cục điện thoại và tình trạng dịch vụ; không tạo hồ sơ thử hoặc bật quy trình trên dữ liệu thật.
+
+## Xác nhận triển khai
+
+Ngày 30/09/2026: đã triển khai release `cdcf743` lên `truongphat-group.xyz`, container healthy và `/healthz` trả `ok: true`. Kiểm tra trình duyệt web thật đạt ở desktop và 390px: mở bảng tổng hợp, cấu hình cấp vật tư, tải lại trang; không có lỗi JavaScript. API trả 18 mẫu, 0 mẫu bật và 0 hồ sơ chạy quy trình. Kiểm tra chặn mọi ghi nghiệp vụ, kể cả tín hiệu hiện diện báo giá tự động. Đã thu hồi phiên kiểm tra.
+
+Ảnh kiểm tra cục bộ: `artifacts/process-routing-live-desktop.png`, `artifacts/process-routing-live-mobile.png`.
