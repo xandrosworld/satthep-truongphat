@@ -19,3 +19,10 @@
 - `npm run build`, kiểm tra cú pháp và `git diff --check`: đạt.
 
 Phân luồng đề nghị bốn cấp vẫn chờ khách xác nhận, không thuộc thay đổi này.
+
+## Triển khai và kiểm tra web thật
+
+- Runtime `25c04fc` tại truongphat-group.xyz; đã sao lưu trước triển khai, container healthy, healthz OK.
+- Kiểm tra chỉ đọc: trường công suất máy, bảng hao phí, form phiếu thực tế, danh sách nhân sự, hiển thị mobile và điều hướng về giá ca máy. Không tạo dữ liệu nghiệp vụ thử trên máy chủ.
+- API hao phí không trả đơn giá máy. Không có lỗi JavaScript trong luồng kiểm tra. Phiên xác thực kiểm thử đã thu hồi.
+- Hai máy hiện có chưa khai công suất/định mức trong bảng mới; cần nhập số liệu điện đầu vào và hao phí đã được xưởng xác nhận.
