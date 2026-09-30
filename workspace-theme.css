@@ -522,3 +522,5 @@ html[data-theme=dark] .pa-operations button:disabled{background:#243443;border-c
 @media(max-width:600px){#dialog:has(.quotes-list){width:100vw!important;height:100dvh;max-height:100dvh;margin:0;inset:0;border-radius:0}}
 
 #dialog:has(.quotes-list) .dialog-body{max-height:none;flex:1;min-height:0}
+
+.quote-back-navigation{margin:0 0 12px}.quote-back-navigation .button{font-weight:650}
