@@ -21,7 +21,7 @@ function workspaceHomeStage(s){return !s?'Chưa xác nhận':s.current?'Đã xá
 function workspaceHomeProgress(q){
  return '<div class="home-progress">'+[['intake','Đầu vào'],['technical','Kỹ thuật'],['materials','Nhập giá']].map(([key,label])=>{
   const value=q.progress?.[key],detail=q.details?.stages?.[key],person=detail?.person||q.progress?.work?.[key]?.name||value?.actor||'Chưa phân công',state=value?.current?'done':value?'changed':'pending',symbol=value?.current?'✓':value?'↻':'○',status=workspaceHomeStage(value),department=detail?.departments?.join(', ')||'';
-  return `<div class="home-stage ${state}"><span class="home-stage-status" title="${esc(label+': '+status)}" aria-label="${esc(label+': '+status)}"><span aria-hidden="true">${symbol}</span></span><div><b>${esc(department||label)}</b>${department?`<small class="home-stage-label">${label}</small>`:''}<span class="home-stage-person">${esc(person)}</span></div></div>`;
+  return `<div class="home-stage ${state}"><span class="home-stage-status" title="${esc(label+': '+status)}" aria-label="${esc(label+': '+status)}"><span aria-hidden="true">${symbol}</span></span><div><b>${esc(label)}</b><small class="home-stage-label">${esc(department||'Chưa phân phòng')}</small><span class="home-stage-person">${esc(person)}</span></div></div>`;
  }).join('')+'</div>';
 }
 function workspaceHomeStatus(q){
