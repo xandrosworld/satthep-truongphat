@@ -9,3 +9,5 @@
 - Giới hạn: đây là khai báo vật tư kho để cấp/mua; không tự tạo công thức hình học hoặc đơn giá trong danh mục báo giá.
 
 Kiểm thử: service-requests.test.cjs; request-context.test.cjs; service-material-picker-browser.cjs; service-requests-browser.cjs. Đạt tìm kiếm, dòng độc lập, đơn vị/quy cách, giữ phiếu khi gửi khai báo và tải mã duyệt, mobile; kiểm tra API từ chối quyền thiếu, mã chưa duyệt chưa được chọn, xung đột phiên bản/mã, trả lại và lưu quy cách từ máy chủ. Luồng cấp một phần/toàn phần và sửa chữa hồi quy đạt.
+
+Triển khai runtime `20d872a` sau sao lưu, container healthy và HTTPS health thành công. Kiểm tra đăng nhập quản trị trên web thật: tìm vật tư có quy cách, đơn vị và thông số đúng dữ liệu API, đổi loại khai báo tấm/thanh hiển thị đúng trường, tải lại danh mục giữ dòng/ghi chú, kích thước 390 px đạt. Chặn ghi API nghiệp vụ, không tạo mã/phiếu/xuất kho thử trên máy chủ thật. Phiên tạm đã thu hồi.
