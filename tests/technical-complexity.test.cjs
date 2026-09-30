@@ -55,3 +55,13 @@ test('unchanged declared complexity may omit its private number without blocking
  const forged=structuredClone(before);forged.quote.products[0].ops[0].complexity.multiplier=99;
  A.throws(()=>T.resolveDocumentChoices(forged,before,before,false),/Không được thay hệ số/);
 });
+
+test('technical material save survives access hydration and rejects changed complexity labels',()=>{
+ const {createApp}=require('../server/app.cjs'),app=createApp();const DA=require('../server/data-access.cjs').createDataAccess({sql:app.sql,fail:(status,message)=>{throw Error(message);}});
+ const d=P.demoSeed();d.pricingDefaults={factorDefinitions:[factor()]};for(const r of d.rates)r.factors=[];
+ const user={id:'tech-catalog',role:'technical',technical_delegated:1,can_view_costs:0};
+ const view=T.projectCatalog(d);view.materials.push({...view.materials[0],id:'VT-00040',name:'Cuộn dây hàn mig 1.0'});
+ const hydrated=DA.hydrate({catalog:view},user).catalog;
+ const saved=T.mergeCatalog(d,hydrated);A.equal(saved.materials.at(-1).id,'VT-00040');A.deepEqual(saved.rates,d.rates);
+ const forged=structuredClone(hydrated);forged.rates[0].complexityLevels[0].label='Fake';A.throws(()=>T.mergeCatalog(d,forged));app.sql.close();
+});
