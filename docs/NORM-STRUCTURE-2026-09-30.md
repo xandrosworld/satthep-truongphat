@@ -20,3 +20,7 @@ Quyền tài chính `view` được xem, `approve` được khai/sửa. Không c
 - Browser: khai/lưu các nhóm, lịch sử, đường đi từ lệnh, điền đúng công đoạn/đơn vị, bảng hao hụt không có nút khai chuẩn, hiển thị mobile.
 - Tests: `norm-structure.test.cjs`, `reference-norms.test.cjs`, `reference-norm-controls.test.cjs`, `reference-norm-groups-browser.cjs`, `machine-consumption-browser.cjs`.
 - Build và kiểm tra whitespace đạt.
+
+## Kiểm tra web thật
+
+Runtime `79a03d3` đã triển khai tại truongphat-group.xyz, có sao lưu trước triển khai; container healthy và healthz OK. Kiểm tra chỉ đọc đạt: form hạn mức để trống số tiền, hao hụt không có nút khai chuẩn mới, mở đối chiếu từ lệnh hiện có, khai theo công đoạn có sẵn mã và đơn vị, hiển thị mobile. Không tạo/sửa dữ liệu nghiệp vụ trên production; phiên kiểm thử đã thu hồi.
