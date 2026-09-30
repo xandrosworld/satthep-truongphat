@@ -16,6 +16,11 @@ test('custom workflows: permissions, editable definitions, parallel barrier, sna
  A.equal((await call('process-routing','POST',create,viewer)).status,403);
  let r=ok(await call('process-routing','POST',create,head));A.equal(r.activeSteps.length,2);A.equal(r.description,create.description);
  A.equal(ok(await call('process-routing','POST',create,head)).id,r.id);
+ const inbox=ok(await call('notifications','GET',undefined,head));const messages=inbox.items.filter(n=>n.processId===r.id);A.equal(messages.length,2);A.ok(messages.every(n=>!n.readAt));
+ A.equal(ok(await call('notifications','GET',undefined,viewer)).items.filter(n=>n.processId===r.id).length,0);
+ A.equal((await call('notifications/'+messages[0].id+'/read','POST',{},viewer)).status,404);
+ ok(await call('notifications/'+messages[0].id+'/read','POST',{},head));A.ok(ok(await call('notifications','GET',undefined,head)).items.find(n=>n.id===messages[0].id).readAt);
+
  A.equal(ok(await call('process-routing','GET',undefined,viewer)).instances.length,0);
  const updated=ok(await call('process-routing','POST',{...draft,expectedVersion:1,name:'Tên mới',steps:[...draft.steps,step('Lưu kết quả')]}));A.equal(updated.version,2);
  r=ok(await call('process-routing','GET',undefined,head)).instances.find(x=>x.id===r.id);A.equal(r.definitionVersion,1);A.equal(r.steps.length,3);

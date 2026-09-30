@@ -115,7 +115,7 @@ function createApp({databasePath=':memory:',staticRoot=path.resolve(__dirname,'.
   const editLeases=require('./formula-edit-leases.cjs').createEditLeases({sql,fail,transaction,readBody,audit});
   const dataAccess=require('./data-access.cjs').createDataAccess({sql,fail});
   const quotePresence=require('./quote-presence.cjs').createQuotePresence({sql,fail,readBody,getQuote});
-  const notifications=require('./notifications.cjs').createNotifications({sql,fail,readBody,transaction,audit,getQuote});
+  const notifications=require('./notifications.cjs').createNotifications({sql,fail,readBody,transaction,audit,getQuote,getProcessRouting:()=>processRouting});
   const corrections=require('./quote-corrections.cjs')({sql,fail,readBody,transaction,audit,getQuote,saveQuote,notifications});
   const formulaSync=require('./formula-sync.cjs').createFormulaSync({sql,cleanDocument,publicOffer,audit});
   const aiPdf=require('./ai-pdf.cjs').createAiPdf({sql,readBody,fail,audit,provider:aiProvider});
