@@ -84,3 +84,26 @@ function installCatalogDraftUI(){
 
 document.addEventListener('click',async e=>{if(!e.target.closest('[data-catalog-review]'))return;try{const rows=await teamApi('catalog/proposals');openDialog('Khai báo chờ người quản trị duyệt','<p>Kiểm tra thay đổi trước khi xác nhận. Nếu danh mục đã đổi phiên bản, người khai báo phải đối chiếu và gửi lại.</p>'+rows.map(r=>'<p>'+esc(r.actorName)+' · '+esc(TPDisplay.date(r.at,true))+' · '+esc(({pending:'Chờ duyệt',approved:'Đã duyệt',rejected:'Đã trả lại',superseded:'Đã gửi bản mới'})[r.status]||r.status)+' <button type="button" class="button" data-catalog-proposal="'+esc(r.id)+'">Xem thay đổi</button></p>').join(''),'Đóng',closeDialog);}catch(error){toast(error.message);}});
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-catalog-proposal]');if(!b)return;try{const [proposal,master]=await Promise.all([teamApi('catalog/proposals/'+b.dataset.catalogProposal),teamApi('catalog')]);const labels={materials:'Vật tư',rates:'Nguyên công',rules:'Quy tắc',library:'Thư viện',materialPrices:'Giá vật liệu',conventions:'Quy ước',shapeDefinitions:'Hình dạng',stockSizes:'Khổ mua',pricingDefaults:'Hệ số tính toán'};const changes=CatalogDraft.keys.filter(k=>JSON.stringify(master.catalog[k])!==JSON.stringify(proposal.catalog[k]));teamDialog('Đối chiếu khai báo · phiên bản '+proposal.base_version,'<p>Danh mục hiện tại: phiên bản '+master.version+'</p>'+cdProposalComparison(proposal,master)+(proposal.status==='pending'?select('Quyết định','decision',[['approve','Xác nhận làm dữ liệu chính thức'],['reject','Trả lại người khai báo']],'approve')+field('Lý do trả lại (nếu có)','reason',''):'<p>Khai báo đã được xử lý.</p>'),proposal.status==='pending'?'Lưu quyết định':'Đóng',async data=>{if(proposal.status!=='pending'){closeDialog();return;}try{await teamApi('catalog/proposals/'+proposal.id+'/'+data.get('decision'),'POST',{reason:data.get('reason')});closeDialog();toast('Đã xử lý khai báo. Xem thay đổi để cập nhật danh mục đang mở.');}catch(error){const el=$('#dialog-error');el.textContent=error.message;el.hidden=false;}});$('#dialog').classList.add('wide-dialog');}catch(error){toast(error.message);}});
+
+
+// Save only the material shown in the editor, preserving unrelated local drafts.
+async function cdPersistOneMaterial(material){
+ const user=Team.user?.id,generation=Team.sessionGeneration,master=await teamApi('catalog');
+ if(user!==Team.user?.id||generation!==Team.sessionGeneration)throw Error('Phiên đăng nhập đã thay đổi');
+ const base=CatalogDraft.record?.baseCatalog?.materials?.find(m=>m.id===material.id),remote=master.catalog.materials.find(m=>m.id===material.id);
+ if(remote&&(!base||TPCostInput.signature(base)!==TPCostInput.signature(remote)))throw Error('Mã vật tư đã có hoặc vừa được cập nhật trên máy chủ. Đối chiếu danh mục trước khi lưu.');
+ const catalog=C.copy(master.catalog),index=catalog.materials.findIndex(m=>m.id===material.id);
+ if(index<0)catalog.materials.push(C.copy(material));else catalog.materials[index]=C.copy(material);
+ const saved=await teamApi('catalog','PUT',{expectedVersion:master.version,catalog});
+ if(user!==Team.user?.id||generation!==Team.sessionGeneration)throw Error('Phiên đăng nhập đã thay đổi; tải lại danh mục để kiểm tra kết quả lưu');
+ return {saved,catalog,master};
+}
+function cdFinishOneMaterial({saved,catalog,master}){
+ const snapshot=cdSnapshot(),pending=!!saved.pending;
+ Team.catalogVersion=saved.version;CatalogDraft.user=Team.user.id;
+ CatalogDraft.published=pending?master:{...saved,catalog};
+ CatalogDraft.dirty=pending||cdEditSignature(snapshot)!==cdEditSignature(catalog);
+ CatalogDraft.record={version:saved.version,catalog:snapshot,baseCatalog:C.copy(pending?master.catalog:catalog),dirty:CatalogDraft.dirty,...(pending?{pendingId:saved.proposalId}:{})};
+ CatalogDraft.error='';CatalogDraft.saveMessage=pending?'Đã gửi vật tư chờ duyệt; chưa phát hành vào danh mục chung.':'Đã lưu vật tư lên máy chủ. Tải lại trang vẫn giữ mã đã lưu.';
+ cdStash();render();toast(CatalogDraft.saveMessage);
+}

@@ -5,7 +5,7 @@ async function operationRefreshMaster(){if(!Team.loaded||!Team.permissions?.edit
 function technicalQuoteDocument(document){
  const projected=TPTechnical.project(document),baseline=Team.quoteTechnicalBaseline;
  // Shared catalogue edits are published separately; quote saves retain their loaded catalogue.
- if(Team.loaded&&baseline?.id===teamCurrent()?.id)return TPTechnical.project({...C.copy(baseline.document),quote:document.quote});
+ if(Team.loaded&&baseline?.document&&baseline.id&&baseline.id===teamCurrent()?.id)return TPTechnical.project({...C.copy(baseline.document),quote:document.quote});
  return projected;
 }
 'use strict';
