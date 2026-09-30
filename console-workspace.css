@@ -14,3 +14,8 @@ dialog.console-window>header{gap:10px}dialog.console-window>header>div{flex:1}
 .console-tabs{left:calc(var(--console-left,0px) + 12px)}
 dialog.console-window.console-expanded{inset:var(--console-top,0px) 0 64px var(--console-left,0px)!important;width:calc(100vw - var(--console-left,0px))!important;height:calc(100dvh - var(--console-top,0px) - 64px)!important;max-height:none!important}
 @media(max-width:600px){.console-tabs{left:6px}}
+
+/* Docked consoles must not cover feedback or communication controls. */
+body:has(.console-tabs:not([hidden])) #toast{bottom:88px;z-index:1010}
+body:has(.console-tabs:not([hidden])) #chat-floating{bottom:88px;z-index:1003}
+body:has(.console-tabs:not([hidden])) #chat-incoming{bottom:160px;z-index:1003}
