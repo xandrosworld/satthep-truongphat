@@ -12,6 +12,7 @@ test('routing: review sequence, source approval, department delegation, snapshot
  let d=ok(await call('process-routing'));let template=d.definitions.find(x=>x.id==='service:supply');const configured={action:'save',id:template.id,expectedVersion:0,active:true,steps:template.steps.map(s=>({...s,departmentId:department(s.key==='technical'?'tech':['price','purchase'].includes(s.key)?'price':'stock'),instructions:'Kiểm tra '+s.name}))};
  A.equal((await post('process-routing',configured,sessions.tech)).status,403);
  A.equal((await post('process-routing',{...configured,steps:configured.steps.map(s=>({...s,departmentId:'missing'}))})).status,400);
+ A.equal((await post('process-routing',{...configured,steps:configured.steps.map(s=>s.key==='technical'?{...s,admin:true}:s)})).status,400);
  ok(await post('process-routing',configured));A.equal((await post('process-routing',configured)).status,409);
  app.sql.prepare('INSERT INTO ops_records VALUES(?,?,?,?)').run('material-purpose','purpose',1,JSON.stringify({type:'office',code:'VP',name:'Office',active:true}));
  ok(await post('ops/master',{kind:'material',expectedVersion:0,document:{id:'MAT',code:'MAT',name:'Material',unit:'cái',form:'bulk'}}));const lot=ok(await post('ops/receipt',{materialId:'MAT',warehouse:'Main',quantity:10,unitWeight:1,unitCost:10,reference:'INITIAL',length:0,width:0,thickness:0}));
