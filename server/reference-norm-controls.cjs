@@ -3,21 +3,32 @@
 const groups=[
  {id:'material',name:'01 · Vật tư',purpose:'Lượng vật tư dùng cho một đơn vị sản phẩm.',material:true,unit:'kg',outputUnit:'bộ'},
  {id:'nesting',name:'02 · Phôi & nesting',purpose:'Số phôi theo đúng mã và khổ cần cho một đơn vị sản phẩm; đối chiếu phương án sắp phôi.',material:true,unit:'tấm',outputUnit:'bộ'},
- {id:'loss',name:'03 · Hao hụt',purpose:'Tỷ lệ phế tối đa trên khối lượng đầu vào đã đối soát.',material:true,unit:'%',outputUnit:'kg đầu vào',percent:true},
+ {id:'loss',name:'Đối chiếu hao hụt',purpose:'So sánh hao hụt báo giá, phương án phôi trong lệnh và thực tế đã đối soát; không khai tỷ lệ chuẩn mới.',material:true,unit:'%',outputUnit:'kg đầu vào',percent:true},
  {id:'recovery',name:'04 · Tàn / phế',purpose:'Tỷ lệ phần tận dụng thu hồi tối thiểu trên khối lượng đầu vào đã đối soát.',material:true,unit:'%',outputUnit:'kg đầu vào',percent:true,minimum:true},
  {id:'routing',name:'05 · Công đoạn',purpose:'Danh sách mã nguyên công theo đúng thứ tự sản phẩm phải đi qua.',unit:'quy trình',outputUnit:'sản phẩm'},
  {id:'time',name:'06 · Thời gian',purpose:'Giờ trong ca từ bắt đầu đến bàn giao của từng công đoạn, trừ khoảng chờ đã duyệt.',operation:true,unit:'giờ',outputUnit:'bộ'},
  {id:'productivity',name:'07 · Năng suất',purpose:'Sản lượng công đoạn trên một giờ trong ca; không tự quy thành năng suất máy hoặc từng người.',operation:true,unit:'bộ',outputUnit:'giờ',minimum:true},
  {id:'labor',name:'08 · Nhân công',purpose:'Tổng giờ công cần cho một đơn vị sản phẩm. Cần ghi nhận giờ từng người để đối chiếu thực tế.',operation:true,unit:'giờ công',outputUnit:'bộ'},
  {id:'machineHours',name:'09 · Máy',purpose:'Giờ máy cần cho một đơn vị sản phẩm. Giờ trong ca của người phụ trách không phải số đo giờ máy.',operation:true,unit:'giờ máy',outputUnit:'bộ'},
- {id:'consumable',name:'10 · Tiêu hao',purpose:'Điện, khí, dây hàn, đá mài, sơn… theo đơn vị đo và căn cứ cụ thể.',unit:'kWh',outputUnit:'bộ'},
+ {id:'consumable',operation:true,name:'10 · Tiêu hao',purpose:'Điện, khí, dây hàn, đá mài, sơn… theo đơn vị đo và căn cứ cụ thể.',unit:'kWh',outputUnit:'bộ'},
  {id:'quality',name:'11 · Chất lượng',purpose:'Tỷ lệ không đạt tối đa ở lần QC cuối lệnh đang ghi nhận; không phải tỷ lệ lỗi lũy kế hoặc làm lại.',unit:'%',outputUnit:'sản phẩm kiểm tra',percent:true},
  {id:'finance',name:'12 · Giá thành',purpose:'Chi phí chuẩn trên một đơn vị sản phẩm; so với chứng từ chi phí đã gắn lệnh, chưa khẳng định đủ giá thành.',unit:'đ',outputUnit:'bộ'},
+ {id:'electricity',name:'Điện theo công đoạn',purpose:'kWh trên một đơn vị sản lượng của công đoạn, có máy và căn cứ khảo sát.',operation:true,unit:'kWh',outputUnit:'bộ'},
+ {id:'machineCost',name:'Chi phí máy theo công đoạn',purpose:'Chi phí máy trên một đơn vị sản lượng công đoạn; không tự cộng thêm vào đơn giá đã có.',operation:true,unit:'đ',outputUnit:'bộ'},
+ {id:'spending',name:'Hạn mức chi tiêu',purpose:'Giới hạn chi theo lần tiếp khách, hợp đồng, chuyến công tác hoặc phạm vi được phê duyệt.',unit:'VND',outputUnit:'lần'},
  {id:'other',name:'Định mức khác / dữ liệu cũ',purpose:'Tham chiếu bổ sung có căn cứ; không tự suy số đo thực tế.',unit:'kg',outputUnit:'bộ'}
 ];
 function validate(b,{text,number,fail}){
  const g=groups.find(g=>g.id===b.category);if(!g)fail(400,'Nhóm định mức không hợp lệ');
  const control={operationRateId:text(b.operationRateId||'',100),machineId:text(b.machineId||'',100),sequence:[]};
+ if(g.id==='spending'){
+  if(!['reception','relations','travel','incentive','other'].includes(b.expenseType)||!['lần','hợp đồng','chuyến','người/ngày','tháng'].includes(b.outputUnit)||b.unit!=='VND')fail(400,'Chọn loại chi và đơn vị hạn mức hợp lệ');
+  control.expenseType=b.expenseType;
+  control.effectiveFrom=text(b.effectiveFrom||'',10,true);control.effectiveTo=text(b.effectiveTo||'',10);
+  for(const v of [control.effectiveFrom,control.effectiveTo].filter(Boolean))if(!/^\d{4}-\d{2}-\d{2}$/.test(v)||!Number.isFinite(Date.parse(v))||new Date(v).toISOString().slice(0,10)!==v)fail(400,'Ngày hiệu lực không hợp lệ');
+  if(control.effectiveTo&&control.effectiveTo<control.effectiveFrom)fail(400,'Ngày kết thúc trước ngày bắt đầu');
+ }
+ if(g.id==='electricity'&&b.unit!=='kWh'||g.id==='machineCost'&&!['đ','VND'].includes(b.unit))fail(400,'Đơn vị không phù hợp');
  if(g.operation&&!control.operationRateId)fail(400,'Chọn nguyên công áp dụng');
  if(g.id==='routing'){
   if(!Array.isArray(b.sequence)||!b.sequence.length||b.sequence.length>100)fail(400,'Khai thứ tự nguyên công');
@@ -30,7 +41,7 @@ function validate(b,{text,number,fail}){
 }
 function compare({norms,j,actual,review}){
  const rows=[],product=j.packet.product,ops=j.packet.operations||[],progress=j.progress.operations||[];
- for(const n of norms.filter(n=>n.active&&n.product===product.name)){
+ for(const n of norms.filter(n=>n.active&&n.category!=='spending'&&n.product===product.name)){
   const g=groups.find(g=>g.id===n.category);if(!g)continue;
   let value=null,basis='Chưa có số đo thực tế phù hợp',target=n.quantity,unit=n.unit,scope='',provisional=j.state!=='completed';
   const add=()=>{const delta=Number.isFinite(value)?value-target:null;rows.push({id:n.id,version:n.version,name:n.name,category:n.category,scope,target,unit,actualValue:value,delta,direction:g.minimum?'minimum':'maximum',status:delta===null?'missing':provisional?'provisional':(g.minimum?delta>=-1e-9:delta<=1e-9)?'within':'outside',basis,provisional});};
@@ -47,7 +58,7 @@ function compare({norms,j,actual,review}){
   }else if(n.category==='routing'){
    const expected=n.sequence||[],got=ops.map(o=>o.rateId);target=expected.join(' → ');value=got.join(' → ');unit='';provisional=false;
    rows.push({id:n.id,version:n.version,name:n.name,category:n.category,target,unit,actualValue:value,delta:null,status:expected.length&&JSON.stringify(expected)===JSON.stringify(got)?'within':'outside',basis:'Thứ tự mã nguyên công trong hồ sơ lệnh; so đầy đủ cả bước lặp',provisional});continue;
-  }else if(['time','productivity','labor','machineHours'].includes(n.category)){
+  }else if(['time','productivity','labor','machineHours','consumable','electricity','machineCost'].includes(n.category)){
    const matches=ops.filter(o=>o.rateId===n.operationRateId&&(!n.machineId||(progress.find(p=>p.id===o.id)?.machineId||o.machineId)===n.machineId));
    if(!matches.length)basis='Lệnh không có nguyên công / máy khớp phạm vi';
    for(const o of matches){

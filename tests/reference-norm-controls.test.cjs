@@ -1,6 +1,6 @@
 const {test}=require('node:test'),A=require('node:assert/strict'),{groups,compare}=require('../server/reference-norm-controls.cjs');
-test('12 production groups compare matching evidence, distinguish unfinished data and protect units',()=>{
- A.equal(groups.filter(g=>g.id!=='other').length,12);
+test('production groups compare matching evidence, distinguish unfinished data and protect units',()=>{
+ A.equal(groups.filter(g=>g.id!=='other').length,15);
  const j={state:'completed',quantity:10,packet:{product:{name:'A',unit:'bộ'},operations:[{id:'O',rateId:'cut',name:'Cut',outputUnit:'bộ',machineId:'M'}]},progress:{operations:[{id:'O',output:10,handedOverAt:'now'}],qc:{at:'now',passed:9,rejected:1}}};
  const actual={materials:[{materialId:'S',balance:'balanced',inputWeight:100,remnantWeight:20,scrapWeight:5,issued:[{quantity:2,unit:'tấm',length:3000,width:1500,thickness:2}]}],costs:[{entries:[{amount:900}]}],recordedTotal:900},review={rows:[{id:'O',actualHours:5}]};
  const n=(category,quantity,extra={})=>({id:category,version:2,name:category,active:true,category,product:'A',unit:groups.find(g=>g.id===category).unit,outputUnit:groups.find(g=>g.id===category).outputUnit,materialId:'S',operationRateId:'cut',quantity,...extra});
@@ -24,9 +24,9 @@ test('control records validate limits, units, catalogue references and preserve 
  async function call(p,method='GET',body){const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/api/'+p,{method,headers:{'Content-Type':'application/json',Cookie:session?.cookie||'','X-CSRF-Token':session?.csrf||''},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],csrf:data.csrf};}
  session=await call('setup','POST',{username:'admin',name:'Admin',password:'Controls-test-2026!'});const admin=session;
  const choices=(await call('ops/norms')).data,materialId=choices.materials[0].id,operationRateId=choices.operations[0].id;
- const body=g=>({category:g.id,name:g.name,product:'A',quantity:g.percent?0:2,unit:g.unit,outputUnit:g.outputUnit,materialId:g.material?materialId:'',operationRateId:g.operation?operationRateId:'',sequence:g.id==='routing'?[operationRateId,operationRateId]:[],source:'production',evidence:'Batch A',expectedVersion:0});
+ const body=g=>({category:g.id,name:g.name,product:'A',quantity:g.percent?0:2,unit:g.unit,outputUnit:g.outputUnit,materialId:g.material?materialId:'',operationRateId:g.operation?operationRateId:'',sequence:g.id==='routing'?[operationRateId,operationRateId]:[],source:'production',evidence:'Batch A',expectedVersion:0,...(g.id==='spending'?{expenseType:'travel',effectiveFrom:'2026-09-30'}:{})});
  const save=b=>call('ops/norm','POST',{...b,requestId:randomUUID()});
- for(const g of groups){const r=await save(body(g));A.equal(r.status,200,JSON.stringify(r.data));}
+ for(const g of groups.filter(g=>g.id!=='loss')){const r=await save(body(g));A.equal(r.status,200,JSON.stringify(r.data));}
  const loss=body(groups.find(g=>g.id==='loss'));A.equal((await save({...loss,quantity:101})).status,400);A.equal((await save({...loss,unit:'kg'})).status,400);
  const time=body(groups.find(g=>g.id==='time'));A.equal((await save({...time,operationRateId:'missing'})).status,400);A.equal((await save({...time,machineId:'missing'})).status,400);
  const routing=body(groups.find(g=>g.id==='routing'));A.equal((await save({...routing,sequence:[]})).status,400);A.equal((await save({...routing,sequence:['missing']})).status,400);
