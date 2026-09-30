@@ -21,6 +21,7 @@ test('routing: review sequence, source approval, department delegation, snapshot
  ok(await post('ops/master',{kind:'material',expectedVersion:0,document:{id:'MAT',code:'MAT',name:'Material',unit:'cái',form:'bulk'}}));const lot=ok(await post('ops/receipt',{materialId:'MAT',warehouse:'Main',quantity:10,unitWeight:1,unitCost:10,reference:'INITIAL',length:0,width:0,thickness:0}));
  const make=()=>post('ops/service-requests',{action:'create',type:'supply',departmentId:department('tech'),purposeType:'office',sourceId:'purpose',recipient:'Xưởng',reason:'Cấp vật tư',neededDate:'2026-10-02',lines:[{materialId:'MAT',quantity:4}]});const request=ok(await make());
  const flow=async s=>ok(await call('process-routing','GET',undefined,s)).instances.find(x=>x.sourceId===request.id);
+ const unassigned=await flow(sessions.worker);A.equal(unassigned.activeSteps[0].canComplete,false);A.match(unassigned.activeSteps[0].actionHint,/Chưa được giao xử lý/);
  let r=await flow();A.equal(r.index,0);A.equal(r.definitionVersion,1);A.equal((await flow(sessions.outsider)),undefined);
  A.equal((await post('ops/service-requests',{action:'approve',id:request.id,expectedVersion:request.version})).status,403);
  A.equal(JSON.parse(app.sql.prepare("SELECT document FROM ops_records WHERE kind='service-request' AND id=?").get(request.id).document).state,'pending');
